@@ -1,36 +1,36 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionFormDialog.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Paper, Chip, Avatar, Accordion, AccordionSummary, AccordionDetails, Stack } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  Save as SaveIcon,
-  Clear as ClearIcon,
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  People as PeopleIcon,
-  AccountBalance as InsuranceIcon,
-  ExpandMore as ExpandMoreIcon,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import BedSelectionDialog from "@/pages/hospitalAdministration/ManageBeds/BedSelection/BedSelectionDialog";
-import NokAttendantSelection from "./NokAttendantSelection";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { AdmissionDto, IPAdmissionDto, IPAdmissionDetailsDto, WrBedDetailsDto } from "@/interfaces/PatientAdministration/AdmissionDto";
-import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
-import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
-import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks/useBedSelection";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
-import InsuranceSelectionForAdmission from "./InsuranceSelectionForAdmission";
-import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import BedSelectionDialog from "@/pages/hospitalAdministration/ManageBeds/BedSelection/BedSelectionDialog";
+import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks/useBedSelection";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Hotel as BedIcon,
+  Clear as ClearIcon,
+  ExpandMore as ExpandMoreIcon,
+  AccountBalance as InsuranceIcon,
+  Person as PatientIcon,
+  People as PeopleIcon,
+  Save as SaveIcon,
+} from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Avatar, Box, Chip, Grid, Paper, Stack, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import InsuranceSelectionForAdmission from "./InsuranceSelectionForAdmission";
+import NokAttendantSelection from "./NokAttendantSelection";
 
 // Enhanced schema with insurance fields
 const admissionSchema = z

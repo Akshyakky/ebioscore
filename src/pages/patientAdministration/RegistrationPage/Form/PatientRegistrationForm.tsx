@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback, useMemo, useImperativeHandle } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, Chip, Paper } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as NextOfKinIcon, CheckCircle, Cancel } from "@mui/icons-material";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { useAlert } from "@/providers/AlertProvider";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { PatientRegistrationDto, PatRegistersDto, PatAddressDto, PatOverviewDto, OpvisitDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { OpvisitDto, PatAddressDto, PatientRegistrationDto, PatOverviewDto, PatRegistersDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { useAlert } from "@/providers/AlertProvider";
+import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel, CheckCircle, Refresh as RefreshIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, Grid, InputAdornment, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 // Create conditional schema based on form mode
 const createSchema = (mode: "create" | "edit" | "view") => {
@@ -167,6 +167,8 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       pChartID: 0,
       pChartCode: "",
       pRegDate: serverDate,
+      pAddID: 0,
+      patOverID: 0,
       pTitleVal: "",
       pTitle: "",
       pFName: "",
@@ -472,7 +474,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         faculty: "",
         langType: "",
         pChartCompID: 0,
-        pExpiryDate: undefined,
+        pExpiryDate: serverDate,
         regTypeVal: "",
         physicianRoom: "",
         regType: "",
@@ -502,7 +504,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         pAddMail: formData.sendEmailYN,
         pAddSMSVal: formData.sendSMSYN,
         pAddSMS: formData.sendSMSYN,
-        pAddEmail: formData.pAddEmail,
+        pAddEmail: formData.pAddEmail || "",
         pAddStreet: formData.pAddStreet,
         pAddStreet1: formData.pAddStreet1,
         pAddCityVal: formData.pAddCityVal,

@@ -1,22 +1,22 @@
 // src/pages/patientAdministration/RegistrationPage/Components/PatientInsuranceManagement.tsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Stack, Chip, Alert, IconButton } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Save as SaveIcon, Cancel as CancelIcon, AccountBalance as InsuranceIcon } from "@mui/icons-material";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { useAlert } from "@/providers/AlertProvider";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
-import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
-import { formatDt } from "@/utils/Common/dateUtils";
 import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
+import { useAlert } from "@/providers/AlertProvider";
+import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
+import { formatDt } from "@/utils/Common/dateUtils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, AccountBalance as InsuranceIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, Grid, IconButton, Paper, Stack, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 // Validation schema for Patient Insurance form
 const patientInsuranceSchema = z.object({
@@ -165,6 +165,7 @@ const PatientInsuranceManagement: React.FC<PatientInsuranceManagementProps> = ({
       setLoading(true);
 
       const insuranceData: OPIPInsurancesDto = {
+        ...data,
         oPIPInsID: data.oPIPInsID || 0,
         pChartID: data.pChartID,
         insurID: data.insurID,
@@ -173,7 +174,6 @@ const PatientInsuranceManagement: React.FC<PatientInsuranceManagementProps> = ({
         rActiveYN: data.rActiveYN,
         policyStartDt: data.policyStartDt || serverDate,
         policyEndDt: data.policyEndDt || new Date(serverDate.getTime() + 365 * 24 * 60 * 60 * 1000),
-        ...data,
       };
 
       const result = await InsuranceCarrierService.addOrUpdateOPIPInsurance(insuranceData);

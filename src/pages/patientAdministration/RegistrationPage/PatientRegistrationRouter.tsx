@@ -1,9 +1,9 @@
 // src/pages/patientAdministration/RegistrationPage/PatientRegistrationRouter.tsx
-import React, { useState, useCallback } from "react";
-import { Box, Paper, ToggleButton, ToggleButtonGroup, Typography, Chip, Stack, Tooltip } from "@mui/material";
-import { GridView as GridViewIcon, EditNote as EditNoteIcon, Search as SearchIcon, PersonAdd as PersonAddIcon } from "@mui/icons-material";
-import PatientRegistrationManager from "./MainPage/PatientRegistrationManager";
+import { EditNote as EditNoteIcon, GridView as GridViewIcon, PersonAdd as PersonAddIcon, Search as SearchIcon } from "@mui/icons-material";
+import { Box, Chip, Paper, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useState } from "react";
 import PatientRegistrationFormManager from "./MainPage/PatientRegistrationFormManager";
+import PatientRegistrationManager from "./MainPage/PatientRegistrationManager";
 
 type RegistrationMode = "search-first" | "form-first";
 

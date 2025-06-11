@@ -1,27 +1,26 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  Schedule as FrequencyIcon,
-  CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon,
-  Star as DefaultIcon,
-  Settings as ModifiableIcon,
-  Transform as TransferIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { MedicationFrequencyDto } from "@/interfaces/ClinicalManagement/MedicationFrequencyDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
+import {
+  CheckCircle as ActiveIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
+  Star as DefaultIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Schedule as FrequencyIcon,
+  Cancel as InactiveIcon,
+  Settings as ModifiableIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import MedicationFrequencyForm from "../Form/MedicationFreequencyForm";
 import { useMedicationFrequency } from "../hooks/useMedicationFreequencyForm";
 

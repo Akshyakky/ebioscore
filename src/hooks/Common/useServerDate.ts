@@ -1,5 +1,5 @@
 // src/hooks/useServerDate.ts
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { fetchServerTime, ServerTimeResponse } from "../../services/CommonServices/serverTimeService";
 
 export const useServerDate = () => {

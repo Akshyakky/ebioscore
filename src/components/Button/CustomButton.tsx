@@ -1,13 +1,13 @@
-import React from "react";
-import Button from "@mui/material/Button";
 import { SvgIconComponent } from "@mui/icons-material";
-import clsx from "clsx";
 import { SxProps, Theme } from "@mui/material";
+import Button from "@mui/material/Button";
+import clsx from "clsx";
+import React from "react";
 
 export interface CustomButtonProps {
   variant?: "text" | "outlined" | "contained";
   size?: "small" | "medium" | "large";
-  icon?: SvgIconComponent;
+  icon?: SvgIconComponent | undefined;
   text?: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   className?: string;
@@ -22,18 +22,19 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   variant = "contained",
   size = "medium",
   icon: Icon,
-  text,
-  onClick,
-  className,
-  disabled,
+  text = "",
+  onClick = () => {},
+  className = "",
+  disabled = false,
   color = "primary",
-  ariaLabel,
-  sx,
+  ariaLabel = "",
+  sx = {},
   children,
   ...props
 }) => {
   return (
     <Button
+      component="button"
       variant={variant}
       size={size}
       onClick={onClick}

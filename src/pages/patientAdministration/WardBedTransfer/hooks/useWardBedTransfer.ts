@@ -1,11 +1,11 @@
 // src/pages/patientAdministration/WardBedTransfer/hooks/useWardBedTransfer.ts
-import { useState, useCallback, useRef } from "react";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
+import { useAlert } from "@/providers/AlertProvider";
 import { wardBedTransferService } from "@/services/PatientAdministrationServices/WardBedTransferService/WardBedTransferService";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
-import { useAlert } from "@/providers/AlertProvider";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { useCallback, useRef, useState } from "react";
 
 interface TransferHistoryRecord {
   transferId: number;
@@ -165,7 +165,7 @@ export const useWardBedTransfer = (): UseWardBedTransferReturn => {
         const currentBedId = state.currentAdmission?.ipAdmissionDetailsDto?.bedID;
 
         // Validate transfer before processing
-        const isValid = await validateTransfer(currentBedId, transferData.bedID, transferData.admitID);
+        const isValid = await validateTransfer(currentBedId || 0, transferData.bedID, transferData.admitID);
 
         if (!isValid) {
           updateState({ loading: false });

@@ -1,24 +1,21 @@
 // src/pages/patientAdministration/WardBedTransfer/Components/CurrentAdmissionDisplay.tsx
-import React, { useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Stack, Alert, Divider, CircularProgress } from "@mui/material";
-import {
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  LocalHospital as AdmissionIcon,
-  MedicalServices as DoctorIcon,
-  CalendarToday as CalendarIcon,
-  SwapHoriz as TransferIcon,
-  History as HistoryIcon,
-  CheckCircle as CheckIcon,
-  Error as ErrorIcon,
-  AccountBalance as InsuranceIcon,
-  Room as RoomIcon,
-  Business as DepartmentIcon,
-} from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import {
+  LocalHospital as AdmissionIcon,
+  Hotel as BedIcon,
+  CheckCircle as CheckIcon,
+  MedicalServices as DoctorIcon,
+  Error as ErrorIcon,
+  History as HistoryIcon,
+  AccountBalance as InsuranceIcon,
+  Person as PatientIcon,
+  SwapHoriz as TransferIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Chip, CircularProgress, Grid, Paper, Stack, Typography } from "@mui/material";
+import React, { useMemo } from "react";
 
 interface CurrentAdmissionDisplayProps {
   patient: PatientSearchResult | null;
@@ -131,7 +128,7 @@ const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patie
     );
   }
 
-  const bedStatusInfo = getBedStatusConfig(admissionInfo.bedStatus);
+  const bedStatusInfo = getBedStatusConfig(admissionInfo.bedStatus || "");
 
   return (
     <Paper

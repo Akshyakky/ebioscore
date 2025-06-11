@@ -370,9 +370,6 @@ const LoginPage: React.FC = () => {
 
   // Check rate limit - no state updates inside
   const checkRateLimit = useCallback(() => {
-    const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
-    const MAX_ATTEMPTS = 3;
-
     if (loginAttempts.isLocked && loginAttempts.lockoutEndTime) {
       const now = new Date();
       if (now < loginAttempts.lockoutEndTime) {
@@ -387,7 +384,6 @@ const LoginPage: React.FC = () => {
 
   // Responsive breakpoints
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const isMediumScreen = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
   // Simple computed value
   const selectedCompanyName = useMemo(() => {
@@ -398,6 +394,7 @@ const LoginPage: React.FC = () => {
   // Pure function, no dependencies
   const checkDateValidity = (dateString: string): number => {
     const [day, month, year] = dateString.split("/").map(Number);
+    if (!day || !month || !year) return 0;
     const today = new Date();
     const targetDate = new Date(year, month - 1, day);
     const differenceInTime = targetDate.getTime() - today.getTime();
@@ -405,7 +402,7 @@ const LoginPage: React.FC = () => {
   };
 
   // Handle company selection - event handler
-  const handleSelectCompany = (compIDCompCode: string, compName: string) => {
+  const handleSelectCompany = (compIDCompCode: string) => {
     const [compID, compCode] = compIDCompCode.split(",");
     setFormState((prev) => ({
       ...prev,
@@ -429,7 +426,7 @@ const LoginPage: React.FC = () => {
           setFormState((prev) => ({ ...prev, companies: companyData }));
 
           // Auto-select if only one company
-          if (companyData.length === 1) {
+          if (companyData.length === 1 && companyData[0]?.compIDCompCode) {
             const [compID, compCode] = companyData[0].compIDCompCode.split(",");
             setFormState((prev) => ({
               ...prev,
@@ -547,7 +544,7 @@ const LoginPage: React.FC = () => {
       });
 
       if (tokenResponse.token) {
-        const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
+        const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1] as string));
         const tokenExpiry = new Date(jwtToken.exp * 1000).getTime();
 
         dispatch(
@@ -791,8 +788,7 @@ const LoginPage: React.FC = () => {
                         }))}
                         onChange={(event) => {
                           const compIDCompCode = event.target.value as string;
-                          const selectedCompany = formState.companies.find((c) => c.compIDCompCode === compIDCompCode);
-                          handleSelectCompany(compIDCompCode, selectedCompany?.compName || "");
+                          handleSelectCompany(compIDCompCode);
                         }}
                         size="small"
                         loading={fieldLoading.company}

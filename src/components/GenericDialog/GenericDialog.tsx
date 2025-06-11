@@ -1,6 +1,6 @@
-import React, { useRef } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Box, SxProps, useTheme, useMediaQuery, Fade, Theme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, SxProps, Theme, Typography, useMediaQuery, useTheme } from "@mui/material";
+import React, { useRef } from "react";
 
 interface GenericDialogProps {
   open: boolean;
@@ -20,7 +20,7 @@ interface GenericDialogProps {
   fullScreen?: boolean;
   titleVariant?: "h4" | "h5" | "h6";
   TransitionProps?: {
-    onEntered?: () => void;
+    onEntered: () => void;
   };
 }
 
@@ -63,15 +63,15 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
       disableEscapeKeyDown={disableEscapeKeyDown}
       aria-labelledby="dialog-title"
       fullScreen={fullScreen || isMobile}
-      TransitionProps={TransitionProps}
+      {...(TransitionProps && { TransitionProps })}
     >
-      <DialogTitle sx={titleSx}>
+      <DialogTitle sx={titleSx || {}}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant={titleVariant} component="h2" id="dialog-title">
             {title}
           </Typography>
           {showCloseButton && (
-            <IconButton edge="end" onClick={onClose} aria-label="close dialog" sx={closeButtonSx}>
+            <IconButton edge="end" onClick={onClose} aria-label="close dialog" sx={closeButtonSx || {}}>
               <CloseIcon />
             </IconButton>
           )}
@@ -82,7 +82,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
         ref={contentRef}
         dividers
         sx={{
-          ...dialogContentSx,
+          ...(dialogContentSx || {}),
           overflowY: "auto",
           maxHeight: isMobile ? "calc(100vh - 56px)" : "100vh",
           position: "relative",
@@ -91,7 +91,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
         {children}
       </DialogContent>
 
-      {actions && <DialogActions sx={actionsSx}>{React.Children.toArray(actions)}</DialogActions>}
+      {actions && <DialogActions sx={actionsSx || {}}>{React.Children.toArray(actions)}</DialogActions>}
     </Dialog>
   );
 };

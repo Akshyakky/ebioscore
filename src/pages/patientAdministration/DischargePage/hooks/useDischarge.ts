@@ -1,16 +1,16 @@
 // src/pages/patientAdministration/DischargePage/hooks/useDischarge.ts
-import { useState, useCallback, useRef } from "react";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
+import { useAlert } from "@/providers/AlertProvider";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import { dischargeService } from "@/services/PatientAdministrationServices/DischargeService/DischargeService";
-import { useAlert } from "@/providers/AlertProvider";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { useCallback, useRef, useState } from "react";
 
 interface PatientAdmissionStatusResponse {
   isAdmitted: boolean;
-  admissionData?: AdmissionDto;
-  patientData?: any;
+  admissionData?: AdmissionDto | undefined;
+  patientData?: any | undefined;
   admissionHistory: any[];
 }
 

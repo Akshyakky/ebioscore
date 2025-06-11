@@ -1,17 +1,17 @@
 // src/components/Patient/PatientDemographicsForm/PatientDemographicsForm.tsx
-import React, { useEffect, useState, useCallback } from "react";
-import { Box, Grid, Typography } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { PatientDemoGraphService } from "@/services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
-import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
-import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
-import { PatientDemographicsFormProps } from "./PatientDemographicsFormProps";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
+import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
 import { useAlert } from "@/providers/AlertProvider";
+import { PatientDemoGraphService } from "@/services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
+import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
+import { Box, Grid, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { PatientDemographicsFormProps } from "./PatientDemographicsFormProps";
 
 /**
  * Reusable patient demographics form component

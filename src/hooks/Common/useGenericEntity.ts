@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function createEntityHook<T extends { [key: string]: any }>(service: any, entityIdField: string = "id") {
   return () => {

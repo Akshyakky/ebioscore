@@ -1,9 +1,9 @@
 // src/pages/common/AlertManagerPage/SubPage/AlertGrid.tsx
-import React, { useMemo } from "react";
-import { Box, Typography, IconButton, Chip } from "@mui/material";
-import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { AlertDto } from "@/interfaces/Common/AlertManager";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import { AlertDto } from "@/interfaces/Common/AlertManager";
+import { Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
+import { Box, Chip, IconButton, Typography } from "@mui/material";
+import React, { useMemo } from "react";
 
 interface AlertGridProps {
   alerts: AlertDto[];

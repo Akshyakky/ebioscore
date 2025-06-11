@@ -1,9 +1,9 @@
 // src/components/Dialog/ConfirmationDialog.tsx
-import React from "react";
+import { Error as ErrorIcon, Info as InfoIcon, CheckCircle as SuccessIcon, Warning as WarningIcon } from "@mui/icons-material";
 import { Box, Typography, useTheme } from "@mui/material";
-import { Warning as WarningIcon, Error as ErrorIcon, Info as InfoIcon, CheckCircle as SuccessIcon } from "@mui/icons-material";
-import GenericDialog from "../GenericDialog/GenericDialog";
+import React from "react";
 import CustomButton from "../Button/CustomButton";
+import GenericDialog from "../GenericDialog/GenericDialog";
 
 export type ConfirmationType = "warning" | "error" | "info" | "success";
 

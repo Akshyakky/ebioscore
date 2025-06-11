@@ -1,15 +1,13 @@
 // src/pages/patientAdministration/AdmissionPage/Components/NokAttendantSelection.tsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Typography, Paper, Card, CardContent, Grid, Chip, Radio, RadioGroup, FormControlLabel, Alert, Avatar, Stack, Divider } from "@mui/material";
-import { People as PeopleIcon, Person as PersonIcon, Phone as PhoneIcon, CalendarToday as CalendarIcon, Add as AddIcon } from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
-import SmartButton from "@/components/Button/SmartButton";
-import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
-import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
-import { formatDt } from "@/utils/Common/dateUtils";
-import { useAlert } from "@/providers/AlertProvider";
-import NextOfKinManagement from "@/pages/patientAdministration/RegistrationPage/Components/NextOfKinManagement";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import NextOfKinManagement from "@/pages/patientAdministration/RegistrationPage/Components/NextOfKinManagement";
+import { useAlert } from "@/providers/AlertProvider";
+import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
+import { Add as AddIcon, People as PeopleIcon, Person as PersonIcon, Phone as PhoneIcon } from "@mui/icons-material";
+import { Alert, Avatar, Box, Card, CardContent, Chip, Divider, FormControlLabel, Grid, Paper, Radio, RadioGroup, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 interface NokAttendantSelectionProps {
   pChartID: number;

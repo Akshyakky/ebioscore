@@ -1,31 +1,27 @@
 // src/pages/patientAdministration/DischargePage/Components/DischargeFormDialog.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Paper, Chip, Avatar, Alert, Accordion, AccordionSummary, AccordionDetails, Stack } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  Save as SaveIcon,
-  Clear as ClearIcon,
-  Person as PatientIcon,
-  LocalHospital as HospitalIcon,
-  MedicalServices as DoctorIcon,
-  ExitToApp as DischargeIcon,
-  Assignment as NotesIcon,
-  ExpandMore as ExpandMoreIcon,
-  CheckCircle as CheckIcon,
-  Home as HomeIcon,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { useServerDate } from "@/hooks/Common/useServerDate";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Clear as ClearIcon,
+  ExitToApp as DischargeIcon,
+  MedicalServices as DoctorIcon,
+  ExpandMore as ExpandMoreIcon,
+  Assignment as NotesIcon,
+  Person as PatientIcon,
+} from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Box, Grid, Paper, Stack, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 // Enhanced discharge schema with comprehensive validation
 const dischargeSchema = z.object({

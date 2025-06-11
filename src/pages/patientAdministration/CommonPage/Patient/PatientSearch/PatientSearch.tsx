@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
-import { TextField, Autocomplete, Box, CircularProgress, Typography } from "@mui/material";
-import { PatientSearchProps } from "./PatientSearchProps";
-import { PatientOption } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { usePatientSearch } from "@/hooks/PatientAdminstration/patient/usePatientSearch";
+import { PatientOption } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { formatDt } from "@/utils/Common/dateUtils";
+import { Autocomplete, Box, CircularProgress, TextField, Typography } from "@mui/material";
+import React, { useEffect } from "react";
+import { PatientSearchProps } from "./PatientSearchProps";
 
 /**
  * Reusable patient search component with autocomplete
@@ -18,7 +18,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
   initialSelection = null,
   className,
 }) => {
-  const { inputValue, setInputValue, options, loading, selectedPatient, setSelectedPatient, clearSearch } = usePatientSearch({ minSearchLength });
+  const { inputValue, setInputValue, options, isLoading, selectedPatient, setSelectedPatient, clearSearch } = usePatientSearch({ minSearchLength });
 
   // Handle external clear trigger
   useEffect(() => {
@@ -52,7 +52,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
     <Autocomplete
       id="patient-search-autocomplete"
       options={options}
-      loading={loading}
+      loading={isLoading}
       value={selectedPatient}
       inputValue={inputValue}
       onChange={(_, newValue) => handlePatientSelect(newValue)}
@@ -65,14 +65,17 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
       renderInput={(params) => (
         <TextField
           {...params}
+          inputProps={params.inputProps}
+          InputLabelProps={{ className: "" }}
           label={label}
           variant="outlined"
           placeholder={placeholder}
+          size="small"
           InputProps={{
             ...params.InputProps,
             endAdornment: (
               <>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                {isLoading ? <CircularProgress color="inherit" size={20} /> : null}
                 {params.InputProps.endAdornment}
               </>
             ),
@@ -97,7 +100,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
       fullWidth
       size="small"
       disabled={disabled}
-      className={className}
+      className={className || ""}
     />
   );
 };

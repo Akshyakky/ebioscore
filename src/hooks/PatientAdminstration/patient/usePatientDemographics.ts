@@ -1,7 +1,7 @@
 // src/hooks/PatientAdminstration/patient/usePatientDemographics.ts
-import { useState, useEffect, useCallback } from "react";
-import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
+import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
+import { useCallback, useEffect, useState } from "react";
 
 interface UsePatientDemographicsProps {
   pChartID?: number | null;

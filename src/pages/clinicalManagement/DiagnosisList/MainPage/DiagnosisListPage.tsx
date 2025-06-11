@@ -1,29 +1,28 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  MedicalServices as DiagnosisIcon,
-  CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon,
-  Build as CustomIcon,
-  Assignment as StandardIcon,
-  Transform as TransferIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import DiagnosisListForm from "../Form/DiagnosisListForm";
-import { useDiagnosisList } from "../hooks/useDiagnosisList";
+import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
-import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
+import {
+  CheckCircle as ActiveIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
+  Build as CustomIcon,
+  Delete as DeleteIcon,
+  MedicalServices as DiagnosisIcon,
+  Edit as EditIcon,
+  Cancel as InactiveIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Assignment as StandardIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import DiagnosisListForm from "../Form/DiagnosisListForm";
+import { useDiagnosisList } from "../hooks/useDiagnosisList";
 
 const statusOptions = [
   { value: "active", label: "Active" },

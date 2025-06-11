@@ -1,28 +1,24 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionStatusDialog.tsx
-import React, { useEffect, useState } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Divider, Alert, CircularProgress, Stack } from "@mui/material";
-import {
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  LocalHospital as AdmissionIcon,
-  CalendarToday as CalendarIcon,
-  MedicalServices as DoctorIcon,
-  Home as HomeIcon,
-  CheckCircle as CheckIcon,
-  Error as ErrorIcon,
-  AccountBalance,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import {
+  AccountBalance,
+  LocalHospital as AdmissionIcon,
+  CalendarToday as CalendarIcon,
+  CheckCircle as CheckIcon,
+  Home as HomeIcon,
+  Person as PatientIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Chip, Divider, Grid, Paper, Stack, Typography } from "@mui/material";
+import React from "react";
 
 interface PatientAdmissionStatusResponse {
   isAdmitted: boolean;
-  admissionData?: AdmissionDto;
+  admissionData?: AdmissionDto | undefined;
   patientData?: any;
   admissionHistory: AdmissionHistoryDto[];
 }
@@ -35,8 +31,6 @@ interface AdmissionStatusDialogProps {
 }
 
 const AdmissionStatusDialog: React.FC<AdmissionStatusDialogProps> = ({ open, onClose, patient, admissionStatus }) => {
-  const { isLoading, setLoading } = useLoading();
-
   if (!patient) {
     return null;
   }

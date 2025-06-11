@@ -1,17 +1,17 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { Grid, Box } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SaveIcon from "@mui/icons-material/Save";
-import GenericDialog from "../GenericDialog/GenericDialog";
-import SmartButton from "../Button/SmartButton";
-import EnhancedFormField from "../EnhancedFormField/EnhancedFormField";
-import ConfirmationDialog from "../Dialog/ConfirmationDialog";
-import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
+import { Box, Grid } from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import SmartButton from "../Button/SmartButton";
+import ConfirmationDialog from "../Dialog/ConfirmationDialog";
+import EnhancedFormField from "../EnhancedFormField/EnhancedFormField";
+import GenericDialog from "../GenericDialog/GenericDialog";
 
 interface ModifiedFieldDialogProps {
   open: boolean;
@@ -84,7 +84,7 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     handleSubmit,
     setValue,
     reset,
-    formState: { errors, isValid },
+    formState: {},
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     mode: "onChange",
@@ -179,8 +179,8 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
   const saveField = async (data: FormData) => {
     try {
       const fieldData: AppModifyFieldDto = {
-        amlID: initialFormData.amlID || 0,
         ...(data as AppModifyFieldDto),
+        amlID: initialFormData.amlID || 0,
       };
 
       const response = await appModifiedListService.save(fieldData);
@@ -216,13 +216,6 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
   const handleCancel = useCallback(() => {
     handleClose(false);
   }, [handleClose]);
-
-  // Handle dialog opening with proper form initialization
-  const handleDialogOpen = useCallback(() => {
-    if (open) {
-      handleDialogEntered();
-    }
-  }, [open, handleDialogEntered]);
 
   return (
     <>

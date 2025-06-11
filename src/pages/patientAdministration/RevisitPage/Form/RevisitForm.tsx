@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
-import { Search as SearchIcon, Refresh as RefreshIcon, Close as CloseIcon, Print as PrintIcon } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { OPVisitDto, DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
+import { DateFilterType, OPVisitDto } from "@/interfaces/PatientAdministration/revisitFormData";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
+import { Close as CloseIcon, Print as PrintIcon, Refresh as RefreshIcon, Search as SearchIcon } from "@mui/icons-material";
+import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRevisit } from "../hooks/useRevisitForm";
 
 interface PatientVisitHistoryDialogProps {
@@ -38,7 +38,6 @@ const dateFilterOptions = [
 ];
 
 const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ open, onClose, onEditVisit, pChartID }) => {
-  debugger;
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedVisit, setSelectedVisit] = useState<OPVisitDto | null>(null);
