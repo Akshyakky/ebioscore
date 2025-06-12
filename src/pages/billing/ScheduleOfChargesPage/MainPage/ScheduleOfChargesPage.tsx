@@ -124,43 +124,18 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleEditCharge = useCallback(
     async (charge: ChargeWithAllDetailsDto) => {
       try {
-        debugger;
-        const responseData = await getChargeById(charge.chargeID);
-        if (responseData) {
-          const normalizedCharge: ChargeWithAllDetailsDto = { ...responseData };
-          if (responseData.chargeDetails && !normalizedCharge.ChargeDetails) {
-            normalizedCharge.ChargeDetails = responseData.chargeDetails;
+        const fullChargeDetails = await getChargeById(charge.chargeID);
+        if (fullChargeDetails) {
+          if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
+            fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
           }
-          if (responseData.doctorShares && !normalizedCharge.DoctorShares) {
-            normalizedCharge.DoctorShares = responseData.doctorShares;
-          }
-          if (responseData.chargeAliases && !normalizedCharge.ChargeAliases) {
-            normalizedCharge.ChargeAliases = responseData.chargeAliases;
-          }
-          if (responseData.chargeFaculties && !normalizedCharge.ChargeFaculties) {
-            normalizedCharge.ChargeFaculties = responseData.chargeFaculties;
-          }
-          if (responseData.chargePacks && !normalizedCharge.ChargePacks) {
-            normalizedCharge.ChargePacks = responseData.chargePacks;
-          }
-
-          if (normalizedCharge.ChargeDetails) {
-            normalizedCharge.ChargeDetails = normalizedCharge.ChargeDetails.map((detail: any) => {
-              const normalizedDetail = { ...detail };
-              if (detail.chargePacks && !normalizedDetail.ChargePacks) {
-                normalizedDetail.ChargePacks = detail.chargePacks;
-              }
-              return normalizedDetail;
-            });
-          }
-          setSelectedCharge(normalizedCharge);
+          setSelectedCharge(fullChargeDetails);
           setIsChargeFormOpen(true);
         } else {
           showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
         }
       } catch (error) {
         showAlert("Error", "An error occurred while fetching charge details.", "error");
-        console.error("Failed to fetch charge details:", error);
       }
     },
     [getChargeById, showAlert]
