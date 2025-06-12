@@ -166,7 +166,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const handleProductSelect = (product: ProductSearchResult | null) => {
     if (product) {
       setValue("productID", product.productID);
-      setValue("productCode", product.productCode);
+      setValue("productCode", product.productCode || "");
       setValue("productName", product.productName || "");
       setValue("pLocationID", product.pLocationID || 0);
       setValue("rActiveYN", product.rActiveYN || "Y");
@@ -184,10 +184,10 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const handleProductSelection = useCallback(
     async (selectedProductString: string) => {
       const [selectedProductCode] = selectedProductString.split(" - ");
-      setValue("productCode", selectedProductCode, { shouldValidate: true, shouldDirty: true });
+      setValue("productCode", selectedProductCode || "", { shouldValidate: true, shouldDirty: true });
 
       try {
-        const productDetails = await getProductByCode(selectedProductCode);
+        const productDetails = await getProductByCode(selectedProductCode || "");
         if (productDetails) {
           setValue("productID", Number(productDetails.productID || 0));
           setValue("productName", productDetails.productName || "");
