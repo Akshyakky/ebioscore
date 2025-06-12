@@ -252,8 +252,8 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
         leadTimeUnit: data.leadTimeUnit || "days",
         avgDemandUnit: data.avgDemandUnit || "days",
         reOrderQuantity: Number(data.reOrderQuantity || 0),
-        productName: data.productName || "",
-        baseUnit: data.baseUnit || "",
+        productName: data.productName,
+        baseUnit: data.baseUnit,
       };
 
       const response = await saveProductOverview(formData);
@@ -638,6 +638,10 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                           {isAutoIndentYN === "Y" ? "Automatic indenting enabled" : "Manual indenting required"}
                         </Typography>
                       </Box>
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="transferYN" control={control} label="Transfer Allowed" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>
