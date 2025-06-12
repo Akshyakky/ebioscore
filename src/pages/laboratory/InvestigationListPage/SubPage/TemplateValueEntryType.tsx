@@ -11,6 +11,7 @@ import * as z from "zod";
 export const templateValueSchema = z.object({
   cTID: z.number().optional(),
   tGroupID: z.number().min(1, "Please select a template group"),
+  tGroupCode: z.string().nonempty("Please select a template group"),
   tGroupName: z.string().optional().nullable(),
   cTText: z.string().nonempty("Template text is required"),
   isBlankYN: z.string().optional().nullable(),
@@ -31,8 +32,8 @@ interface TemplateValueEntryTypeProps {
 }
 
 const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, compoID, templateData, onUpdate }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading] = useState(false);
+  const [error] = useState<string | null>(null);
   const { templateGroup } = useDropdownValues(["templateGroup"]);
 
   const {
@@ -46,6 +47,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     defaultValues: {
       cTID: 0,
       tGroupID: 0,
+      tGroupCode: "",
       tGroupName: "",
       cTText: "",
       isBlankYN: "N",
@@ -59,12 +61,12 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     mode: "onChange",
   });
 
-  // Load existing template data
   useEffect(() => {
     if (templateData) {
       reset({
         cTID: templateData.cTID || 0,
         tGroupID: templateData.tGroupID || 0,
+        tGroupCode: templateData.tGroupCode || "",
         tGroupName: templateData.tGroupName || "",
         cTText: templateData.cTText || "",
         isBlankYN: templateData.isBlankYN || "N",
@@ -78,6 +80,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
       reset({
         cTID: 0,
         tGroupID: 0,
+        tGroupCode: "",
         tGroupName: "",
         cTText: "",
         isBlankYN: "N",
@@ -94,6 +97,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     const templateValue: LCompTemplateDto = {
       cTID: data.cTID || 0,
       tGroupID: data.tGroupID,
+      tGroupCode: data.tGroupCode || "",
       tGroupName: data.tGroupName || "",
       cTText: data.cTText || "",
       isBlankYN: data.isBlankYN || "N",
@@ -111,6 +115,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     reset({
       cTID: 0,
       tGroupID: 0,
+      tGroupCode: "",
       tGroupName: "",
       cTText: "",
       isBlankYN: "N",
@@ -123,17 +128,17 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     onUpdate(null);
   };
 
-  const watchedTGroupID = watch("tGroupID");
+  const watchedTGroupCode = watch("tGroupCode");
 
-  // Update tGroupName when template group is selected
   useEffect(() => {
-    if (watchedTGroupID && templateGroup && templateGroup.length > 0) {
-      const selectedGroup = templateGroup?.find((group) => group.value === watchedTGroupID);
+    if (watchedTGroupCode && templateGroup && templateGroup.length > 0) {
+      const selectedGroup = templateGroup?.find((group) => group.bchCode === watchedTGroupCode);
       if (selectedGroup) {
+        setValue("tGroupID", selectedGroup.bchID);
         setValue("tGroupName", selectedGroup.label);
       }
     }
-  }, [watchedTGroupID, templateGroup, setValue]);
+  }, [watchedTGroupCode, templateGroup, setValue]);
 
   if (isLoading) {
     return (
@@ -171,7 +176,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
       <Grid container spacing={2}>
         <Grid size={{ sm: 12, md: 6 }}>
           <FormField
-            name="tGroupID"
+            name="tGroupCode"
             control={control}
             label="Template Group"
             type="select"
@@ -180,7 +185,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
             options={templateGroup || []}
             fullWidth
             placeholder="Select a template group"
-            helperText={errors.tGroupID?.message}
+            helperText={errors.tGroupCode?.message}
             disabled={templateGroup?.length === 0}
           />
         </Grid>

@@ -77,7 +77,7 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
           pTypeID: row.pTypeID,
           chargeDesc: row.chargeDesc,
           chargeDescLang: row.chargeDesc,
-          rActiveYN: existingAlias?.rActiveYN || "Y",
+          rActiveYN: "Y",
           rTransferYN: existingAlias?.rTransferYN || existingAlias?.transferYN || "N",
           rNotes: existingAlias?.rNotes || "",
         });
