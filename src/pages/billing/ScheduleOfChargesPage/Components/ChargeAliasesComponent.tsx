@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Chip, Stack, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { useFieldArray, Control, useWatch } from "react-hook-form";
 import { BChargeAliasDto } from "@/interfaces/Billing/ChargeDto";
+import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Stack, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Control, useFieldArray, useWatch } from "react-hook-form";
 
 interface ChargeAliasesComponentProps {
   control: Control<any>;
@@ -24,22 +24,25 @@ interface AliasGridRow {
 
 const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control, pic, expanded, onToggleExpand, onUpdateFunction }) => {
   const [aliasGridData, setAliasGridData] = useState<AliasGridRow[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
   const aliasesArray = useFieldArray({
     control,
     name: "ChargeAliases",
   });
 
-  const watchedAliases =
-    useWatch({
-      control,
-      name: "ChargeAliases",
-    }) || [];
+  const watchedAliases = useWatch({
+    control,
+    name: "ChargeAliases",
+    defaultValue: [],
+  });
 
   const initializeAliasGridData = useCallback(() => {
     if (!pic || pic.length === 0) return;
     const gridRows: AliasGridRow[] = pic.map((picOption) => {
       const pTypeID = Number(picOption.value);
       const existingAlias = watchedAliases.find((alias: BChargeAliasDto) => Number(alias.pTypeID) === pTypeID);
+
       return {
         id: `pic-${pTypeID}`,
         pTypeID: pTypeID,
@@ -48,28 +51,39 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         hasAlias: Boolean(existingAlias?.chargeDesc),
       };
     });
+
     setAliasGridData(gridRows);
+    setIsInitialized(true);
   }, [pic, watchedAliases]);
+
+  useEffect(() => {
+    if (!isInitialized || watchedAliases.length > 0) {
+      initializeAliasGridData();
+    }
+  }, [initializeAliasGridData, isInitialized, watchedAliases]);
 
   const updateChargeAliasesFromGrid = useCallback(() => {
     const chargeAliasesArray: BChargeAliasDto[] = [];
     for (const row of aliasGridData) {
-      const hasContent = Boolean(row.chargeDesc);
+      const hasContent = Boolean(row.chargeDesc && row.chargeDesc.trim());
       if (hasContent) {
+        const existingAlias = watchedAliases.find((alias: BChargeAliasDto) => Number(alias.pTypeID) === row.pTypeID);
         chargeAliasesArray.push({
-          chAliasID: 0,
-          chargeID: 0,
+          chAliasID: existingAlias?.chAliasID || 0,
+          chargeID: existingAlias?.chargeID || 0,
           pTypeID: row.pTypeID,
           chargeDesc: row.chargeDesc,
           chargeDescLang: row.chargeDesc,
-          rActiveYN: "Y",
-          rTransferYN: "N",
-          rNotes: "",
+          rActiveYN: existingAlias?.rActiveYN || "Y",
+          rTransferYN: existingAlias?.rTransferYN || "N",
+          rNotes: existingAlias?.rNotes || "",
         });
       }
     }
+
+    console.log("Updating charge aliases from grid:", chargeAliasesArray);
     aliasesArray.replace(chargeAliasesArray);
-  }, [aliasGridData, aliasesArray]);
+  }, [aliasGridData, aliasesArray, watchedAliases]);
 
   const handleFieldChange = useCallback(
     (rowIndex: number, valueOrEvent: any) => {
@@ -81,6 +95,7 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
       } else if (valueOrEvent && typeof valueOrEvent.value === "string") {
         actualValue = valueOrEvent.value;
       }
+
       setAliasGridData((prevData) => {
         const updatedGridData = [...prevData];
         const row = updatedGridData[rowIndex];
@@ -88,36 +103,36 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         const updatedRow = {
           ...row,
           chargeDesc: actualValue,
-          hasAlias: Boolean(actualValue),
+          hasAlias: Boolean(actualValue && actualValue.trim()),
         };
         updatedGridData[rowIndex] = updatedRow;
         const chargeAliasesArray: BChargeAliasDto[] = [];
         for (const gridRow of updatedGridData) {
-          const hasContent = Boolean(gridRow.chargeDesc);
+          const hasContent = Boolean(gridRow.chargeDesc && gridRow.chargeDesc.trim());
           if (hasContent) {
+            const existingAlias = watchedAliases.find((alias: BChargeAliasDto) => Number(alias.pTypeID) === gridRow.pTypeID);
+
             chargeAliasesArray.push({
-              chAliasID: 0,
-              chargeID: 0,
+              chAliasID: existingAlias?.chAliasID || 0,
+              chargeID: existingAlias?.chargeID || 0,
               pTypeID: gridRow.pTypeID,
               chargeDesc: gridRow.chargeDesc,
               chargeDescLang: gridRow.chargeDesc,
-              rActiveYN: "Y",
-              rTransferYN: "N",
-              rNotes: "",
+              rActiveYN: existingAlias?.rActiveYN || "Y",
+              rTransferYN: existingAlias?.rTransferYN || "N",
+              rNotes: existingAlias?.rNotes || "",
             });
           }
         }
+
         aliasesArray.replace(chargeAliasesArray);
         return updatedGridData;
       });
     },
-    [aliasesArray]
+    [aliasesArray, watchedAliases]
   );
 
-  useEffect(() => {
-    initializeAliasGridData();
-  }, [initializeAliasGridData]);
-
+  // Register update function with parent
   useEffect(() => {
     if (onUpdateFunction) {
       onUpdateFunction(updateChargeAliasesFromGrid);

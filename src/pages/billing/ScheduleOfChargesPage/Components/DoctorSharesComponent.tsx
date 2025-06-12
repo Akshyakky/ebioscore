@@ -26,6 +26,7 @@ interface DoctorSharesComponentProps {
 
 const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, expanded, onToggleExpand, attendingPhy, doctorShareEnabled }) => {
   const [selectedDoctor, setSelectedDoctor] = useState<string>("");
+  const [isInitialized, setIsInitialized] = useState(false);
   const doctorNamesRef = useRef<Map<string, string>>(new Map());
   const fieldRefsRef = useRef<Map<string, any>>(new Map());
 
@@ -37,6 +38,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
   const doctorShares = useWatch({
     control,
     name: "DoctorShares",
+    defaultValue: [],
   });
 
   const extractDoctorName = (label: string): string => {
@@ -52,6 +54,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
     };
   };
 
+  // Initialize doctor names mapping
   useEffect(() => {
     attendingPhy.forEach((doctor) => {
       if (!doctorNamesRef.current.has(doctor.value)) {
@@ -60,11 +63,37 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
     });
   }, [attendingPhy]);
 
+  // Initialize component state when doctor shares data is available
+  useEffect(() => {
+    if (!isInitialized && doctorShares && doctorShares.length > 0) {
+      console.log("Initializing doctor shares component with data:", doctorShares);
+
+      // Ensure all existing doctor shares have proper originalCompositeId
+      doctorShares.forEach((share: any, index: number) => {
+        if (!share.originalCompositeId) {
+          // Try to find the matching doctor in attendingPhy
+          const matchingDoctor = attendingPhy.find((doc) => {
+            const parsed = parseCompositeId(doc.value);
+            return parsed.conID === share.conID;
+          });
+
+          if (matchingDoctor) {
+            share.originalCompositeId = matchingDoctor.value;
+            doctorNamesRef.current.set(matchingDoctor.value, extractDoctorName(matchingDoctor.label));
+          }
+        }
+      });
+
+      setIsInitialized(true);
+    }
+  }, [doctorShares, attendingPhy, isInitialized]);
+
   const getDoctorName = useCallback(
     (conID: number, originalCompositeId?: string): string => {
       if (originalCompositeId && doctorNamesRef.current.has(originalCompositeId)) {
         return doctorNamesRef.current.get(originalCompositeId) || "Doctor undefined";
       }
+
       const doctor = attendingPhy.find((doc) => {
         const parsed = parseCompositeId(doc.value);
         return parsed.conID === conID;
@@ -107,6 +136,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
       if (doctor) {
         const parsed = parseCompositeId(doctorCompositeId);
         doctorNamesRef.current.set(doctorCompositeId, extractDoctorName(doctor.label));
+
         const newShare = {
           docShareID: 0,
           chargeID: 0,
@@ -118,8 +148,11 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
           rNotes: "",
           originalCompositeId: doctorCompositeId,
         };
+
+        console.log("Adding new doctor share:", newShare);
         append(newShare);
         setSelectedDoctor("");
+
         if (!expanded) {
           onToggleExpand();
         }
@@ -128,6 +161,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
   };
 
   const handleRemoveDoctor = (index: number) => {
+    console.log("Removing doctor share at index:", index);
     remove(index);
   };
 
