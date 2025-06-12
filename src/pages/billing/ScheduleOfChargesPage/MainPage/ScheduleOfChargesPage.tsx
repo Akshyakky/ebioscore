@@ -1,4 +1,3 @@
-// src/pages/billing/ScheduleOfChargesPage/MainPage/ScheduleOfChargesPage.tsx
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
@@ -42,7 +41,6 @@ const ScheduleOfChargesPage: React.FC = () => {
   const [isChargeFormOpen, setIsChargeFormOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const { showAlert } = useAlert();
-  // --- CHANGE 1: Destructure getChargeById from the hook ---
   const { charges, loading, refreshCharges, saveCharge, generateChargeCode, deleteCharge, getChargeById } = useScheduleOfCharges();
   const { serviceType = [] } = useDropdownValues(["serviceType", "serviceGroup", "pic"]);
 
@@ -123,14 +121,14 @@ const ScheduleOfChargesPage: React.FC = () => {
     setIsChargeFormOpen(true);
   }, []);
 
-  // --- CHANGE 2: Convert handleEditCharge to an async function to fetch full details ---
   const handleEditCharge = useCallback(
     async (charge: ChargeWithAllDetailsDto) => {
-      // Use the base DTO type
       try {
-        debugger;
         const fullChargeDetails = await getChargeById(charge.chargeID);
         if (fullChargeDetails) {
+          if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
+            fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
+          }
           setSelectedCharge(fullChargeDetails);
           setIsChargeFormOpen(true);
         } else {
@@ -186,14 +184,9 @@ const ScheduleOfChargesPage: React.FC = () => {
       try {
         await saveCharge(chargeData);
         setIsChargeFormOpen(false);
-        // The success alert is now handled inside the hook, so we can remove it here to avoid duplication.
         setSelectedCharge(null);
         await refreshCharges();
-      } catch (error) {
-        // The error alert is also handled inside the hook.
-        // We only need to catch the error to prevent the app from crashing.
-        console.error("Failed to submit charge:", error);
-      }
+      } catch (error) {}
     },
     [saveCharge, refreshCharges]
   );
@@ -203,9 +196,7 @@ const ScheduleOfChargesPage: React.FC = () => {
       try {
         await deleteCharge(chargeId);
         await refreshCharges();
-      } catch (error) {
-        console.error("Failed to delete charge:", error);
-      }
+      } catch (error) {}
     },
     [deleteCharge, refreshCharges]
   );
@@ -356,7 +347,6 @@ const ScheduleOfChargesPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* ... The rest of the JSX is unchanged ... */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
           Schedule of Charges

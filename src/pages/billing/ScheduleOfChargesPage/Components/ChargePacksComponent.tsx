@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Typography, Grid, Paper, Accordion, AccordionSummary, AccordionDetails, Chip, IconButton, Alert, Stack, Button, Tooltip } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon, Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, CalendarMonth as CalendarIcon } from "@mui/icons-material";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { useFieldArray, Control, useWatch } from "react-hook-form";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { BChargePackDto } from "@/interfaces/Billing/ChargeDto";
+import { Add as AddIcon, CalendarMonth as CalendarIcon, Delete as DeleteIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Chip, Grid, IconButton, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import dayjs from "dayjs";
+import React, { useEffect, useMemo, useState } from "react";
+import { Control, useFieldArray, useWatch } from "react-hook-form";
 
 interface ChargePacksComponentProps {
   control: Control<any>;
@@ -82,11 +82,9 @@ const ChargePacksComponent: React.FC<ChargePacksComponentProps> = ({ control, ex
   };
 
   const savePack = () => {
-    // Calculate total charge value
     const dcValue = Number(formData.dcValue) || 0;
     const hcValue = Number(formData.hcValue) || 0;
     const totalCharge = dcValue + hcValue;
-
     const updatedData = {
       ...formData,
       dcValue,
@@ -95,10 +93,8 @@ const ChargePacksComponent: React.FC<ChargePacksComponentProps> = ({ control, ex
     };
 
     if (editMode === -1) {
-      // Adding new pack
       packsArray.append(updatedData);
     } else if (editMode !== null) {
-      // Updating existing pack
       packsArray.update(editMode, updatedData);
     }
 
