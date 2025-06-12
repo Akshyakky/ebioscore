@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
-import { Save as SaveIcon, Cancel as CancelIcon, Refresh as RefreshIcon } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
-import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
-import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useLoading } from "@/hooks/Common/useLoading";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel as CancelIcon, Refresh as RefreshIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
 
 interface ProductFormProps {
   open: boolean;
@@ -446,7 +446,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select a category"
-                      options={productCategory}
+                      options={productCategory || []}
                       size="small"
                       clearable={true}
                     />
@@ -461,7 +461,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select a product group"
-                      options={productGroup}
+                      options={productGroup || []}
                       size="small"
                     />
                   </Grid>
@@ -474,7 +474,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select a sub group"
-                      options={productSubGroup}
+                      options={productSubGroup || []}
                       size="small"
                     />
                   </Grid>
@@ -487,7 +487,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select a manufacturer"
-                      options={manufacturer}
+                      options={manufacturer || []}
                       size="small"
                       clearable={true}
                     />
@@ -549,7 +549,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                           required={taxable === "Y"}
                           disabled={viewOnly}
                           placeholder="Select Tax Type"
-                          options={taxType}
+                          options={taxType || []}
                           size="small"
                         />
                       </Grid>
@@ -626,7 +626,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select issue unit"
-                      options={productUnit}
+                      options={productUnit || []}
                       size="small"
                     />
                   </Grid>
@@ -643,7 +643,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select base unit"
-                      options={productBaseUnit}
+                      options={productBaseUnit || []}
                       size="small"
                     />
                   </Grid>
@@ -668,7 +668,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select location"
-                      options={productLocation}
+                      options={productLocation || []}
                       size="small"
                     />
                   </Grid>

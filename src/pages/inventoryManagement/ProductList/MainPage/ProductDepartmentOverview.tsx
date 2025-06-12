@@ -1,48 +1,25 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  Divider,
-  TextField,
-  IconButton,
-  Tooltip,
-  Stack,
-  Chip,
-  Alert,
-  FormControlLabel,
-  Checkbox,
-  Button,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-} from "@mui/material";
-import {
-  Edit as EditIcon,
-  ContentCopy as CopyIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  ArrowDropDown as ArrowDropDownIcon,
-  SelectAll as SelectAllIcon,
-  FileDownload as ImportIcon,
-  Send as ApplyIcon,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import ProductOverviewForm from "../../ProductOverview/Form/ProductOverviewForm";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useLoading } from "@/hooks/Common/useLoading";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { useAlert } from "@/providers/AlertProvider";
-import { useLoading } from "@/hooks/Common/useLoading";
 import { productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
+import {
+  Send as ApplyIcon,
+  ArrowDropDown as ArrowDropDownIcon,
+  ContentCopy as CopyIcon,
+  Edit as EditIcon,
+  FileDownload as ImportIcon,
+  SelectAll as SelectAllIcon,
+} from "@mui/icons-material";
+import { Alert, Box, Button, Checkbox, Chip, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Stack, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import ProductOverviewForm from "../../ProductOverview/Form/ProductOverviewForm";
 
 interface ProductDepartmentOverviewProps {
   open: boolean;

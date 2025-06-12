@@ -1,10 +1,10 @@
 // Updated ProductSearchForm.tsx - Enhanced version with better clear mechanism
 
-import React, { useEffect, useImperativeHandle, forwardRef } from "react";
-import { TextField, Autocomplete, Box, CircularProgress, Typography } from "@mui/material";
-import { ProductSearchProps } from "./ProductSearchProps";
-import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import { useProductSearch } from "@/hooks/InventoryManagement/Product/useProductSearch";
+import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
+import { Autocomplete, Box, CircularProgress, TextField, Typography } from "@mui/material";
+import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { ProductSearchProps } from "./ProductSearchProps";
 
 export interface ProductSearchRef {
   clearSelection: () => void;
@@ -20,7 +20,7 @@ export const ProductSearch = forwardRef<ProductSearchRef, ProductSearchProps>(
       placeholder = "Enter product name or code",
       disabled = false,
       initialSelection = null,
-      className,
+      className = "",
       setInputValue,
       setSelectedProduct,
     },
@@ -30,7 +30,7 @@ export const ProductSearch = forwardRef<ProductSearchRef, ProductSearchProps>(
       inputValue,
       setInputValue: hookSetInputValue,
       options,
-      loading,
+      isLoading,
       selectedProduct,
       setSelectedProduct: hookSetSelectedProduct,
       clearSearch,
@@ -62,8 +62,8 @@ export const ProductSearch = forwardRef<ProductSearchRef, ProductSearchProps>(
       if (product) {
         onProductSelect({
           productID: product.productID,
-          productCode: product.productCode,
-          productName: product.productName,
+          productCode: product.productCode || "",
+          productName: product.productName || "",
           catValue: product.productCategory || "",
           prescription: "",
           expiry: "",
@@ -87,7 +87,7 @@ export const ProductSearch = forwardRef<ProductSearchRef, ProductSearchProps>(
       <Autocomplete
         id="product-search-autocomplete"
         options={options}
-        loading={loading}
+        loading={isLoading}
         value={selectedProduct}
         inputValue={inputValue}
         onChange={(_, newValue) => handleProductSelect(newValue)}
@@ -97,18 +97,23 @@ export const ProductSearch = forwardRef<ProductSearchRef, ProductSearchProps>(
         renderInput={(params) => (
           <TextField
             {...params}
-            label={label}
-            variant="outlined"
-            placeholder={placeholder}
+            inputProps={params.inputProps}
             InputProps={{
               ...params.InputProps,
               endAdornment: (
                 <>
-                  {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                  {isLoading ? <CircularProgress color="inherit" size={20} /> : null}
                   {params.InputProps.endAdornment}
                 </>
               ),
             }}
+            InputLabelProps={{
+              className: params.InputLabelProps?.className || "",
+            }}
+            label={label}
+            variant="outlined"
+            size="small"
+            placeholder={placeholder}
             disabled={disabled}
           />
         )}

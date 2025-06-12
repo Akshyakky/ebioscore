@@ -1,29 +1,29 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  LocalOffer as TaxIcon,
-  CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon,
-  Percent as RateIcon,
-  TrendingUp as HighIcon,
-  TrendingDown as LowIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
-import ProductTaxListForm from "../Form/ProductTaxListForm";
-import { useProductTaxList } from "../hooks/useProductTaxListPage";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
+import {
+  CheckCircle as ActiveIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  TrendingUp as HighIcon,
+  Cancel as InactiveIcon,
+  TrendingDown as LowIcon,
+  Percent as RateIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  LocalOffer as TaxIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import ProductTaxListForm from "../Form/ProductTaxListForm";
+import { useProductTaxList } from "../hooks/useProductTaxListPage";
 
 const statusOptions = [
   { value: "active", label: "Active" },

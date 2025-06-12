@@ -45,7 +45,7 @@ export interface ProductSearchProps {
   /**
    * Additional CSS class names
    */
-  className?: string;
+  className: string;
 
   setInputValue?: (value: string) => void; // To clear the input value
 

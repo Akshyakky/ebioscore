@@ -1,33 +1,33 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  Dashboard as DashboardIcon,
-  ChangeCircleRounded as ChangeDepartmentIcon,
-  Inventory as ProductIcon,
-  CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon,
-  Warning as LowStockIcon,
-  Dangerous as DangerIcon,
-  AutoMode as AutoIndentIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
-import ProductOverviewForm from "../Form/ProductOverviewForm";
+import {
+  CheckCircle as ActiveIcon,
+  Add as AddIcon,
+  AutoMode as AutoIndentIcon,
+  ChangeCircleRounded as ChangeDepartmentIcon,
+  Close as CloseIcon,
+  Dangerous as DangerIcon,
+  Dashboard as DashboardIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Cancel as InactiveIcon,
+  Warning as LowStockIcon,
+  Inventory as ProductIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
+import ProductOverviewForm from "../Form/ProductOverviewForm";
 import { useProductOverview } from "../hooks/useProductOverview";
-import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 
 const statusOptions = [
   { value: "active", label: "Active" },
