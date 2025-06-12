@@ -1,11 +1,11 @@
-import React, { useCallback, useState, useEffect } from "react";
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, FormHelperText } from "@mui/material";
-import { ThumbUp } from "@mui/icons-material";
-import Close from "@mui/icons-material/Close";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useAlert } from "@/providers/AlertProvider";
+import { ThumbUp } from "@mui/icons-material";
+import Close from "@mui/icons-material/Close";
+import { Box, FormControl, FormHelperText, InputLabel, MenuItem, Select, SelectChangeEvent, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface DepartmentSelectionDialogProps {
@@ -38,7 +38,7 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
   }, [initialDeptId, open]);
 
   const handleDropdownChange = useCallback(
-    (event: SelectChangeEvent<unknown>) => {
+    (event: SelectChangeEvent<number>) => {
       const deptId = Number(event.target.value);
       setSelectedDeptId(deptId);
       setHasError(false);
@@ -78,7 +78,13 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
 
       <FormControl fullWidth variant="outlined" size="small" error={hasError} required sx={{ mt: 2 }}>
         <InputLabel id="department-select-label">Department</InputLabel>
-        <Select labelId="department-select-label" id="department-select" value={selectedDeptId === 0 ? "" : selectedDeptId} onChange={handleDropdownChange} label="Department">
+        <Select
+          labelId="department-select-label"
+          id="department-select"
+          value={selectedDeptId === 0 ? "" : selectedDeptId}
+          onChange={(event: SelectChangeEvent<number>) => handleDropdownChange(event)}
+          label="Department"
+        >
           <MenuItem value="">
             <em>Select a department</em>
           </MenuItem>
