@@ -2,7 +2,7 @@ import { AlertProvider } from "@/providers/AlertProvider";
 import React, { lazy, Suspense } from "react";
 
 //const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
-//const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
+const LogViewerPage = lazy(() => import("@/pages/common/LogViewerPage/LogViewerPage"));
 //const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 //const ComponentEntryTypePage = lazy(() => import("@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage"));
 
@@ -500,16 +500,16 @@ const routeConfig: RouteConfig[] = [
       category: "inventory",
     },
   },
-  // {
-  //   path: "/LogModulePage",
-  //   component: wrapWithSuspense(LogModule),
-  //   protected: true,
-  //   providers: [AlertProvider],
-  //   metadata: {
-  //     title: "Log Module",
-  //     category: "admin",
-  //   },
-  // },
+  {
+    path: "/LogModulePage",
+    component: wrapWithSuspense(LogViewerPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Log Module",
+      category: "admin",
+    },
+  },
   {
     path: "/ProductTransaction",
     component: wrapWithSuspense(ProductTransaction),
