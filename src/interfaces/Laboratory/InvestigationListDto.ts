@@ -55,6 +55,7 @@ export interface LComponentDto extends BaseDto {
   rNotes?: string;
   lCompMultipleDto?: LCompMultipleDto[];
   lCompNormalDto?: LCompNormalDto[];
+  lCompTemplateDto?: LCompTemplateDto;
 }
 
 export interface LComponentEntryTypeDto extends BaseDto {
@@ -115,7 +116,7 @@ export interface LCompTemplateDto extends BaseDto {
   tGroupName?: string;
   cTText?: string;
   isBlankYN?: string;
-  compOID?: number;
+  compoID?: number;
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;
