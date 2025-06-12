@@ -143,7 +143,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       return [];
     }
 
-    // --- FIX IS HERE: Explicitly type the constant ---
     const filteredByPIC: PricingGridItem[] =
       picFilters.length > 0
         ? picFilters.map((picId) => {
@@ -152,20 +151,18 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
               return { ...existingItem };
             } else {
               const picInfo = pic.find((p) => p.value === picId);
-              // Now TypeScript knows this object must be a PricingGridItem
               return {
                 id: `pic-${picId}`,
                 picId: parseInt(picId),
                 picName: picInfo?.label || `PIC ${picId}`,
                 selected: false,
-                wardCategories: {}, // This is valid, as an empty object is assignable to the index signature type
+                wardCategories: {},
               };
             }
           })
         : gridData.length > 0
         ? [...gridData]
         : pic.map((picOption) => ({
-            // This also must conform to PricingGridItem
             id: `pic-${picOption.value}`,
             picId: parseInt(picOption.value),
             picName: picOption.label,
@@ -173,12 +170,9 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
             wardCategories: {},
           }));
 
-    // Ensure all filtered ward categories are included
     return filteredByPIC.map((item) => {
-      // The type of 'item' is now correctly inferred as PricingGridItem
       const updatedItem = { ...item, wardCategories: { ...item.wardCategories } };
       getFilteredWardCategories.forEach((category) => {
-        // --- THIS CODE NOW WORKS ---
         if (!updatedItem.wardCategories[category.name]) {
           updatedItem.wardCategories[category.name] = {
             DcValue: 0,
@@ -193,14 +187,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
   const isApplyReady = useMemo(() => {
     const numericAmount = parseFloat(amountValue);
-
-    return (
-      // Valid number greater than zero
-      !isNaN(numericAmount) &&
-      numericAmount > 0 &&
-      // Valid price change type (not "None")
-      (priceChangeType === "Increase" || priceChangeType === "Decrease")
-    );
+    return !isNaN(numericAmount) && numericAmount > 0 && (priceChangeType === "Increase" || priceChangeType === "Decrease");
   }, [amountValue, priceChangeType]);
 
   const applyChanges = () => {
@@ -323,15 +310,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                     wardCategories: {
                       ...item.wardCategories,
                       [category.name]: {
-                        // --- FIX STARTS HERE ---
-                        DcValue: numValue, // The new value being set
-                        hcValue: item.wardCategories[category.name]?.hcValue || 0, // Get existing or default to 0
-                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0), // Recalculate total
-                        // --- FIX ENDS HERE ---
+                        DcValue: numValue,
+                        hcValue: item.wardCategories[category.name]?.hcValue || 0,
+                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0),
                       },
                     },
                   };
-                  // This will now pass the type check
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
@@ -363,15 +347,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                     wardCategories: {
                       ...item.wardCategories,
                       [category.name]: {
-                        // --- FIX STARTS HERE ---
-                        DcValue: item.wardCategories[category.name]?.DcValue || 0, // Get existing or default to 0
-                        hcValue: numValue, // The new value being set
-                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue, // Recalculate total
-                        // --- FIX ENDS HERE ---
+                        DcValue: item.wardCategories[category.name]?.DcValue || 0,
+                        hcValue: numValue,
+                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue,
                       },
                     },
                   };
-                  // This will now pass the type check
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
@@ -392,7 +373,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           const totalAmount = (item.wardCategories[category.name]?.DcValue || 0) + (item.wardCategories[category.name]?.hcValue || 0);
           return (
             <TextField
-              value={totalAmount.toFixed(2)} // Use toFixed(2) for better display
+              value={totalAmount.toFixed(2)}
               disabled
               size="small"
               fullWidth
@@ -408,7 +389,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     });
 
     return columns;
-  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection]); // Removed updateChargeDetailsFromGrid as it's not used here
+  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection]);
   const handlePriceChangeTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
     if (newValue) {
       setPriceChangeType(newValue);

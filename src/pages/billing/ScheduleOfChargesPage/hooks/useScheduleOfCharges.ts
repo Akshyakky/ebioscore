@@ -158,7 +158,6 @@ export const useScheduleOfCharges = (): UseScheduleOfChargesReturn => {
   const getChargeById = useCallback(
     async (chargeId: number): Promise<ChargeWithAllDetailsDto | null> => {
       try {
-        debugger;
         updateState({ loading: true, error: null });
         if (chargeId <= 0) {
           throw new Error("Invalid charge ID");
