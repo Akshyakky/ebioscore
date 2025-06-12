@@ -10,9 +10,9 @@ export enum DateFilterType {
 
 export interface FilterDto {
   dateFilter: DateFilterType;
-  startDate: Date;
-  endDate: Date;
-  statusFilter: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  statusFilter: string | null;
   pageIndex: number;
   pageSize: number;
 }
