@@ -79,8 +79,6 @@ export interface LCompMultipleDto extends BaseDto {
 }
 export interface LCompAgeRangeDto extends BaseDto {
   carID: number;
-  cappID?: number;
-  compoID?: number;
   carName?: string;
   carSex?: string;
   carStart: number;

@@ -123,8 +123,8 @@ const MultipleSelectionEntryType: React.FC<MultipleSelectionFormProps> = ({ invI
               label="Default Value"
               name="defaultYN"
               control={multipleControl}
-              onChange={(value: string) => {
-                setValue("defaultYN", value ? "Y" : "N");
+              onChange={(value: boolean) => {
+                setValue("defaultYN", value ? "Y" : "N", { shouldValidate: true });
               }}
             />
           </Grid>
