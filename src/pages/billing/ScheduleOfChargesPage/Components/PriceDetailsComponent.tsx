@@ -1,36 +1,36 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  Grid,
-  Button,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  Tooltip,
-  Paper,
-  TextField,
-  Alert,
-  Snackbar,
-  ToggleButtonGroup,
-  ToggleButton,
-  InputAdornment,
-  Divider,
-} from "@mui/material";
-import {
-  ExpandMore as ExpandMoreIcon,
-  Visibility as VisibilityIcon,
-  Check as CheckIcon,
-  FilterList as FilterIcon,
-  PercentOutlined as PercentIcon,
-  AttachMoney as MoneyIcon,
-  Add as AddIcon,
-  Remove as RemoveIcon,
-} from "@mui/icons-material";
-import { useFieldArray, Control } from "react-hook-form";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import {
+  Add as AddIcon,
+  Check as CheckIcon,
+  ExpandMore as ExpandMoreIcon,
+  FilterList as FilterIcon,
+  AttachMoney as MoneyIcon,
+  PercentOutlined as PercentIcon,
+  Remove as RemoveIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Divider,
+  Grid,
+  InputAdornment,
+  Paper,
+  Snackbar,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import { Control, useFieldArray } from "react-hook-form";
 
 interface PricingGridItem {
   id: string;
@@ -143,8 +143,8 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       return [];
     }
 
-    // If filters are applied, use them, otherwise use all data
-    const filteredByPIC =
+    // --- FIX IS HERE: Explicitly type the constant ---
+    const filteredByPIC: PricingGridItem[] =
       picFilters.length > 0
         ? picFilters.map((picId) => {
             const existingItem = gridData.find((item) => item.picId.toString() === picId);
@@ -152,18 +152,20 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
               return { ...existingItem };
             } else {
               const picInfo = pic.find((p) => p.value === picId);
+              // Now TypeScript knows this object must be a PricingGridItem
               return {
                 id: `pic-${picId}`,
                 picId: parseInt(picId),
                 picName: picInfo?.label || `PIC ${picId}`,
                 selected: false,
-                wardCategories: {},
+                wardCategories: {}, // This is valid, as an empty object is assignable to the index signature type
               };
             }
           })
         : gridData.length > 0
         ? [...gridData]
         : pic.map((picOption) => ({
+            // This also must conform to PricingGridItem
             id: `pic-${picOption.value}`,
             picId: parseInt(picOption.value),
             picName: picOption.label,
@@ -173,8 +175,10 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
     // Ensure all filtered ward categories are included
     return filteredByPIC.map((item) => {
+      // The type of 'item' is now correctly inferred as PricingGridItem
       const updatedItem = { ...item, wardCategories: { ...item.wardCategories } };
       getFilteredWardCategories.forEach((category) => {
+        // --- THIS CODE NOW WORKS ---
         if (!updatedItem.wardCategories[category.name]) {
           updatedItem.wardCategories[category.name] = {
             DcValue: 0,
@@ -319,12 +323,15 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                     wardCategories: {
                       ...item.wardCategories,
                       [category.name]: {
-                        ...item.wardCategories[category.name],
-                        DcValue: numValue,
-                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0),
+                        // --- FIX STARTS HERE ---
+                        DcValue: numValue, // The new value being set
+                        hcValue: item.wardCategories[category.name]?.hcValue || 0, // Get existing or default to 0
+                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0), // Recalculate total
+                        // --- FIX ENDS HERE ---
                       },
                     },
                   };
+                  // This will now pass the type check
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
@@ -356,12 +363,15 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                     wardCategories: {
                       ...item.wardCategories,
                       [category.name]: {
-                        ...item.wardCategories[category.name],
-                        hcValue: numValue,
-                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue,
+                        // --- FIX STARTS HERE ---
+                        DcValue: item.wardCategories[category.name]?.DcValue || 0, // Get existing or default to 0
+                        hcValue: numValue, // The new value being set
+                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue, // Recalculate total
+                        // --- FIX ENDS HERE ---
                       },
                     },
                   };
+                  // This will now pass the type check
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
@@ -382,7 +392,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           const totalAmount = (item.wardCategories[category.name]?.DcValue || 0) + (item.wardCategories[category.name]?.hcValue || 0);
           return (
             <TextField
-              value={totalAmount}
+              value={totalAmount.toFixed(2)} // Use toFixed(2) for better display
               disabled
               size="small"
               fullWidth
@@ -398,8 +408,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     });
 
     return columns;
-  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection, updateChargeDetailsFromGrid]);
-
+  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection]); // Removed updateChargeDetailsFromGrid as it's not used here
   const handlePriceChangeTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
     if (newValue) {
       setPriceChangeType(newValue);

@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Chip, Stack, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { useFieldArray, Control, useWatch } from "react-hook-form";
 import { BChargeAliasDto } from "@/interfaces/Billing/ChargeDto";
+import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Stack, TextField, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Control, useFieldArray } from "react-hook-form";
 
 interface ChargeAliasesComponentProps {
   control: Control<any>;
   pic: { value: string; label: string }[];
   expanded: boolean;
   onToggleExpand: () => void;
+  chargeAliases: BChargeAliasDto[];
   onUpdateFunction?: (updateFn: () => void) => void;
 }
 
@@ -22,24 +22,30 @@ interface AliasGridRow {
   hasAlias: boolean;
 }
 
-const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control, pic, expanded, onToggleExpand, onUpdateFunction }) => {
+const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control, pic, expanded, onToggleExpand, chargeAliases, onUpdateFunction }) => {
   const [aliasGridData, setAliasGridData] = useState<AliasGridRow[]>([]);
+  const isInitializedRef = useRef(false);
+  const previousChargeAliasesRef = useRef<BChargeAliasDto[]>([]);
   const aliasesArray = useFieldArray({
     control,
     name: "ChargeAliases",
   });
 
-  const watchedAliases =
-    useWatch({
-      control,
-      name: "ChargeAliases",
-    }) || [];
+  const hasChargeAliasesChanged = useMemo(() => {
+    if (previousChargeAliasesRef.current.length !== chargeAliases.length) {
+      return true;
+    }
+    return chargeAliases.some((alias, index) => {
+      const prevAlias = previousChargeAliasesRef.current[index];
+      return !prevAlias || alias.pTypeID !== prevAlias.pTypeID || alias.chargeDesc !== prevAlias.chargeDesc;
+    });
+  }, [chargeAliases]);
 
   const initializeAliasGridData = useCallback(() => {
     if (!pic || pic.length === 0) return;
     const gridRows: AliasGridRow[] = pic.map((picOption) => {
       const pTypeID = Number(picOption.value);
-      const existingAlias = watchedAliases.find((alias: BChargeAliasDto) => Number(alias.pTypeID) === pTypeID);
+      const existingAlias = chargeAliases.find((alias: BChargeAliasDto) => Number(alias.pTypeID) === pTypeID);
       return {
         id: `pic-${pTypeID}`,
         pTypeID: pTypeID,
@@ -49,77 +55,57 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
       };
     });
     setAliasGridData(gridRows);
-  }, [pic, watchedAliases]);
+    previousChargeAliasesRef.current = [...chargeAliases];
+    isInitializedRef.current = true;
+  }, [pic, chargeAliases]);
+
+  useEffect(() => {
+    if (!isInitializedRef.current || hasChargeAliasesChanged) {
+      initializeAliasGridData();
+    }
+  }, [initializeAliasGridData, hasChargeAliasesChanged]);
 
   const updateChargeAliasesFromGrid = useCallback(() => {
     const chargeAliasesArray: BChargeAliasDto[] = [];
     for (const row of aliasGridData) {
-      const hasContent = Boolean(row.chargeDesc);
+      const hasContent = Boolean(row.chargeDesc && row.chargeDesc.trim());
       if (hasContent) {
+        const existingAlias = chargeAliases.find((alias: BChargeAliasDto) => Number(alias.pTypeID) === row.pTypeID);
         chargeAliasesArray.push({
-          chAliasID: 0,
-          chargeID: 0,
+          chAliasID: existingAlias?.chAliasID || existingAlias?.chaliasID || 0,
+          chargeID: existingAlias?.chargeID || 0,
           pTypeID: row.pTypeID,
           chargeDesc: row.chargeDesc,
           chargeDescLang: row.chargeDesc,
-          rActiveYN: "Y",
-          rTransferYN: "N",
-          rNotes: "",
+          rActiveYN: existingAlias?.rActiveYN || "Y",
+          rTransferYN: existingAlias?.rTransferYN || existingAlias?.transferYN || "N",
+          rNotes: existingAlias?.rNotes || "",
         });
       }
     }
     aliasesArray.replace(chargeAliasesArray);
-  }, [aliasGridData, aliasesArray]);
+  }, [aliasGridData, aliasesArray, chargeAliases]);
 
   const handleFieldChange = useCallback(
-    (rowIndex: number, valueOrEvent: any) => {
-      let actualValue = "";
-      if (typeof valueOrEvent === "string") {
-        actualValue = valueOrEvent;
-      } else if (valueOrEvent && valueOrEvent.target && typeof valueOrEvent.target.value === "string") {
-        actualValue = valueOrEvent.target.value;
-      } else if (valueOrEvent && typeof valueOrEvent.value === "string") {
-        actualValue = valueOrEvent.value;
-      }
+    (rowIndex: number, newValue: string) => {
       setAliasGridData((prevData) => {
         const updatedGridData = [...prevData];
         const row = updatedGridData[rowIndex];
         if (!row) return prevData;
-        const updatedRow = {
+        if (row.chargeDesc === newValue) return prevData;
+        updatedGridData[rowIndex] = {
           ...row,
-          chargeDesc: actualValue,
-          hasAlias: Boolean(actualValue),
+          chargeDesc: newValue,
+          hasAlias: Boolean(newValue && newValue.trim()),
         };
-        updatedGridData[rowIndex] = updatedRow;
-        const chargeAliasesArray: BChargeAliasDto[] = [];
-        for (const gridRow of updatedGridData) {
-          const hasContent = Boolean(gridRow.chargeDesc);
-          if (hasContent) {
-            chargeAliasesArray.push({
-              chAliasID: 0,
-              chargeID: 0,
-              pTypeID: gridRow.pTypeID,
-              chargeDesc: gridRow.chargeDesc,
-              chargeDescLang: gridRow.chargeDesc,
-              rActiveYN: "Y",
-              rTransferYN: "N",
-              rNotes: "",
-            });
-          }
-        }
-        aliasesArray.replace(chargeAliasesArray);
         return updatedGridData;
       });
     },
-    [aliasesArray]
+    [aliasesArray, chargeAliases]
   );
 
   useEffect(() => {
-    initializeAliasGridData();
-  }, [initializeAliasGridData]);
-
-  useEffect(() => {
-    if (onUpdateFunction) {
+    if (onUpdateFunction && isInitializedRef.current) {
       onUpdateFunction(updateChargeAliasesFromGrid);
     }
   }, [updateChargeAliasesFromGrid, onUpdateFunction]);
@@ -160,24 +146,30 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         align: "left",
         render: (item, rowIndex) => (
           <Box sx={{ py: 1 }}>
-            <EnhancedFormField
-              name={`alias_chargeDesc_${item.pTypeID}`}
-              control={control}
-              type="text"
-              label=""
+            <TextField
               size="small"
               variant="standard"
               fullWidth
               placeholder="Enter alias name (max 250 characters)"
-              helperText=""
-              defaultValue={item.chargeDesc}
-              onChange={(value) => handleFieldChange(rowIndex, value)}
+              value={item.chargeDesc}
+              onChange={(e) => handleFieldChange(rowIndex, e.target.value)}
+              sx={{
+                "& .MuiInput-underline:before": {
+                  borderBottomColor: "transparent",
+                },
+                "& .MuiInput-underline:hover:before": {
+                  borderBottomColor: "primary.main",
+                },
+                "& .MuiInput-underline:after": {
+                  borderBottomColor: "primary.main",
+                },
+              }}
             />
           </Box>
         ),
       },
     ],
-    [control, handleFieldChange]
+    [handleFieldChange]
   );
 
   return (
@@ -209,17 +201,6 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
               },
               "& .MuiTableCell-body": {
                 padding: "8px 12px",
-              },
-              "& .MuiTextField-root": {
-                "& .MuiInput-underline:before": {
-                  borderBottomColor: "transparent",
-                },
-                "& .MuiInput-underline:hover:before": {
-                  borderBottomColor: "primary.main",
-                },
-                "& .MuiInput-underline:after": {
-                  borderBottomColor: "primary.main",
-                },
               },
             }}
           >

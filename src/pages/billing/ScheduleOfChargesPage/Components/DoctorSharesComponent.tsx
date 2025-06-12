@@ -26,6 +26,7 @@ interface DoctorSharesComponentProps {
 
 const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, expanded, onToggleExpand, attendingPhy, doctorShareEnabled }) => {
   const [selectedDoctor, setSelectedDoctor] = useState<string>("");
+  const [isInitialized, setIsInitialized] = useState(false);
   const doctorNamesRef = useRef<Map<string, string>>(new Map());
   const fieldRefsRef = useRef<Map<string, any>>(new Map());
 
@@ -37,6 +38,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
   const doctorShares = useWatch({
     control,
     name: "DoctorShares",
+    defaultValue: [],
   });
 
   const extractDoctorName = (label: string): string => {
@@ -60,6 +62,24 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
     });
   }, [attendingPhy]);
 
+  useEffect(() => {
+    if (!isInitialized && doctorShares && doctorShares.length > 0) {
+      doctorShares.forEach((share: any) => {
+        if (!share.originalCompositeId) {
+          const matchingDoctor = attendingPhy.find((doc) => {
+            const parsed = parseCompositeId(doc.value);
+            return parsed.conID === share.conID;
+          });
+          if (matchingDoctor) {
+            share.originalCompositeId = matchingDoctor.value;
+            doctorNamesRef.current.set(matchingDoctor.value, extractDoctorName(matchingDoctor.label));
+          }
+        }
+      });
+      setIsInitialized(true);
+    }
+  }, [doctorShares, attendingPhy, isInitialized]);
+
   const getDoctorName = useCallback(
     (conID: number, originalCompositeId?: string): string => {
       if (originalCompositeId && doctorNamesRef.current.has(originalCompositeId)) {
@@ -69,7 +89,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
         const parsed = parseCompositeId(doc.value);
         return parsed.conID === conID;
       });
-
       if (doctor) {
         const name = extractDoctorName(doctor.label);
         doctorNamesRef.current.set(doctor.value, name);
@@ -82,7 +101,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
 
   const gridData = useMemo(() => {
     if (!doctorShares) return [];
-
     return doctorShares.map((share: any, index: number) => {
       return {
         ...share,
@@ -120,6 +138,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
         };
         append(newShare);
         setSelectedDoctor("");
+
         if (!expanded) {
           onToggleExpand();
         }

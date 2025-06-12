@@ -402,14 +402,14 @@ const InvestigationListPage: React.FC = () => {
   }, []);
 
   if (error) {
-    // return (
-    //   <Box sx={{ p: 2 }}>
-    //     <Typography color="error" variant="h6">
-    //       Error loading investigations: {error}
-    //     </Typography>
-    //     <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
-    //   </Box>
-    // );
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error" variant="h6">
+          Error loading investigations: {error}
+        </Typography>
+        <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
+      </Box>
+    );
   }
 
   return (

@@ -1,28 +1,27 @@
-// src/pages/billing/ScheduleOfChargesPage/MainPage/ScheduleOfChargesPage.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, TextField, MenuItem } from "@mui/material";
-import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  ContentCopy as CopyIcon,
-  LocalHospital as ChargeIcon,
-  AccountBalance as PaymentIcon,
-  Group as DoctorIcon,
-  Category as CategoryIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { useAlert } from "@/providers/AlertProvider";
-import { BChargeDto, ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
+import { useAlert } from "@/providers/AlertProvider";
 import { formatCurrency } from "@/utils/Common/formatUtils";
-import useScheduleOfCharges from "../hooks/useScheduleOfCharges";
-import ChargeFormDialog from "../Components/ChargeFormDialog";
+import {
+  Add as AddIcon,
+  Category as CategoryIcon,
+  LocalHospital as ChargeIcon,
+  ContentCopy as CopyIcon,
+  Group as DoctorIcon,
+  Edit as EditIcon,
+  AccountBalance as PaymentIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as ViewIcon,
+} from "@mui/icons-material";
+import { Box, Card, CardContent, Chip, Grid, IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ChargeDetailsDialog from "../Components/ChargeDetailsDialog";
+import ChargeFormDialog from "../Components/ChargeFormDialog";
+import useScheduleOfCharges from "../hooks/useScheduleOfCharges";
 
 interface EnhancedChargeDto extends ChargeWithAllDetailsDto {
   lowestPrice?: number;
@@ -36,14 +35,14 @@ interface EnhancedChargeDto extends ChargeWithAllDetailsDto {
 
 const ScheduleOfChargesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCharge, setSelectedCharge] = useState<EnhancedChargeDto | null>(null);
+  const [selectedCharge, setSelectedCharge] = useState<ChargeWithAllDetailsDto | null>(null); // Use base DTO
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isChargeFormOpen, setIsChargeFormOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const { showAlert } = useAlert();
-  const { charges, loading, refreshCharges, saveCharge, generateChargeCode, deleteCharge } = useScheduleOfCharges();
-  const { serviceType = [], serviceGroup = [], pic = [] } = useDropdownValues(["serviceType", "serviceGroup", "pic"]);
+  const { charges, loading, refreshCharges, saveCharge, generateChargeCode, deleteCharge, getChargeById } = useScheduleOfCharges();
+  const { serviceType = [] } = useDropdownValues(["serviceType", "serviceGroup", "pic"]);
 
   useEffect(() => {
     refreshCharges();
@@ -122,10 +121,25 @@ const ScheduleOfChargesPage: React.FC = () => {
     setIsChargeFormOpen(true);
   }, []);
 
-  const handleEditCharge = useCallback((charge: EnhancedChargeDto) => {
-    setSelectedCharge(charge);
-    setIsChargeFormOpen(true);
-  }, []);
+  const handleEditCharge = useCallback(
+    async (charge: ChargeWithAllDetailsDto) => {
+      try {
+        const fullChargeDetails = await getChargeById(charge.chargeID);
+        if (fullChargeDetails) {
+          if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
+            fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
+          }
+          setSelectedCharge(fullChargeDetails);
+          setIsChargeFormOpen(true);
+        } else {
+          showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
+        }
+      } catch (error) {
+        showAlert("Error", "An error occurred while fetching charge details.", "error");
+      }
+    },
+    [getChargeById, showAlert]
+  );
 
   const handleViewDetails = useCallback((charge: EnhancedChargeDto) => {
     setSelectedCharge(charge);
@@ -135,6 +149,10 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleCopyCharge = useCallback(
     async (charge: EnhancedChargeDto) => {
       try {
+        if (typeof charge.serviceGroupID !== "number") {
+          showAlert("Error", "Service Group ID is missing or invalid", "error");
+          return;
+        }
         const newCode = await generateChargeCode({
           ChargeType: charge.chargeType,
           ChargeTo: charge.chargeTo,
@@ -164,30 +182,23 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleChargeSubmit = useCallback(
     async (chargeData: ChargeWithAllDetailsDto) => {
       try {
-        debugger;
         await saveCharge(chargeData);
         setIsChargeFormOpen(false);
-        showAlert("Success", `Charge ${selectedCharge ? "updated" : "created"} successfully`, "success");
         setSelectedCharge(null);
         await refreshCharges();
-      } catch (error) {
-        showAlert("Error", `Failed to ${selectedCharge ? "update" : "create"} charge`, "error");
-      }
+      } catch (error) {}
     },
-    [saveCharge, selectedCharge, showAlert, refreshCharges]
+    [saveCharge, refreshCharges]
   );
 
   const handleDeleteCharge = useCallback(
     async (chargeId: number) => {
       try {
         await deleteCharge(chargeId);
-        showAlert("Success", "Charge deleted successfully", "success");
         await refreshCharges();
-      } catch (error) {
-        showAlert("Error", "Failed to delete charge", "error");
-      }
+      } catch (error) {}
     },
-    [deleteCharge, showAlert, refreshCharges]
+    [deleteCharge, refreshCharges]
   );
 
   const columns: Column<EnhancedChargeDto>[] = [
@@ -274,8 +285,8 @@ const ScheduleOfChargesPage: React.FC = () => {
       width: 120,
       render: (charge) => (
         <Stack spacing={0.5}>
-          {charge.aliasCount > 0 && <Chip label={`${charge.aliasCount} Aliases`} size="small" color="info" variant="outlined" />}
-          {charge.packCount > 0 && <Chip label={`${charge.packCount} Packs`} size="small" color="secondary" variant="outlined" />}
+          {(charge.aliasCount ?? 0) > 0 && <Chip label={`${charge.aliasCount} Aliases`} size="small" color="info" variant="outlined" />}
+          {(charge.packCount ?? 0) > 0 && <Chip label={`${charge.packCount ?? 0} Packs`} size="small" color="secondary" variant="outlined" />}
           {charge.regServiceYN === "Y" && <Chip label="Registration" size="small" color="warning" variant="outlined" />}
         </Stack>
       ),
