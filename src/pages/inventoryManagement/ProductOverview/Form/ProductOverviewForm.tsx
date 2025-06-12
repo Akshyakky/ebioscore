@@ -5,7 +5,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
+import { ProductOption, ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { useAlert } from "@/providers/AlertProvider";
@@ -72,6 +72,10 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const [selectedProductData, setSelectedProductData] = useState<ProductListDto[]>([]);
   const [, setIsProductSelected] = useState(false);
   const [convertedLeadTime, setConvertedLeadTime] = useState<number | null>(null);
+
+  // State for ProductSearch component synchronization
+  const [searchInputValue, setSearchInputValue] = useState<string>("");
+  const [selectedProductOption, setSelectedProductOption] = useState<ProductOption | null>(null);
 
   const productSearchRef = useRef<ProductSearchRef>(null);
   const isAddMode = !initialData;
@@ -165,8 +169,22 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
       };
       reset(formData);
 
-      if (initialData.productCode) {
-        handleProductSelection(initialData.productCode);
+      // Set initial product selection for ProductSearch component
+      if (initialData.productCode && initialData.productName) {
+        const initialProduct: ProductOption = {
+          productID: Number(initialData.productID || 0),
+          productCode: initialData.productCode,
+          productName: initialData.productName,
+          productCategory: "",
+          rActiveYN: initialData.rActiveYN || "Y",
+        };
+        setSelectedProductOption(initialProduct);
+        setSearchInputValue(initialData.productName || "");
+
+        // Load product details if available
+        if (initialData.productCode) {
+          handleProductSelection(initialData.productCode);
+        }
       }
     } else {
       reset({
@@ -174,24 +192,57 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
         deptID: selectedDepartment.deptID,
         department: selectedDepartment.department,
       });
+      // Clear product search state for new records
+      setSelectedProductOption(null);
+      setSearchInputValue("");
     }
   }, [initialData, reset, selectedDepartment]);
 
   const handleProductSelect = (product: ProductSearchResult | null) => {
     if (product) {
-      setValue("productID", product.productID);
-      setValue("productCode", product.productCode || "");
-      setValue("productName", product.productName || "");
-      setValue("pLocationID", product.pLocationID || 0);
-      setValue("rActiveYN", product.rActiveYN || "Y");
-      setValue("transferYN", product.transferYN || "N");
+      // Update form values with proper triggering
+      setValue("productID", product.productID, { shouldValidate: true, shouldDirty: true });
+      setValue("productCode", product.productCode || "", { shouldValidate: true, shouldDirty: true });
+      setValue("productName", product.productName || "", { shouldValidate: true, shouldDirty: true });
+      setValue("pLocationID", product.pLocationID || 0, { shouldValidate: true, shouldDirty: true });
+      setValue("rActiveYN", product.rActiveYN || "Y", { shouldValidate: true, shouldDirty: true });
+      setValue("transferYN", product.transferYN || "N", { shouldValidate: true, shouldDirty: true });
+
+      // Update ProductSearch component state
+      const productOption: ProductOption = {
+        productID: product.productID,
+        productCode: product.productCode || "",
+        productName: product.productName || "",
+        productCategory: product.catValue || "",
+        rActiveYN: product.rActiveYN || "Y",
+      };
+      setSelectedProductOption(productOption);
+      setSearchInputValue(product.productName || "");
+
+      // Load additional product details and update grid
+      if (product.productCode) {
+        handleProductSelection(product.productCode);
+      }
+
+      // Force form re-render to update display values
+      setTimeout(() => {
+        setValue("productCode", product.productCode || "", { shouldValidate: false, shouldDirty: false });
+        setValue("productName", product.productName || "", { shouldValidate: false, shouldDirty: false });
+      }, 0);
     } else {
-      setValue("productID", 0);
-      setValue("productCode", "");
-      setValue("productName", "");
-      setValue("pLocationID", 0);
-      setValue("rActiveYN", "Y");
-      setValue("transferYN", "N");
+      // Clear all form values
+      setValue("productID", 0, { shouldValidate: true, shouldDirty: true });
+      setValue("productCode", "", { shouldValidate: true, shouldDirty: true });
+      setValue("productName", "", { shouldValidate: true, shouldDirty: true });
+      setValue("pLocationID", 0, { shouldValidate: true, shouldDirty: true });
+      setValue("rActiveYN", "Y", { shouldValidate: true, shouldDirty: true });
+      setValue("transferYN", "N", { shouldValidate: true, shouldDirty: true });
+
+      // Clear ProductSearch component state
+      setSelectedProductOption(null);
+      setSearchInputValue("");
+      setSelectedProductData([]);
+      setIsProductSelected(false);
     }
   };
 
@@ -203,18 +254,22 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
       try {
         const productDetails = await getProductByCode(selectedProductCode || "");
         if (productDetails) {
-          setValue("productID", Number(productDetails.productID || 0));
-          setValue("productName", productDetails.productName || "");
-          setValue("baseUnit", productDetails.baseUnit ? String(productDetails.baseUnit) : "");
+          // Update all form fields with proper triggering
+          setValue("productID", Number(productDetails.productID || 0), { shouldValidate: true, shouldDirty: true });
+          setValue("productName", productDetails.productName || "", { shouldValidate: true, shouldDirty: true });
+          setValue("baseUnit", productDetails.baseUnit ? String(productDetails.baseUnit) : "", { shouldValidate: true, shouldDirty: true });
 
           setSelectedProductData([productDetails]);
           setIsProductSelected(true);
+
+          // Force form to recognize the changes
+          await new Promise((resolve) => setTimeout(resolve, 0));
         }
       } catch (error) {
         showAlert("Error", "Failed to fetch product details", "error");
       }
     },
-    [getProductByCode, setValue]
+    [getProductByCode, setValue, showAlert]
   );
 
   const onSubmit = async (data: ProductOverviewFormData) => {
@@ -302,6 +357,26 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
     setSelectedProductData([]);
     setIsProductSelected(false);
     setConvertedLeadTime(null);
+
+    // Reset ProductSearch component state
+    if (initialData && initialData.productCode && initialData.productName) {
+      const initialProduct: ProductOption = {
+        productID: Number(initialData.productID || 0),
+        productCode: initialData.productCode,
+        productName: initialData.productName,
+        productCategory: "",
+        rActiveYN: initialData.rActiveYN || "Y",
+      };
+      setSelectedProductOption(initialProduct);
+      setSearchInputValue(initialData.productName || "");
+    } else {
+      setSelectedProductOption(null);
+      setSearchInputValue("");
+      // Clear using ref if available
+      if (productSearchRef.current) {
+        productSearchRef.current.clearSelection();
+      }
+    }
   };
 
   const handleReset = () => {
@@ -436,6 +511,9 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                         placeholder="Search and select product..."
                         disabled={viewOnly}
                         className="product-search-field"
+                        initialSelection={selectedProductOption}
+                        setInputValue={setSearchInputValue}
+                        setSelectedProduct={setSelectedProductOption}
                       />
                     </Grid>
 

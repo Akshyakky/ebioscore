@@ -6,7 +6,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Cancel, Refresh, Save } from "@mui/icons-material";
+import { Cancel, Info, Refresh, Save } from "@mui/icons-material";
 import { Alert, Box, Card, CardContent, CircularProgress, Divider, Grid, InputAdornment, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -84,6 +84,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
       }
     } catch (error) {
       console.error("Error generating tax code:", error);
+      showAlert("Error", "Error generating tax code", "error");
     } finally {
       setIsGeneratingCode(false);
     }
@@ -253,6 +254,15 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
             </Alert>
           )}
 
+          {/* Tax Rate Information Alert */}
+          {pTaxAmt !== undefined && pTaxAmt > 0 && !viewOnly && (
+            <Alert severity="info" sx={{ mb: 2 }} icon={<Info />}>
+              <Typography variant="body2">
+                <strong>Tax Rate:</strong> This tax will be applied at {pTaxAmt}% rate to applicable products.
+              </Typography>
+            </Alert>
+          )}
+
           <Grid container spacing={3}>
             {/* Status Toggle - Prominent Position */}
             <Grid size={{ sm: 12 }}>
@@ -266,9 +276,9 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
 
             {/* Basic Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #1976d2" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
                     Basic Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -312,7 +322,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
                         disabled={viewOnly}
                         size="small"
                         fullWidth
-                        placeholder="Brief description of the tax"
+                        placeholder="Brief description of the tax (e.g., GST, VAT, Service Tax)"
                       />
                     </Grid>
                   </Grid>
@@ -320,44 +330,60 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
               </Card>
             </Grid>
 
-            {/* Tax Details Section */}
+            {/* Tax Configuration Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #ff9800" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Tax Settings
+                  <Typography variant="h6" gutterBottom color="#ff9800" fontWeight="bold">
+                    Tax Configuration
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="pTaxAmt"
-                        control={control}
-                        label="Tax Rate (%)"
-                        type="number"
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                        inputProps={{ min: 0, max: 100, step: 0.01 }}
-                        placeholder="Enter tax percentage (0-100)"
-                      />
-                      {pTaxAmt !== undefined && pTaxAmt > 0 && (
+                      <Box>
+                        <FormField
+                          name="pTaxAmt"
+                          control={control}
+                          label="Tax Rate (%)"
+                          type="number"
+                          disabled={viewOnly}
+                          size="small"
+                          fullWidth
+                          inputProps={{ min: 0, max: 100, step: 0.01 }}
+                          placeholder="Enter tax percentage (0-100)"
+                        />
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                          Tax rate: {pTaxAmt}%
+                          Enter the tax percentage rate (e.g., 18 for 18% tax)
                         </Typography>
-                      )}
+                      </Box>
                     </Grid>
+
+                    {pTaxAmt !== undefined && pTaxAmt > 0 && (
+                      <Grid size={{ sm: 12, md: 6 }}>
+                        <Box sx={{ p: 2, bgcolor: "rgba(255, 152, 0, 0.08)", borderRadius: 1, border: "1px solid rgba(255, 152, 0, 0.2)" }}>
+                          <Typography variant="body2" color="#ff9800" fontWeight="medium">
+                            Tax Rate Preview
+                          </Typography>
+                          <Typography variant="h6" color="#ff9800" fontWeight="bold" sx={{ mt: 0.5 }}>
+                            {pTaxAmt}%
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            This rate will be applied to products
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* Notes Section */}
+            {/* Additional Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #4caf50" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#4caf50" fontWeight="bold">
                     Additional Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -373,7 +399,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
                         size="small"
                         fullWidth
                         rows={4}
-                        placeholder="Enter any additional information about this product tax"
+                        placeholder="Enter any additional information about this product tax, including applicable conditions, exemptions, or special instructions"
                       />
                     </Grid>
                   </Grid>
