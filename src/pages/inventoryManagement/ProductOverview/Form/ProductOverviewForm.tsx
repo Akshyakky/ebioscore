@@ -64,7 +64,7 @@ type ProductOverviewFormData = z.infer<typeof schema>;
 const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
-  const { saveProductOverview, getProductByCode, fetchProductSuggestions, convertLeadTimeToDays } = useProductOverview();
+  const { saveProductOverview, getProductByCode, convertLeadTimeToDays } = useProductOverview();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -72,7 +72,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const [selectedProductData, setSelectedProductData] = useState<ProductListDto[]>([]);
   const [, setIsProductSelected] = useState(false);
   const [convertedLeadTime, setConvertedLeadTime] = useState<number | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+
   const productSearchRef = useRef<ProductSearchRef>(null);
   const isAddMode = !initialData;
   const { productLocation } = useDropdownValues(["productLocation"]);
@@ -122,7 +122,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
     mode: "onChange",
   });
 
-  const rActiveYN = useWatch({ control, name: "rActiveYN" });
   const isAutoIndentYN = useWatch({ control, name: "isAutoIndentYN" });
   const poStatus = useWatch({ control, name: "poStatus" });
   const watchedLeadTime = watch("leadTime");
@@ -638,10 +637,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                           {isAutoIndentYN === "Y" ? "Automatic indenting enabled" : "Manual indenting required"}
                         </Typography>
                       </Box>
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="transferYN" control={control} label="Transfer Allowed" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>
