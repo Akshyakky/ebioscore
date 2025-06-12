@@ -108,7 +108,7 @@ const MultipleSelectionEntryType: React.FC<MultipleSelectionFormProps> = ({ invI
   return (
     <Grid size={{ sm: 12 }}>
       <Typography variant="subtitle1" gutterBottom>
-        Multiple Choice Values
+        Selection Type [Alpha Numeric]
       </Typography>
       <Divider sx={{ mb: 2 }} />
 
