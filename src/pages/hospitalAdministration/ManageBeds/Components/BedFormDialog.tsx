@@ -1,17 +1,17 @@
 // src/pages/hospitalAdministration/ManageBeds/Components/BedFormDialog.tsx
-import React, { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Box, Grid, Divider, Alert, Typography, Switch, FormControlLabel, Paper, Chip } from "@mui/material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import BedSelectionDialog from "../BedSelection/BedSelectionDialog";
-import { Save as SaveIcon, Clear as ClearIcon, Bed as BedIcon, Crib as CradleIcon } from "@mui/icons-material";
-import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Bed as BedIcon, Clear as ClearIcon, Crib as CradleIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, Divider, FormControlLabel, Grid, Paper, Switch, Typography } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import BedSelectionDialog from "../BedSelection/BedSelectionDialog";
 
 interface BedFormData {
   bedID?: number;
@@ -337,7 +337,7 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
     const formattedData: Partial<WrBedDto> = {
       ...data,
       // Only include key if it has a value (for cradle association)
-      key: data.isCradle && data.key && data.key > 0 ? data.key : undefined,
+      key: data.isCradle && data.key && data.key > 0 ? data.key : 0,
     };
 
     // Remove the isCradle field as it's not part of the DTO

@@ -39,7 +39,7 @@ export const getCurrentDateTime = (): Date => {
  * Formats a date to ISO string without timezone
  */
 export const formatDateToISO = (date: Date): string => {
-  return date.toISOString().split("T")[0];
+  return date.toISOString().split("T")[0] ?? "";
 };
 
 /**
@@ -68,6 +68,6 @@ export const formatTimeStringToDate = (timeString: string): Date => {
   const today = new Date();
   const [hours, minutes] = timeString.split(":");
 
-  const dateWithTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes));
+  const dateWithTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours ?? "0"), parseInt(minutes ?? "0"));
   return dateWithTime;
 };

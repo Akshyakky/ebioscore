@@ -1,5 +1,5 @@
-import { CommonApiService, ApiConfig } from "@/services/CommonApiService";
 import { APIConfig } from "@/apiConfig";
+import { ApiConfig, CommonApiService } from "@/services/CommonApiService";
 
 // Create API configuration
 const apiConfig: ApiConfig = {

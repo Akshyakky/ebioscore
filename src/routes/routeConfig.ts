@@ -1,6 +1,5 @@
-import { lazy, Suspense } from "react";
-import React from "react";
 import { AlertProvider } from "@/providers/AlertProvider";
+import React, { lazy, Suspense } from "react";
 
 //const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
 //const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));

@@ -2,7 +2,10 @@
 
 ## Overview
 
-eBios Core HMIS is a comprehensive Hospital Management Information System built with React TypeScript and Vite. The system provides end-to-end solutions for hospital operations including patient management, billing, clinical services, and reporting.
+eBios Core HMIS is a comprehensive Hospital Management Information System built
+with React TypeScript and Vite. The system provides end-to-end solutions for
+hospital operations including patient management, billing, clinical services,
+and reporting.
 
 ## Features
 
@@ -80,8 +83,8 @@ cd ebioscore
 npm install
 ```
 
-3. Configure environment variables:
-   Create a `.env` file in the root directory and add necessary configuration:
+3. Configure environment variables: Create a `.env` file in the root directory
+   and add necessary configuration:
 
 ```env
 VITE_API_BASE_URL=your_api_url
@@ -138,7 +141,8 @@ ebioscore/
 
 ### State Management
 
-The application uses Redux Toolkit for global state management and React Query for server state management:
+The application uses Redux Toolkit for global state management and React Query
+for server state management:
 
 ```typescript
 // Redux store configuration
@@ -149,7 +153,8 @@ export const store = configureStore({
   reducer: {
     // your reducers
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(/* your middleware */),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(/* your middleware */),
 });
 
 setupListeners(store.dispatch);
@@ -206,7 +211,8 @@ const {
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details.
+This project is licensed under the MIT License - see the LICENSE.md file for
+details.
 
 ## Support
 
@@ -224,4 +230,5 @@ Please report any security vulnerabilities to security@ebios.com
 
 ---
 
-For more detailed documentation about specific modules and features, please refer to the `/docs` directory in the repository.
+For more detailed documentation about specific modules and features, please
+refer to the `/docs` directory in the repository.

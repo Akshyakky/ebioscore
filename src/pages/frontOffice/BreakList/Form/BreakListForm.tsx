@@ -1,47 +1,47 @@
-import React, { useState, useEffect, useCallback } from "react";
+import CustomButton from "@/components/Button/CustomButton";
+import SmartButton from "@/components/Button/SmartButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useLoading } from "@/hooks/Common/useLoading";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { BreakConDetailData, BreakListData, BreakListDto, FrequencyData } from "@/interfaces/FrontOffice/BreakListData";
+import { useAlert } from "@/providers/AlertProvider";
+import { Cancel, ChangeCircle, Save } from "@mui/icons-material";
 import {
+  Alert,
   Box,
-  Grid,
-  Typography,
-  Divider,
   Card,
   CardContent,
-  Alert,
-  FormControlLabel,
-  Switch,
+  Divider,
   FormControl,
+  FormControlLabel,
   FormLabel,
-  RadioGroup,
+  Grid,
+  Paper,
   Radio,
+  RadioGroup,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  Typography,
 } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { BreakListData, BreakConDetailData, FrequencyData, BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import SmartButton from "@/components/Button/SmartButton";
-import CustomButton from "@/components/Button/CustomButton";
-import { Save, Cancel, ChangeCircle } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
-import { useServerDate } from "@/hooks/Common/useServerDate";
 
-import { formatDate, formatTimeStringToDate } from "@/utils/Common/dateUtils";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import BreakFrequency from "./BreakFrequency";
+import { formatDate, formatTimeStringToDate } from "@/utils/Common/dateUtils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { frequencyCodeMap, weekDayCodeMap } from "../MainPage/BreakListPage";
+import BreakFrequency from "./BreakFrequency";
 
-import { useBreakList } from "../hooks/useBreakList";
 import { useBreakConDetails } from "../hooks/useBreakConDetails";
+import { useBreakList } from "../hooks/useBreakList";
 
 interface BreakListFormProps {
   open: boolean;
@@ -99,7 +99,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [frequencyData, setFrequencyData] = useState<FrequencyData>({
     frequency: "none",
-    endDate: serverDate ? serverDate.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+    endDate: serverDate?.toISOString().split("T")[0] || "",
     interval: 1,
     weekDays: [],
   });
@@ -165,7 +165,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       if (selectedOption === "resource") {
         setResourceData(resourceList || []);
       } else {
-        setConsultantData(appointmentConsultants);
+        setConsultantData(appointmentConsultants || []);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -190,7 +190,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       const frequencyKey = Object.keys(frequencyCodeMap).find((key) => frequencyCodeMap[key as keyof typeof frequencyCodeMap] === initialData.bLFrqDesc);
       const freqData: FrequencyData = {
         frequency: frequencyKey || "none",
-        endDate: new Date(initialData.bLEndDate).toISOString().split("T")[0],
+        endDate: new Date(initialData.bLEndDate).toISOString().split("T")[0] || "",
         interval: initialData.bLFrqNo || 1,
         weekDays: initialData.bLFrqWkDesc ? initialData.bLFrqWkDesc.split(",") : [],
       };
@@ -395,7 +395,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     setIsOneDay(false);
     setFrequencyData({
       frequency: "none",
-      endDate: serverDate ? serverDate.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+      endDate: serverDate?.toISOString().split("T")[0] || "",
       interval: 1,
       weekDays: [],
     });
@@ -596,11 +596,11 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                     <Typography variant="body1">
                       {isPhyResYN === "Y"
                         ? consultantData
-                            .filter((item) => initialData.hPLID === item.conID)
+                            .filter((item) => initialData?.hPLID === item.conID)
                             .map((item) => renderConsultantName(item))
                             .join(", ")
                         : resourceData
-                            .filter((item) => initialData.hPLID === item.rLID)
+                            .filter((item) => initialData?.hPLID === item.rLID)
                             .map((item) => item.rLName)
                             .join(", ")}
                     </Typography>

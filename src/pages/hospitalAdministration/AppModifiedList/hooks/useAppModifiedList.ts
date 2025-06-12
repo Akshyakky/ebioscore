@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
-import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
-import { appModifiedListService, appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { appModifiedListService, appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { useCallback, useState } from "react";
 
 export const useAppModifiedList = () => {
   const { setLoading } = useLoading();
@@ -33,7 +33,7 @@ export const useAppModifiedList = () => {
     }
   }, []);
 
-  const getMasterById = useCallback(async (id: number): Promise<AppModifiedMast | null> => {
+  const getMasterById = useCallback(async (id: number): Promise<AppModifiedMast | undefined> => {
     try {
       const response = await appModifiedMastService.getById(id);
       if (response && typeof response === "object" && "data" in response) {
@@ -41,7 +41,7 @@ export const useAppModifiedList = () => {
       }
     } catch (error) {
       showAlert("Error", "Failed to fetch master details", "error");
-      return null;
+      return undefined;
     }
   }, []);
 
@@ -126,7 +126,7 @@ export const useAppModifiedList = () => {
     }
   }, []);
 
-  const getFieldById = useCallback(async (id: number): Promise<AppModifyFieldDto | null> => {
+  const getFieldById = useCallback(async (id: number): Promise<AppModifyFieldDto | undefined> => {
     try {
       const response = await appModifiedListService.getById(id);
       if (response && typeof response === "object" && "data" in response) {
@@ -134,7 +134,7 @@ export const useAppModifiedList = () => {
       }
     } catch (error) {
       showAlert("Error", "Failed to fetch field details", "error");
-      return null;
+      return undefined;
     }
   }, []);
 

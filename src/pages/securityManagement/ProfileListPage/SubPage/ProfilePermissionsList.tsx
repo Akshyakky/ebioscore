@@ -123,7 +123,9 @@ const ProfilePermissionsList: React.FC<ProfilePermissionsListProps> = ({ title, 
   };
 
   if (type === "D" && groupedPermissions.length > 0) {
-    if (groupedPermissions[0].subModules[0].operations.length === 0) {
+    const firstGroup = groupedPermissions[0];
+    const firstSubModule = firstGroup?.subModules?.[0];
+    if (!firstSubModule?.operations?.length) {
       return (
         <Typography variant="body1" sx={{ py: 2, textAlign: "center" }}>
           No permissions found for this profile.
@@ -141,7 +143,7 @@ const ProfilePermissionsList: React.FC<ProfilePermissionsListProps> = ({ title, 
       ) : type === "D" ? (
         <Box sx={{ minHeight: "600px" }}>
           <List sx={{ width: "100%", bgcolor: "background.paper", p: 0 }}>
-            {groupedPermissions[0].subModules[0].operations.map((operation) => (
+            {groupedPermissions[0]?.subModules?.[0]?.operations?.map((operation) => (
               <ListItem key={`operation-${operation.opId}`} divider>
                 <ListItemText primary={operation.opName} />
               </ListItem>

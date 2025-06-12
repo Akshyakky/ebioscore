@@ -1,8 +1,8 @@
-import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
-import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
-import { ProfileDetailDto, ProfileModuleOperationDto, ProfileDetailedViewDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { ProfileDetailDto, ProfileDetailedViewDto, ProfileModuleOperationDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { CommonApiService } from "../CommonApiService";
+import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
 class ProfileService extends GenericEntityService<ProfileModuleOperationDto> {
   constructor() {
     super(

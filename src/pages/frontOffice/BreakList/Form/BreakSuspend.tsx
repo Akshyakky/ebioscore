@@ -1,16 +1,16 @@
-import React, { useCallback, useEffect } from "react";
-import { Close } from "@mui/icons-material";
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { useServerDate } from "@/hooks/Common/useServerDate";
-import { useAlert } from "@/providers/AlertProvider";
-import { Box, Grid, TextField } from "@mui/material";
+import CustomButton from "@/components/Button/CustomButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import CustomButton from "@/components/Button/CustomButton";
+import { useLoading } from "@/hooks/Common/useLoading";
+import { useServerDate } from "@/hooks/Common/useServerDate";
 import { BreakConSuspendData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
+import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Close } from "@mui/icons-material";
+import { Box, Grid, TextField } from "@mui/material";
+import React, { useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 import { useBreakConSuspend } from "../hooks/useBreakConSuspend";
 
@@ -98,7 +98,7 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
         hPLID: breakData.hPLID,
         bCSStartDate: formData.bCSStartDate,
         bCSEndDate: formData.bCSEndDate,
-        rNotes: formData.rNotes,
+        rNotes: formData.rNotes || "",
         rActiveYN: "Y",
       };
 

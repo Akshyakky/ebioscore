@@ -1,10 +1,9 @@
 // src/components/BedSelection/BedSelectionDialog.tsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Typography, Grid, Card, CardContent, Chip, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, Avatar, Stack, Alert } from "@mui/material";
-import { Search as SearchIcon, Bed as BedIcon, CheckCircle as AvailableIcon, Person as OccupiedIcon, Block as BlockIcon, Build as MaintenanceIcon } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import CustomButton from "@/components/Button/CustomButton";
-import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { CheckCircle as AvailableIcon, Bed as BedIcon, Block as BlockIcon, Build as MaintenanceIcon, Person as OccupiedIcon, Search as SearchIcon } from "@mui/icons-material";
+import { Alert, Avatar, Box, Card, CardContent, Chip, FormControl, Grid, InputAdornment, InputLabel, MenuItem, Select, Stack, TextField, Typography } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
 
 export interface BedSelectionFilter {
   roomGroupId?: number;

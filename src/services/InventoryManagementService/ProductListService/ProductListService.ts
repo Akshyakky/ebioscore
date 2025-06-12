@@ -1,7 +1,7 @@
-import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { APIConfig } from "@/apiConfig";
-import { GenericEntityService, OperationResult } from "@/services/GenericEntityService/GenericEntityService";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { CommonApiService } from "@/services/CommonApiService";
+import { GenericEntityService, OperationResult } from "@/services/GenericEntityService/GenericEntityService";
 
 export class ProductListService extends GenericEntityService<ProductListDto> {
   constructor() {
