@@ -120,5 +120,4 @@ export interface LCompTemplateDto extends BaseDto {
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;
-  invID?: number;
 }
