@@ -77,6 +77,7 @@ export interface LCompMultipleDto extends BaseDto {
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;
+  isEditing?: boolean;
 }
 export interface LCompAgeRangeDto extends BaseDto {
   carID: number;
@@ -106,6 +107,7 @@ export interface LCompNormalDto extends BaseDto {
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;
+  isEditing?: boolean;
 }
 export interface LCompTemplateDto extends BaseDto {
   cTID: number;

@@ -3,6 +3,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { InvestigationListDto, LComponentDto, LInvMastDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,11 +79,8 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const [selectedComponent, setSelectedComponent] = useState<LComponentDto | null>(null);
   const [selectedComponentIndex, setSelectedComponentIndex] = useState<number>(-1);
   const [components, setComponents] = useState<LComponentDto[]>([]);
-  const sampleTypes = [
-    { value: 1, code: "LAB", label: "Laboratory" },
-    { value: 2, code: "RAD", label: "Radiology" },
-    { value: 3, code: "UTS", label: "Ultrasound" },
-  ];
+  const { sampleType } = useDropdownValues(["sampleType"]);
+  console.log(sampleType);
   const isAddMode = !initialData;
 
   const defaultValues: InvestigationFormData = {
@@ -391,10 +389,10 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={sampleTypes}
+                        options={[]}
                         fullWidth
                         onChange={(value) => {
-                          const selectedType = sampleTypes.find((type) => Number(type.value) === Number(value.value));
+                          const selectedType = [{ label: "", code: "", value: "" }].find((type) => Number(type.value) === Number(value.value));
                           if (selectedType) {
                             setValue("invType", selectedType.label);
                             setValue("invTypeCode", selectedType.code);
@@ -411,12 +409,15 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={[
-                          { value: 1, label: "Blood" },
-                          { value: 2, label: "Urine" },
-                          { value: 3, label: "Stool" },
-                        ]}
+                        options={sampleType || []}
                         fullWidth
+                        onChange={(value) => {
+                          const selectedType = sampleType?.find((type) => type.value === value.value);
+                          if (selectedType) {
+                            console.log(selectedType);
+                            setValue("invSampleType", Number(selectedType.id));
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid size={{ sm: 12, md: 4 }}>

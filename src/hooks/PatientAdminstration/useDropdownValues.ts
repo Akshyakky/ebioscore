@@ -106,7 +106,8 @@ export type DropdownType =
   | "units"
   | "dischargeType"
   | "alertCategory"
-  | "productBaseUnit";
+  | "productBaseUnit"
+  | "componentUnit";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -443,15 +444,27 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       mainGroup: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVMAINGROUP");
-        return response;
+        return (response || []).map((item: any) => ({
+          value: item.id || "",
+          label: item.value || "",
+          ...item,
+        }));
       },
       subTitle: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SUBTITLE");
-        return response;
+        return (response || []).map((item: any) => ({
+          value: item.id || "",
+          label: item.value || "",
+          ...item,
+        }));
       },
       sampleType: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SAMPLETYPE");
-        return response;
+        return (response || []).map((item: any) => ({
+          value: item.id || "",
+          label: item.value || "",
+          ...item,
+        }));
       },
       serviceType: async () => {
         const response = await serviceTypeService.getAll();
@@ -541,6 +554,15 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       alertCategory: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ALERTCATEGORY");
         return response;
+      },
+
+      componentUnit: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPOUNIT");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
       },
     }),
     []
