@@ -56,7 +56,7 @@ const schema = z.object({
   invNHCode: z.string().default(""),
   invNHEnglishName: z.string().default(""),
   invNHGreekName: z.string().default(""),
-  invSampleType: z.number().default(0),
+  invSampleType: z.string().default(""),
   invShortName: z.string().default(""),
   methods: z.string().default(""),
   coopLabs: z.string().default(""),
@@ -79,8 +79,15 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const [selectedComponent, setSelectedComponent] = useState<LComponentDto | null>(null);
   const [selectedComponentIndex, setSelectedComponentIndex] = useState<number>(-1);
   const [components, setComponents] = useState<LComponentDto[]>([]);
-  const { sampleType } = useDropdownValues(["sampleType"]);
-  console.log(sampleType);
+  const { sampleType, serviceType } = useDropdownValues(["sampleType", "serviceType"]);
+  const [repEntryServiceTypes, setRepEntryServiceTypes] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (Array.isArray(serviceType) && serviceType.length > 0) {
+      const fileterefServiceTypes = serviceType.filter((type) => type.isLabYN === "Y");
+      setRepEntryServiceTypes(fileterefServiceTypes);
+    }
+  }, [serviceType]);
   const isAddMode = !initialData;
 
   const defaultValues: InvestigationFormData = {
@@ -98,7 +105,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     invNHCode: "",
     invNHEnglishName: "",
     invNHGreekName: "",
-    invSampleType: 0,
+    invSampleType: "",
     invShortName: "",
     methods: "",
     coopLabs: "",
@@ -389,13 +396,13 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={[]}
+                        options={repEntryServiceTypes || []}
                         fullWidth
                         onChange={(value) => {
-                          const selectedType = [{ label: "", code: "", value: "" }].find((type) => Number(type.value) === Number(value.value));
+                          const selectedType = repEntryServiceTypes?.find((type) => Number(type.value) === Number(value.value));
                           if (selectedType) {
                             setValue("invType", selectedType.label);
-                            setValue("invTypeCode", selectedType.code);
+                            setValue("invTypeCode", selectedType.bchCode);
                           }
                         }}
                       />
@@ -411,13 +418,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                         size="small"
                         options={sampleType || []}
                         fullWidth
-                        onChange={(value) => {
-                          const selectedType = sampleType?.find((type) => type.value === value.value);
-                          if (selectedType) {
-                            console.log(selectedType);
-                            setValue("invSampleType", Number(selectedType.id));
-                          }
-                        }}
                       />
                     </Grid>
                     <Grid size={{ sm: 12, md: 4 }}>

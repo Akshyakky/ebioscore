@@ -471,6 +471,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: ServiceTypeDto) => ({
           value: item.bchID || 0,
           label: item.bchName || "",
+          ...item,
         }));
       },
       serviceGroup: async () => {
