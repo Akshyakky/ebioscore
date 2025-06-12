@@ -1,22 +1,22 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
-import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, ChangeCircleRounded } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
-import { useProductOverview } from "../hooks/useProductOverview";
-import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
-import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel, ChangeCircleRounded, Info, Save } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import * as z from "zod";
+import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
+import { useProductOverview } from "../hooks/useProductOverview";
 
 interface ProductOverviewFormProps {
   open: boolean;
@@ -60,6 +60,7 @@ const schema = z.object({
 });
 
 type ProductOverviewFormData = z.infer<typeof schema>;
+
 const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
@@ -71,6 +72,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const [selectedProductData, setSelectedProductData] = useState<ProductListDto[]>([]);
   const [, setIsProductSelected] = useState(false);
   const [convertedLeadTime, setConvertedLeadTime] = useState<number | null>(null);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const productSearchRef = useRef<ProductSearchRef>(null);
   const isAddMode = !initialData;
   const { productLocation } = useDropdownValues(["productLocation"]);
@@ -113,15 +115,19 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
     reset,
     setValue,
     watch,
-    formState: { isDirty, isValid, errors },
+    formState: { errors, isDirty, isValid },
   } = useForm<ProductOverviewFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
+  const rActiveYN = useWatch({ control, name: "rActiveYN" });
+  const isAutoIndentYN = useWatch({ control, name: "isAutoIndentYN" });
+  const poStatus = useWatch({ control, name: "poStatus" });
   const watchedLeadTime = watch("leadTime");
   const watchedLeadTimeUnit = watch("leadTimeUnit");
+  const watchedLocationID = watch("pLocationID");
 
   useEffect(() => {
     if (watchedLeadTime && watchedLeadTimeUnit) {
@@ -129,6 +135,15 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
       setConvertedLeadTime(days);
     }
   }, [watchedLeadTime, watchedLeadTimeUnit, convertLeadTimeToDays]);
+
+  useEffect(() => {
+    if (watchedLocationID) {
+      const selectedLocation = productLocation?.find((location) => location.id === watchedLocationID);
+      if (selectedLocation) {
+        setValue("productLocation", selectedLocation.label, { shouldValidate: true, shouldDirty: false });
+      }
+    }
+  }, [watchedLocationID, productLocation, setValue]);
 
   useEffect(() => {
     if (initialData) {
@@ -166,7 +181,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const handleProductSelect = (product: ProductSearchResult | null) => {
     if (product) {
       setValue("productID", product.productID);
-      setValue("productCode", product.productCode);
+      setValue("productCode", product.productCode || "");
       setValue("productName", product.productName || "");
       setValue("pLocationID", product.pLocationID || 0);
       setValue("rActiveYN", product.rActiveYN || "Y");
@@ -184,10 +199,10 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const handleProductSelection = useCallback(
     async (selectedProductString: string) => {
       const [selectedProductCode] = selectedProductString.split(" - ");
-      setValue("productCode", selectedProductCode, { shouldValidate: true, shouldDirty: true });
+      setValue("productCode", selectedProductCode || "", { shouldValidate: true, shouldDirty: true });
 
       try {
-        const productDetails = await getProductByCode(selectedProductCode);
+        const productDetails = await getProductByCode(selectedProductCode || "");
         if (productDetails) {
           setValue("productID", Number(productDetails.productID || 0));
           setValue("productName", productDetails.productName || "");
@@ -214,8 +229,8 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
         productID: Number(data.productID),
         productCode: data.productCode,
         fsbCode: data.fsbCode || "N",
-        rackNo: data.rackNo,
-        shelfNo: data.shelfNo,
+        rackNo: data.rackNo || "",
+        shelfNo: data.shelfNo || "",
         minLevelUnits: Number(data.minLevelUnits || 0),
         maxLevelUnits: Number(data.maxLevelUnits || 0),
         dangerLevelUnits: Number(data.dangerLevelUnits || 0),
@@ -228,7 +243,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
         department: selectedDepartment.department,
         defaultYN: data.defaultYN || "N",
         isAutoIndentYN: data.isAutoIndentYN || "N",
-        productLocation: data.productLocation,
+        productLocation: data.productLocation || "",
         pLocationID: Number(data.pLocationID || 0),
         rActiveYN: data.rActiveYN || "Y",
         transferYN: data.transferYN || "N",
@@ -237,8 +252,8 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
         leadTimeUnit: data.leadTimeUnit || "days",
         avgDemandUnit: data.avgDemandUnit || "days",
         reOrderQuantity: Number(data.reOrderQuantity || 0),
-        productName: data.productName,
-        baseUnit: data.baseUnit,
+        productName: data.productName || "",
+        baseUnit: data.baseUnit || "",
       };
 
       const response = await saveProductOverview(formData);
@@ -363,17 +378,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
     { key: "pLocationName", header: "Location", visible: true },
   ];
 
-  const watchedLocationID = watch("pLocationID");
-
-  useEffect(() => {
-    if (watchedLocationID) {
-      const selectedLocation = productLocation?.find((location) => location.id === watchedLocationID);
-      if (selectedLocation) {
-        setValue("productLocation", selectedLocation.label, { shouldValidate: true, shouldDirty: false });
-      }
-    }
-  }, [watchedLocationID, productLocation, setValue]);
-
   return (
     <>
       <GenericDialog
@@ -394,20 +398,32 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
             </Alert>
           )}
 
+          {/* Department Information Alert */}
+          {selectedDepartment.department && !viewOnly && (
+            <Alert severity="info" sx={{ mb: 2 }} icon={<Info />}>
+              <Typography variant="body2">
+                <strong>Department:</strong> Creating product overview for {selectedDepartment.department} department.
+                {onChangeDepartment && <SmartButton text="Change Department" onClick={onChangeDepartment} variant="text" icon={ChangeCircleRounded} size="small" sx={{ ml: 1 }} />}
+              </Typography>
+            </Alert>
+          )}
+
           <Grid container spacing={3}>
+            {/* Status Toggle - Prominent Position */}
             <Grid size={{ sm: 12 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h6">Department: {selectedDepartment.department}</Typography>
-                {onChangeDepartment && (
-                  <SmartButton text={selectedDepartment.department} onClick={onChangeDepartment} variant="contained" icon={ChangeCircleRounded} size="small" color="warning" />
-                )}
+              <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
+                <Typography variant="body2" color="text.secondary">
+                  Status:
+                </Typography>
+                <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
               </Box>
             </Grid>
 
+            {/* Product Selection Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #1976d2" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
                     Product Selection
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -418,7 +434,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                         ref={productSearchRef}
                         onProductSelect={handleProductSelect}
                         label="Product Code"
-                        placeholder="Search through product..."
+                        placeholder="Search and select product..."
                         disabled={viewOnly}
                         className="product-search-field"
                       />
@@ -429,7 +445,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="baseUnit" control={control} label="Base Unit" type="text" disabled={false} size="small" fullWidth />
+                      <FormField name="baseUnit" control={control} label="Base Unit" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
 
@@ -445,10 +461,11 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
+            {/* Location Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #ff9800" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#ff9800" fontWeight="bold">
                     Location Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -472,9 +489,11 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                         fullWidth
                       />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="rackNo" control={control} label="Rack No" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="shelfNo" control={control} label="Shelf No" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
@@ -483,10 +502,11 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
+            {/* Stock Level Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #4caf50" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#4caf50" fontWeight="bold">
                     Stock Level Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -495,12 +515,15 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="stockLevel" control={control} label="Current Stock" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="minLevelUnits" control={control} label="Min Level" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="maxLevelUnits" control={control} label="Max Level" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="dangerLevelUnits" control={control} label="Danger Level" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
@@ -509,10 +532,11 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
+            {/* Lead Time & Demand Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #9c27b0" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#9c27b0" fontWeight="bold">
                     Lead Time & Demand Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -521,12 +545,15 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="leadTime" control={control} label="Lead Time" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="leadTimeUnit" control={control} label="Lead Time Unit" type="select" options={leadTimeOptions} disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="avgDemand" control={control} label="Average Demand" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="avgDemandUnit" control={control} label="Demand Unit" type="select" options={leadTimeOptions} disabled={viewOnly} size="small" fullWidth />
                     </Grid>
@@ -543,10 +570,11 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
+            {/* Reorder Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #f44336" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#f44336" fontWeight="bold">
                     Reorder Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -555,55 +583,72 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="reOrderLevel" control={control} label="Reorder Level" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="reOrderQuantity" control={control} label="Reorder Quantity" type="number" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField
-                        name="poStatus"
-                        control={control}
-                        label="PO Generation"
-                        type="radio"
-                        options={[
-                          { value: "Y", label: "Automatic" },
-                          { value: "N", label: "Manual" },
-                        ]}
-                        disabled={viewOnly}
-                        size="small"
-                      />
+                      <Box>
+                        <FormField
+                          name="poStatus"
+                          control={control}
+                          label="PO Generation"
+                          type="radio"
+                          options={[
+                            { value: "Y", label: "Automatic" },
+                            { value: "N", label: "Manual" },
+                          ]}
+                          disabled={viewOnly}
+                          size="small"
+                        />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                          {poStatus === "Y" ? "Purchase orders will be generated automatically" : "Purchase orders will be created manually"}
+                        </Typography>
+                      </Box>
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
 
+            {/* Product Settings Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #607d8b" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Settings
+                  <Typography variant="h6" gutterBottom color="#607d8b" fontWeight="bold">
+                    Product Settings
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <Box>
+                        <FormField name="defaultYN" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                          Mark this as the default product overview for the department
+                        </Typography>
+                      </Box>
                     </Grid>
-                    <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField name="defaultYN" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-                    <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField name="isAutoIndentYN" control={control} label="Auto Indent" type="switch" disabled={viewOnly} size="small" />
+
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <Box>
+                        <FormField name="isAutoIndentYN" control={control} label="Auto Indent" type="switch" disabled={viewOnly} size="small" />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                          {isAutoIndentYN === "Y" ? "Automatic indenting enabled" : "Manual indenting required"}
+                        </Typography>
+                      </Box>
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
 
+            {/* Additional Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #795548" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#795548" fontWeight="bold">
                     Additional Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -619,7 +664,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                         size="small"
                         fullWidth
                         rows={4}
-                        placeholder="Enter any additional information about this product overview"
+                        placeholder="Enter any additional information about this product overview, including special handling instructions, supplier details, or usage notes"
                       />
                     </Grid>
                   </Grid>

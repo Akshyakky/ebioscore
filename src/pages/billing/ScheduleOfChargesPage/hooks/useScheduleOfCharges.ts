@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from "react";
-import { ChargeWithAllDetailsDto, ChargeCodeGenerationDto } from "@/interfaces/Billing/ChargeDto";
-import { bChargeService } from "@/services/BillingServices/BillingService";
-import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { ChargeCodeGenerationDto, ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { bChargeService } from "@/services/BillingServices/BillingService";
+import { useCallback, useRef, useState } from "react";
 interface UseScheduleOfChargesState {
   charges: ChargeWithAllDetailsDto[];
   loading: boolean;
@@ -158,6 +158,7 @@ export const useScheduleOfCharges = (): UseScheduleOfChargesReturn => {
   const getChargeById = useCallback(
     async (chargeId: number): Promise<ChargeWithAllDetailsDto | null> => {
       try {
+        debugger;
         updateState({ loading: true, error: null });
         if (chargeId <= 0) {
           throw new Error("Invalid charge ID");

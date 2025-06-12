@@ -96,7 +96,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   } = useDropdownValues(["serviceType", "serviceGroup", "pic", "bedCategory", "attendingPhy", "subModules"]);
 
   const wardCategories = useMemo(() => {
-    return bedCategory.map((category, index) => ({
+    return bedCategory.map((category) => ({
       id: Number(category.value),
       name: category.label,
     }));
