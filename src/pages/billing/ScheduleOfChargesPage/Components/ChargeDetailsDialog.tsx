@@ -1,25 +1,23 @@
-// src/pages/billing/ScheduleOfChargesPage/Components/ChargeDetailsDialog.tsx
-import React, { useState, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Divider, Tab, Tabs, Alert, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
-import {
-  LocalHospital as ChargeIcon,
-  AttachMoney as PriceIcon,
-  Group as DoctorIcon,
-  Label as AliasIcon,
-  School as FacultyIcon,
-  Inventory as PackIcon,
-  Info as InfoIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  AccountBalance as PaymentIcon,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
 import { formatCurrency } from "@/utils/Common/formatUtils";
 import { formatDt } from "@/utils/Common/newDateUtils";
+import {
+  Label as AliasIcon,
+  LocalHospital as ChargeIcon,
+  Delete as DeleteIcon,
+  Group as DoctorIcon,
+  Edit as EditIcon,
+  School as FacultyIcon,
+  Info as InfoIcon,
+  Inventory as PackIcon,
+  AttachMoney as PriceIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Chip, Grid, Paper, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, Typography } from "@mui/material";
+import React, { useMemo, useState } from "react";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -34,7 +32,6 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
     </div>
   );
 };
-
 interface ChargeDetailsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -46,8 +43,6 @@ interface ChargeDetailsDialogProps {
 const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose, charge, onEdit, onDelete }) => {
   const [tabValue, setTabValue] = useState(0);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-
-  // Load dropdown values for display purposes
   const {
     serviceType = [],
     serviceGroup = [],
@@ -57,27 +52,18 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
     subModules = [],
   } = useDropdownValues(["serviceType", "pic", "bedCategory", "attendingPhy", "subModules"]);
 
-  // Helper functions to get display names from dropdown values
   const getChargeTypeDisplay = (value: string) => serviceType.find((t) => t.value === value)?.label || value;
-
   const getServiceGroupDisplay = (id: number) => serviceGroup.find((s) => Number(s.value) === id)?.label || "Not specified";
-
   const getPatientTypeDisplay = (id: number) => pic.find((p) => Number(p.value) === id)?.label || "Unknown";
-
   const getWardCategoryDisplay = (id: number) => bedCategory.find((w) => Number(w.value) === id)?.label || "Unknown";
-
   const getDoctorDisplay = (id: number) => attendingPhy.find((d) => Number(d.value.split("-")[0]) === id)?.label || "Unknown Doctor";
-
   const getSubModuleDisplay = (id: number) => subModules.find((s) => Number(s.value) === id)?.label || "Unknown Subject";
 
-  // Calculate statistics
   const statistics = useMemo(() => {
     if (!charge) return {};
-
     const prices = charge.ChargeDetails?.map((detail) => detail.chValue) || [];
     const totalDoctorShare = charge.DoctorShares?.reduce((sum, share) => sum + share.doctorShare, 0) || 0;
     const totalHospitalShare = charge.DoctorShares?.reduce((sum, share) => sum + share.hospShare, 0) || 0;
-
     return {
       minPrice: prices.length > 0 ? Math.min(...prices) : 0,
       maxPrice: prices.length > 0 ? Math.max(...prices) : 0,
@@ -116,7 +102,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
   const renderBasicInformation = () => (
     <Paper sx={{ p: 3 }}>
       <Grid container spacing={3}>
-        {/* Charge Information */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ChargeIcon />
@@ -166,7 +151,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
           </Box>
         </Grid>
 
-        {/* Configuration & Features */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <InfoIcon />
@@ -199,7 +183,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
           </Box>
         </Grid>
 
-        {/* Pricing Statistics */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <PriceIcon />
@@ -218,7 +201,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
           </Box>
         </Grid>
 
-        {/* Related Configurations */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="h6" gutterBottom>
             Related Configurations
@@ -511,7 +493,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
         }
       >
         <Box sx={{ width: "100%" }}>
-          {/* Charge Header */}
           <Paper sx={{ p: 2, mb: 2, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
             <Box display="flex" alignItems="center" gap={2}>
               <Avatar sx={{ bgcolor: "primary.main", width: 48, height: 48 }}>
@@ -533,7 +514,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
             </Box>
           </Paper>
 
-          {/* Tabs */}
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <Tabs value={tabValue} onChange={handleTabChange} aria-label="charge details tabs">
               <Tab label="Basic Information" icon={<InfoIcon />} iconPosition="start" />
@@ -545,7 +525,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
             </Tabs>
           </Box>
 
-          {/* Tab Panels */}
           <TabPanel value={tabValue} index={0}>
             {renderBasicInformation()}
           </TabPanel>
@@ -572,7 +551,6 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
         </Box>
       </GenericDialog>
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
