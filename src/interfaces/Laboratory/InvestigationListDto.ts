@@ -20,7 +20,7 @@ export interface LInvMastDto extends BaseDto {
   invNHCode?: string;
   invNHEnglishName?: string;
   invNHGreekName?: string;
-  invSampleType?: number;
+  invSampleType?: string;
   invShortName?: string;
   methods?: string;
   coopLabs?: string;

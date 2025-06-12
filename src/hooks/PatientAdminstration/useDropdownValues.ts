@@ -471,6 +471,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: ServiceTypeDto) => ({
           value: item.bchID || 0,
           label: item.bchName || "",
+          ...item,
         }));
       },
       serviceGroup: async () => {
@@ -555,7 +556,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ALERTCATEGORY");
         return response;
       },
-
       componentUnit: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPOUNIT");
         return (response || []).map((item: any) => ({

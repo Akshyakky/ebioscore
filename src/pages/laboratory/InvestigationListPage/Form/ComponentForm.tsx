@@ -2,7 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { LCompNormalDto, LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
+import { LCompNormalDto, LComponentDto, LCompTemplateDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 import MultipleSelectionEntryType, { multipleEntrySchema } from "../SubPage/MultipleSelectionEntryType";
 import ReferenceValueEntryType, { referenceValueSchema } from "../SubPage/ReferenceValueEntryType";
+import TemplateValueEntryType, { templateValueSchema } from "../SubPage/TemplateValueEntryType";
 
 interface ComponentFormProps {
   open: boolean;
@@ -49,12 +50,14 @@ const schema = z.object({
   rNotes: z.string().optional().nullable(),
   lCompMultipleDto: z.array(multipleEntrySchema).optional(),
   lCompNormalDto: z.array(referenceValueSchema).optional(),
+  lCompTemplateDto: templateValueSchema.optional().nullable(),
 });
 
 type ComponentFormData = z.infer<typeof schema>;
 
 const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, initialData, invID }) => {
   const [entryTypes, setEntryTypes] = React.useState<any[]>([]);
+  const [templateData, setTemplateData] = React.useState<LCompTemplateDto | null>(null);
   const { componentUnit } = useDropdownValues(["componentUnit"]);
   const defaultValues: ComponentFormData = {
     compoID: 0,
@@ -83,6 +86,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     rNotes: "",
     lCompMultipleDto: [],
     lCompNormalDto: [],
+    lCompTemplateDto: null,
   };
 
   const {
@@ -177,9 +181,12 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
         ...initialData,
         lCompMultipleDto: initialData.lCompMultipleDto || [],
         lCompNormalDto: initialData.lCompNormalDto || [],
+        lCompTemplateDto: initialData.lCompTemplateDto || null,
       });
+      setTemplateData(initialData.lCompTemplateDto || null);
     } else {
       reset({ ...defaultValues, invID });
+      setTemplateData(null);
     }
   }, [initialData, invID, reset]);
 
@@ -231,6 +238,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       rNotes: data.rNotes || "",
       lCompMultipleDto: (watchedLCentID === 5 ? typedMultipleFields : []) as LCompMultipleDto[],
       lCompNormalDto: (watchedLCentID === 6 ? typedReferenceFields : []) as LCompNormalDto[],
+      lCompTemplateDto: (watchedLCentID === 7 ? templateData : undefined) as LCompTemplateDto,
     };
     onSave(componentData);
   };
@@ -239,6 +247,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     if (!isValid) return false;
     if (watchedLCentID === 5 && multipleFields.length === 0) return false;
     if (watchedLCentID === 6 && referenceFields.length === 0) return false;
+    if (watchedLCentID === 7 && !templateData) return false;
     return true;
   };
 
@@ -358,6 +367,9 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
               defaultUnit={watchedCompUnit || ""}
             />
           )}
+
+          {/* Template Values Section - when lCentID === 7 */}
+          {watchedLCentID === 7 && <TemplateValueEntryType invID={invID} compoID={watch("compoID") || 0} templateData={templateData} onUpdate={setTemplateData} />}
 
           {/* Notes */}
           <Grid size={{ sm: 12 }}>
