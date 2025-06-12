@@ -1,4 +1,3 @@
-import { useLoading } from "@/hooks/Common/useLoading";
 import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { debounce } from "@/utils/Common/debounceUtils";
@@ -27,7 +26,7 @@ interface UseProductSearchResult {
 export const useProductSearch = ({ debounceTimeMs = 500, minSearchLength = 2 }: UseProductSearchProps = {}): UseProductSearchResult => {
   const [inputValue, setInputValue] = useState<string>("");
   const [options, setOptions] = useState<ProductOption[]>([]);
-  const { isLoading, setLoading } = useLoading();
+  const [isLoading, setLoading] = useState<boolean>(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
 
   const debouncedSearch = useCallback(
