@@ -1,3 +1,4 @@
+export { useCompAgeRange } from "./useCompAgeRange";
 export { useInvestigationList } from "./useInvestigationList";
-export { useLInvMast } from "./useLInvMast";
 export { useLComponent } from "./useLComponent";
+export { useLInvMast } from "./useLInvMast";

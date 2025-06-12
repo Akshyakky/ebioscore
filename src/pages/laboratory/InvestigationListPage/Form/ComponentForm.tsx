@@ -1,7 +1,8 @@
 import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { LCompNormalDto, LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +11,7 @@ import React, { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 import MultipleSelectionEntryType, { multipleEntrySchema } from "../SubPage/MultipleSelectionEntryType";
+import ReferenceValueEntryType, { referenceValueSchema } from "../SubPage/ReferenceValueEntryType";
 
 interface ComponentFormProps {
   open: boolean;
@@ -46,13 +48,14 @@ const schema = z.object({
   transferYN: z.string().optional().nullable(),
   rNotes: z.string().optional().nullable(),
   lCompMultipleDto: z.array(multipleEntrySchema).optional(),
+  lCompNormalDto: z.array(referenceValueSchema).optional(),
 });
 
 type ComponentFormData = z.infer<typeof schema>;
 
 const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, initialData, invID }) => {
   const [entryTypes, setEntryTypes] = React.useState<any[]>([]);
-
+  const { componentUnit } = useDropdownValues(["componentUnit"]);
   const defaultValues: ComponentFormData = {
     compoID: 0,
     compoCode: "",
@@ -79,6 +82,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     transferYN: "N",
     rNotes: "",
     lCompMultipleDto: [],
+    lCompNormalDto: [],
   };
 
   const {
@@ -95,11 +99,28 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
   });
 
   // Use useFieldArray for managing multiple entries
-  const { fields, append, update, remove } = useFieldArray({
+  const {
+    fields: multipleFields,
+    append: appendMultiple,
+    update: updateMultiple,
+    remove: removeMultiple,
+  } = useFieldArray({
     control,
     name: "lCompMultipleDto",
   });
-  const multipleFields = fields.map((field) => ({
+
+  // Use useFieldArray for managing reference values
+  const {
+    fields: referenceFields,
+    append: appendReference,
+    update: updateReference,
+    remove: removeReference,
+  } = useFieldArray({
+    control,
+    name: "lCompNormalDto",
+  });
+
+  const typedMultipleFields = multipleFields.map((field) => ({
     ...field,
     cmID: field.cmID || 0,
     cmValues: field.cmValues || "",
@@ -112,23 +133,50 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     isEditing: field.isEditing || false,
   }));
 
+  const typedReferenceFields = referenceFields.map((field) => ({
+    ...field,
+    cnID: field.cnID || 0,
+    compoID: field.compoID || 0,
+    carID: field.carID || 0,
+    cnUpper: field.cnUpper || 0,
+    cnLower: field.cnLower || 0,
+    cnApply: field.cnApply || "",
+    cnSex: field.cnSex || "",
+    cnAgeLmt: field.cnAgeLmt || "",
+    cnUnits: field.cnUnits || "",
+    rActiveYN: field.rActiveYN || "Y",
+    transferYN: field.transferYN || "N",
+    rNotes: field.rNotes || "",
+    isEditing: field.isEditing || false,
+  }));
+
   // Create typed append/update functions
-  const typedAppend = (value: LCompMultipleDto) => {
-    append(value as any);
+  const typedAppendMultiple = (value: LCompMultipleDto) => {
+    appendMultiple(value as any);
   };
 
-  const typedUpdate = (index: number, value: LCompMultipleDto) => {
-    update(index, value as any);
+  const typedUpdateMultiple = (index: number, value: LCompMultipleDto) => {
+    updateMultiple(index, value as any);
   };
 
-  // Watch lCentID to show/hide multiple values section
+  const typedAppendReference = (value: LCompNormalDto) => {
+    appendReference(value as any);
+  };
+
+  const typedUpdateReference = (index: number, value: LCompNormalDto) => {
+    updateReference(index, value as any);
+  };
+
+  // Watch lCentID to show/hide appropriate sections
   const watchedLCentID = watch("lCentID");
+  const watchedCompUnit = watch("compUnit");
 
   useEffect(() => {
     if (initialData) {
       reset({
         ...initialData,
         lCompMultipleDto: initialData.lCompMultipleDto || [],
+        lCompNormalDto: initialData.lCompNormalDto || [],
       });
     } else {
       reset({ ...defaultValues, invID });
@@ -181,10 +229,17 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       rActiveYN: data.rActiveYN || "Y",
       transferYN: data.transferYN || "N",
       rNotes: data.rNotes || "",
-      lCompMultipleDto: (watchedLCentID === 5 ? multipleFields : []) as LCompMultipleDto[],
+      lCompMultipleDto: (watchedLCentID === 5 ? typedMultipleFields : []) as LCompMultipleDto[],
+      lCompNormalDto: (watchedLCentID === 6 ? typedReferenceFields : []) as LCompNormalDto[],
     };
-    console.log(componentData);
     onSave(componentData);
+  };
+
+  const isFormValid = () => {
+    if (!isValid) return false;
+    if (watchedLCentID === 5 && multipleFields.length === 0) return false;
+    if (watchedLCentID === 6 && referenceFields.length === 0) return false;
+    return true;
   };
 
   return (
@@ -197,13 +252,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       actions={
         <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
           <SmartButton text="Cancel" onClick={onClose} variant="outlined" color="inherit" />
-          <SmartButton
-            text={initialData ? "Update" : "Add"}
-            onClick={handleSubmit(onSubmit)}
-            variant="contained"
-            color="primary"
-            disabled={!isValid || (watchedLCentID === 5 && fields.length === 0)}
-          />
+          <SmartButton text={initialData ? "Update" : "Add"} onClick={handleSubmit(onSubmit)} variant="contained" color="primary" disabled={!isFormValid()} />
         </Box>
       }
     >
@@ -244,7 +293,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
                 <FormField name="compInterpret" control={control} label="Interpretation" type="text" size="small" fullWidth />
               </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
-                <FormField name="compUnit" control={control} label="Unit" type="text" size="small" fullWidth />
+                <FormField name="compUnit" control={control} label="Unit" type="select" required size="small" options={componentUnit || []} fullWidth />
               </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="deltaValPercent" control={control} label="Delta Value (%)" type="number" size="small" fullWidth />
@@ -259,6 +308,10 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
           </Grid>
 
           <Grid size={{ sm: 12 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Entry Type Settings
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField
@@ -282,13 +335,33 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
             </Grid>
           </Grid>
 
-          {/* Multiple Values Section */}
+          {/* Multiple Values Section - when lCentID === 5 */}
           {watchedLCentID === 5 && (
-            <MultipleSelectionEntryType invID={invID} compoID={watch("compoID") || 0} fields={multipleFields} append={typedAppend} update={typedUpdate} remove={remove} />
+            <MultipleSelectionEntryType
+              invID={invID}
+              compoID={watch("compoID") || 0}
+              fields={typedMultipleFields}
+              append={typedAppendMultiple}
+              update={typedUpdateMultiple}
+              remove={removeMultiple}
+            />
+          )}
+
+          {/* Reference Values Section - when lCentID === 6*/}
+          {watchedLCentID === 6 && (
+            <ReferenceValueEntryType
+              compoID={watch("compoID") || 0}
+              fields={typedReferenceFields}
+              append={typedAppendReference}
+              update={typedUpdateReference}
+              remove={removeReference}
+              defaultUnit={watchedCompUnit || ""}
+            />
           )}
 
           {/* Notes */}
           <Grid size={{ sm: 12 }}>
+            <Divider sx={{ mb: 2 }} />
             <FormField name="rNotes" control={control} label="Notes" type="textarea" size="small" fullWidth rows={3} />
           </Grid>
         </Grid>
