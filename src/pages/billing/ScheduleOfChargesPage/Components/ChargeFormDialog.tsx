@@ -160,100 +160,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     return chargeFaculties.map((faculty) => faculty.aSubID).filter((id) => id != null);
   }, []);
 
-  useEffect(() => {
-    if (open) {
-      if (charge) {
-        const normalizedChargeAliases = [];
-        const rawAliases = charge.chargeAliases || charge.ChargeAliases || [];
-        if (Array.isArray(rawAliases) && rawAliases.length > 0) {
-          for (const alias of rawAliases) {
-            normalizedChargeAliases.push({
-              chAliasID: alias.chAliasID || alias.chaliasID || 0,
-              chargeID: alias.chargeID || 0,
-              pTypeID: alias.pTypeID || 0,
-              chargeDesc: alias.chargeDesc || "",
-              chargeDescLang: alias.chargeDescLang || alias.chargeDesc || "",
-              rActiveYN: alias.rActiveYN || "Y",
-              rTransferYN: alias.rTransferYN || alias.transferYN || "N",
-              rNotes: alias.rNotes || "",
-            });
-          }
-        }
-        const selectedFacultiesIds = extractSelectedFaculties(charge.ChargeFaculties || []);
-        const formData = {
-          chargeID: charge.chargeID || 0,
-          chargeCode: charge.chargeCode || "",
-          chargeDesc: charge.chargeDesc || "",
-          chargesHDesc: charge.chargesHDesc || "",
-          chargeDescLang: charge.chargeDescLang || "",
-          cShortName: charge.cShortName || "",
-          bChID: charge.bChID || null,
-          chargeType: charge.chargeType || "",
-          chargeTo: charge.chargeTo || "",
-          chargeStatus: charge.chargeStatus || "AC",
-          chargeBreakYN: charge.chargeBreakYN || "N",
-          regServiceYN: charge.regServiceYN || "N",
-          regDefaultServiceYN: charge.regDefaultServiceYN || "N",
-          isBedServiceYN: charge.isBedServiceYN || "N",
-          doctorShareYN: charge.doctorShareYN || "N",
-          cNhsCode: charge.cNhsCode || "",
-          cNhsEnglishName: charge.cNhsEnglishName || "",
-          chargeCost: charge.chargeCost || 0,
-          serviceGroupID: charge.serviceGroupID || null,
-          selectedFaculties: selectedFacultiesIds,
-          ChargeDetails: charge.ChargeDetails || charge.chargeDetails || [],
-          DoctorShares: charge.DoctorShares || charge.doctorShares || [],
-          ChargeAliases: normalizedChargeAliases,
-          ChargeFaculties: charge.ChargeFaculties || charge.chargeFaculties || [],
-          ChargePacks: charge.ChargePacks || charge.chargePacks || [],
-        };
-        reset(formData);
-        setDetailsExpanded((charge.ChargeDetails?.length || charge.chargeDetails?.length || 0) > 0);
-        setDoctorSharesExpanded((charge.DoctorShares?.length || charge.doctorShares?.length || 0) > 0);
-        setAliasesExpanded(normalizedChargeAliases.length > 0);
-        setFacultiesExpanded((charge.ChargeFaculties?.length || charge.chargeFaculties?.length || 0) > 0);
-        setPacksExpanded((charge.ChargePacks?.length || charge.chargePacks?.length || 0) > 0);
-      } else {
-        const newChargeData = {
-          chargeID: 0,
-          chargeCode: "",
-          chargeDesc: "",
-          chargesHDesc: "",
-          chargeDescLang: "",
-          cShortName: "",
-          bChID: null,
-          chargeType: "",
-          chargeTo: "",
-          chargeStatus: "AC",
-          chargeBreakYN: "N" as "Y" | "N",
-          regServiceYN: "N" as "Y" | "N",
-          regDefaultServiceYN: "N" as "Y" | "N",
-          isBedServiceYN: "N" as "Y" | "N",
-          doctorShareYN: "N" as "Y" | "N",
-          cNhsCode: "",
-          cNhsEnglishName: "",
-          chargeCost: 0,
-          serviceGroupID: null,
-          selectedFaculties: [],
-          ChargeDetails: [],
-          DoctorShares: [],
-          ChargeAliases: [],
-          ChargeFaculties: [],
-          ChargePacks: [],
-        };
-
-        reset(newChargeData);
-        setTabValue(0);
-        setDetailsExpanded(false);
-        setDoctorSharesExpanded(false);
-        setAliasesExpanded(false);
-        setFacultiesExpanded(false);
-        setPacksExpanded(false);
-        initializeGridData([]);
-      }
-    }
-  }, [open, charge]);
-
   const initializeGridData = useCallback(
     (chargeDetails: any[] = []) => {
       const patientGroups: Record<number, any[]> = {};
@@ -304,6 +210,149 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     },
     [pic, bedCategory, wardCategories]
   );
+
+  useEffect(() => {
+    if (open) {
+      debugger;
+      if (charge) {
+        const normalizedChargeAliases = [];
+        const rawAliases = charge.chargeAliases || charge.ChargeAliases || [];
+        if (Array.isArray(rawAliases) && rawAliases.length > 0) {
+          for (const alias of rawAliases) {
+            normalizedChargeAliases.push({
+              chAliasID: alias.chAliasID || alias.chaliasID || 0,
+              chargeID: alias.chargeID || 0,
+              pTypeID: alias.pTypeID || 0,
+              chargeDesc: alias.chargeDesc || "",
+              chargeDescLang: alias.chargeDescLang || alias.chargeDesc || "",
+              rActiveYN: alias.rActiveYN || "Y",
+              rTransferYN: alias.rTransferYN || alias.transferYN || "N",
+              rNotes: alias.rNotes || "",
+            });
+          }
+        }
+
+        // Normalize ChargeDetails with proper field mapping
+        const normalizedChargeDetails = [];
+        const rawChargeDetails = charge.ChargeDetails || charge.chargeDetails || [];
+        if (Array.isArray(rawChargeDetails) && rawChargeDetails.length > 0) {
+          for (const detail of rawChargeDetails) {
+            normalizedChargeDetails.push({
+              chDetID: detail.chDetID || 0,
+              chargeID: detail.chargeID || 0,
+              pTypeID: detail.pTypeID || 0,
+              wCatID: detail.wCatID || 0,
+              // Map API field names to expected format
+              DcValue: detail.DcValue || detail.dcValue || 0,
+              hcValue: detail.hcValue || 0,
+              chValue: detail.chValue || 0,
+              chargeStatus: detail.chargeStatus || "AC",
+              rActiveYN: detail.rActiveYN || "Y",
+              rTransferYN: detail.rTransferYN || detail.transferYN || "N",
+              rNotes: detail.rNotes || "",
+              ChargePacks: detail.ChargePacks || detail.chargePacks || [],
+            });
+          }
+        }
+
+        // Normalize DoctorShares
+        const normalizedDoctorShares = [];
+        const rawDoctorShares = charge.DoctorShares || charge.doctorShares || [];
+        if (Array.isArray(rawDoctorShares) && rawDoctorShares.length > 0) {
+          for (const share of rawDoctorShares) {
+            normalizedDoctorShares.push({
+              docShareID: share.docShareID || 0,
+              chargeID: share.chargeID || 0,
+              conID: share.conID || 0,
+              doctorShare: share.doctorShare || 0,
+              hospShare: share.hospShare || 0,
+              rActiveYN: share.rActiveYN || "Y",
+              rTransferYN: share.rTransferYN || "N",
+              rNotes: share.rNotes || "",
+            });
+          }
+        }
+
+        const selectedFacultiesIds = extractSelectedFaculties(charge.ChargeFaculties || charge.chargeFaculties || []);
+        const formData = {
+          chargeID: charge.chargeID || 0,
+          chargeCode: charge.chargeCode || "",
+          chargeDesc: charge.chargeDesc || "",
+          chargesHDesc: charge.chargesHDesc || "",
+          chargeDescLang: charge.chargeDescLang || "",
+          cShortName: charge.cShortName || "",
+          bChID: charge.bChID || null,
+          chargeType: charge.chargeType || "",
+          chargeTo: charge.chargeTo || "",
+          chargeStatus: charge.chargeStatus || "AC",
+          chargeBreakYN: charge.chargeBreakYN || "N",
+          regServiceYN: charge.regServiceYN || "N",
+          regDefaultServiceYN: charge.regDefaultServiceYN || "N",
+          isBedServiceYN: charge.isBedServiceYN || "N",
+          doctorShareYN: charge.doctorShareYN || "N",
+          cNhsCode: charge.cNhsCode || "",
+          cNhsEnglishName: charge.cNhsEnglishName || "",
+          chargeCost: charge.chargeCost || 0,
+          serviceGroupID: charge.serviceGroupID || charge.sGrpID || null,
+          selectedFaculties: selectedFacultiesIds,
+          ChargeDetails: normalizedChargeDetails,
+          DoctorShares: normalizedDoctorShares,
+          ChargeAliases: normalizedChargeAliases,
+          ChargeFaculties: charge.ChargeFaculties || charge.chargeFaculties || [],
+          ChargePacks: charge.ChargePacks || charge.chargePacks || [],
+        };
+
+        reset(formData);
+
+        // Initialize grid data with normalized charge details
+        initializeGridData(normalizedChargeDetails);
+
+        // Set expansion states based on data availability
+        setDetailsExpanded(normalizedChargeDetails.length > 0);
+        setDoctorSharesExpanded(normalizedDoctorShares.length > 0);
+        setAliasesExpanded(normalizedChargeAliases.length > 0);
+        setFacultiesExpanded((charge.ChargeFaculties?.length || charge.chargeFaculties?.length || 0) > 0);
+        setPacksExpanded((charge.ChargePacks?.length || charge.chargePacks?.length || 0) > 0);
+      } else {
+        const newChargeData = {
+          chargeID: 0,
+          chargeCode: "",
+          chargeDesc: "",
+          chargesHDesc: "",
+          chargeDescLang: "",
+          cShortName: "",
+          bChID: null,
+          chargeType: "",
+          chargeTo: "",
+          chargeStatus: "AC",
+          chargeBreakYN: "N" as "Y" | "N",
+          regServiceYN: "N" as "Y" | "N",
+          regDefaultServiceYN: "N" as "Y" | "N",
+          isBedServiceYN: "N" as "Y" | "N",
+          doctorShareYN: "N" as "Y" | "N",
+          cNhsCode: "",
+          cNhsEnglishName: "",
+          chargeCost: 0,
+          serviceGroupID: null,
+          selectedFaculties: [],
+          ChargeDetails: [],
+          DoctorShares: [],
+          ChargeAliases: [],
+          ChargeFaculties: [],
+          ChargePacks: [],
+        };
+
+        reset(newChargeData);
+        setTabValue(0);
+        setDetailsExpanded(false);
+        setDoctorSharesExpanded(false);
+        setAliasesExpanded(false);
+        setFacultiesExpanded(false);
+        setPacksExpanded(false);
+        initializeGridData([]);
+      }
+    }
+  }, [open, charge, extractSelectedFaculties, reset, initializeGridData]);
 
   const getWardCategoryById = (id: number): string => {
     const category = wardCategories.find((wc) => wc.id === id);

@@ -75,9 +75,42 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [applySuccess, setApplySuccess] = useState<boolean>(false);
 
+  const chargeDetailsArray = useFieldArray({
+    control,
+    name: "ChargeDetails",
+  });
+
   useEffect(() => {
-    setGridData([...pricingGridData]);
-  }, [pricingGridData]);
+    if (pricingGridData.length > 0) {
+      setShowGrid(true);
+      setGridData([...pricingGridData]);
+      const existingPicIds = [...new Set(pricingGridData.map((item) => item.picId.toString()))];
+      const existingWardCategoryNames = new Set<string>();
+      pricingGridData.forEach((item) => {
+        Object.keys(item.wardCategories).forEach((wcName) => {
+          if (item.wardCategories[wcName] && (item.wardCategories[wcName].DcValue > 0 || item.wardCategories[wcName].hcValue > 0 || item.wardCategories[wcName].chValue > 0)) {
+            existingWardCategoryNames.add(wcName);
+          }
+        });
+      });
+
+      const existingWardCategoryIds = Array.from(existingWardCategoryNames)
+        .map((name) => bedCategory.find((bc) => bc.label === name)?.value)
+        .filter(Boolean) as string[];
+      if (existingPicIds.length > 0) {
+        setPicFilters(existingPicIds);
+      }
+      if (existingWardCategoryIds.length > 0) {
+        setWardCategoryFilters(existingWardCategoryIds);
+      }
+    }
+  }, [pricingGridData, bedCategory]);
+
+  useEffect(() => {
+    if (!showGrid && pricingGridData.length === 0) {
+      setGridData([...pricingGridData]);
+    }
+  }, [pricingGridData, showGrid]);
 
   useEffect(() => {
     if (picFilters.length > 0 || wardCategoryFilters.length > 0) {
@@ -85,13 +118,9 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     }
   }, [picFilters, wardCategoryFilters]);
 
-  const chargeDetailsArray = useFieldArray({
-    control,
-    name: "ChargeDetails",
-  });
-
   const picOptions = useMemo(() => pic.map((option) => ({ value: option.value, label: option.label })), [pic]);
   const wardCategoryOptions = useMemo(() => bedCategory.map((option) => ({ value: option.value, label: option.label })), [bedCategory]);
+
   const getFilteredWardCategories = useMemo(() => {
     if (wardCategoryFilters.length === 0) {
       return bedCategory.map((category) => ({
@@ -138,47 +167,44 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
   };
 
   const displayedPricingData = useMemo(() => {
-    const shouldShowGrid = showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0;
+    const shouldShowGrid = showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0 || pricingGridData.length > 0;
     if (!shouldShowGrid) {
       return [];
     }
 
-    // --- FIX IS HERE: Explicitly type the constant ---
-    const filteredByPIC: PricingGridItem[] =
-      picFilters.length > 0
-        ? picFilters.map((picId) => {
-            const existingItem = gridData.find((item) => item.picId.toString() === picId);
-            if (existingItem) {
-              return { ...existingItem };
-            } else {
-              const picInfo = pic.find((p) => p.value === picId);
-              // Now TypeScript knows this object must be a PricingGridItem
-              return {
-                id: `pic-${picId}`,
-                picId: parseInt(picId),
-                picName: picInfo?.label || `PIC ${picId}`,
-                selected: false,
-                wardCategories: {}, // This is valid, as an empty object is assignable to the index signature type
-              };
-            }
-          })
-        : gridData.length > 0
-        ? [...gridData]
-        : pic.map((picOption) => ({
-            // This also must conform to PricingGridItem
-            id: `pic-${picOption.value}`,
-            picId: parseInt(picOption.value),
-            picName: picOption.label,
+    let filteredByPIC: PricingGridItem[] = [];
+
+    if (picFilters.length > 0) {
+      filteredByPIC = picFilters.map((picId) => {
+        const existingItem = gridData.find((item) => item.picId.toString() === picId);
+        if (existingItem) {
+          return { ...existingItem };
+        } else {
+          const picInfo = pic.find((p) => p.value === picId);
+          return {
+            id: `pic-${picId}`,
+            picId: parseInt(picId),
+            picName: picInfo?.label || `PIC ${picId}`,
             selected: false,
             wardCategories: {},
-          }));
+          };
+        }
+      });
+    } else if (gridData.length > 0) {
+      filteredByPIC = [...gridData];
+    } else {
+      filteredByPIC = pic.slice(0, 5).map((picOption) => ({
+        id: `pic-${picOption.value}`,
+        picId: parseInt(picOption.value),
+        picName: picOption.label,
+        selected: false,
+        wardCategories: {},
+      }));
+    }
 
-    // Ensure all filtered ward categories are included
     return filteredByPIC.map((item) => {
-      // The type of 'item' is now correctly inferred as PricingGridItem
       const updatedItem = { ...item, wardCategories: { ...item.wardCategories } };
       getFilteredWardCategories.forEach((category) => {
-        // --- THIS CODE NOW WORKS ---
         if (!updatedItem.wardCategories[category.name]) {
           updatedItem.wardCategories[category.name] = {
             DcValue: 0,
@@ -189,18 +215,11 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       });
       return updatedItem;
     });
-  }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid]);
+  }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid, pricingGridData]);
 
   const isApplyReady = useMemo(() => {
     const numericAmount = parseFloat(amountValue);
-
-    return (
-      // Valid number greater than zero
-      !isNaN(numericAmount) &&
-      numericAmount > 0 &&
-      // Valid price change type (not "None")
-      (priceChangeType === "Increase" || priceChangeType === "Decrease")
-    );
+    return !isNaN(numericAmount) && numericAmount > 0 && (priceChangeType === "Increase" || priceChangeType === "Decrease");
   }, [amountValue, priceChangeType]);
 
   const applyChanges = () => {
@@ -209,6 +228,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     const updatedGridData = [...gridData];
     const rowsToUpdate = selectedRows.length > 0 ? selectedRows : updatedGridData.map((row) => row.id);
     let changesMade = false;
+
     updatedGridData.forEach((row) => {
       if (!rowsToUpdate.includes(row.id) && rowsToUpdate.length > 0) {
         return;
@@ -222,6 +242,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
         const values = row.wardCategories[catName];
         const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
         const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
+
         if (updateDr) {
           const currentValue = values.DcValue || 0;
           let newValue;
@@ -234,6 +255,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           values.DcValue = Math.max(0, newValue);
           changesMade = true;
         }
+
         if (updateHosp) {
           const currentValue = values.hcValue || 0;
           let newValue;
@@ -246,9 +268,11 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           values.hcValue = Math.max(0, newValue);
           changesMade = true;
         }
+
         values.chValue = values.DcValue + values.hcValue;
       });
     });
+
     if (changesMade) {
       setGridData([...updatedGridData]);
       updateChargeDetailsFromGrid();
@@ -323,15 +347,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                     wardCategories: {
                       ...item.wardCategories,
                       [category.name]: {
-                        // --- FIX STARTS HERE ---
-                        DcValue: numValue, // The new value being set
-                        hcValue: item.wardCategories[category.name]?.hcValue || 0, // Get existing or default to 0
-                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0), // Recalculate total
-                        // --- FIX ENDS HERE ---
+                        DcValue: numValue,
+                        hcValue: item.wardCategories[category.name]?.hcValue || 0,
+                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0),
                       },
                     },
                   };
-                  // This will now pass the type check
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
@@ -363,15 +384,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                     wardCategories: {
                       ...item.wardCategories,
                       [category.name]: {
-                        // --- FIX STARTS HERE ---
-                        DcValue: item.wardCategories[category.name]?.DcValue || 0, // Get existing or default to 0
-                        hcValue: numValue, // The new value being set
-                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue, // Recalculate total
-                        // --- FIX ENDS HERE ---
+                        DcValue: item.wardCategories[category.name]?.DcValue || 0,
+                        hcValue: numValue,
+                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue,
                       },
                     },
                   };
-                  // This will now pass the type check
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
@@ -392,7 +410,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           const totalAmount = (item.wardCategories[category.name]?.DcValue || 0) + (item.wardCategories[category.name]?.hcValue || 0);
           return (
             <TextField
-              value={totalAmount.toFixed(2)} // Use toFixed(2) for better display
+              value={totalAmount.toFixed(2)}
               disabled
               size="small"
               fullWidth
@@ -408,7 +426,8 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     });
 
     return columns;
-  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection]); // Removed updateChargeDetailsFromGrid as it's not used here
+  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection]);
+
   const handlePriceChangeTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
     if (newValue) {
       setPriceChangeType(newValue);
@@ -423,6 +442,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
             Pricing Details
           </Typography>
           <Chip label={`${chargeDetailsArray.fields.length} entries`} size="small" color="primary" variant="outlined" />
+          {pricingGridData.length > 0 && <Chip label="Has Data" size="small" color="success" variant="filled" />}
         </Box>
       </AccordionSummary>
       <AccordionDetails>
@@ -577,9 +597,11 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
               <Grid size={{ xs: 12, md: 3 }}>
                 <Box display="flex" justifyContent="flex-end" gap={1} alignItems="flex-end" height="100%">
-                  <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick}>
-                    View
-                  </Button>
+                  {!showGrid && pricingGridData.length === 0 && (
+                    <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick}>
+                      View
+                    </Button>
+                  )}
 
                   <Tooltip
                     title={
@@ -599,7 +621,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
             </Grid>
           </Paper>
 
-          {(showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0) && (
+          {(showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0 || pricingGridData.length > 0) && (
             <>
               <Box sx={{ mb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>

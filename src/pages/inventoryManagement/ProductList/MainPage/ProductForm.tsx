@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
-import { Save as SaveIcon, Cancel as CancelIcon, Refresh as RefreshIcon } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
-import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
-import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useLoading } from "@/hooks/Common/useLoading";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel as CancelIcon, Refresh as RefreshIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
 
 interface ProductFormProps {
   open: boolean;
@@ -170,7 +170,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues,
-    mode: "onChange", // Enable real-time validation
+    mode: "onChange",
   });
 
   // Watch for changes in relevant fields
@@ -184,12 +184,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
     if (taxable === "Y" && taxID && taxType && taxType.length > 0) {
       const selectedTax = taxType.find((tax) => Number(tax.value) === Number(taxID));
       if (selectedTax) {
-        // Extract tax percentage from selected tax
-        // Assuming the tax percentage is available in the tax object
         const taxPercentage = Number(selectedTax.label) || 0;
 
         if (taxPercentage > 0) {
-          // For Indian GST system, typically split equally between CGST and SGST
           const halfTaxRate = taxPercentage / 2;
 
           setValue("gstPerValue", taxPercentage);
@@ -198,7 +195,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         }
       }
     } else if (taxable === "N") {
-      // Clear tax percentages when not taxable
       setValue("gstPerValue", 0);
       setValue("cgstPerValue", 0);
       setValue("sgstPerValue", 0);
@@ -220,7 +216,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       const response = await productService.getNextProductCode();
       if (response.success && response.data) {
         setValue("productCode", response.data);
-        await trigger("productCode"); // Validate the new code
+        await trigger("productCode");
       } else {
         showAlert("Warning", "Could not generate product code. Please enter manually.", "warning");
       }
@@ -236,10 +232,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
   const onSubmit = async (data: ProductFormData) => {
     if (viewOnly) return;
 
-    // Clear any previous form errors
     setFormError(null);
 
-    // Additional validation
     if (chargableYN === "Y" && (!chargePercentage || chargePercentage === 0)) {
       setFormError("Charge percentage is required when product is chargeable");
       return;
@@ -249,7 +243,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       setIsSaving(true);
       setLoading(true);
 
-      // Get selected dropdown items' labels for better data integrity
       const selectedUnit = productUnit?.find((unit) => Number(unit.value) === data.pUnitID);
       const selectedTax = taxType?.find((tax) => Number(tax.value) === data.taxID);
       const selectedManufacturer = manufacturer?.find((mfr) => Number(mfr.value) === data.manufacturerID);
@@ -260,7 +253,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       const selectedCatDescription = productCategory?.find((category) => category.value === data.catValue);
       const selectedPLocation = productLocation?.find((location) => Number(location.value) === data.pLocationID);
 
-      // Enhanced data preparation with proper type handling
       const productData: ProductListDto = {
         ...data,
         productID: data.productID || 0,
@@ -268,7 +260,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         supplierStatus: data.supplierStatus || "A",
         vedCode: data.vedCode || "",
         abcCode: data.abcCode || "",
-        // Normalize Y/N values
         prescription: data.prescription === "Y" ? "Y" : "N",
         expiry: data.expiry === "Y" ? "Y" : "N",
         sellable: data.sellable === "Y" ? "Y" : "N",
@@ -277,7 +268,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         isAssetYN: data.isAssetYN === "Y" ? "Y" : "N",
         transferYN: data.transferYN === "Y" ? "Y" : "N",
         rActiveYN: data.rActiveYN === "Y" ? "Y" : "N",
-        // Ensure numeric values are properly set
         pGrpID: data.pGrpID || undefined,
         pUnitID: data.pUnitID || undefined,
         taxID: data.taxable === "Y" ? data.taxID || undefined : undefined,
@@ -287,7 +277,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         manufacturerID: data.manufacturerID || undefined,
         pLocationID: data.pLocationID || undefined,
         pPackageID: data.pPackageID || undefined,
-        // Add dropdown text values for better data integrity
         pUnitName: selectedUnit?.label || "",
         taxName: selectedTax?.label?.toString() || "",
         taxCode: selectedTax?.code || "",
@@ -306,7 +295,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
 
       if (response.success && response.data) {
         showAlert("Success", product ? "Product updated successfully" : "Product created successfully", "success");
-        onClose(true); // Close form and refresh data
+        onClose(true);
       } else {
         const errorMessage = response.errorMessage || "Failed to save product";
         setFormError(errorMessage);
@@ -339,14 +328,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
     }
   };
 
-  // Enhanced dialog title with status indication
   const dialogTitle = useMemo(() => {
     if (viewOnly) return "View Product Details";
     if (product) return `Edit Product - ${product.productName}`;
     return "Create New Product";
   }, [viewOnly, product]);
 
-  // Enhanced action buttons with better states
   const dialogActions = useMemo(() => {
     if (viewOnly) {
       return <CustomButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />;
@@ -373,6 +360,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       </Box>
     );
   }, [viewOnly, isSaving, isDirty, isValid, product, formError, handleSubmit, onSubmit, onClose, handleReset]);
+
+  const handleRefreshCode = () => {
+    if (!product) {
+      generateProductCode();
+    }
+  };
 
   return (
     <GenericDialog
@@ -406,9 +399,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
 
           {/* Basic Information Section */}
           <Grid size={{ xs: 12 }}>
-            <Card variant="outlined">
+            <Card variant="outlined" sx={{ borderLeft: "3px solid #1976d2" }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
                   Basic Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
@@ -420,7 +413,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       {!product && !viewOnly && (
                         <SmartButton
                           text="Generate"
-                          onClick={generateProductCode}
+                          onClick={handleRefreshCode}
                           variant="outlined"
                           size="small"
                           icon={RefreshIcon}
@@ -446,7 +439,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select a category"
-                      options={productCategory}
+                      options={productCategory || []}
                       size="small"
                       clearable={true}
                     />
@@ -461,7 +454,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select a product group"
-                      options={productGroup}
+                      options={productGroup || []}
                       size="small"
                     />
                   </Grid>
@@ -474,7 +467,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select a sub group"
-                      options={productSubGroup}
+                      options={productSubGroup || []}
                       size="small"
                     />
                   </Grid>
@@ -487,7 +480,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select a manufacturer"
-                      options={manufacturer}
+                      options={manufacturer || []}
                       size="small"
                       clearable={true}
                     />
@@ -509,17 +502,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
             </Card>
           </Grid>
 
-          {/* Price and Tax Section */}
+          {/* Pricing & Tax Section */}
           <Grid size={{ xs: 12 }}>
-            <Card variant="outlined">
+            <Card variant="outlined" sx={{ borderLeft: "3px solid #ff9800" }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color="#ff9800" fontWeight="bold">
                   Pricing & Tax Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
-                  {/* Pricing Row */}
                   <Grid size={{ xs: 12, md: 6 }}>
                     <FormField name="defaultPrice" control={control} label="Price (₹)" type="number" required disabled={viewOnly} size="small" placeholder="Enter price" />
                   </Grid>
@@ -531,11 +523,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                     </Box>
                   </Grid>
 
-                  {/* Tax Section - Only show when taxable is Y */}
                   {taxable === "Y" && (
                     <>
                       <Grid size={{ xs: 12 }}>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+                        <Typography variant="subtitle2" color="#ff9800" sx={{ mt: 1, mb: 1, fontWeight: "medium" }}>
                           Tax Configuration
                         </Typography>
                       </Grid>
@@ -549,7 +540,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                           required={taxable === "Y"}
                           disabled={viewOnly}
                           placeholder="Select Tax Type"
-                          options={taxType}
+                          options={taxType || []}
                           size="small"
                         />
                       </Grid>
@@ -568,11 +559,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                     </>
                   )}
 
-                  {/* Charge Section - Only show when chargeable is Y */}
                   {chargableYN === "Y" && (
                     <>
                       <Grid size={{ xs: 12 }}>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+                        <Typography variant="subtitle2" color="#ff9800" sx={{ mt: 1, mb: 1, fontWeight: "medium" }}>
                           Charge Configuration
                         </Typography>
                       </Grid>
@@ -597,20 +587,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
 
           {/* Inventory Settings Section */}
           <Grid size={{ xs: 12 }}>
-            <Card variant="outlined">
+            <Card variant="outlined" sx={{ borderLeft: "3px solid #2196f3" }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color="#2196f3" fontWeight="bold">
                   Inventory Settings
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormField name="sellable" control={control} label="Sellable" type="switch" disabled={viewOnly} size="small" />
+                    <Box>
+                      <FormField name="sellable" control={control} label="Sellable" type="switch" disabled={viewOnly} size="small" />
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                        Enable if this product can be sold to customers
+                      </Typography>
+                    </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormField name="isAssetYN" control={control} label="Is Asset" type="switch" disabled={viewOnly} size="small" />
+                    <Box>
+                      <FormField name="isAssetYN" control={control} label="Is Asset" type="switch" disabled={viewOnly} size="small" />
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                        Mark if this product is a fixed asset
+                      </Typography>
+                    </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -626,7 +626,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select issue unit"
-                      options={productUnit}
+                      options={productUnit || []}
                       size="small"
                     />
                   </Grid>
@@ -643,7 +643,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select base unit"
-                      options={productBaseUnit}
+                      options={productBaseUnit || []}
                       size="small"
                     />
                   </Grid>
@@ -668,7 +668,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select location"
-                      options={productLocation}
+                      options={productLocation || []}
                       size="small"
                     />
                   </Grid>
@@ -679,20 +679,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
 
           {/* Medication Information Section */}
           <Grid size={{ xs: 12 }}>
-            <Card variant="outlined">
+            <Card variant="outlined" sx={{ borderLeft: "3px solid #9c27b0" }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color="#9c27b0" fontWeight="bold">
                   Medication Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormField name="prescription" control={control} label="Requires Prescription" type="switch" disabled={viewOnly} size="small" />
+                    <Box>
+                      <FormField name="prescription" control={control} label="Requires Prescription" type="switch" disabled={viewOnly} size="small" />
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                        Enable if this medication requires a prescription
+                      </Typography>
+                    </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormField name="expiry" control={control} label="Has Expiry" type="switch" disabled={viewOnly} size="small" />
+                    <Box>
+                      <FormField name="expiry" control={control} label="Has Expiry" type="switch" disabled={viewOnly} size="small" />
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                        Enable if this product has an expiration date
+                      </Typography>
+                    </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -737,10 +747,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
 
           {/* Classification Section */}
           <Grid size={{ xs: 12 }}>
-            <Card variant="outlined">
+            <Card variant="outlined" sx={{ borderLeft: "3px solid #607d8b" }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Classification
+                <Typography variant="h6" gutterBottom color="#607d8b" fontWeight="bold">
+                  Classification & Status
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
@@ -804,11 +814,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
             </Card>
           </Grid>
 
-          {/* Notes Section */}
+          {/* Additional Information Section */}
           <Grid size={{ xs: 12 }}>
-            <Card variant="outlined">
+            <Card variant="outlined" sx={{ borderLeft: "3px solid #4caf50" }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color="#4caf50" fontWeight="bold">
                   Additional Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
@@ -823,7 +833,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       disabled={viewOnly}
                       rows={4}
                       size="small"
-                      placeholder="Enter notes about the product"
+                      placeholder="Enter detailed notes about the product, including usage instructions, contraindications, or special handling requirements"
                     />
                   </Grid>
 
@@ -831,12 +841,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                     <FormField
                       name="rNotes"
                       control={control}
-                      label="Additional Notes"
+                      label="Additional Remarks"
                       type="textarea"
                       disabled={viewOnly}
                       rows={4}
                       size="small"
-                      placeholder="Enter any additional remarks"
+                      placeholder="Enter any additional remarks, regulatory information, or special considerations for this product"
                     />
                   </Grid>
                 </Grid>

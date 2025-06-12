@@ -294,16 +294,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
           <Typography variant="subtitle1" sx={{ textTransform: "uppercase", fontWeight: "bold" }}>
             Doctor Revenue Sharing
           </Typography>
-          <Chip
-            label={`${doctorShares?.length || 0} doctors`}
-            size="small"
-            sx={{
-              bgcolor: "#e8f5e9",
-              color: "#2e7d32",
-              border: "1px solid #2e7d32",
-              borderRadius: "16px",
-            }}
-          />
+          <Chip label={`${doctorShares?.length || 0} doctors`} size="small" />
         </Box>
       </AccordionSummary>
       <AccordionDetails>
@@ -320,12 +311,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
                 }
                 const doctor = attendingPhy.find((doc) => doc.value === selected);
                 return doctor?.label || selected;
-              }}
-              sx={{
-                bgcolor: "#f5f5f5",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#e0e0e0",
-                },
               }}
             >
               <MenuItem value="">
