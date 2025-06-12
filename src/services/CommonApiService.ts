@@ -1,8 +1,8 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 import CryptoJS from "crypto-js";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { toast } from "react-toastify";
 
 // Initialize dayjs plugins
@@ -33,9 +33,9 @@ const handleError = (error: unknown): void => {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as ApiErrorResponse;
     errorDetails.message = response?.message || error.message;
-    errorDetails.status = error.response?.status;
-    errorDetails.code = error.code;
-    errorDetails.path = error.config?.url;
+    errorDetails.status = error.response?.status ?? 0;
+    errorDetails.code = error.code ?? "";
+    errorDetails.path = error.config?.url ?? "";
 
     // Log detailed error information
     console.error("API Error:", {

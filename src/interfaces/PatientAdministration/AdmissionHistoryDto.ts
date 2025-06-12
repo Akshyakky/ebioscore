@@ -9,6 +9,6 @@ export interface AdmissionHistoryDto {
   wardName: string;
   roomName: string;
   bedName: string;
-  dischargeDate?: Date;
+  dischargeDate: Date | null;
   status: string;
 }

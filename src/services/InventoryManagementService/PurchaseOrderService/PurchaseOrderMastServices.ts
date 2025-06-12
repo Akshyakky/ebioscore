@@ -1,8 +1,8 @@
-import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
-import { CommonApiService } from "@/services/CommonApiService";
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { CommonApiService } from "@/services/CommonApiService";
+import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 class PurchaseOrderMastServices extends GenericEntityService<PurchaseOrderMastDto> {
   constructor() {
     super(

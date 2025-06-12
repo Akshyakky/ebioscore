@@ -1,10 +1,10 @@
 // src/services/ClinicalManagementServices/diagnosisService.ts
 
-import { DiagnosisDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
-import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
-import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
+import { DiagnosisDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { CommonApiService } from "../CommonApiService";
+import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
 
 class DiagnosisService extends GenericEntityService<DiagnosisDto> {
   constructor() {

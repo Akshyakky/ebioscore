@@ -36,6 +36,7 @@ const chargeSchema = z.object({
   cNhsEnglishName: z.string().optional().nullable(),
   chargeCost: z.number().optional().nullable(),
   serviceGroupID: z.number().optional().nullable(),
+  selectedFaculties: z.array(z.number()).optional().default([]), // Add this field
   ChargeDetails: z.array(z.any()).optional().default([]),
   DoctorShares: z.array(z.any()).optional().default([]),
   ChargeAliases: z.array(z.any()).optional().default([]),
@@ -58,6 +59,7 @@ interface PricingGridItem {
     };
   };
 }
+
 interface ChargeFormDialogProps {
   open: boolean;
   onClose: () => void;
@@ -132,6 +134,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       cNhsEnglishName: "",
       chargeCost: 0,
       serviceGroupID: null,
+      selectedFaculties: [], // Initialize this field
       ChargeDetails: [],
       DoctorShares: [],
       ChargeAliases: [],
@@ -151,9 +154,18 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   const watchedServiceGroupID = watch("serviceGroupID");
   const watchedDoctorShareYN = watch("doctorShareYN");
 
+  // Extract selected faculties from ChargeFaculties data
+  const extractSelectedFaculties = useCallback((chargeFaculties: BChargeFacultyDto[]): number[] => {
+    if (!chargeFaculties || chargeFaculties.length === 0) return [];
+    return chargeFaculties.map((faculty) => faculty.aSubID).filter((id) => id != null);
+  }, []);
+
   useEffect(() => {
     if (open) {
       if (charge) {
+        // Extract selected faculties for the AssociatedFacultiesComponent
+        const selectedFacultiesIds = extractSelectedFaculties(charge.ChargeFaculties || []);
+
         reset({
           chargeID: charge.chargeID || 0,
           chargeCode: charge.chargeCode || "",
@@ -174,18 +186,25 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           cNhsEnglishName: charge.cNhsEnglishName || "",
           chargeCost: charge.chargeCost || 0,
           serviceGroupID: charge.serviceGroupID || null,
+          selectedFaculties: selectedFacultiesIds, // Set the selected faculties
           ChargeDetails: charge.ChargeDetails || [],
           DoctorShares: charge.DoctorShares || [],
           ChargeAliases: charge.ChargeAliases || [],
           ChargeFaculties: charge.ChargeFaculties || [],
           ChargePacks: charge.ChargePacks || [],
         });
-        initializeGridData(charge.ChargeDetails);
-        setDetailsExpanded(charge.ChargeDetails?.length > 0);
-        setDoctorSharesExpanded(charge.DoctorShares?.length > 0);
-        setAliasesExpanded(charge.ChargeAliases?.length > 0);
-        setFacultiesExpanded(charge.ChargeFaculties?.length > 0);
-        setPacksExpanded(charge.ChargePacks?.length > 0);
+
+        // Initialize grid data with a small delay to ensure form is ready
+        setTimeout(() => {
+          initializeGridData(charge.ChargeDetails || []);
+        }, 100);
+
+        // Set expansion states based on data availability
+        setDetailsExpanded((charge.ChargeDetails?.length || 0) > 0);
+        setDoctorSharesExpanded((charge.DoctorShares?.length || 0) > 0);
+        setAliasesExpanded((charge.ChargeAliases?.length || 0) > 0);
+        setFacultiesExpanded((charge.ChargeFaculties?.length || 0) > 0);
+        setPacksExpanded((charge.ChargePacks?.length || 0) > 0);
       } else {
         reset({
           chargeID: 0,
@@ -207,6 +226,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           cNhsEnglishName: "",
           chargeCost: 0,
           serviceGroupID: null,
+          selectedFaculties: [],
           ChargeDetails: [],
           DoctorShares: [],
           ChargeAliases: [],
@@ -222,10 +242,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         initializeGridData([]);
       }
     }
-  }, [open, charge, reset, trigger]);
+  }, [open, charge, reset, trigger, extractSelectedFaculties]);
 
   const initializeGridData = useCallback(
     (chargeDetails: any[] = []) => {
+      console.log("Initializing grid data with charge details:", chargeDetails);
+
       const patientGroups: Record<number, any[]> = {};
       chargeDetails.forEach((detail) => {
         if (detail && detail.pTypeID != null) {
@@ -241,10 +263,13 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
       const gridData: PricingGridItem[] = [];
       const patientTypes = Object.keys(patientGroups).length > 0 ? Object.keys(patientGroups).map(Number) : pic.slice(0, 5).map((p) => Number(p.value));
+
       patientTypes.forEach((patientTypeId) => {
         const patientType = pic.find((p) => Number(p.value) === patientTypeId);
         const details = patientGroups[patientTypeId] || [];
         const wardCategoriesData: Record<string, any> = {};
+
+        // Initialize all ward categories
         wardCategories.forEach((wc) => {
           wardCategoriesData[wc.name] = {
             DcValue: 0,
@@ -253,10 +278,11 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           };
         });
 
+        // Populate with existing data
         details.forEach((detail) => {
           const wardCategory = bedCategory.find((wc) => Number(wc.value) === detail.wCatID);
           const wcName = wardCategory?.label || getWardCategoryById(detail.wCatID);
-          if (wcName) {
+          if (wcName && wardCategoriesData[wcName]) {
             wardCategoriesData[wcName] = {
               DcValue: detail.DcValue || 0,
               hcValue: detail.hcValue || 0,
@@ -274,6 +300,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         });
       });
 
+      console.log("Initialized grid data:", gridData);
       setPricingGridData(gridData);
     },
     [pic, bedCategory, wardCategories]
@@ -403,7 +430,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
   const onFormSubmit = async (data: ChargeFormData) => {
     try {
-      debugger;
       updateAllComponentsData();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const latestFormData = getValues();
@@ -507,6 +533,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
   const handleClear = () => {
     if (isEditMode && charge) {
+      const selectedFacultiesIds = extractSelectedFaculties(charge.ChargeFaculties || []);
+
       reset({
         chargeID: charge.chargeID || 0,
         chargeCode: charge.chargeCode || "",
@@ -527,6 +555,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         cNhsEnglishName: charge.cNhsEnglishName || "",
         chargeCost: charge.chargeCost || 0,
         serviceGroupID: charge.serviceGroupID || null,
+        selectedFaculties: selectedFacultiesIds,
         ChargeDetails: charge.ChargeDetails || [],
         DoctorShares: charge.DoctorShares || [],
         ChargeAliases: charge.ChargeAliases || [],
@@ -555,6 +584,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         cNhsEnglishName: "",
         chargeCost: 0,
         serviceGroupID: null,
+        selectedFaculties: [],
         ChargeDetails: [],
         DoctorShares: [],
         ChargeAliases: [],

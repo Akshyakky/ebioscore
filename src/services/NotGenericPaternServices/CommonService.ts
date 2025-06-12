@@ -1,7 +1,7 @@
 import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { store } from "@/store";
 import { CommonApiService } from "../CommonApiService";
-import { OperationResult } from "@/interfaces/Common/OperationResult";
 
 // Initialize ApiService with the base URL for the common API
 const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });

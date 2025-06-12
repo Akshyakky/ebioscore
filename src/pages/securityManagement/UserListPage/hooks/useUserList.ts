@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { SaveUserPermissionsRequest, UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { appUserService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const useUserList = () => {
   const [userList, setUserList] = useState<UserListDto[]>([]);

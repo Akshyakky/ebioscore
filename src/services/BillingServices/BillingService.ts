@@ -1,19 +1,19 @@
 // src/services/BillingServices/billingService.ts
 
+import { APIConfig } from "@/apiConfig";
 import {
-  BChargeDto,
-  BChargeDetailDto,
-  BDoctorSharePercShareDto,
   BChargeAliasDto,
+  BChargeDetailDto,
+  BChargeDto,
   BChargeFacultyDto,
   BChargePackDto,
-  ChargeWithAllDetailsDto,
+  BDoctorSharePercShareDto,
   ChargeCodeGenerationDto,
+  ChargeWithAllDetailsDto,
 } from "@/interfaces/Billing/ChargeDto";
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { CommonApiService } from "@/services/CommonApiService";
 import { GenericEntityService, OperationResult } from "@/services/GenericEntityService/GenericEntityService";
-import { APIConfig } from "@/apiConfig";
+import { createEntityService } from "@/utils/Common/serviceFactory";
 
 // Create extended services with custom methods
 class ExtendedBChargeDetailService extends GenericEntityService<BChargeDetailDto> {
@@ -109,4 +109,4 @@ export const bChargeFacultyService = new ExtendedBChargeFacultyService();
 export const bChargePackService = new ExtendedBChargePackService();
 
 // Export types for convenience
-export type { BChargeDto, BChargeDetailDto, BDoctorSharePercShareDto, BChargeAliasDto, BChargeFacultyDto, BChargePackDto, ChargeWithAllDetailsDto, ChargeCodeGenerationDto };
+export type { BChargeAliasDto, BChargeDetailDto, BChargeDto, BChargeFacultyDto, BChargePackDto, BDoctorSharePercShareDto, ChargeCodeGenerationDto, ChargeWithAllDetailsDto };

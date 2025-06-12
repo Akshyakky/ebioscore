@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakListData";
 import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { useCallback, useState } from "react";
 
 const useGenericBreakConSuspend = createEntityHook<BreakConSuspendData>(breakConSuspendService, "bCSID");
 

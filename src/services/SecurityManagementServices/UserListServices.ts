@@ -1,9 +1,9 @@
-import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
-import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
-import { SaveUserPermissionsRequest, UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
+import { SaveUserPermissionsRequest, UserListDto } from "@/interfaces/SecurityManagement/UserListData";
+import { CommonApiService } from "../CommonApiService";
+import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
 class UserListServices extends GenericEntityService<UserListDto> {
   constructor() {
     super(

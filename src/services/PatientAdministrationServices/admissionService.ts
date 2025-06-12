@@ -1,10 +1,10 @@
-import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
-import { BaseDto, GenericEntityService } from "../GenericEntityService/GenericEntityService";
-import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
-import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
-import { CommonApiService } from "../CommonApiService";
-import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { CommonApiService } from "../CommonApiService";
+import { BaseDto, GenericEntityService } from "../GenericEntityService/GenericEntityService";
 
 export enum AdmissionStatus {
   ADMITTED = "ADMITTED",
@@ -110,7 +110,7 @@ class ExtendedAdmissionService extends GenericEntityService<AdmissionDto> {
     return safeHistory.map((record) => ({
       ...record,
       admitDate: new Date(record.admitDate),
-      dischargeDate: record.dischargeDate ? new Date(record.dischargeDate) : undefined,
+      dischargeDate: record.dischargeDate ? new Date(record.dischargeDate) : null,
       attendingPhysicianName: this.formatPhysicianName(record.attendingPhysicianName, record.speciality),
       wardName: this.formatLocation(record.wardName, record.roomName),
       status: this.formatAdmissionStatus(record.status as AdmissionStatus),

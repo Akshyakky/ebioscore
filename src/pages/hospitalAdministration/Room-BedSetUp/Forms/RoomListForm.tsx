@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { RoomGroupDto, RoomListDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { RoomGroupDto, RoomListDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { useAlert } from "@/providers/AlertProvider";
 import { roomGroupService, roomListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel, Refresh, Save } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, CircularProgress, Divider, Grid, InputAdornment, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 interface RoomListFormProps {
   open: boolean;
@@ -174,7 +174,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
         setLoading(false);
       }
     },
-    [ setValue, showAlert]
+    [setValue, showAlert]
   );
   useEffect(() => {
     if (rgrpID && rgrpID !== 0) {
@@ -388,7 +388,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                         label="Room Group"
                         type="select"
                         required
-                        disabled={viewOnly || (initialData?.rgrpID && !isAddMode)}
+                        disabled={viewOnly || (initialData?.rgrpID !== undefined && initialData.rgrpID !== 0 && !isAddMode)}
                         size="small"
                         fullWidth
                         options={roomGroups.map((group) => ({

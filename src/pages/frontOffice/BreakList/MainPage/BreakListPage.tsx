@@ -1,25 +1,25 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  PauseCircleOutline as SuspendIcon,
-  PlayCircleOutline as ResumeIcon,
-} from "@mui/icons-material";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { BreakConSuspendData, BreakDto } from "@/interfaces/FrontOffice/BreakListData";
+import { useAlert } from "@/providers/AlertProvider";
+import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { debounce } from "@/utils/Common/debounceUtils";
+import {
+  Add as AddIcon,
+  Close as CloseIcon,
+  Delete as DeleteIcon,
+  Refresh as RefreshIcon,
+  PlayCircleOutline as ResumeIcon,
+  Search as SearchIcon,
+  PauseCircleOutline as SuspendIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import BreakListForm from "../Form/BreakListForm";
 import BreakSuspend from "../Form/BreakSuspend";
-import { useAlert } from "@/providers/AlertProvider";
-import { debounce } from "@/utils/Common/debounceUtils";
-import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useBreakListOperations } from "../hooks/useBreakListOperations";
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -215,9 +215,9 @@ const BreakListPage: React.FC = () => {
       };
     }
 
-    const physicianCount = breakList.filter((b) => b.isPhyResYN === "Y").length;
-    const suspendedCount = breakList.filter((b) => b.status === "Suspended").length;
-    const activeCount = breakList.filter((b) => b.rActiveYN === "Y").length - suspendedCount;
+    const physicianCount = breakList.filter((b) => b?.isPhyResYN === "Y").length;
+    const suspendedCount = breakList.filter((b) => b?.status === "Suspended").length;
+    const activeCount = breakList.filter((b) => b?.rActiveYN === "Y").length - suspendedCount;
 
     return {
       totalBreaks: breakList.length,
@@ -234,16 +234,16 @@ const BreakListPage: React.FC = () => {
     return breakList.filter((breakItem) => {
       const matchesSearch =
         debouncedSearchTerm === "" ||
-        breakItem.bLName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        breakItem.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        breakItem.bLFrqDesc?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+        breakItem?.bLName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        breakItem?.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        breakItem?.bLFrqDesc?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
       const matchesStatus =
         filters.status === "" ||
-        (filters.status === "active" && breakItem.rActiveYN === "Y" && breakItem.status === "") ||
-        (filters.status === "suspended" && breakItem.status === "Suspended");
+        (filters.status === "active" && breakItem?.rActiveYN === "Y" && breakItem?.status === "") ||
+        (filters.status === "suspended" && breakItem?.status === "Suspended");
 
-      const matchesType = filters.type === "" || (filters.type === "physician" && breakItem.isPhyResYN === "Y") || (filters.type === "resource" && breakItem.isPhyResYN === "N");
+      const matchesType = filters.type === "" || (filters.type === "physician" && breakItem?.isPhyResYN === "Y") || (filters.type === "resource" && breakItem?.isPhyResYN === "N");
 
       return matchesSearch && matchesStatus && matchesType;
     });
@@ -421,8 +421,8 @@ const BreakListPage: React.FC = () => {
           title={
             value === "Suspended" ? (
               <Box>
-                <Typography variant="body2">Suspended From: {formatDate(item.bCSStartDate)}</Typography>
-                <Typography variant="body2">Suspended Until: {formatDate(item.bCSEndDate)}</Typography>
+                <Typography variant="body2">Suspended From: {formatDate(item?.bCSStartDate || "")}</Typography>
+                <Typography variant="body2">Suspended Until: {formatDate(item?.bCSEndDate || "")}</Typography>
               </Box>
             ) : (
               ""
@@ -587,7 +587,7 @@ const BreakListPage: React.FC = () => {
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid columns={columns} data={filteredBreaks} maxHeight="calc(100vh - 280px)" emptyStateMessage="No breaks found" loading={isLoading} />
+        <CustomGrid columns={columns} data={filteredBreaks as BreakDto[]} maxHeight="calc(100vh - 280px)" emptyStateMessage="No breaks found" loading={isLoading} />
       </Paper>
 
       {isFormOpen && <BreakListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedBreak} viewOnly={isViewMode} />}

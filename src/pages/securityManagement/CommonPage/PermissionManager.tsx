@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { Grid, Typography } from "@mui/material";
-import { useForm } from "react-hook-form";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { CustomUISwitch } from "@/components/Switch/CustomUISwitch";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { SaveUserPermissionsRequest, UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
-import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
 import { useAlert } from "@/providers/AlertProvider";
-import { CustomUISwitch } from "@/components/Switch/CustomUISwitch";
-import { profileDetailService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { profileService } from "@/services/SecurityManagementServices/ProfileListServices";
+import { profileDetailService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
+import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
+import { Grid, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface PermissionFormData {
   mainModuleId: number;

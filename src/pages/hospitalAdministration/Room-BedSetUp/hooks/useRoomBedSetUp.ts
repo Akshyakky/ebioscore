@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
-import { roomGroupService, roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useAlert } from "@/providers/AlertProvider";
+import { roomGroupService, roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { useCallback, useEffect, useState } from "react";
 
 export const useBedSetup = () => {
   const [roomGroups, setRoomGroups] = useState<RoomGroupDto[]>([]);
