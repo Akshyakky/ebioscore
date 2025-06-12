@@ -225,8 +225,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               pTypeID: alias.pTypeID || 0,
               chargeDesc: alias.chargeDesc || "",
               chargeDescLang: alias.chargeDescLang || alias.chargeDesc || "",
-              rActiveYN: alias.rActiveYN || "Y",
-              rTransferYN: alias.rTransferYN || alias.transferYN || "N",
+              rActiveYN: "Y",
+              rTransferYN: "N",
               rNotes: alias.rNotes || "",
             });
           }
@@ -242,13 +242,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               chargeID: detail.chargeID || 0,
               pTypeID: detail.pTypeID || 0,
               wCatID: detail.wCatID || 0,
-              // Map API field names to expected format
               DcValue: detail.DcValue || detail.dcValue || 0,
               hcValue: detail.hcValue || 0,
               chValue: detail.chValue || 0,
               chargeStatus: detail.chargeStatus || "AC",
-              rActiveYN: detail.rActiveYN || "Y",
-              rTransferYN: detail.rTransferYN || detail.transferYN || "N",
+              rActiveYN: "Y",
+              rTransferYN: "N",
               rNotes: detail.rNotes || "",
               ChargePacks: detail.ChargePacks || detail.chargePacks || [],
             });
@@ -266,8 +265,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               conID: share.conID || 0,
               doctorShare: share.doctorShare || 0,
               hospShare: share.hospShare || 0,
-              rActiveYN: share.rActiveYN || "Y",
-              rTransferYN: share.rTransferYN || "N",
+              rActiveYN: "Y",
+              rTransferYN: "N",
               rNotes: share.rNotes || "",
             });
           }
@@ -534,7 +533,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               conID: conID,
               doctorShare: Number(share.doctorShare) || 0,
               hospShare: Number(share.hospShare) || 0,
-              rActiveYN: share.rActiveYN || "Y",
+              rActiveYN: "Y",
               rTransferYN: share.rTransferYN || "N",
               rNotes: share.rNotes || "",
             };
