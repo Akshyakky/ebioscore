@@ -2,13 +2,16 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import {
   Add as AddIcon,
+  Calculate as CalculateIcon,
   Check as CheckIcon,
   ExpandMore as ExpandMoreIcon,
-  FilterList as FilterIcon,
   AttachMoney as MoneyIcon,
   PercentOutlined as PercentIcon,
+  Refresh as RefreshIcon,
   Remove as RemoveIcon,
+  TrendingUp as TrendingUpIcon,
   Visibility as VisibilityIcon,
+  Warning as WarningIcon,
 } from "@mui/icons-material";
 import {
   Accordion,
@@ -19,17 +22,20 @@ import {
   Button,
   Chip,
   Divider,
+  Fade,
   Grid,
+  IconButton,
   InputAdornment,
   Paper,
   Snackbar,
+  Stack,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, useFieldArray } from "react-hook-form";
 
 interface PricingGridItem {
@@ -61,9 +67,32 @@ interface PriceDetailsComponentProps {
   wardCategories: WardCategory[];
   pic: { value: string; label: string }[];
   bedCategory: { value: string; label: string }[];
+  disabled?: boolean;
 }
 
-const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, expanded, onToggleExpand, pricingGridData, updateChargeDetailsFromGrid, pic, bedCategory }) => {
+interface PricingStatistics {
+  totalConfigurations: number;
+  averagePrice: number;
+  minPrice: number;
+  maxPrice: number;
+  priceRange: number;
+  configurationPercentage: number;
+  hasInconsistencies: boolean;
+  totalDoctorAmount: number;
+  totalHospitalAmount: number;
+  doctorHospitalRatio: number;
+}
+
+const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
+  control,
+  expanded,
+  onToggleExpand,
+  pricingGridData,
+  updateChargeDetailsFromGrid,
+  pic,
+  bedCategory,
+  disabled = false,
+}) => {
   const [picFilters, setPicFilters] = useState<string[]>([]);
   const [wardCategoryFilters, setWardCategoryFilters] = useState<string[]>([]);
   const [isPercentage, setIsPercentage] = useState<boolean>(false);
@@ -74,11 +103,59 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
   const [gridData, setGridData] = useState<PricingGridItem[]>([]);
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [applySuccess, setApplySuccess] = useState<boolean>(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showAdvancedControls, setShowAdvancedControls] = useState<boolean>(false);
 
   const chargeDetailsArray = useFieldArray({
     control,
     name: "ChargeDetails",
   });
+
+  const pricingStatistics = useMemo((): PricingStatistics => {
+    const allPrices: number[] = [];
+    const doctorAmounts: number[] = [];
+    const hospitalAmounts: number[] = [];
+    let configuredCount = 0;
+    let totalPossibleConfigurations = 0;
+    let hasInconsistencies = false;
+    gridData.forEach((row) => {
+      Object.values(row.wardCategories).forEach((category) => {
+        totalPossibleConfigurations++;
+        const total = category.DcValue + category.hcValue;
+        if (total > 0) {
+          configuredCount++;
+          allPrices.push(total);
+          doctorAmounts.push(category.DcValue);
+          hospitalAmounts.push(category.hcValue);
+          if (category.chValue !== total) {
+            hasInconsistencies = true;
+          }
+        }
+      });
+    });
+
+    const averagePrice = allPrices.length > 0 ? allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length : 0;
+    const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
+    const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 0;
+    const priceRange = maxPrice - minPrice;
+    const configurationPercentage = totalPossibleConfigurations > 0 ? (configuredCount / totalPossibleConfigurations) * 100 : 0;
+    const totalDoctorAmount = doctorAmounts.reduce((sum, amount) => sum + amount, 0);
+    const totalHospitalAmount = hospitalAmounts.reduce((sum, amount) => sum + amount, 0);
+    const doctorHospitalRatio = totalHospitalAmount > 0 ? totalDoctorAmount / totalHospitalAmount : 0;
+
+    return {
+      totalConfigurations: configuredCount,
+      averagePrice,
+      minPrice,
+      maxPrice,
+      priceRange,
+      configurationPercentage,
+      hasInconsistencies,
+      totalDoctorAmount,
+      totalHospitalAmount,
+      doctorHospitalRatio,
+    };
+  }, [gridData]);
 
   useEffect(() => {
     if (pricingGridData.length > 0) {
@@ -88,7 +165,8 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       const existingWardCategoryNames = new Set<string>();
       pricingGridData.forEach((item) => {
         Object.keys(item.wardCategories).forEach((wcName) => {
-          if (item.wardCategories[wcName] && (item.wardCategories[wcName].DcValue > 0 || item.wardCategories[wcName].hcValue > 0 || item.wardCategories[wcName].chValue > 0)) {
+          const category = item.wardCategories[wcName];
+          if (category && (category.DcValue > 0 || category.hcValue > 0 || category.chValue > 0)) {
             existingWardCategoryNames.add(wcName);
           }
         });
@@ -97,6 +175,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       const existingWardCategoryIds = Array.from(existingWardCategoryNames)
         .map((name) => bedCategory.find((bc) => bc.label === name)?.value)
         .filter(Boolean) as string[];
+
       if (existingPicIds.length > 0) {
         setPicFilters(existingPicIds);
       }
@@ -120,7 +199,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
   const picOptions = useMemo(() => pic.map((option) => ({ value: option.value, label: option.label })), [pic]);
   const wardCategoryOptions = useMemo(() => bedCategory.map((option) => ({ value: option.value, label: option.label })), [bedCategory]);
-
   const getFilteredWardCategories = useMemo(() => {
     if (wardCategoryFilters.length === 0) {
       return bedCategory.map((category) => ({
@@ -129,7 +207,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       }));
     }
 
-    return wardCategoryFilters.map((filterId, index) => {
+    return wardCategoryFilters.map((filterId) => {
       const category = bedCategory.find((cat) => cat.value === filterId);
       return {
         id: parseInt(filterId),
@@ -146,37 +224,17 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     return picFilters.map((filterId) => pic.find((p) => p.value === filterId)?.label).filter(Boolean);
   }, [picFilters, pic]);
 
-  const selectAllRows = () => {
-    if (selectedRows.length === displayedPricingData.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(displayedPricingData.map((row) => row.id));
-    }
-  };
-
-  const toggleRowSelection = (rowId: string) => {
-    if (selectedRows.includes(rowId)) {
-      setSelectedRows(selectedRows.filter((id) => id !== rowId));
-    } else {
-      setSelectedRows([...selectedRows, rowId]);
-    }
-  };
-
-  const isRowSelected = (rowId: string) => {
-    return selectedRows.includes(rowId);
-  };
-
   const displayedPricingData = useMemo(() => {
     const shouldShowGrid = showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0 || pricingGridData.length > 0;
+
     if (!shouldShowGrid) {
       return [];
     }
-
     let filteredByPIC: PricingGridItem[] = [];
-
     if (picFilters.length > 0) {
       filteredByPIC = picFilters.map((picId) => {
         const existingItem = gridData.find((item) => item.picId.toString() === picId);
+
         if (existingItem) {
           return { ...existingItem };
         } else {
@@ -213,27 +271,71 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           };
         }
       });
+
       return updatedItem;
     });
   }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid, pricingGridData]);
 
+  const selectAllRows = useCallback(() => {
+    if (selectedRows.length === displayedPricingData.length) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(displayedPricingData.map((row) => row.id));
+    }
+  }, [selectedRows.length, displayedPricingData]);
+
+  const toggleRowSelection = useCallback((rowId: string) => {
+    setSelectedRows((prev) => (prev.includes(rowId) ? prev.filter((id) => id !== rowId) : [...prev, rowId]));
+  }, []);
+
+  const isRowSelected = useCallback(
+    (rowId: string) => {
+      return selectedRows.includes(rowId);
+    },
+    [selectedRows]
+  );
+
   const isApplyReady = useMemo(() => {
     const numericAmount = parseFloat(amountValue);
-    return !isNaN(numericAmount) && numericAmount > 0 && (priceChangeType === "Increase" || priceChangeType === "Decrease");
-  }, [amountValue, priceChangeType]);
+    const hasValidAmount = !isNaN(numericAmount) && numericAmount > 0;
+    const hasValidOperation = priceChangeType === "Increase" || priceChangeType === "Decrease";
+    const hasValidTargets = displayedPricingData.length > 0;
+    return hasValidAmount && hasValidOperation && hasValidTargets;
+  }, [amountValue, priceChangeType, displayedPricingData.length]);
 
-  const applyChanges = () => {
+  const validatePricingData = useCallback(() => {
+    const errors: string[] = [];
+    gridData.forEach((row, rowIndex) => {
+      Object.entries(row.wardCategories).forEach(([wcName, values]) => {
+        if (values.DcValue < 0) {
+          errors.push(`Row ${rowIndex + 1} (${row.picName}) - ${wcName}: Doctor charge cannot be negative`);
+        }
+        if (values.hcValue < 0) {
+          errors.push(`Row ${rowIndex + 1} (${row.picName}) - ${wcName}: Hospital charge cannot be negative`);
+        }
+        if (values.DcValue > 0 || values.hcValue > 0) {
+          const expectedTotal = values.DcValue + values.hcValue;
+          if (Math.abs(values.chValue - expectedTotal) > 0.01) {
+            errors.push(`Row ${rowIndex + 1} (${row.picName}) - ${wcName}: Total charge mismatch`);
+          }
+        }
+      });
+    });
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  }, [gridData]);
+
+  const applyChanges = useCallback(() => {
     if (!isApplyReady) return;
     const numericAmount = parseFloat(amountValue);
     const updatedGridData = [...gridData];
     const rowsToUpdate = selectedRows.length > 0 ? selectedRows : updatedGridData.map((row) => row.id);
     let changesMade = false;
-
     updatedGridData.forEach((row) => {
-      if (!rowsToUpdate.includes(row.id) && rowsToUpdate.length > 0) {
+      if (selectedRows.length > 0 && !rowsToUpdate.includes(row.id)) {
         return;
       }
-
       getFilteredWardCategories.forEach((category) => {
         const catName = category.name;
         if (!row.wardCategories[catName]) {
@@ -242,7 +344,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
         const values = row.wardCategories[catName];
         const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
         const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
-
         if (updateDr) {
           const currentValue = values.DcValue || 0;
           let newValue;
@@ -255,7 +356,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           values.DcValue = Math.max(0, newValue);
           changesMade = true;
         }
-
         if (updateHosp) {
           const currentValue = values.hcValue || 0;
           let newValue;
@@ -268,17 +368,29 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           values.hcValue = Math.max(0, newValue);
           changesMade = true;
         }
-
         values.chValue = values.DcValue + values.hcValue;
       });
     });
-
     if (changesMade) {
       setGridData([...updatedGridData]);
       updateChargeDetailsFromGrid();
-      setApplySuccess(true);
+
+      if (validatePricingData()) {
+        setApplySuccess(true);
+      }
     }
-  };
+  }, [
+    isApplyReady,
+    amountValue,
+    gridData,
+    selectedRows,
+    getFilteredWardCategories,
+    displayAmountType,
+    isPercentage,
+    priceChangeType,
+    updateChargeDetailsFromGrid,
+    validatePricingData,
+  ]);
 
   const getApplyButtonText = useMemo(() => {
     if (!isApplyReady) return "Apply";
@@ -286,20 +398,27 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     const valueDisplay = isPercentage ? `${amountValue}%` : `₹${amountValue}`;
     return `${actionSymbol}${valueDisplay}`;
   }, [isApplyReady, priceChangeType, isPercentage, amountValue]);
+  const generateOptimalPricing = useCallback(() => {
+    const avgMarketPrice = 1000;
+    const doctorShare = 0.6;
+    const updatedGridData = [...gridData];
+    updatedGridData.forEach((row) => {
+      getFilteredWardCategories.forEach((category) => {
+        const catName = category.name;
 
-  const handleViewClick = () => {
-    setShowGrid(true);
-  };
+        if (!row.wardCategories[catName]) {
+          row.wardCategories[catName] = { DcValue: 0, hcValue: 0, chValue: 0 };
+        }
+        const values = row.wardCategories[catName];
+        values.DcValue = Math.round(avgMarketPrice * doctorShare);
+        values.hcValue = Math.round(avgMarketPrice * (1 - doctorShare));
+        values.chValue = values.DcValue + values.hcValue;
+      });
+    });
 
-  const handleAmountTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: boolean | null) => {
-    if (newValue !== null) {
-      setIsPercentage(newValue);
-    }
-  };
-
-  const handleAmountValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setAmountValue(event.target.value);
-  };
+    setGridData(updatedGridData);
+    updateChargeDetailsFromGrid();
+  }, [gridData, getFilteredWardCategories, updateChargeDetailsFromGrid]);
 
   const gridColumns = useMemo((): Column<PricingGridItem>[] => {
     const columns: Column<PricingGridItem>[] = [
@@ -309,18 +428,21 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
         visible: true,
         width: 70,
         render: (item: PricingGridItem) => (
-          <input type="checkbox" checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} style={{ transform: "scale(1.2)" }} />
+          <input type="checkbox" checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} style={{ transform: "scale(1.2)" }} disabled={disabled} />
         ),
       },
       {
         key: "picName",
-        header: "PIC Name",
+        header: "Patient Type",
         visible: true,
-        width: 180,
+        width: 200,
         render: (item: PricingGridItem) => (
-          <Typography variant="body2" fontWeight="medium">
-            {item.picName}
-          </Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="body2" fontWeight="medium">
+              {item.picName}
+            </Typography>
+            {Object.values(item.wardCategories).some((cat) => cat.chValue > 0) && <Chip label="Configured" size="small" color="success" variant="outlined" />}
+          </Box>
         ),
       },
     ];
@@ -328,12 +450,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
     getFilteredWardCategories.forEach((category) => {
       columns.push({
         key: `${category.name}_drAmt`,
-        header: `${category.name} - Dr Amt`,
+        header: `${category.name} - Doctor`,
         visible: true,
-        width: 120,
+        width: 140,
         render: (item: PricingGridItem) => {
           const currentValue = item.wardCategories[category.name]?.DcValue || 0;
-
+          const isValid = currentValue >= 0;
           return (
             <TextField
               type="number"
@@ -359,6 +481,18 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
               fullWidth
               variant="outlined"
               inputProps={{ min: 0, step: "0.01" }}
+              disabled={disabled}
+              error={!isValid}
+              helperText={!isValid ? "Must be positive" : undefined}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "&.Mui-error": {
+                    "& fieldset": {
+                      borderColor: "error.main",
+                    },
+                  },
+                },
+              }}
             />
           );
         },
@@ -366,11 +500,13 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
       columns.push({
         key: `${category.name}_hospAmt`,
-        header: `${category.name} - Hosp Amt`,
+        header: `${category.name} - Hospital`,
         visible: true,
-        width: 120,
+        width: 140,
         render: (item: PricingGridItem) => {
           const currentValue = item.wardCategories[category.name]?.hcValue || 0;
+          const isValid = currentValue >= 0;
+
           return (
             <TextField
               type="number"
@@ -378,6 +514,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
               value={currentValue}
               onChange={(e) => {
                 const numValue = parseFloat(e.target.value) || 0;
+
                 if (numValue >= 0) {
                   const updatedItem = {
                     ...item,
@@ -390,12 +527,16 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                       },
                     },
                   };
+
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
               fullWidth
               variant="outlined"
               inputProps={{ min: 0, step: "0.01" }}
+              disabled={disabled}
+              error={!isValid}
+              helperText={!isValid ? "Must be positive" : undefined}
             />
           );
         },
@@ -403,60 +544,116 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
       columns.push({
         key: `${category.name}_totalAmt`,
-        header: `${category.name} - Total Amt`,
+        header: `${category.name} - Total`,
         visible: true,
-        width: 120,
+        width: 140,
         render: (item: PricingGridItem) => {
           const totalAmount = (item.wardCategories[category.name]?.DcValue || 0) + (item.wardCategories[category.name]?.hcValue || 0);
+          const isConfigured = totalAmount > 0;
+
           return (
-            <TextField
-              value={totalAmount.toFixed(2)}
-              disabled
-              size="small"
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                readOnly: true,
-                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-              }}
-            />
+            <Box display="flex" alignItems="center" gap={1}>
+              <TextField
+                value={totalAmount.toFixed(2)}
+                disabled
+                size="small"
+                fullWidth
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+              />
+              {isConfigured && <CheckIcon color="success" sx={{ fontSize: 16 }} />}
+            </Box>
           );
         },
       });
     });
 
     return columns;
-  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection]);
+  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection, disabled]);
 
-  const handlePriceChangeTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
+  const handlePriceChangeTypeChange = useCallback((e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
     if (newValue) {
       setPriceChangeType(newValue);
     }
-  };
+  }, []);
+
+  const handleViewClick = useCallback(() => {
+    setShowGrid(true);
+  }, []);
+
+  const handleAmountTypeChange = useCallback((e: React.MouseEvent<HTMLElement>, newValue: boolean | null) => {
+    if (newValue !== null) {
+      setIsPercentage(newValue);
+    }
+  }, []);
+
+  const handleAmountValueChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setAmountValue(event.target.value);
+  }, []);
 
   return (
     <Accordion expanded={expanded} onChange={onToggleExpand}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box display="flex" alignItems="center" gap={1} width="100%">
-          <Typography variant="subtitle1" fontWeight="medium">
-            Pricing Details
+          <MoneyIcon color="primary" sx={{ fontSize: 20 }} />
+          <Typography variant="subtitle1" fontWeight={600}>
+            Pricing Configuration
           </Typography>
+
           <Chip label={`${chargeDetailsArray.fields.length} entries`} size="small" color="primary" variant="outlined" />
-          {pricingGridData.length > 0 && <Chip label="Has Data" size="small" color="success" variant="filled" />}
+
+          {pricingStatistics.totalConfigurations > 0 && (
+            <Chip
+              label={`${pricingStatistics.configurationPercentage.toFixed(0)}% configured`}
+              size="small"
+              color={pricingStatistics.configurationPercentage >= 80 ? "success" : "warning"}
+              variant="filled"
+            />
+          )}
+
+          {pricingStatistics.hasInconsistencies && (
+            <Tooltip title="Price inconsistencies detected" arrow>
+              <WarningIcon color="warning" sx={{ fontSize: 16 }} />
+            </Tooltip>
+          )}
         </Box>
       </AccordionSummary>
-      <AccordionDetails>
-        <Box>
-          <Snackbar open={applySuccess} autoHideDuration={3000} onClose={() => setApplySuccess(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-            <Alert severity="success" sx={{ width: "100%" }}>
-              Price changes applied successfully!
-            </Alert>
-          </Snackbar>
 
-          <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="medium">
-              Filter & Bulk Operations
-            </Typography>
+      <AccordionDetails sx={{ padding: "16px" }}>
+        <Stack spacing={3}>
+          {/* Validation Errors */}
+          {validationErrors.length > 0 && (
+            <Alert severity="error" variant="outlined">
+              <Typography variant="body2" fontWeight={500} gutterBottom>
+                Configuration Issues Found:
+              </Typography>
+              <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                {validationErrors.slice(0, 5).map((error, index) => (
+                  <li key={index}>
+                    <Typography variant="body2">{error}</Typography>
+                  </li>
+                ))}
+                {validationErrors.length > 5 && (
+                  <li>
+                    <Typography variant="body2">...and {validationErrors.length - 5} more issues</Typography>
+                  </li>
+                )}
+              </Box>
+            </Alert>
+          )}
+
+          <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle2" gutterBottom color="primary" fontWeight={600}>
+                Configuration Controls
+              </Typography>
+              <IconButton size="small" onClick={() => setShowAdvancedControls(!showAdvancedControls)} color="primary">
+                <CalculateIcon />
+              </IconButton>
+            </Box>
 
             <Grid container spacing={2} alignItems="center">
               <Grid size={{ xs: 12, md: 6 }}>
@@ -469,7 +666,8 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                   defaultValue={picFilters}
                   onChange={setPicFilters}
                   size="small"
-                  placeholder="Select PICs"
+                  placeholder="Select patient types..."
+                  disabled={disabled}
                 />
               </Grid>
 
@@ -483,180 +681,202 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                   defaultValue={wardCategoryFilters}
                   onChange={setWardCategoryFilters}
                   size="small"
-                  placeholder="Select ward categories"
+                  placeholder="Select ward categories..."
+                  disabled={disabled}
                 />
               </Grid>
 
-              <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="medium">
-                  Price Adjustment
-                </Typography>
-              </Grid>
+              {/* Advanced Controls */}
+              <Fade in={showAdvancedControls}>
+                <Grid container spacing={2} sx={{ width: "100%", mt: 1 }}>
+                  <Grid size={{ xs: 12 }}>
+                    <Divider sx={{ my: 2 }}>
+                      <Chip label="Bulk Price Operations" size="small" />
+                    </Divider>
+                  </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Adjustment Type
-                  </Typography>
-                  <ToggleButtonGroup exclusive value={isPercentage} onChange={handleAmountTypeChange} aria-label="amount type" size="small" fullWidth>
-                    <ToggleButton value={false} aria-label="amount">
-                      <MoneyIcon fontSize="small" sx={{ mr: 0.5 }} />
-                      Amount
-                    </ToggleButton>
-                    <ToggleButton value={true} aria-label="percentage">
-                      <PercentIcon fontSize="small" sx={{ mr: 0.5 }} />
-                      Percentage
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Adjustment Type
+                      </Typography>
+                      <ToggleButtonGroup exclusive value={isPercentage} onChange={handleAmountTypeChange} aria-label="amount type" size="small" fullWidth disabled={disabled}>
+                        <ToggleButton value={false} aria-label="amount">
+                          <MoneyIcon fontSize="small" sx={{ mr: 0.5 }} />
+                          Amount
+                        </ToggleButton>
+                        <ToggleButton value={true} aria-label="percentage">
+                          <PercentIcon fontSize="small" sx={{ mr: 0.5 }} />
+                          Percentage
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
 
-                <TextField
-                  type="number"
-                  label={isPercentage ? "Percentage Value" : "Amount Value"}
-                  value={amountValue}
-                  onChange={handleAmountValueChange}
-                  size="small"
-                  fullWidth
-                  placeholder={`Enter ${isPercentage ? "percentage" : "amount"}`}
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">{isPercentage ? "%" : "₹"}</InputAdornment>,
-                  }}
-                  inputProps={{
-                    min: 0,
-                    step: "0.01",
-                  }}
-                  variant="outlined"
-                />
-              </Grid>
+                    <TextField
+                      type="number"
+                      label={isPercentage ? "Percentage Value" : "Amount Value"}
+                      value={amountValue}
+                      onChange={handleAmountValueChange}
+                      size="small"
+                      fullWidth
+                      placeholder={`Enter ${isPercentage ? "percentage" : "amount"}`}
+                      disabled={disabled}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">{isPercentage ? "%" : "₹"}</InputAdornment>,
+                      }}
+                      inputProps={{
+                        min: 0,
+                        step: "0.01",
+                      }}
+                      variant="outlined"
+                    />
+                  </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Price Change Type
-                  </Typography>
-                  <ToggleButtonGroup exclusive value={priceChangeType} onChange={handlePriceChangeTypeChange} aria-label="price change type" size="small" fullWidth>
-                    <ToggleButton value="Increase" aria-label="increase">
-                      <AddIcon fontSize="small" sx={{ mr: 0.5 }} />
-                      Increase
-                    </ToggleButton>
-                    <ToggleButton value="Decrease" aria-label="decrease">
-                      <RemoveIcon fontSize="small" sx={{ mr: 0.5 }} />
-                      Decrease
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Operation Type
+                      </Typography>
+                      <ToggleButtonGroup
+                        exclusive
+                        value={priceChangeType}
+                        onChange={handlePriceChangeTypeChange}
+                        aria-label="price change type"
+                        size="small"
+                        fullWidth
+                        disabled={disabled}
+                      >
+                        <ToggleButton value="Increase" aria-label="increase">
+                          <AddIcon fontSize="small" sx={{ mr: 0.5 }} />
+                          Increase
+                        </ToggleButton>
+                        <ToggleButton value="Decrease" aria-label="decrease">
+                          <RemoveIcon fontSize="small" sx={{ mr: 0.5 }} />
+                          Decrease
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
 
-                {isApplyReady && (
-                  <Box sx={{ mt: 1, p: 1, border: "1px solid #e0e0e0", borderRadius: 1, bgcolor: "background.paper" }}>
-                    <Typography variant="body2" align="center">
-                      Example: <strong>100</strong> will become{" "}
-                      <strong>
-                        {priceChangeType === "Increase"
-                          ? isPercentage
-                            ? (100 * (1 + parseFloat(amountValue) / 100)).toFixed(2)
-                            : (100 + parseFloat(amountValue)).toFixed(2)
-                          : isPercentage
-                          ? (100 * (1 - parseFloat(amountValue) / 100)).toFixed(2)
-                          : Math.max(0, 100 - parseFloat(amountValue)).toFixed(2)}
-                      </strong>
-                    </Typography>
-                  </Box>
-                )}
-              </Grid>
+                    {isApplyReady && (
+                      <Box sx={{ mt: 1, p: 1, border: "1px solid #e0e0e0", borderRadius: 1, bgcolor: "background.paper" }}>
+                        <Typography variant="body2" align="center">
+                          Preview: <strong>100</strong> →{" "}
+                          <strong>
+                            {priceChangeType === "Increase"
+                              ? isPercentage
+                                ? (100 * (1 + parseFloat(amountValue) / 100)).toFixed(2)
+                                : (100 + parseFloat(amountValue)).toFixed(2)
+                              : isPercentage
+                              ? (100 * (1 - parseFloat(amountValue) / 100)).toFixed(2)
+                              : Math.max(0, 100 - parseFloat(amountValue)).toFixed(2)}
+                          </strong>
+                        </Typography>
+                      </Box>
+                    )}
+                  </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Apply To Amount Type
-                  </Typography>
-                  <ToggleButtonGroup
-                    exclusive
-                    value={displayAmountType}
-                    onChange={(e, newValue) => {
-                      if (newValue) {
-                        setDisplayAmountType(newValue);
-                      }
-                    }}
-                    aria-label="apply to amount type"
-                    size="small"
-                    fullWidth
-                  >
-                    <ToggleButton value="Dr Amt" aria-label="dr amount">
-                      Dr Amt
-                    </ToggleButton>
-                    <ToggleButton value="Hosp Amt" aria-label="hosp amount">
-                      Hosp Amt
-                    </ToggleButton>
-                    <ToggleButton value="Both" aria-label="both amounts">
-                      Both
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-              </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Apply To
+                      </Typography>
+                      <ToggleButtonGroup
+                        exclusive
+                        value={displayAmountType}
+                        onChange={(e, newValue) => {
+                          if (newValue) {
+                            setDisplayAmountType(newValue);
+                          }
+                        }}
+                        aria-label="apply to amount type"
+                        size="small"
+                        fullWidth
+                        disabled={disabled}
+                      >
+                        <ToggleButton value="Dr Amt" aria-label="dr amount">
+                          Dr Amt
+                        </ToggleButton>
+                        <ToggleButton value="Hosp Amt" aria-label="hosp amount">
+                          Hosp Amt
+                        </ToggleButton>
+                        <ToggleButton value="Both" aria-label="both amounts">
+                          Both
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+                  </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Box display="flex" justifyContent="flex-end" gap={1} alignItems="flex-end" height="100%">
-                  {!showGrid && pricingGridData.length === 0 && (
-                    <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick}>
-                      View
-                    </Button>
-                  )}
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Box display="flex" justifyContent="flex-end" gap={1} alignItems="flex-end" height="100%">
+                      {!showGrid && pricingGridData.length === 0 && (
+                        <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick} disabled={disabled}>
+                          View
+                        </Button>
+                      )}
 
-                  <Tooltip
-                    title={
-                      !isApplyReady
-                        ? "Enter amount and select increase/decrease"
-                        : `Apply ${getApplyButtonText} to ${displayAmountType === "Both" ? "all amounts" : displayAmountType}`
-                    }
-                  >
-                    <span>
-                      <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={() => applyChanges()} disabled={!isApplyReady}>
-                        {getApplyButtonText}
+                      <Tooltip
+                        title={
+                          !isApplyReady
+                            ? "Enter amount and select operation type"
+                            : `Apply ${getApplyButtonText} to ${displayAmountType === "Both" ? "all amounts" : displayAmountType}`
+                        }
+                      >
+                        <span>
+                          <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={applyChanges} disabled={!isApplyReady || disabled}>
+                            {getApplyButtonText}
+                          </Button>
+                        </span>
+                      </Tooltip>
+
+                      <Button variant="outlined" startIcon={<TrendingUpIcon />} size="small" onClick={generateOptimalPricing} disabled={disabled} color="secondary">
+                        Auto-Price
                       </Button>
-                    </span>
-                  </Tooltip>
-                </Box>
-              </Grid>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Fade>
             </Grid>
           </Paper>
 
+          {/* Enhanced Grid Display */}
           {(showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0 || pricingGridData.length > 0) && (
             <>
               <Box sx={{ mb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     {picFilters.length === 0
-                      ? "Showing all PICs"
+                      ? "Showing all patient types"
                       : picFilters.length === 1
-                      ? `Filtered by PIC: ${selectedPICNames[0]}`
-                      : `Filtered by PICs: ${selectedPICNames.join(", ")}`}
+                      ? `Filtered by: ${selectedPICNames[0]}`
+                      : `Filtered by: ${selectedPICNames.join(", ")}`}
                     {" • "}
                     {wardCategoryFilters.length === 0
                       ? "All ward categories"
                       : wardCategoryFilters.length === 1
-                      ? `Ward category: ${selectedWardCategoryNames[0]}`
-                      : `Ward categories: ${selectedWardCategoryNames.join(", ")}`}
+                      ? `Ward: ${selectedWardCategoryNames[0]}`
+                      : `Wards: ${selectedWardCategoryNames.join(", ")}`}
                   </Typography>
                 </Box>
+
                 <Box display="flex" gap={1}>
-                  <Button size="small" color="primary" variant="outlined" onClick={selectAllRows} sx={{ minWidth: "100px" }}>
+                  <Button size="small" color="primary" variant="outlined" onClick={selectAllRows} sx={{ minWidth: "100px" }} disabled={disabled}>
                     {selectedRows.length === displayedPricingData.length && displayedPricingData.length > 0 ? "Deselect All" : "Select All"}
                   </Button>
-                  <Button size="small" color="secondary" variant="outlined" onClick={updateChargeDetailsFromGrid} startIcon={<FilterIcon />}>
-                    Update Charge Details
+
+                  <Button size="small" color="secondary" variant="outlined" onClick={updateChargeDetailsFromGrid} startIcon={<RefreshIcon />} disabled={disabled}>
+                    Update Details
                   </Button>
                 </Box>
               </Box>
 
-              <Paper elevation={1}>
+              <Paper elevation={1} sx={{ borderRadius: 2 }}>
                 <CustomGrid
                   columns={gridColumns}
                   data={displayedPricingData}
                   maxHeight="500px"
                   density="small"
-                  showDensityControls={true}
-                  emptyStateMessage="No pricing data available. Please select PICs and Ward Categories to begin."
+                  showDensityControls={false}
+                  emptyStateMessage="No pricing data available. Please select patient types and ward categories to begin configuration."
                   rowKeyField="id"
                   pagination={false}
                   selectable={false}
@@ -664,10 +884,17 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
               </Paper>
             </>
           )}
-        </Box>
+
+          {/* Success Notification */}
+          <Snackbar open={applySuccess} autoHideDuration={3000} onClose={() => setApplySuccess(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
+            <Alert severity="success" sx={{ width: "100%" }}>
+              Price changes applied successfully!
+            </Alert>
+          </Snackbar>
+        </Stack>
       </AccordionDetails>
     </Accordion>
   );
 };
 
-export default PriceDetailsComponent;
+export default React.memo(PriceDetailsComponent);
