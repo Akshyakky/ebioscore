@@ -1,6 +1,7 @@
 // src/layouts/Themes/LightTheme.ts
-import { createTheme, alpha } from "@mui/material";
-import { DRAWER_WIDTH, LIGHT_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS, SPACING_UNIT } from "./themeConstants";
+import { alpha, createTheme } from "@mui/material";
+import type {} from "@mui/x-data-grid/themeAugmentation";
+import { COMPONENT_CONSTANTS, DRAWER_WIDTH, LIGHT_COLORS, SHADOWS, SHAPE, SPACING_UNIT, TRANSITIONS, TYPOGRAPHY } from "./themeConstants";
 
 const lightTheme = createTheme({
   palette: {
@@ -471,6 +472,130 @@ const lightTheme = createTheme({
         grouped: {
           "&:not(:last-of-type)": {
             borderColor: alpha(LIGHT_COLORS.primary.main, 0.15),
+          },
+        },
+      },
+    },
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          backgroundColor: LIGHT_COLORS.background.paper,
+          color: LIGHT_COLORS.text.primary,
+          border: `1px solid ${LIGHT_COLORS.divider}`,
+          borderRadius: SHAPE.borderRadius,
+          fontSize: TYPOGRAPHY.fontSizes.sm,
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+            color: `${LIGHT_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            minHeight: `${COMPONENT_CONSTANTS.table.headerHeight}px !important`,
+            borderBottom: "none !important",
+            "& .MuiDataGrid-columnHeader": {
+              "&:not(:last-child)": {
+                borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)} !important`,
+              },
+            },
+            "& .MuiDataGrid-columnHeaderTitle": {
+              fontWeight: TYPOGRAPHY.fontWeights.semibold,
+              color: "inherit",
+            },
+            "& .MuiDataGrid-iconSeparator": {
+              display: "none",
+            },
+            "& .MuiDataGrid-menuIcon, & .MuiDataGrid-sortIcon": {
+              color: LIGHT_COLORS.primary.contrastText,
+            },
+          },
+          "& .MuiDataGrid-cell": {
+            borderRight: `1px solid ${LIGHT_COLORS.divider}`,
+            borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
+            color: LIGHT_COLORS.text.primary,
+            fontSize: TYPOGRAPHY.fontSizes.sm,
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 1.5}px`,
+            height: `${COMPONENT_CONSTANTS.table.rowHeight}px`,
+            "&:focus": {
+              outline: "none",
+            },
+            "&:focus-within": {
+              outline: `2px solid ${LIGHT_COLORS.primary.main}`,
+              outlineOffset: "-2px",
+            },
+            userSelect: "text",
+            WebkitUserSelect: "text",
+          },
+          "& .MuiDataGrid-row": {
+            "&:nth-of-type(odd)": {
+              backgroundColor: alpha(LIGHT_COLORS.grey[100], 0.5),
+            },
+            "&:hover": {
+              backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.04),
+            },
+            "&.Mui-selected": {
+              backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.08),
+              "&:hover": {
+                backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.12),
+              },
+            },
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: `1px solid ${LIGHT_COLORS.divider}`,
+            backgroundColor: LIGHT_COLORS.background.dark,
+            color: LIGHT_COLORS.text.primary,
+            minHeight: `${COMPONENT_CONSTANTS.table.paginationHeight}px`,
+          },
+          "& .MuiDataGrid-selectedRowCount": {
+            color: LIGHT_COLORS.text.secondary,
+          },
+          "& .MuiDataGrid-overlay": {
+            backgroundColor: LIGHT_COLORS.background.paper,
+            color: LIGHT_COLORS.text.primary,
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            "&::-webkit-scrollbar": {
+              width: "8px",
+              height: "8px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: LIGHT_COLORS.grey[100],
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: LIGHT_COLORS.grey[400],
+              borderRadius: "4px",
+              border: `2px solid ${LIGHT_COLORS.grey[100]}`,
+              transition: "background-color 0.2s ease",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: LIGHT_COLORS.primary.main,
+            },
+            "&::-webkit-scrollbar-corner": {
+              background: LIGHT_COLORS.grey[100],
+            },
+          },
+          "& .MuiDataGrid-cell--editing": {
+            backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.04),
+            "& .MuiInputBase-root": {
+              fontSize: TYPOGRAPHY.fontSizes.sm,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: LIGHT_COLORS.primary.main,
+              },
+            },
+          },
+          "& .MuiDataGrid-actionsCell": {
+            "& .MuiButton-root": {
+              minWidth: "auto",
+              padding: `${SPACING_UNIT / 2}px ${SPACING_UNIT}px`,
+            },
+          },
+          "& .MuiDataGrid-columnSeparator": {
+            display: "none",
+          },
+          "& .MuiDataGrid-menuIcon": {
+            visibility: "hidden",
+          },
+          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-menuIcon": {
+            visibility: "visible",
           },
         },
       },

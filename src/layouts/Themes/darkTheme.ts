@@ -1,6 +1,6 @@
 // src/layouts/Themes/darkTheme.ts
-import { DRAWER_WIDTH, DARK_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS, SPACING_UNIT } from "./themeConstants";
-import { createTheme, alpha } from "@mui/material";
+import { alpha, createTheme } from "@mui/material";
+import { COMPONENT_CONSTANTS, DARK_COLORS, DRAWER_WIDTH, SHADOWS, SHAPE, SPACING_UNIT, TRANSITIONS, TYPOGRAPHY } from "./themeConstants";
 
 const darkTheme = createTheme({
   palette: {
@@ -517,6 +517,131 @@ const darkTheme = createTheme({
         grouped: {
           "&:not(:last-of-type)": {
             borderColor: alpha(DARK_COLORS.primary.main, 0.2),
+          },
+        },
+      },
+    },
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          backgroundColor: DARK_COLORS.background.paper,
+          color: DARK_COLORS.text.primary,
+          border: `1px solid ${DARK_COLORS.divider}`,
+          borderRadius: SHAPE.borderRadius,
+          fontSize: TYPOGRAPHY.fontSizes.sm,
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: `${DARK_COLORS.primary.main} !important`,
+            color: `${DARK_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            minHeight: `${COMPONENT_CONSTANTS.table.headerHeight}px !important`,
+            borderBottom: "none !important",
+            "& .MuiDataGrid-columnHeader": {
+              "&:not(:last-child)": {
+                borderRight: `1px solid ${alpha(DARK_COLORS.primary.contrastText, 0.2)} !important`,
+              },
+            },
+            "& .MuiDataGrid-columnHeaderTitle": {
+              fontWeight: TYPOGRAPHY.fontWeights.semibold,
+              color: "inherit",
+            },
+            "& .MuiDataGrid-iconSeparator": {
+              display: "none",
+            },
+            "& .MuiDataGrid-menuIcon, & .MuiDataGrid-sortIcon": {
+              color: DARK_COLORS.primary.contrastText,
+            },
+          },
+          "& .MuiDataGrid-cell": {
+            borderRight: `1px solid ${DARK_COLORS.divider}`,
+            borderBottom: `1px solid ${DARK_COLORS.divider}`,
+            color: DARK_COLORS.text.primary,
+            fontSize: TYPOGRAPHY.fontSizes.sm,
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 1.5}px`,
+            height: `${COMPONENT_CONSTANTS.table.rowHeight}px`,
+            "&:focus": {
+              outline: "none",
+            },
+            "&:focus-within": {
+              outline: `2px solid ${DARK_COLORS.primary.main}`,
+              outlineOffset: "-2px",
+            },
+            userSelect: "text",
+            WebkitUserSelect: "text",
+          },
+          "& .MuiDataGrid-row": {
+            "&:nth-of-type(odd)": {
+              backgroundColor: alpha(DARK_COLORS.background.light, 0.05),
+            },
+            "&:hover": {
+              backgroundColor: DARK_COLORS.action.hover,
+            },
+            "&.Mui-selected": {
+              backgroundColor: alpha(DARK_COLORS.primary.main, 0.16),
+              "&:hover": {
+                backgroundColor: alpha(DARK_COLORS.primary.main, 0.24),
+              },
+            },
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: `1px solid ${DARK_COLORS.divider}`,
+            backgroundColor: DARK_COLORS.background.dark,
+            color: DARK_COLORS.text.primary,
+            minHeight: `${COMPONENT_CONSTANTS.table.paginationHeight}px`,
+          },
+          "& .MuiDataGrid-selectedRowCount": {
+            color: DARK_COLORS.text.secondary,
+          },
+          "& .MuiDataGrid-overlay": {
+            backgroundColor: DARK_COLORS.background.paper,
+            color: DARK_COLORS.text.primary,
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            "&::-webkit-scrollbar": {
+              width: "8px",
+              height: "8px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: DARK_COLORS.background.default,
+              borderRadius: "4px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: DARK_COLORS.grey[600],
+              borderRadius: "4px",
+              border: `2px solid ${DARK_COLORS.background.default}`,
+              transition: "background-color 0.2s ease",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: DARK_COLORS.primary.main,
+            },
+            "&::-webkit-scrollbar-corner": {
+              background: DARK_COLORS.background.default,
+            },
+          },
+          "& .MuiDataGrid-cell--editing": {
+            backgroundColor: DARK_COLORS.action.hover,
+            "& .MuiInputBase-root": {
+              fontSize: TYPOGRAPHY.fontSizes.sm,
+              backgroundColor: DARK_COLORS.background.dark,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: DARK_COLORS.primary.main,
+              },
+            },
+          },
+          "& .MuiDataGrid-actionsCell": {
+            "& .MuiButton-root": {
+              minWidth: "auto",
+              padding: `${SPACING_UNIT / 2}px ${SPACING_UNIT}px`,
+            },
+          },
+          "& .MuiDataGrid-columnSeparator": {
+            display: "none",
+          },
+          "& .MuiDataGrid-menuIcon": {
+            visibility: "hidden",
+          },
+          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-menuIcon": {
+            visibility: "visible",
           },
         },
       },

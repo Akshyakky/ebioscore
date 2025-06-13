@@ -739,15 +739,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                       disableRowSelectionOnClick
                       hideFooter={gridRows.length <= 10}
                       loading={indentLoading}
-                      sx={{
-                        "& .MuiDataGrid-cell": {
-                          borderRight: "1px solid #e0e0e0",
-                        },
-                        "& .MuiDataGrid-columnHeaders": {
-                          backgroundColor: "#f5f5f5",
-                          fontWeight: "bold",
-                        },
-                      }}
                     />
                   </Box>
 
