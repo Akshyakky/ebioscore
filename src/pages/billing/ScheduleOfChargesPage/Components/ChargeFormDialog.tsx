@@ -497,6 +497,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         regDefaultServiceYN: latestFormData.regDefaultServiceYN || "N",
         isBedServiceYN: latestFormData.isBedServiceYN || "N",
         doctorShareYN: latestFormData.doctorShareYN || "N",
+        rActiveYN: "Y",
+        rTransferYN: "N",
         cNhsCode: latestFormData.cNhsCode || "",
         cNhsEnglishName: latestFormData.cNhsEnglishName || "",
         chargeCost: latestFormData.chargeCost || 0,
@@ -512,6 +514,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             hcValue: detail.hcValue || 0,
             chValue: detail.chValue,
             chargeStatus: detail.chargeStatus || "AC",
+            rActiveYN: "Y",
+            rTransferYN: "N",
             ChargePacks: (detail.ChargePacks || []).map((pack: any) => ({
               chPackID: pack.chPackID || 0,
               chargeID: pack.chargeID || latestFormData.chargeID || 0,
@@ -523,6 +527,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               chValue: pack.chValue || 0,
               effectiveFromDate: pack.effectiveFromDate,
               effectiveToDate: pack.effectiveToDate,
+              rActiveYN: "Y",
+              rTransferYN: "N",
             })),
           })) || [],
 
@@ -537,7 +543,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               doctorShare: Number(share.doctorShare) || 0,
               hospShare: Number(share.hospShare) || 0,
               rActiveYN: "Y",
-              rTransferYN: share.rTransferYN || "N",
+              rTransferYN: "N",
               rNotes: share.rNotes || "",
             };
           }) || [],
@@ -576,6 +582,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             chValue: pack.chValue || 0,
             effectiveFromDate: pack.effectiveFromDate,
             effectiveToDate: pack.effectiveToDate,
+            rActiveYN: "Y",
+            rTransferYN: "N",
           })) || [],
       };
       await onSubmit(formattedData);
@@ -678,19 +686,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       actions={dialogActions}
     >
       <Box sx={{ width: "100%" }}>
-        {process.env.NODE_ENV === "development" && (
-          <Paper sx={{ p: 1, mb: 2, bgcolor: "#f5f5f5" }}>
-            <Typography variant="caption">
-              Form Debug: isValid={formDebug.isValid.toString()}, isDirty={formDebug.isDirty.toString()}
-            </Typography>
-            {Object.entries(errors).length > 0 && (
-              <Typography variant="caption" color="error">
-                Errors: {JSON.stringify(errors)}
-              </Typography>
-            )}
-          </Paper>
-        )}
-
         <form onSubmit={handleSubmit(onFormSubmit)}>
           <Paper sx={{ p: 2, mb: 2 }}>
             <Typography variant="h6" gutterBottom>

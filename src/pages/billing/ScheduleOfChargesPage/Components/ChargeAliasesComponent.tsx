@@ -89,6 +89,9 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({
         hasAlias: Boolean(chargeDesc),
         isValid,
         characterCount,
+        rActiveYN: "Y",
+        transferYN: "N",
+        rNotes: "",
       };
     });
 
@@ -253,20 +256,7 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({
 
   return (
     <>
-      <Accordion
-        expanded={expanded}
-        onChange={onToggleExpand}
-        sx={{
-          "&.Mui-expanded": {
-            margin: "8px 0",
-          },
-          "&:before": {
-            display: "none",
-          },
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          borderRadius: "8px !important",
-        }}
-      >
+      <Accordion expanded={expanded} onChange={onToggleExpand} sx={{ mt: 2 }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Box display="flex" alignItems="center" gap={1} width="100%">
             <LabelIcon color="primary" sx={{ fontSize: 20 }} />
