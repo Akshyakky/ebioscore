@@ -1,7 +1,6 @@
 // src/pages/inventoryManagement/IndentProduct/Form/IndentProductForm.tsx
 
 import SmartButton from "@/components/Button/SmartButton";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -17,7 +16,6 @@ import {
   Cancel as CancelIcon,
   Delete as DeleteIcon,
   Business as DepartmentIcon,
-  Edit as EditIcon,
   Notes as NotesIcon,
   LocalHospital as PatientIcon,
   Person as PersonIcon,
@@ -26,7 +24,8 @@ import {
   Save as SaveIcon,
   Today as TodayIcon,
 } from "@mui/icons-material";
-import { Alert, Box, Card, CardContent, Chip, Divider, Grid, IconButton, Paper, TextField, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Card, CardContent, Chip, Divider, Grid, Paper, Tooltip, Typography } from "@mui/material";
+import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
@@ -74,8 +73,8 @@ type IndentFormData = z.infer<typeof indentFormSchema>;
 
 interface IndentDetailRow extends IndentDetailDto {
   isNew?: boolean;
-  isEditing?: boolean;
   tempId?: string;
+  id?: string | number; // Required for DataGrid
 }
 
 const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
@@ -93,12 +92,13 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
   // Product selection state
   const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
   const [indentDetails, setIndentDetails] = useState<IndentDetailRow[]>([]);
-  const [editingDetailId, setEditingDetailId] = useState<string | null>(null);
-  const [requiredQuantity, setRequiredQuantity] = useState<number>(1);
 
   // Patient selection state
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [clearPatientTrigger, setClearPatientTrigger] = useState(0);
+
+  // State to track if code has been generated
+  const [hasGeneratedCode, setHasGeneratedCode] = useState(false);
 
   // Product search ref
   const productSearchRef = useRef<ProductSearchRef>(null);
@@ -169,19 +169,29 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     } finally {
       setIsGeneratingCode(false);
     }
-  }, [isAddMode, selectedDepartment, getNextIndentCode, setValue, showAlert]);
+  }, [isAddMode, selectedDepartment.deptID, selectedDepartment.department, getNextIndentCode, setValue, showAlert]);
 
   // Initialize form
   useEffect(() => {
     if (initialData) {
       reset(defaultValues);
+      setHasGeneratedCode(true); // Don't generate code for existing data
       // Load existing details if editing
       // This would typically come from a service call
     } else {
       reset(defaultValues);
-      generateIndentCode();
+      setHasGeneratedCode(false); // Reset flag for new forms
     }
-  }, [initialData, reset, defaultValues, generateIndentCode]);
+  }, [initialData, reset, defaultValues]);
+
+  // Generate code only once for new forms when department is available
+  useEffect(() => {
+    if (isAddMode && selectedDepartment.deptID && !hasGeneratedCode) {
+      generateIndentCode().then(() => {
+        setHasGeneratedCode(true);
+      });
+    }
+  }, [isAddMode, selectedDepartment.deptID, hasGeneratedCode, generateIndentCode]);
 
   // Handle product selection
   const handleProductSelect = useCallback((product: ProductSearchResult | null) => {
@@ -205,8 +215,8 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
 
   // Add product to indent details
   const handleAddProduct = useCallback(() => {
-    if (!selectedProduct || requiredQuantity <= 0) {
-      showAlert("Warning", "Please select a product and enter a valid quantity", "warning");
+    if (!selectedProduct) {
+      showAlert("Warning", "Please select a product", "warning");
       return;
     }
 
@@ -217,6 +227,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       return;
     }
 
+    const tempId = `temp-${Date.now()}`;
     const newDetail: IndentDetailRow = {
       indentDetID: 0,
       indentID: 0,
@@ -224,42 +235,39 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       productCode: selectedProduct.productCode || "",
       productName: selectedProduct.productName || "",
       catValue: selectedProduct.catValue || "",
-      requiredQty: requiredQuantity,
-      requiredUnitQty: requiredQuantity,
+      requiredQty: 1, // Default quantity
+      requiredUnitQty: 1,
       receivedQty: 0,
       deptIssualYN: "N",
       rActiveYN: "Y",
       transferYN: "N",
       rNotes: "",
       isNew: true,
-      tempId: `temp-${Date.now()}`,
+      tempId: tempId,
+      id: tempId, // Required for DataGrid
     };
 
     setIndentDetails((prev) => [...prev, newDetail]);
 
     // Clear selections
     setSelectedProduct(null);
-    setRequiredQuantity(1);
     productSearchRef.current?.clearSelection();
-  }, [selectedProduct, requiredQuantity, indentDetails, showAlert]);
+  }, [selectedProduct, indentDetails, showAlert]);
 
   // Remove product from indent details
-  const handleRemoveProduct = useCallback((tempId: string | undefined, indentDetID: number) => {
-    setIndentDetails((prev) => prev.filter((detail) => (tempId ? detail.tempId !== tempId : detail.indentDetID !== indentDetID)));
+  const handleRemoveProduct = useCallback((id: string | number) => {
+    setIndentDetails((prev) => prev.filter((detail) => detail.id !== id));
   }, []);
 
-  // Edit product quantity
-  const handleEditQuantity = useCallback(
-    (detail: IndentDetailRow, newQuantity: number) => {
-      if (newQuantity <= 0) {
+  // Handle quantity cell edit
+  const handleQuantityChange = useCallback(
+    (id: string | number, newValue: number) => {
+      if (newValue <= 0) {
         showAlert("Warning", "Quantity must be greater than 0", "warning");
         return;
       }
 
-      setIndentDetails((prev) =>
-        prev.map((item) => (item.tempId === detail.tempId || item.indentDetID === detail.indentDetID ? { ...item, requiredQty: newQuantity, requiredUnitQty: newQuantity } : item))
-      );
-      setEditingDetailId(null);
+      setIndentDetails((prev) => prev.map((item) => (item.id === id ? { ...item, requiredQty: newValue, requiredUnitQty: newValue } : item)));
     },
     [showAlert]
   );
@@ -316,8 +324,8 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         ...detail,
         indentID: data.indentID,
         isNew: undefined,
-        isEditing: undefined,
         tempId: undefined,
+        id: undefined,
       }));
 
       const saveRequest: IndentSaveRequestDto = {
@@ -349,7 +357,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     setIndentDetails([]);
     setSelectedProduct(null);
     setSelectedPatient(null);
-    setRequiredQuantity(1);
     setFormError(null);
     setClearPatientTrigger((prev) => prev + 1);
     productSearchRef.current?.clearSelection();
@@ -391,79 +398,57 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
 
   const currentTypeInfo = getIndentTypeInfo(watchedIndentType);
 
-  // Define grid columns for indent details
-  const detailColumns: Column<IndentDetailRow>[] = [
+  // Define DataGrid columns for indent details
+  const detailColumns: GridColDef[] = [
     {
-      key: "productCode",
-      header: "Product Code",
-      visible: true,
+      field: "productCode",
+      headerName: "Product Code",
       width: 150,
       sortable: false,
     },
     {
-      key: "productName",
-      header: "Product Name",
-      visible: true,
+      field: "productName",
+      headerName: "Product Name",
       width: 250,
       sortable: false,
     },
     {
-      key: "catValue",
-      header: "Category",
-      visible: true,
+      field: "catValue",
+      headerName: "Category",
       width: 150,
       sortable: false,
     },
     {
-      key: "requiredQty",
-      header: "Required Qty",
-      visible: true,
-      width: 120,
+      field: "requiredQty",
+      headerName: "Required Qty",
+      width: 150,
+      type: "number",
+      editable: !viewOnly,
       sortable: false,
-      render: (item) => (
-        <Box>
-          {editingDetailId === (item.tempId || item.indentDetID.toString()) ? (
-            <TextField
-              type="number"
-              size="small"
-              defaultValue={item.requiredQty}
-              inputProps={{ min: 1 }}
-              onBlur={(e) => handleEditQuantity(item, parseInt(e.target.value) || 1)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleEditQuantity(item, parseInt((e.target as HTMLInputElement).value) || 1);
-                }
-              }}
-              autoFocus
-            />
-          ) : (
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="body2">{item.requiredQty}</Typography>
-              {!viewOnly && (
-                <IconButton size="small" onClick={() => setEditingDetailId(item.tempId || item.indentDetID.toString())}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Box>
-          )}
-        </Box>
-      ),
     },
     {
-      key: "actions",
-      header: "Actions",
-      visible: !viewOnly,
+      field: "actions",
+      type: "actions",
+      headerName: "Actions",
       width: 100,
-      sortable: false,
-      render: (item) => (
-        <Tooltip title="Remove Product">
-          <IconButton size="small" color="error" onClick={() => handleRemoveProduct(item.tempId, item.indentDetID)} disabled={viewOnly}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      ),
+      getActions: (params) => [
+        <GridActionsCellItem
+          icon={
+            <Tooltip title="Remove Product">
+              <DeleteIcon />
+            </Tooltip>
+          }
+          label="Remove"
+          onClick={() => handleRemoveProduct(params.id)}
+          disabled={viewOnly}
+          showInMenu={false}
+        />,
+      ],
     },
   ];
+
+  // Filter columns based on viewOnly
+  const visibleColumns = viewOnly ? detailColumns.filter((col) => col.field !== "actions") : detailColumns;
 
   // Dialog title
   const dialogTitle = useMemo(() => {
@@ -657,32 +642,12 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                     <Divider sx={{ mb: 2 }} />
 
                     <Grid container spacing={2} alignItems="end">
-                      <Grid size={{ xs: 12, md: 6 }}>
+                      <Grid size={{ xs: 12, md: 9 }}>
                         <ProductSearch ref={productSearchRef} onProductSelect={handleProductSelect} label="Select Product" disabled={viewOnly} className="product-search-field" />
                       </Grid>
 
                       <Grid size={{ xs: 12, md: 3 }}>
-                        <TextField
-                          label="Required Quantity"
-                          type="number"
-                          value={requiredQuantity}
-                          onChange={(e) => setRequiredQuantity(parseInt(e.target.value) || 1)}
-                          size="small"
-                          fullWidth
-                          inputProps={{ min: 1 }}
-                          disabled={viewOnly}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <SmartButton
-                          text="Add Product"
-                          onClick={handleAddProduct}
-                          variant="contained"
-                          color="success"
-                          icon={AddIcon}
-                          disabled={!selectedProduct || requiredQuantity <= 0}
-                        />
+                        <SmartButton text="Add Product" onClick={handleAddProduct} variant="contained" color="success" icon={AddIcon} disabled={!selectedProduct} />
                       </Grid>
                     </Grid>
                   </CardContent>
@@ -690,7 +655,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
               </Grid>
             )}
 
-            {/* Indent Details Grid */}
+            {/* Indent Details DataGrid */}
             <Grid size={{ xs: 12 }}>
               <Card variant="outlined" sx={{ borderLeft: "3px solid #ed6c02" }}>
                 <CardContent>
@@ -705,14 +670,34 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                   <Divider sx={{ mb: 2 }} />
 
                   {indentDetails.length > 0 ? (
-                    <CustomGrid
-                      columns={detailColumns}
-                      data={indentDetails}
-                      maxHeight="400px"
-                      emptyStateMessage="No products added to this indent"
-                      density="small"
-                      loading={false}
-                    />
+                    <Box sx={{ height: 400, width: "100%" }}>
+                      <DataGrid
+                        rows={indentDetails}
+                        columns={visibleColumns}
+                        density="compact"
+                        disableRowSelectionOnClick
+                        hideFooterSelectedRowCount
+                        pageSizeOptions={[5, 10, 25]}
+                        initialState={{
+                          pagination: {
+                            paginationModel: { pageSize: 10 },
+                          },
+                        }}
+                        processRowUpdate={(newRow, oldRow) => {
+                          handleQuantityChange(newRow.id, newRow.requiredQty);
+                          return newRow;
+                        }}
+                        onProcessRowUpdateError={(error) => {
+                          console.error("Row update error:", error);
+                          showAlert("Error", "Failed to update quantity", "error");
+                        }}
+                        sx={{
+                          "& .MuiDataGrid-row:hover": {
+                            backgroundColor: "rgba(25, 118, 210, 0.04)",
+                          },
+                        }}
+                      />
+                    </Box>
                   ) : (
                     <Paper sx={{ p: 4, textAlign: "center", bgcolor: "grey.50" }}>
                       <PersonIcon sx={{ fontSize: 48, color: "grey.400", mb: 1 }} />
