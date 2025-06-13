@@ -122,7 +122,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert]
+    [showAlert]
   );
 
   /**
@@ -154,7 +154,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert, fetchIndentList]
+    [showAlert, fetchIndentList]
   );
 
   /**
@@ -183,7 +183,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert]
+    [showAlert]
   );
 
   /**
@@ -226,7 +226,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert, indentList]
+    [showAlert, indentList]
   );
 
   /**
@@ -280,7 +280,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert, indentList]
+    [showAlert, indentList]
   );
 
   /**
@@ -334,7 +334,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert, indentList]
+    [showAlert, indentList]
   );
 
   /**
@@ -360,7 +360,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert]
+    [showAlert]
   );
 
   /**
@@ -389,7 +389,7 @@ export const useIndentProduct = () => {
         setLoading(false);
       }
     },
-    [setLoading, showAlert]
+    [showAlert]
   );
 
   /**
