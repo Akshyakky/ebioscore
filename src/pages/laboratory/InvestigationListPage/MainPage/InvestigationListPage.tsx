@@ -283,7 +283,18 @@ const InvestigationListPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 120,
-      formatter: (_value: any, item: InvestigationListDto) => <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />,
+      formatter: (_value: any, item: InvestigationListDto) => (
+        <Tooltip
+          title={
+            item.lComponentsDto
+              ?.map((comp) => comp.compoName)
+              .filter(Boolean)
+              .join(", ") || "No components"
+          }
+        >
+          <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />
+        </Tooltip>
+      ),
     },
     {
       key: "invReportYN",

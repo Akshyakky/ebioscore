@@ -251,9 +251,15 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
 
   const isFormValid = () => {
     if (!isValid) return false;
-    if (watchedLCentID === LCENT_ID.MULTIPLE_SELECTION && multipleFields.length === 0) return false;
-    if (watchedLCentID === LCENT_ID.REFERENCE_VALUES && referenceFields.length === 0) return false;
-    if (watchedLCentID === LCENT_ID.TEMPLATE_VALUES && !templateData) return false;
+    if (watchedLCentID === LCENT_ID.MULTIPLE_SELECTION && multipleFields.length === 0) {
+      return false;
+    }
+    if (watchedLCentID === LCENT_ID.REFERENCE_VALUES && referenceFields.length === 0) {
+      return false;
+    }
+    if (watchedLCentID === LCENT_ID.TEMPLATE_VALUES) {
+      return !!(templateData && templateData.tGroupID && templateData.tGroupID > 0 && templateData.cTText);
+    }
     return true;
   };
 

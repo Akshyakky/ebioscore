@@ -11,7 +11,7 @@ import * as z from "zod";
 export const templateValueSchema = z.object({
   cTID: z.number().optional(),
   tGroupID: z.number().min(1, "Please select a template group"),
-  tGroupCode: z.string().nonempty("Please select a template group"),
+  tGroupCode: z.string().optional().nullable(), // Made optional
   tGroupName: z.string().optional().nullable(),
   cTText: z.string().nonempty("Template text is required"),
   isBlankYN: z.string().optional().nullable(),
@@ -93,23 +93,30 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     }
   }, [templateData, compoID, invID, reset]);
 
-  const handleSaveTemplate = (data: TemplateValueFormData) => {
-    const templateValue: LCompTemplateDto = {
-      cTID: data.cTID || 0,
-      tGroupID: data.tGroupID,
-      tGroupCode: data.tGroupCode || "",
-      tGroupName: data.tGroupName || "",
-      cTText: data.cTText || "",
-      isBlankYN: data.isBlankYN || "N",
-      compoID: compoID,
-      rActiveYN: data.rActiveYN || "Y",
-      transferYN: data.transferYN || "N",
-      rNotes: data.rNotes || "",
-      invID: invID,
-    };
+  // Auto-save template data when form is valid
+  const watchedTGroupID = watch("tGroupID");
+  const watchedCTText = watch("cTText");
+  const watchedIsBlankYN = watch("isBlankYN");
 
-    onUpdate(templateValue);
-  };
+  useEffect(() => {
+    // Only auto-save if we have valid tGroupID and cTText
+    if (watchedTGroupID > 0 && watchedCTText) {
+      const templateValue: LCompTemplateDto = {
+        cTID: templateData?.cTID || 0,
+        tGroupID: watchedTGroupID,
+        tGroupCode: watch("tGroupCode") || "",
+        tGroupName: watch("tGroupName") || "",
+        cTText: watchedCTText,
+        isBlankYN: watchedIsBlankYN || "N",
+        compoID: compoID,
+        rActiveYN: "Y",
+        transferYN: "N",
+        rNotes: watch("rNotes") || "",
+        invID: invID,
+      };
+      onUpdate(templateValue);
+    }
+  }, [watchedTGroupID, watchedCTText, watchedIsBlankYN, compoID, invID, templateData, watch, onUpdate]);
 
   const handleClearTemplate = () => {
     reset({
@@ -128,17 +135,14 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     onUpdate(null);
   };
 
-  const watchedTGroupCode = watch("tGroupCode");
-
-  useEffect(() => {
-    if (watchedTGroupCode && templateGroup && templateGroup.length > 0) {
-      const selectedGroup = templateGroup?.find((group) => group.bchCode === watchedTGroupCode);
-      if (selectedGroup) {
-        setValue("tGroupID", selectedGroup.bchID);
-        setValue("tGroupName", selectedGroup.label);
-      }
-    }
-  }, [watchedTGroupCode, templateGroup, setValue]);
+  // Create properly formatted options for the dropdown
+  const templateGroupOptions = React.useMemo(() => {
+    if (!templateGroup || templateGroup.length === 0) return [];
+    return templateGroup.map((group) => ({
+      value: group.bchID || group.id || group.value, // Use bchID as the value
+      label: group.label || group.bchName || "",
+    }));
+  }, [templateGroup]);
 
   if (isLoading) {
     return (
@@ -176,17 +180,25 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
       <Grid container spacing={2}>
         <Grid size={{ sm: 12, md: 6 }}>
           <FormField
-            name="tGroupCode"
+            name="tGroupID"
             control={control}
             label="Template Group"
             type="select"
             required
             size="small"
-            options={templateGroup || []}
+            options={templateGroupOptions}
             fullWidth
             placeholder="Select a template group"
-            helperText={errors.tGroupCode?.message}
-            disabled={templateGroup?.length === 0}
+            helperText={errors.tGroupID?.message}
+            disabled={templateGroupOptions.length === 0}
+            onChange={(value: any) => {
+              // When tGroupID changes, update the related fields
+              const selectedGroup = templateGroup?.find((group) => (group.bchID || group.id || group.value) === value.value);
+              if (selectedGroup) {
+                setValue("tGroupCode", selectedGroup.bchCode || selectedGroup.code || "");
+                setValue("tGroupName", selectedGroup.label || selectedGroup.bchName || "");
+              }
+            }}
           />
         </Grid>
 
@@ -219,14 +231,9 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
         <Grid size={{ sm: 12 }}>
           <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
             {templateData && <SmartButton text="Clear Template" onClick={handleClearTemplate} variant="outlined" color="error" size="small" />}
-            <SmartButton
-              text={templateData ? "Update Template" : "Save Template"}
-              onClick={handleSubmit(handleSaveTemplate)}
-              variant="contained"
-              color="primary"
-              size="small"
-              disabled={!isDirty || !!errors.tGroupID || !!errors.cTText}
-            />
+            <Typography variant="body2" color="text.secondary">
+              Template will be automatically saved
+            </Typography>
           </Box>
         </Grid>
       </Grid>
