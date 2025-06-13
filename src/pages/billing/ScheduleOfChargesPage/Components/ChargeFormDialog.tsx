@@ -480,6 +480,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       updateAllComponentsData();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const latestFormData = getValues();
+
       const formattedData: ChargeWithAllDetailsDto = {
         chargeID: latestFormData.chargeID || 0,
         chargeCode: latestFormData.chargeCode,
@@ -500,6 +501,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         cNhsEnglishName: latestFormData.cNhsEnglishName || "",
         chargeCost: latestFormData.chargeCost || 0,
         serviceGroupID: latestFormData.serviceGroupID || 0,
+
         ChargeDetails:
           latestFormData.ChargeDetails?.map((detail) => ({
             chDetID: detail.chDetID || 0,
@@ -523,6 +525,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               effectiveToDate: pack.effectiveToDate,
             })),
           })) || [],
+
         DoctorShares:
           latestFormData.DoctorShares?.map((share) => {
             let conID = share.conID;
@@ -538,6 +541,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               rNotes: share.rNotes || "",
             };
           }) || [],
+
         ChargeAliases:
           latestFormData.ChargeAliases?.map((alias) => ({
             chAliasID: alias.chAliasID || 0,
@@ -549,6 +553,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             rTransferYN: "N",
             rNotes: alias.rNotes || "",
           })) || [],
+
         ChargeFaculties:
           latestFormData.ChargeFaculties?.map((faculty: BChargeFacultyDto) => ({
             chFacID: faculty.chFacID || 0,
@@ -558,6 +563,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             rTransferYN: "N",
             rNotes: faculty.rNotes || "",
           })) || [],
+
         ChargePacks:
           latestFormData.ChargePacks?.map((pack) => ({
             chPackID: pack.chPackID || 0,
@@ -750,6 +756,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="cNhsCode" control={control} type="text" label="Resource Code" size="small" />
               </Grid>
+
               <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="cNhsEnglishName" control={control} type="text" label="Resource Name" size="small" />
               </Grid>

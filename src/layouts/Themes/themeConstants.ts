@@ -116,10 +116,10 @@ export const LIGHT_COLORS = {
 // Dark Theme Colors
 export const DARK_COLORS = {
   primary: {
-    main: "#1976d2", // Changed from light blue to proper primary blue
+    main: "#1976d2",
     light: "#42a5f5",
     dark: "#1565c0",
-    contrastText: "#ffffff", // Changed from black to white for better contrast
+    contrastText: "#ffffff",
   },
   secondary: {
     main: "#f48fb1",
@@ -251,16 +251,33 @@ export const TRANSITIONS = {
 // Component-specific constants
 export const COMPONENT_CONSTANTS = {
   table: {
-    headerHeight: 40,
-    rowHeight: 36,
-    paginationHeight: 40,
-    denseHeaderHeight: 32,
+    headerHeight: 44,
+    rowHeight: 40,
+    paginationHeight: 52,
+    denseHeaderHeight: 36,
     denseRowHeight: 32,
-    densePaginationHeight: 32,
+    densePaginationHeight: 40,
+  },
+  dataGrid: {
+    headerHeight: 48,
+    rowHeight: 44,
+    compactRowHeight: 36,
+    denseRowHeight: 32,
+    paginationHeight: 52,
+    cellPadding: "8px 12px",
+    compactCellPadding: "6px 10px",
+    denseCellPadding: "4px 8px",
+    editCellPadding: "4px 8px",
+    borderWidth: "1px",
+    fontSize: "0.875rem",
+    headerFontSize: "0.875rem",
+    headerFontWeight: 600,
+    emptyStateMinHeight: 300,
+    loadingOverlayMinHeight: 200,
   },
   dialog: {
     spacing: 16,
-    titleHeight: 40, // Reduced from 48 to 40 for more compact title
+    titleHeight: 40,
     footerHeight: 48,
   },
   drawer: {
@@ -286,6 +303,54 @@ export const SHAPE = {
   borderStyle: "solid",
 };
 
+// DataGrid Specific Constants
+export const DATAGRID_CONSTANTS = {
+  colors: {
+    light: {
+      headerBackground: "#1976d2",
+      headerText: "#ffffff",
+      rowEven: "rgba(0, 0, 0, 0.02)",
+      rowOdd: "#ffffff",
+      rowHover: "rgba(25, 118, 210, 0.04)",
+      rowSelected: "rgba(25, 118, 210, 0.08)",
+      rowValid: "rgba(76, 175, 80, 0.04)",
+      rowInvalid: "rgba(255, 152, 0, 0.04)",
+      rowError: "rgba(244, 67, 54, 0.04)",
+      cellBorder: "#e0e0e0",
+      cellFocus: "#1976d2",
+      emptyStateBg: "#fafafa",
+      emptyStateBorder: "#e0e0e0",
+      loadingOverlay: "rgba(255, 255, 255, 0.8)",
+    },
+    dark: {
+      headerBackground: "#1976d2",
+      headerText: "#ffffff",
+      rowEven: "rgba(255, 255, 255, 0.02)",
+      rowOdd: "#1e1e1e",
+      rowHover: "rgba(255, 255, 255, 0.08)",
+      rowSelected: "rgba(25, 118, 210, 0.16)",
+      rowValid: "rgba(76, 175, 80, 0.08)",
+      rowInvalid: "rgba(255, 152, 0, 0.08)",
+      rowError: "rgba(244, 67, 54, 0.08)",
+      cellBorder: "#424242",
+      cellFocus: "#42a5f5",
+      emptyStateBg: "#151515",
+      emptyStateBorder: "#424242",
+      loadingOverlay: "rgba(0, 0, 0, 0.8)",
+    },
+  },
+  transitions: {
+    rowHover: "background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+    cellFocus: "outline 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+    cellEdit: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+  },
+  zIndex: {
+    overlay: 1000,
+    editCell: 1001,
+    columnMenu: 1002,
+  },
+};
+
 export default {
   DRAWER_WIDTH,
   APPBAR_HEIGHT,
@@ -301,4 +366,5 @@ export default {
   TRANSITIONS,
   COMPONENT_CONSTANTS,
   SHAPE,
+  DATAGRID_CONSTANTS,
 };

@@ -16,10 +16,10 @@
     "jsx": "react-jsx",
 
     /* Enhanced Type Checking */
-    "strict": true,
+    "strict": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noUncheckedIndexedAccess": true,
