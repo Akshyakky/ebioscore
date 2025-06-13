@@ -1,23 +1,86 @@
 // src/pages/inventoryManagement/IndentProduct/Form/IndentProductForm.tsx
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Add as AddIcon,
+  Cancel as CancelIcon,
+  Delete as DeleteIcon,
+  Business as DepartmentIcon,
+  Assignment as IndentIcon,
+  Person as PatientIcon,
+  Inventory as ProductIcon,
+  Save as SaveIcon,
+} from "@mui/icons-material";
+import { Alert, Box, Button, Card, CardContent, Chip, Divider, Grid, Tooltip, Typography } from "@mui/material";
+import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams, GridRenderEditCellParams, GridRowId, GridRowModel, GridRowsProp } from "@mui/x-data-grid";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import * as z from "zod";
+
 import SmartButton from "@/components/Button/SmartButton";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { usePatientSearch } from "@/hooks/PatientAdminstration/patient/usePatientSearch";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
+
+import { useLoading } from "@/hooks/Common/useLoading";
+import { useAlert } from "@/providers/AlertProvider";
+import { useIndentProduct } from "../hooks/useIndentProduct";
+
 import { IndentDetailDto, IndentMastDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
-import { useAlert } from "@/providers/AlertProvider";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Cancel, ChangeCircleRounded, Delete as DeleteIcon, Edit as EditIcon, Info, Inventory, Notes, Refresh, Save, Schedule, Settings } from "@mui/icons-material";
-import { Alert, Box, Card, CardContent, Chip, Divider, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
-import { useIndentProduct } from "../hooks/useIndentProduct";
+import { PatientOption } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+
+// Validation schemas
+const indentDetailSchema = z.object({
+  indentDetID: z.number().default(0),
+  indentID: z.number().optional(),
+  productID: z.number().min(1, "Product is required"),
+  productCode: z.string().min(1, "Product code is required"),
+  productName: z.string().min(1, "Product name is required"),
+  catValue: z.string().optional(),
+  pGrpID: z.number().optional(),
+  requiredQty: z.number().min(1, "Quantity must be at least 1"),
+  requiredUnitQty: z.number().optional(),
+  pUnitID: z.number().optional(),
+  pUnitName: z.string().optional(),
+  unitPack: z.number().optional(),
+  manufacturerID: z.number().optional(),
+  manufacturerName: z.string().optional(),
+  qoh: z.number().optional(),
+  reOrderLevel: z.number().optional(),
+  rNotes: z.string().optional(),
+  rActiveYN: z.string().default("Y"),
+  transferYN: z.string().default("N"),
+});
+
+const indentMasterSchema = z.object({
+  indentID: z.number().default(0),
+  indentCode: z.string().min(1, "Indent code is required"),
+  fromDeptID: z.number().min(1, "From department is required"),
+  fromDeptName: z.string().optional(),
+  toDeptID: z.number().min(1, "To department is required"),
+  toDeptName: z.string().optional(),
+  indentDate: z.date(),
+  pChartID: z.number().optional(),
+  pChartCode: z.string().optional(),
+  indentType: z.string().default("NORMAL"),
+  indentTypeValue: z.string().optional(),
+  autoIndentYN: z.string().default("N"),
+  transferYN: z.string().default("N"),
+  rActiveYN: z.string().default("Y"),
+  rNotes: z.string().optional(),
+});
+
+const indentFormSchema = z.object({
+  indentMaster: indentMasterSchema,
+  indentDetails: z.array(indentDetailSchema).min(1, "At least one product is required"),
+});
+
+type IndentFormData = z.infer<typeof indentFormSchema>;
+type IndentDetailFormData = z.infer<typeof indentDetailSchema>;
 
 interface IndentProductFormProps {
   open: boolean;
@@ -28,91 +91,85 @@ interface IndentProductFormProps {
   onChangeDepartment?: () => void;
 }
 
-// Validation schemas
-const indentDetailSchema = z.object({
-  indentDetID: z.coerce.number().default(0),
-  productID: z.coerce.number().min(1, "Product is required"),
-  productCode: z.string().min(1, "Product code is required"),
-  productName: z.string().optional(),
-  catValue: z.string().optional(),
-  requiredQty: z.coerce.number().min(1, "Required quantity must be greater than 0"),
-  requiredUnitQty: z.coerce.number().min(0, "Required unit quantity must be non-negative").default(0),
-  pUnitName: z.string().optional(),
-  manufacturerID: z.coerce.number().default(0),
-  manufacturerName: z.string().optional(),
-  rActiveYN: z.string().default("Y"),
-  transferYN: z.string().default("N"),
-  rNotes: z.string().optional(),
-  unitPack: z.coerce.number().min(0, "Unit pack must be non-negative").default(1),
-  deptIssualYN: z.string().default("N"),
-});
+// Custom cell components for the data grid
+const ProductSearchCell = ({ params, onProductSelect }: { params: GridRenderEditCellParams; onProductSelect: (product: ProductSearchResult | null, rowId: GridRowId) => void }) => {
+  const productSearchRef = useRef<ProductSearchRef>(null);
 
-const indentFormSchema = z.object({
-  indentID: z.coerce.number().default(0),
-  indentCode: z.string().min(1, "Indent code is required"),
-  fromDeptID: z.coerce.number().min(1, "From department is required"),
-  fromDeptName: z.string().optional(),
-  toDeptID: z.coerce.number().min(1, "To department is required"),
-  toDeptName: z.string().optional(),
-  indentDate: z.date().default(() => new Date()),
-  indentType: z.string().min(1, "Indent type is required"),
-  indentTypeValue: z.string().optional(),
-  autoIndentYN: z.string().default("N"),
-  indexpiryYN: z.string().default("N"),
-  pChartID: z.coerce.number().default(0),
-  pChartCode: z.string().optional(),
-  indentAcknowledgement: z.string().optional(),
-  rActiveYN: z.string().default("Y"),
-  transferYN: z.string().default("N"),
-  rNotes: z.string().optional(),
-  indentDetails: z.array(indentDetailSchema).min(1, "At least one product is required"),
-});
+  const handleProductSelect = (product: ProductSearchResult | null) => {
+    onProductSelect(product, params.id);
+  };
 
-type IndentFormData = z.infer<typeof indentFormSchema>;
-type IndentDetailFormData = z.infer<typeof indentDetailSchema>;
+  return (
+    <Box sx={{ width: "100%", p: 1 }}>
+      <ProductSearch ref={productSearchRef} onProductSelect={handleProductSelect} label="" placeholder="Search product..." className="grid-product-search" disabled={false} />
+    </Box>
+  );
+};
+
+const QuantityCell = ({ params }: { params: GridRenderCellParams }) => {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+      <Typography variant="body2" fontWeight="medium">
+        {params.value || 0}
+      </Typography>
+    </Box>
+  );
+};
 
 const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
-  const { setLoading } = useLoading();
   const { showAlert } = useAlert();
-  const { saveIndent, getIndentById, getNextIndentCode, canEditIndent, canDeleteIndent } = useIndentProduct();
+  const { setLoading } = useLoading();
+  const { saveIndent, getNextIndentCode, getIndentById, isLoading: indentLoading } = useIndentProduct();
 
   // State management
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-  const [selectedProductForEdit, setSelectedProductForEdit] = useState<IndentDetailFormData | null>(null);
-  const [editingProductIndex, setEditingProductIndex] = useState<number>(-1);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [gridRows, setGridRows] = useState<GridRowsProp>([]);
+  const [selectedPatient, setSelectedPatient] = useState<PatientOption | null>(null);
 
-  const productSearchRef = useRef<ProductSearchRef>(null);
+  // Dropdown values
+  const { department } = useDropdownValues(["department"]);
+
+  // Patient search hook
+  const {
+    inputValue: patientSearchValue,
+    setInputValue: setPatientSearchValue,
+    options: patientOptions,
+    selectedPatient: hookSelectedPatient,
+    setSelectedPatient: setHookSelectedPatient,
+    clearSearch: clearPatientSearch,
+  } = usePatientSearch();
+
   const isAddMode = !initialData;
 
-  // Load dropdown values
-  const { department, departmentIndent } = useDropdownValues(["department", "departmentIndent"]);
+  // Default form values
+  const defaultValues: IndentFormData = useMemo(
+    () => ({
+      indentMaster: {
+        indentID: initialData?.indentID || 0,
+        indentCode: initialData?.indentCode || "",
+        fromDeptID: selectedDepartment.deptID,
+        fromDeptName: selectedDepartment.department,
+        toDeptID: initialData?.toDeptID || 0,
+        toDeptName: initialData?.toDeptName || "",
+        indentDate: initialData?.indentDate ? new Date(initialData.indentDate) : new Date(),
+        pChartID: initialData?.pChartID || 0,
+        pChartCode: initialData?.pChartCode || "",
+        indentType: initialData?.indentType || "NORMAL",
+        indentTypeValue: initialData?.indentTypeValue || "Normal",
+        autoIndentYN: initialData?.autoIndentYN || "N",
+        transferYN: initialData?.transferYN || "N",
+        rActiveYN: initialData?.rActiveYN || "Y",
+        rNotes: initialData?.rNotes || "",
+      },
+      indentDetails: [],
+    }),
+    [initialData, selectedDepartment]
+  );
 
   // Form setup
-  const defaultValues: IndentFormData = {
-    indentID: 0,
-    indentCode: "",
-    fromDeptID: selectedDepartment.deptID,
-    fromDeptName: selectedDepartment.department,
-    toDeptID: 0,
-    toDeptName: "",
-    indentDate: new Date(),
-    indentType: "",
-    indentTypeValue: "",
-    autoIndentYN: "N",
-    indexpiryYN: "N",
-    pChartID: 0,
-    pChartCode: "",
-    indentAcknowledgement: "",
-    rActiveYN: "Y",
-    transferYN: "N",
-    rNotes: "",
-    indentDetails: [],
-  };
-
   const {
     control,
     handleSubmit,
@@ -126,231 +183,238 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     mode: "onChange",
   });
 
-  const watchedIndentDetails = watch("indentDetails");
-  const watchedToDeptID = watch("toDeptID");
-  const watchedIndentType = watch("indentType");
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "indentDetails",
+  });
 
-  // Generate indent code for new indents
-  const generateIndentCode = useCallback(async () => {
-    if (!isAddMode) return;
-
-    try {
-      setIsGeneratingCode(true);
-      const nextCode = await getNextIndentCode("IND", 5);
-      if (nextCode) {
-        setValue("indentCode", nextCode, { shouldValidate: true, shouldDirty: true });
-      } else {
-        showAlert("Warning", "Failed to generate indent code", "warning");
-      }
-    } catch (error) {
-      console.error("Error generating indent code:", error);
-      showAlert("Error", "Error generating indent code", "error");
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  }, [isAddMode, getNextIndentCode, setValue, showAlert]); // Keep dependencies minimal and correct
+  // Watch form values
+  const watchedIndentType = watch("indentMaster.indentType");
+  const watchedPChartID = watch("indentMaster.pChartID");
 
   // Initialize form data
   useEffect(() => {
-    if (initialData) {
-      const loadIndentDetails = async () => {
-        try {
-          setLoading(true);
-          const fullIndentData = await getIndentById(initialData.indentID);
-
-          if (fullIndentData) {
-            const formData: IndentFormData = {
-              indentID: fullIndentData.IndentMaster.indentID,
-              indentCode: fullIndentData.IndentMaster.indentCode || "",
-              fromDeptID: fullIndentData.IndentMaster.fromDeptID || selectedDepartment.deptID,
-              fromDeptName: fullIndentData.IndentMaster.fromDeptName || selectedDepartment.department,
-              toDeptID: fullIndentData.IndentMaster.toDeptID || 0,
-              toDeptName: fullIndentData.IndentMaster.toDeptName || "",
-              indentDate: fullIndentData.IndentMaster.indentDate ? new Date(fullIndentData.IndentMaster.indentDate) : new Date(),
-              indentType: fullIndentData.IndentMaster.indentType || "",
-              indentTypeValue: fullIndentData.IndentMaster.indentTypeValue || "",
-              autoIndentYN: fullIndentData.IndentMaster.autoIndentYN || "N",
-              indexpiryYN: fullIndentData.IndentMaster.indexpiryYN || "N",
-              pChartID: fullIndentData.IndentMaster.pChartID || 0,
-              pChartCode: fullIndentData.IndentMaster.pChartCode || "",
-              indentAcknowledgement: fullIndentData.IndentMaster.indentAcknowledgement || "",
-              rActiveYN: fullIndentData.IndentMaster.rActiveYN || "Y",
-              transferYN: fullIndentData.IndentMaster.transferYN || "N",
-              rNotes: fullIndentData.IndentMaster.rNotes || "",
-              indentDetails: fullIndentData.IndentDetails.map((detail: IndentDetailDto) => ({
-                indentDetID: detail.indentDetID,
-                productID: detail.productID || 0,
-                productCode: detail.productCode || "",
-                productName: detail.productName || "",
-                catValue: detail.catValue || "",
-                requiredQty: detail.requiredQty || 1,
-                requiredUnitQty: detail.requiredUnitQty || 0,
-                pUnitName: detail.pUnitName || "",
-                manufacturerID: detail.manufacturerID || 0,
-                manufacturerName: detail.manufacturerName || "",
-                rActiveYN: detail.rActiveYN || "Y",
-                transferYN: detail.transferYN || "N",
-                rNotes: detail.rNotes || "",
-                unitPack: detail.unitPack || 1,
-                deptIssualYN: detail.deptIssualYN || "N",
-              })),
-            };
-            reset(formData);
-          }
-        } catch (error) {
-          showAlert("Error", "Failed to load indent details", "error");
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      loadIndentDetails();
-    } else {
-      // For add mode, initialize and then generate code ONLY if indentCode is empty
-      reset({
-        ...defaultValues,
-        fromDeptID: selectedDepartment.deptID,
-        fromDeptName: selectedDepartment.department,
-      });
-      // Call generateIndentCode here directly, it already handles `isAddMode` check
-      // And crucially, it's not part of the dependency array for this useEffect
-      // so it won't re-trigger this effect on its own.
-      // We also add a check to ensure it only runs if the code is not already present.
-      if (!watch("indentCode")) {
-        // Check if indentCode is empty before generating
-        generateIndentCode();
-      }
+    if (initialData && open) {
+      loadInitialData();
+    } else if (!initialData && open) {
+      generateIndentCode();
+      initializeEmptyForm();
     }
-  }, [initialData, reset, selectedDepartment, getIndentById, watch, defaultValues]); // Removed generateIndentCode from dependencies
+  }, [initialData, open]);
 
-  // Handle product selection for adding to indent
-  const handleProductSelect = useCallback(
-    (product: ProductSearchResult | null) => {
-      if (!product || viewOnly) return;
+  const loadInitialData = async () => {
+    if (!initialData) return;
 
-      const newDetail: IndentDetailFormData = {
-        indentDetID: 0,
-        productID: product.productID,
-        productCode: product.productCode || "",
-        productName: product.productName || "",
-        catValue: product.catValue || "",
-        requiredQty: 1,
-        requiredUnitQty: 0,
-        pUnitName: "",
-        manufacturerID: 0,
-        manufacturerName: "",
-        rActiveYN: "Y",
-        transferYN: "N",
-        rNotes: "",
-        unitPack: 1,
-        deptIssualYN: "N",
-      };
+    try {
+      setLoading(true);
+      const fullIndentData = await getIndentById(initialData.indentID);
 
-      // Check if product already exists in the list
-      const existingIndex = watchedIndentDetails.findIndex((detail) => detail.productID === product.productID);
+      if (fullIndentData) {
+        const formData: IndentFormData = {
+          indentMaster: {
+            ...defaultValues.indentMaster,
+            ...fullIndentData.IndentMaster,
+            indentDate: fullIndentData.IndentMaster.indentDate ? new Date(fullIndentData.IndentMaster.indentDate) : new Date(),
+          },
+          indentDetails: fullIndentData.IndentDetails || [],
+        };
 
-      if (existingIndex >= 0) {
-        showAlert("Warning", "This product is already added to the indent", "warning");
-        return;
+        reset(formData);
+        setGridRows(convertDetailsToGridRows(fullIndentData.IndentDetails || []));
+
+        // Set selected patient if exists
+        if (fullIndentData.IndentMaster.pChartID) {
+          // You might want to fetch patient details here
+          setSelectedPatient({
+            pChartID: fullIndentData.IndentMaster.pChartID,
+            pChartCode: fullIndentData.IndentMaster.pChartCode || "",
+            pfName: "",
+            plName: "",
+            pAddPhone1: "",
+            pDob: null,
+            fullName: fullIndentData.IndentMaster.pChartCode || "",
+          });
+        }
       }
+    } catch (error) {
+      showAlert("Error", "Failed to load indent data", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const updatedDetails = [...watchedIndentDetails, newDetail];
-      setValue("indentDetails", updatedDetails, { shouldValidate: true, shouldDirty: true });
+  const initializeEmptyForm = () => {
+    reset(defaultValues);
+    setGridRows([]);
+    addNewDetailRow();
+  };
 
-      // Clear the product search
-      if (productSearchRef.current) {
-        productSearchRef.current.clearSelection();
+  const generateIndentCode = async () => {
+    try {
+      const code = await getNextIndentCode();
+      if (code) {
+        setValue("indentMaster.indentCode", code);
       }
-    },
-    [watchedIndentDetails, setValue, viewOnly, showAlert]
-  );
+    } catch (error) {
+      console.error("Failed to generate indent code:", error);
+    }
+  };
 
-  // Handle editing product details
-  const handleEditProduct = useCallback(
-    (index: number) => {
-      if (viewOnly) return;
-      setSelectedProductForEdit(watchedIndentDetails[index] || null);
-      setEditingProductIndex(index);
-    },
-    [watchedIndentDetails, viewOnly]
-  );
+  const convertDetailsToGridRows = (details: IndentDetailDto[]): GridRowsProp => {
+    return details.map((detail, index) => ({
+      id: detail.indentDetID || `temp-${index}`,
+      indentDetID: detail.indentDetID || 0,
+      productID: detail.productID || 0,
+      productCode: detail.productCode || "",
+      productName: detail.productName || "",
+      catValue: detail.catValue || "",
+      requiredQty: detail.requiredQty || 1,
+      pUnitName: detail.pUnitName || "",
+      manufacturerName: detail.manufacturerName || "",
+      qoh: detail.qoh || 0,
+      reOrderLevel: detail.reOrderLevel || 0,
+      rNotes: detail.rNotes || "",
+      rActiveYN: detail.rActiveYN || "Y",
+    }));
+  };
 
-  // Handle updating product details
-  const handleUpdateProduct = useCallback(
-    (updatedProduct: IndentDetailFormData) => {
-      if (editingProductIndex >= 0) {
-        const updatedDetails = [...watchedIndentDetails];
-        updatedDetails[editingProductIndex] = updatedProduct;
-        setValue("indentDetails", updatedDetails, { shouldValidate: true, shouldDirty: true });
-      }
-      setSelectedProductForEdit(null);
-      setEditingProductIndex(-1);
-    },
-    [editingProductIndex, watchedIndentDetails, setValue]
-  );
+  const addNewDetailRow = () => {
+    const newRow = {
+      id: `temp-${Date.now()}`,
+      indentDetID: 0,
+      productID: 0,
+      productCode: "",
+      productName: "",
+      catValue: "",
+      requiredQty: 1,
+      pUnitName: "",
+      manufacturerName: "",
+      qoh: 0,
+      reOrderLevel: 0,
+      rNotes: "",
+      rActiveYN: "Y",
+    };
 
-  // Handle removing product from indent
-  const handleRemoveProduct = useCallback(
-    (index: number) => {
-      if (viewOnly) return;
-      const updatedDetails = watchedIndentDetails.filter((_, i) => i !== index);
-      setValue("indentDetails", updatedDetails, { shouldValidate: true, shouldDirty: true });
-    },
-    [watchedIndentDetails, setValue, viewOnly]
-  );
+    setGridRows((prev) => [...prev, newRow]);
 
-  // Handle form submission
+    append({
+      indentDetID: 0,
+      productID: 0,
+      productCode: "",
+      productName: "",
+      catValue: "",
+      requiredQty: 1,
+      pUnitID: 0,
+      pUnitName: "",
+      rActiveYN: "Y",
+      transferYN: "N",
+    });
+  };
+
+  const handleProductSelect = (product: ProductSearchResult | null, rowId: GridRowId) => {
+    if (!product) return;
+
+    const rowIndex = gridRows.findIndex((row) => row.id === rowId);
+    if (rowIndex === -1) return;
+
+    const updatedRow = {
+      ...gridRows[rowIndex],
+      productID: product.productID,
+      productCode: product.productCode,
+      productName: product.productName,
+      catValue: product.catValue,
+    };
+
+    const newGridRows = [...gridRows];
+    newGridRows[rowIndex] = updatedRow;
+    setGridRows(newGridRows);
+
+    // Update form data
+    update(rowIndex, {
+      ...fields[rowIndex],
+      productID: product.productID,
+      productCode: product.productCode,
+      productName: product.productName,
+      catValue: product.catValue,
+    });
+  };
+
+  const handleRowUpdate = (newRow: GridRowModel, oldRow: GridRowModel) => {
+    const rowIndex = gridRows.findIndex((row) => row.id === newRow.id);
+    if (rowIndex !== -1) {
+      update(rowIndex, {
+        ...fields[rowIndex],
+        requiredQty: newRow.requiredQty,
+        rNotes: newRow.rNotes,
+      });
+    }
+    return newRow;
+  };
+
+  const handleDeleteRow = (rowId: GridRowId) => {
+    const rowIndex = gridRows.findIndex((row) => row.id === rowId);
+    if (rowIndex !== -1) {
+      const newGridRows = gridRows.filter((row) => row.id !== rowId);
+      setGridRows(newGridRows);
+      remove(rowIndex);
+    }
+  };
+
+  const handlePatientSelect = (patient: PatientOption | null) => {
+    setSelectedPatient(patient);
+    setHookSelectedPatient(patient);
+
+    if (patient) {
+      setValue("indentMaster.pChartID", patient.pChartID);
+      setValue("indentMaster.pChartCode", patient.pChartCode);
+    } else {
+      setValue("indentMaster.pChartID", 0);
+      setValue("indentMaster.pChartCode", "");
+    }
+  };
+
   const onSubmit = async (data: IndentFormData) => {
     if (viewOnly) return;
+
     setFormError(null);
+
+    if (gridRows.length === 0) {
+      setFormError("At least one product is required");
+      return;
+    }
 
     try {
       setIsSaving(true);
       setLoading(true);
 
-      const selectedToDept = department?.find((dept) => Number(dept.value) === data.toDeptID);
-
       const indentData: IndentSaveRequestDto = {
         IndentMaster: {
-          indentID: data.indentID,
-          indentCode: data.indentCode,
-          fromDeptID: data.fromDeptID,
-          fromDeptName: data.fromDeptName || selectedDepartment.department,
-          toDeptID: data.toDeptID,
-          toDeptName: selectedToDept?.label || "",
-          indentDate: data.indentDate,
-          indentType: data.indentType,
-          indentTypeValue: data.indentTypeValue || data.indentType,
-          autoIndentYN: data.autoIndentYN,
-          indexpiryYN: data.indexpiryYN,
-          pChartID: data.pChartID,
-          pChartCode: data.pChartCode,
-          indentAcknowledgement: data.indentAcknowledgement,
-          rActiveYN: data.rActiveYN,
-          transferYN: data.transferYN,
-          rNotes: data.rNotes,
-          indentApprovedYN: initialData?.indentApprovedYN || "N",
-          indStatusCode: initialData?.indStatusCode || "PENDING",
-          indStatus: initialData?.indStatus || "Pending",
+          ...data.indentMaster,
+          fromDeptID: selectedDepartment.deptID,
+          fromDeptName: selectedDepartment.department,
+          rActiveYN: "Y",
+          indentID: data.indentMaster.indentID,
+          transferYN: "N",
         },
-        IndentDetails: data.indentDetails.map((detail, index) => ({
-          indentDetID: detail.indentDetID,
-          indentID: data.indentID,
-          productID: detail.productID,
-          productCode: detail.productCode,
-          productName: detail.productName,
-          catValue: detail.catValue,
-          requiredQty: detail.requiredQty,
-          requiredUnitQty: detail.requiredUnitQty,
-          pUnitName: detail.pUnitName,
-          manufacturerID: detail.manufacturerID,
-          manufacturerName: detail.manufacturerName,
-          rActiveYN: detail.rActiveYN,
-          transferYN: detail.transferYN,
-          rNotes: detail.rNotes,
-          unitPack: detail.unitPack,
-          deptIssualYN: detail.deptIssualYN,
-        })),
+        IndentDetails: gridRows
+          .filter((row) => row.productID > 0)
+          .map((row) => ({
+            indentDetID: row.indentDetID || 0,
+            indentID: data.indentMaster.indentID,
+            productID: row.productID,
+            productCode: row.productCode,
+            requiredQty: row.requiredQty,
+            rActiveYN: row.rActiveYN,
+            transferYN: "N",
+            rNotes: row.rNotes,
+            productName: row.productName,
+            catValue: row.catValue,
+            pUnitName: row.pUnitName,
+            manufacturerName: row.manufacturerName,
+            qoh: row.qoh,
+            reOrderLevel: row.reOrderLevel,
+            deptIssualYN: "N",
+          })),
       };
 
       const response = await saveIndent(indentData);
@@ -371,47 +435,118 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     }
   };
 
-  // Reset form
-  const performReset = useCallback(() => {
-    if (initialData) {
-      // Reload initial data
-      reset(defaultValues); // Pass defaultValues to reset to ensure proper re-initialization
-      // if initialData is present, useEffect above will load the data.
-      // If you specifically want to re-fetch the data, you'd call loadIndentDetails again here.
-      // But simply resetting to default and relying on useEffect for initialData is cleaner.
-    } else {
-      reset({
-        ...defaultValues,
-        fromDeptID: selectedDepartment.deptID,
-        fromDeptName: selectedDepartment.department,
-      });
-      // Conditionally generate code only if it's an add mode and not already present
-      if (!watch("indentCode")) {
-        generateIndentCode();
-      }
-    }
-    setFormError(null);
-    setSelectedProductForEdit(null);
-    setEditingProductIndex(-1);
-  }, [initialData, reset, defaultValues, selectedDepartment, generateIndentCode, watch]); // Removed generateIndentCode from dependencies, added watch
-
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     if (isDirty) {
       setShowResetConfirmation(true);
     } else {
       performReset();
     }
-  }, [isDirty, performReset]);
+  };
 
-  const handleCancel = useCallback(() => {
+  const performReset = () => {
+    reset(defaultValues);
+    setGridRows([]);
+    setSelectedPatient(null);
+    clearPatientSearch();
+    setFormError(null);
+    if (!initialData) {
+      generateIndentCode();
+      addNewDetailRow();
+    }
+  };
+
+  const handleCancel = () => {
     if (isDirty) {
       setShowCancelConfirmation(true);
     } else {
       onClose();
     }
-  }, [isDirty, onClose]);
+  };
 
-  // Dialog configuration
+  // Data Grid columns definition
+  const columns: GridColDef[] = [
+    {
+      field: "productCode",
+      headerName: "Product Code",
+      width: 200,
+      editable: !viewOnly,
+      renderEditCell: (params) => <ProductSearchCell params={params} onProductSelect={handleProductSelect} />,
+    },
+    {
+      field: "productName",
+      headerName: "Product Name",
+      width: 250,
+      editable: false,
+    },
+    {
+      field: "catValue",
+      headerName: "Category",
+      width: 150,
+      editable: false,
+    },
+    {
+      field: "requiredQty",
+      headerName: "Required Qty",
+      width: 120,
+      type: "number",
+      editable: !viewOnly,
+      renderCell: (params) => <QuantityCell params={params} />,
+    },
+    {
+      field: "pUnitName",
+      headerName: "Unit",
+      width: 100,
+      editable: false,
+    },
+    {
+      field: "qoh",
+      headerName: "Stock On Hand",
+      width: 130,
+      type: "number",
+      editable: false,
+      renderCell: (params) => <Chip size="small" color={params.value > 0 ? "success" : "warning"} label={params.value || 0} />,
+    },
+    {
+      field: "reOrderLevel",
+      headerName: "Reorder Level",
+      width: 130,
+      type: "number",
+      editable: false,
+    },
+    {
+      field: "rNotes",
+      headerName: "Notes",
+      width: 200,
+      editable: !viewOnly,
+    },
+    {
+      field: "rActiveYN",
+      headerName: "Status",
+      width: 100,
+      editable: false,
+      renderCell: (params) => <Chip size="small" color={params.value === "Y" ? "success" : "error"} label={params.value === "Y" ? "Active" : "Inactive"} />,
+    },
+    {
+      field: "actions",
+      type: "actions",
+      headerName: "Actions",
+      width: 80,
+      getActions: (params) => [
+        <GridActionsCellItem
+          icon={
+            <Tooltip title="Delete Row">
+              <DeleteIcon />
+            </Tooltip>
+          }
+          label="Delete"
+          onClick={() => handleDeleteRow(params.id)}
+          disabled={viewOnly}
+          color="inherit"
+        />,
+      ],
+    },
+  ];
+
   const dialogTitle = useMemo(() => {
     if (viewOnly) return "View Indent Details";
     if (isAddMode) return "Create New Indent";
@@ -423,105 +558,27 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       return <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />;
     }
 
-    const canEdit = !initialData || canEditIndent(initialData);
-
     return (
       <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
         <SmartButton text="Cancel" onClick={handleCancel} variant="outlined" color="inherit" disabled={isSaving} />
         <Box sx={{ display: "flex", gap: 1 }}>
-          <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
+          <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={CancelIcon} disabled={isSaving || (!isDirty && !formError)} />
           <SmartButton
             text={isAddMode ? "Create Indent" : "Update Indent"}
             onClick={handleSubmit(onSubmit)}
             variant="contained"
             color="primary"
-            icon={Save}
+            icon={SaveIcon}
             asynchronous={true}
             showLoadingIndicator={true}
             loadingText={isAddMode ? "Creating..." : "Updating..."}
             successText={isAddMode ? "Created!" : "Updated!"}
-            disabled={isSaving || !isValid || !canEdit}
+            disabled={isSaving || !isValid || gridRows.length === 0}
           />
         </Box>
       </Box>
     );
-  }, [viewOnly, initialData, canEditIndent, handleCancel, handleReset, handleSubmit, onSubmit, onClose, isSaving, isDirty, isValid, formError, isAddMode]);
-
-  // Product details grid columns
-  const productColumns: Column<IndentDetailFormData>[] = [
-    {
-      key: "productCode",
-      header: "Product Code",
-      visible: true,
-      width: 150,
-    },
-    {
-      key: "productName",
-      header: "Product Name",
-      visible: true,
-      width: 200,
-    },
-    {
-      key: "catValue",
-      header: "Category",
-      visible: true,
-      width: 120,
-    },
-    {
-      key: "requiredQty",
-      header: "Required Qty",
-      visible: true,
-      width: 100,
-      align: "right",
-    },
-    {
-      key: "pUnitName",
-      header: "Unit",
-      visible: true,
-      width: 80,
-    },
-    {
-      key: "manufacturerName",
-      header: "Manufacturer",
-      visible: true,
-      width: 150,
-    },
-    {
-      key: "rActiveYN",
-      header: "Status",
-      visible: true,
-      width: 80,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      visible: true,
-      width: 120,
-      render: (item, index) => (
-        <Stack direction="row" spacing={1}>
-          <Tooltip title="Edit Product">
-            <IconButton size="small" color="info" onClick={() => handleEditProduct(index!)} disabled={viewOnly}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Remove Product">
-            <IconButton size="small" color="error" onClick={() => handleRemoveProduct(index!)} disabled={viewOnly}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
-
-  // Get total quantity for display
-  const totalQuantity = useMemo(() => {
-    return watchedIndentDetails.reduce((sum, detail) => sum + (detail.requiredQty || 0), 0);
-  }, [watchedIndentDetails]);
-
-  // Check if form can be edited
-  const canEditForm = !viewOnly && (!initialData || canEditIndent(initialData));
+  }, [viewOnly, isSaving, isDirty, isValid, formError, isAddMode, gridRows.length, handleSubmit, onSubmit, onClose, handleReset, handleCancel]);
 
   return (
     <>
@@ -543,113 +600,79 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
             </Alert>
           )}
 
-          {/* Status and approval alerts */}
-          {initialData?.indentApprovedYN === "Y" && (
-            <Alert severity="info" sx={{ mb: 2 }} icon={<Info />}>
-              <Typography variant="body2">
-                <strong>Approved Indent:</strong> This indent has been approved and cannot be modified.
-              </Typography>
-            </Alert>
-          )}
-
-          {initialData?.indStatusCode === "COMPLETED" && (
-            <Alert severity="success" sx={{ mb: 2 }} icon={<Info />}>
-              <Typography variant="body2">
-                <strong>Completed Indent:</strong> This indent has been completed.
-              </Typography>
-            </Alert>
-          )}
-
           <Grid container spacing={3}>
             {/* Status Toggle */}
             <Grid size={{ xs: 12 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Box display="flex" alignItems="center" gap={2}>
                   <Typography variant="h6" color="primary" fontWeight="bold">
-                    From Department: {selectedDepartment.department}
+                    Department: {selectedDepartment.department}
                   </Typography>
-                  {onChangeDepartment && canEditForm && (
-                    <SmartButton text="Change Department" onClick={onChangeDepartment} variant="outlined" icon={ChangeCircleRounded} size="small" color="warning" />
+                  {onChangeDepartment && (
+                    <SmartButton text="Change Department" onClick={onChangeDepartment} variant="outlined" icon={DepartmentIcon} size="small" color="warning" />
                   )}
                 </Box>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Typography variant="body2" color="text.secondary">
-                    Status:
-                  </Typography>
-                  <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={!canEditForm} size="small" />
-                </Box>
+                <FormField name="indentMaster.rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
               </Box>
             </Grid>
 
-            {/* Basic Information Section */}
+            {/* Indent Master Information */}
             <Grid size={{ xs: 12 }}>
               <Card variant="outlined" sx={{ borderLeft: "3px solid #1976d2" }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-                    <Schedule sx={{ mr: 1, verticalAlign: "middle" }} />
-                    Basic Information
+                    <IndentIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                    Indent Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <FormField name="indentCode" control={control} label="Indent Code" type="text" required disabled={!canEditForm || !isAddMode} size="small" fullWidth />
-                        {isAddMode && canEditForm && (
-                          <SmartButton
-                            text="Generate"
-                            onClick={generateIndentCode}
-                            variant="outlined"
-                            size="small"
-                            icon={Refresh}
-                            disabled={isGeneratingCode}
-                            asynchronous={true}
-                            showLoadingIndicator={true}
-                            loadingText="..."
-                          />
-                        )}
-                      </Box>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <FormField name="indentDate" control={control} label="Indent Date" type="datepicker" required disabled={!canEditForm} size="small" fullWidth />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 4 }}>
                       <FormField
-                        name="toDeptID"
+                        name="indentMaster.indentCode"
                         control={control}
-                        label="To Department"
-                        type="select"
+                        label="Indent Code"
+                        type="text"
                         required
-                        disabled={!canEditForm}
-                        placeholder="Select destination department"
-                        options={
-                          department
-                            ?.filter((dept) => Number(dept.value) !== selectedDepartment.deptID)
-                            .map((dept) => ({
-                              value: dept.value,
-                              label: dept.label,
-                            })) || []
-                        }
+                        disabled={viewOnly || !!initialData}
                         size="small"
                         fullWidth
                       />
                     </Grid>
 
                     <Grid size={{ xs: 12, md: 4 }}>
+                      <FormField name="indentMaster.indentDate" control={control} label="Indent Date" type="datepicker" required disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 4 }}>
                       <FormField
-                        name="indentType"
+                        name="indentMaster.indentType"
                         control={control}
                         label="Indent Type"
                         type="select"
+                        disabled={viewOnly}
+                        options={[
+                          { value: "NORMAL", label: "Normal" },
+                          { value: "URGENT", label: "Urgent" },
+                          { value: "EMERGENCY", label: "Emergency" },
+                        ]}
+                        size="small"
+                        fullWidth
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <FormField
+                        name="indentMaster.toDeptID"
+                        control={control}
+                        label="To Department"
+                        type="select"
                         required
-                        disabled={!canEditForm}
-                        placeholder="Select indent type"
+                        disabled={viewOnly}
                         options={
-                          departmentIndent?.map((type) => ({
-                            value: type.value,
-                            label: type.label,
+                          department?.map((dept) => ({
+                            value: dept.value,
+                            label: dept.label,
                           })) || []
                         }
                         size="small"
@@ -657,153 +680,102 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                       />
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <FormField
-                        name="pChartCode"
-                        control={control}
-                        label="Patient Chart Code"
-                        type="text"
-                        disabled={!canEditForm}
-                        size="small"
-                        fullWidth
-                        placeholder="Enter patient chart code if applicable"
-                      />
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <FormField name="indentMaster.autoIndentYN" control={control} label="Auto Indent" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Box>
-                        <FormField name="autoIndentYN" control={control} label="Auto Indent" type="switch" disabled={!canEditForm} size="small" />
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                          Enable automatic indent generation
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Product Selection Section */}
-            <Grid size={{ xs: 12 }}>
-              <Card variant="outlined" sx={{ borderLeft: "3px solid #ff9800" }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="#ff9800" fontWeight="bold">
-                    <Inventory sx={{ mr: 1, verticalAlign: "middle" }} />
-                    Product Selection
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  {canEditForm && (
-                    <Grid container spacing={2} mb={2}>
-                      <Grid size={{ xs: 12, md: 8 }}>
-                        <ProductSearch
-                          ref={productSearchRef}
-                          onProductSelect={handleProductSelect}
-                          label="Add Product"
-                          placeholder="Search and select products to add to indent"
-                          disabled={!canEditForm}
-                          className="product-search-field"
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <Box sx={{ p: 2, bgcolor: "rgba(255, 152, 0, 0.08)", borderRadius: 1 }}>
-                          <Typography variant="body2" color="#ff9800" fontWeight="medium">
-                            Total Products: {watchedIndentDetails.length}
+                    {watchedIndentType === "PATIENT" && (
+                      <Grid size={{ xs: 12 }}>
+                        <Box>
+                          <Typography variant="subtitle2" gutterBottom>
+                            <PatientIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                            Patient Information
                           </Typography>
-                          <Typography variant="h6" color="#ff9800" fontWeight="bold">
-                            Total Quantity: {totalQuantity}
-                          </Typography>
+                          {/* Patient search would go here - simplified for this example */}
+                          <FormField name="indentMaster.pChartCode" control={control} label="Patient Chart Code" type="text" disabled={viewOnly} size="small" fullWidth />
                         </Box>
                       </Grid>
-                    </Grid>
-                  )}
+                    )}
 
-                  {watchedIndentDetails.length > 0 ? (
-                    <CustomGrid
-                      columns={productColumns}
-                      data={watchedIndentDetails}
-                      maxHeight="400px"
-                      emptyStateMessage="No products added to this indent"
-                      loading={false}
-                      density="small"
-                    />
-                  ) : (
-                    <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-                      <Inventory sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-                      <Typography variant="h6" gutterBottom>
-                        No products added yet
-                      </Typography>
-                      <Typography variant="body2">
-                        {canEditForm ? "Use the product search above to add products to this indent" : "This indent doesn't have any products"}
-                      </Typography>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Settings Section */}
-            <Grid size={{ xs: 12 }}>
-              <Card variant="outlined" sx={{ borderLeft: "3px solid #2196f3" }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="#2196f3" fontWeight="bold">
-                    <Settings sx={{ mr: 1, verticalAlign: "middle" }} />
-                    Additional Settings
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <FormField
-                        name="indentAcknowledgement"
-                        control={control}
-                        label="Acknowledgement"
-                        type="text"
-                        disabled={!canEditForm}
-                        size="small"
-                        fullWidth
-                        placeholder="Enter acknowledgement details"
-                      />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box>
-                        <FormField name="indexpiryYN" control={control} label="Track Expiry" type="switch" disabled={!canEditForm} size="small" />
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                          Enable expiry tracking for this indent
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Notes Section */}
-            <Grid size={{ xs: 12 }}>
-              <Card variant="outlined" sx={{ borderLeft: "3px solid #4caf50" }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="#4caf50" fontWeight="bold">
-                    <Notes sx={{ mr: 1, verticalAlign: "middle" }} />
-                    Additional Information
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
                       <FormField
-                        name="rNotes"
+                        name="indentMaster.rNotes"
                         control={control}
                         label="Notes"
                         type="textarea"
-                        disabled={!canEditForm}
+                        disabled={viewOnly}
+                        rows={3}
                         size="small"
                         fullWidth
-                        rows={4}
-                        placeholder="Enter any additional information about this indent, including special instructions, urgency level, or departmental requirements"
+                        placeholder="Enter any additional notes for this indent"
                       />
                     </Grid>
                   </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Product Details Grid */}
+            <Grid size={{ xs: 12 }}>
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #ff9800" }}>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h6" color="#ff9800" fontWeight="bold">
+                      <ProductIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                      Product Details ({gridRows.length} items)
+                    </Typography>
+                    {!viewOnly && (
+                      <Button variant="outlined" startIcon={<AddIcon />} onClick={addNewDetailRow} size="small">
+                        Add Product
+                      </Button>
+                    )}
+                  </Box>
+
+                  <Box sx={{ height: 400, width: "100%" }}>
+                    <DataGrid
+                      rows={gridRows}
+                      columns={columns}
+                      processRowUpdate={handleRowUpdate}
+                      disableRowSelectionOnClick
+                      hideFooter={gridRows.length <= 10}
+                      loading={indentLoading}
+                      sx={{
+                        "& .MuiDataGrid-cell": {
+                          borderRight: "1px solid #e0e0e0",
+                        },
+                        "& .MuiDataGrid-columnHeaders": {
+                          backgroundColor: "#f5f5f5",
+                          fontWeight: "bold",
+                        },
+                      }}
+                    />
+                  </Box>
+
+                  {gridRows.length === 0 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        py: 4,
+                        color: "text.secondary",
+                      }}
+                    >
+                      <ProductIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" gutterBottom>
+                        No products added
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Click "Add Product" to start building your indent
+                      </Typography>
+                      {!viewOnly && (
+                        <Button variant="contained" startIcon={<AddIcon />} onClick={addNewDetailRow}>
+                          Add First Product
+                        </Button>
+                      )}
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>

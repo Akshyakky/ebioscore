@@ -4,7 +4,7 @@ export interface PatientOption {
   pfName: string;
   plName: string;
   pAddPhone1?: string;
-  pDob?: Date;
+  pDob?: Date | null;
   fullName: string;
 }
 
