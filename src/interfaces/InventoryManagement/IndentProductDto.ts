@@ -1,5 +1,3 @@
-import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
-
 export interface IndentSaveRequestDto {
   IndentMaster: IndentMastDto;
   IndentDetails: IndentDetailDto[];

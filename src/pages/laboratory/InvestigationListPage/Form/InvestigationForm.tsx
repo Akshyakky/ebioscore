@@ -7,7 +7,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { InvestigationListDto, LComponentDto, LInvMastDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Add as AddIcon, Cancel, Delete as DeleteIcon, Edit as EditIcon, Save } from "@mui/icons-material";
+import { Add as AddIcon, ArrowDownward, ArrowUpward, Cancel, Delete as DeleteIcon, DragIndicator, Edit as EditIcon, Save } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -155,7 +155,12 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
         invType: initialData.lInvMastDto.invType || "",
       };
       reset(formData);
-      setComponents(initialData.lComponentsDto || []);
+      // Set components with compOrder based on their current position
+      const orderedComponents = (initialData.lComponentsDto || []).map((comp, index) => ({
+        ...comp,
+        compOrder: comp.compOrder || index + 1,
+      }));
+      setComponents(orderedComponents.sort((a, b) => Number(a.compOrder) - Number(b.compOrder)));
     } else {
       reset(defaultValues);
       setComponents([]);
@@ -177,20 +182,50 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
 
   const handleDeleteComponent = (index: number) => {
     const updatedComponents = components.filter((_, i) => i !== index);
-    setComponents(updatedComponents);
+    // Reorder remaining components
+    const reorderedComponents = updatedComponents.map((comp, idx) => ({
+      ...comp,
+      compOrder: idx + 1,
+    }));
+    setComponents(reorderedComponents);
   };
 
   const handleComponentSave = (componentData: LComponentDto) => {
     if (selectedComponentIndex >= 0) {
       // Edit existing component
       const updatedComponents = [...components];
-      updatedComponents[selectedComponentIndex] = componentData;
+      updatedComponents[selectedComponentIndex] = {
+        ...componentData,
+        compOrder: updatedComponents[selectedComponentIndex].compOrder,
+      };
       setComponents(updatedComponents);
     } else {
-      // Add new component
-      setComponents([...components, componentData]);
+      // Add new component at the end
+      const newComponent = {
+        ...componentData,
+        compOrder: components.length + 1,
+      };
+      setComponents([...components, newComponent]);
     }
     setIsComponentFormOpen(false);
+  };
+
+  const moveComponent = (index: number, direction: "up" | "down") => {
+    const newComponents = [...components];
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (newIndex >= 0 && newIndex < newComponents.length) {
+      // Swap components
+      [newComponents[index], newComponents[newIndex]] = [newComponents[newIndex], newComponents[index]];
+
+      // Update compOrder for all components
+      const reorderedComponents = newComponents.map((comp, idx) => ({
+        ...comp,
+        compOrder: idx + 1,
+      }));
+
+      setComponents(reorderedComponents);
+    }
   };
 
   const onSubmit = async (data: InvestigationFormData) => {
@@ -231,8 +266,9 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
 
       const investigationListData: InvestigationListDto = {
         lInvMastDto: investigationData,
-        lComponentsDto: components,
+        lComponentsDto: components, // Components already have updated compOrder
       };
+
       console.log("Save", investigationListData);
       const response = await saveInvestigation(investigationListData);
 
@@ -257,7 +293,11 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const performReset = () => {
     if (initialData) {
       reset(initialData.lInvMastDto as InvestigationFormData);
-      setComponents(initialData.lComponentsDto || []);
+      const orderedComponents = (initialData.lComponentsDto || []).map((comp, index) => ({
+        ...comp,
+        compOrder: comp.compOrder || index + 1,
+      }));
+      setComponents(orderedComponents);
     } else {
       reset(defaultValues);
       setComponents([]);
@@ -433,7 +473,14 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
               <Card variant="outlined">
                 <CardContent>
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                    <Typography variant="h6">Components</Typography>
+                    <Box>
+                      <Typography variant="h6">Components</Typography>
+                      {!viewOnly && (
+                        <Typography variant="body2" color="text.secondary">
+                          Use arrow buttons to reorder components
+                        </Typography>
+                      )}
+                    </Box>
                     {!viewOnly && <SmartButton text="Add Component" icon={AddIcon} onClick={handleAddComponent} variant="contained" color="primary" size="small" />}
                   </Box>
                   <Divider sx={{ mb: 2 }} />
@@ -447,31 +494,51 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                       <Table size="small" stickyHeader>
                         <TableHead>
                           <TableRow>
-                            <TableCell>#</TableCell>
+                            <TableCell width={60}>Order</TableCell>
                             <TableCell>Component Name</TableCell>
                             <TableCell>Unit</TableCell>
-                            <TableCell>Order</TableCell>
                             <TableCell>Entry Type</TableCell>
                             <TableCell>Status</TableCell>
-                            {!viewOnly && <TableCell>Actions</TableCell>}
+                            <TableCell width={viewOnly ? 80 : 200}>Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {components.map((component, index) => (
                             <TableRow key={index}>
-                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>
+                                <Typography variant="h6" color="primary">
+                                  {index + 1}
+                                </Typography>
+                              </TableCell>
                               <TableCell>{component.compoName}</TableCell>
                               <TableCell>{component.compUnit || "-"}</TableCell>
-                              <TableCell>{component.compOrder || "-"}</TableCell>
                               <TableCell>{component.lCentName || "-"}</TableCell>
                               <TableCell>
                                 <Chip size="small" color={component.rActiveYN === "Y" ? "success" : "error"} label={component.rActiveYN === "Y" ? "Active" : "Inactive"} />
                               </TableCell>
-                              {!viewOnly && (
-                                <TableCell>
+                              <TableCell>
+                                {viewOnly ? (
+                                  <IconButton size="small" sx={{ cursor: "default" }}>
+                                    <DragIndicator fontSize="small" />
+                                  </IconButton>
+                                ) : (
                                   <Stack direction="row" spacing={1}>
+                                    <Tooltip title="Move Up">
+                                      <span>
+                                        <IconButton size="small" color="primary" onClick={() => moveComponent(index, "up")} disabled={index === 0}>
+                                          <ArrowUpward fontSize="small" />
+                                        </IconButton>
+                                      </span>
+                                    </Tooltip>
+                                    <Tooltip title="Move Down">
+                                      <span>
+                                        <IconButton size="small" color="primary" onClick={() => moveComponent(index, "down")} disabled={index === components.length - 1}>
+                                          <ArrowDownward fontSize="small" />
+                                        </IconButton>
+                                      </span>
+                                    </Tooltip>
                                     <Tooltip title="Edit Component">
-                                      <IconButton size="small" color="primary" onClick={() => handleEditComponent(component, index)}>
+                                      <IconButton size="small" color="info" onClick={() => handleEditComponent(component, index)}>
                                         <EditIcon fontSize="small" />
                                       </IconButton>
                                     </Tooltip>
@@ -481,8 +548,8 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                                       </IconButton>
                                     </Tooltip>
                                   </Stack>
-                                </TableCell>
-                              )}
+                                )}
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>

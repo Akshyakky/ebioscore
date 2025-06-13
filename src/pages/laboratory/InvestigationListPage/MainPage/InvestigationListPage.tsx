@@ -14,10 +14,12 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, Tab, Tabs, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import InvestigationForm from "../Form/InvestigationForm";
 import { useInvestigationList } from "../hooks/useInvestigationList";
+import { useLInvMast } from "../hooks/useLInvMast";
+import InvestigationPrintOrder from "../SubPage/InvestigationPrintOrder";
 
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -34,8 +36,25 @@ const sampleOptions = [
   { value: "no", label: "No Sample" },
 ];
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div role="tabpanel" hidden={value !== index} id={`simple-tabpanel-${index}`} aria-labelledby={`simple-tab-${index}`} {...other}>
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
 const InvestigationListPage: React.FC = () => {
   const { showAlert } = useAlert();
+  const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedInvestigation, setSelectedInvestigation] = useState<InvestigationListDto | null>(null);
@@ -44,7 +63,9 @@ const InvestigationListPage: React.FC = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
 
-  const { investigationList, isLoading, error, fetchInvestigationList, deleteInvestigation } = useInvestigationList();
+  const { investigationList, isLoading, fetchInvestigationList, deleteInvestigation } = useInvestigationList();
+  const { invMastList, fetchInvMastList, saveInvMast } = useLInvMast();
+
   const [filters, setFilters] = useState<{
     status: string;
     report: string;
@@ -55,9 +76,23 @@ const InvestigationListPage: React.FC = () => {
     sample: "",
   });
 
+  useEffect(() => {
+    if (tabValue === 1) {
+      fetchInvMastList();
+    }
+  }, [tabValue, fetchInvMastList]);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
   const handleRefresh = useCallback(() => {
-    fetchInvestigationList();
-  }, [fetchInvestigationList]);
+    if (tabValue === 0) {
+      fetchInvestigationList();
+    } else {
+      fetchInvMastList();
+    }
+  }, [fetchInvestigationList, fetchInvMastList, tabValue]);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
@@ -149,15 +184,12 @@ const InvestigationListPage: React.FC = () => {
     });
   }, []);
 
-  // Ensure investigationList is always an array
   const normalizedInvestigationList = useMemo(() => {
     if (!investigationList) return [];
     if (Array.isArray(investigationList)) return investigationList;
-    // If it's a single object, wrap it in an array
     return [investigationList];
   }, [investigationList]);
 
-  // Calculate stats for the dashboard
   const stats = useMemo(() => {
     if (!normalizedInvestigationList.length) {
       return {
@@ -184,7 +216,6 @@ const InvestigationListPage: React.FC = () => {
     };
   }, [normalizedInvestigationList]);
 
-  // Apply filters to the list
   const filteredInvestigations = useMemo(() => {
     if (!normalizedInvestigationList.length) return [];
 
@@ -208,51 +239,6 @@ const InvestigationListPage: React.FC = () => {
       return matchesSearch && matchesStatus && matchesReport && matchesSample;
     });
   }, [normalizedInvestigationList, debouncedSearchTerm, filters]);
-
-  const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Total Investigations</Typography>
-          <Typography variant="h4">{stats.totalInvestigations}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeInvestigations}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveInvestigations}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">With Report</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.withReport}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">With Sample</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.withSample}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Total Components</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.totalComponents}
-          </Typography>
-        </Grid>
-      </Grid>
-    </Paper>
-  );
-
-  console.log("investigationList", investigationList);
-  console.log("normalizedInvestigationList", normalizedInvestigationList);
-  console.log("filteredInvestigations", filteredInvestigations);
 
   const columns: Column<InvestigationListDto>[] = [
     {
@@ -297,7 +283,18 @@ const InvestigationListPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 120,
-      formatter: (_value: any, item: InvestigationListDto) => <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />,
+      formatter: (_value: any, item: InvestigationListDto) => (
+        <Tooltip
+          title={
+            item.lComponentsDto
+              ?.map((comp) => comp.compoName)
+              .filter(Boolean)
+              .join(", ") || "No components"
+          }
+        >
+          <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />
+        </Tooltip>
+      ),
     },
     {
       key: "invReportYN",
@@ -385,7 +382,6 @@ const InvestigationListPage: React.FC = () => {
     },
   ];
 
-  // Custom filter function for CustomGrid
   const customFilter = useCallback((item: InvestigationListDto, searchValue: string) => {
     const inv = item.lInvMastDto;
     if (!inv) return false;
@@ -401,126 +397,167 @@ const InvestigationListPage: React.FC = () => {
     );
   }, []);
 
-  if (error) {
-    // return (
-    //   <Box sx={{ p: 2 }}>
-    //     <Typography color="error" variant="h6">
-    //       Error loading investigations: {error}
-    //     </Typography>
-    //     <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
-    //   </Box>
-    // );
-  }
-
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2 }}>
-        <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
-      </Box>
+      <Paper sx={{ width: "100%" }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="investigation tabs">
+          <Tab label="Investigation List" />
+          <Tab label="Investigation Print Order" />
+        </Tabs>
+      </Paper>
 
-      {showStats && renderStatsDashboard()}
+      <TabPanel value={tabValue} index={0}>
+        <Box sx={{ mb: 2 }}>
+          <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
+        </Box>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
-              Investigation List
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={1}>
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
+        {showStats && (
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <Typography variant="h6">Total Investigations</Typography>
+                <Typography variant="h4">{stats.totalInvestigations}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <Typography variant="h6">Active</Typography>
+                <Typography variant="h4" color="success.main">
+                  {stats.activeInvestigations}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <Typography variant="h6">Inactive</Typography>
+                <Typography variant="h4" color="error.main">
+                  {stats.inactiveInvestigations}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <Typography variant="h6">With Report</Typography>
+                <Typography variant="h4" color="info.main">
+                  {stats.withReport}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <Typography variant="h6">With Sample</Typography>
+                <Typography variant="h4" color="warning.main">
+                  {stats.withSample}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <Typography variant="h6">Total Components</Typography>
+                <Typography variant="h4" color="secondary.main">
+                  {stats.totalComponents}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+        )}
+
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Typography variant="h5" component="h1" gutterBottom>
+                Investigation List
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
+              <Stack direction="row" spacing={1}>
+                <SmartButton
+                  text="Refresh"
+                  icon={RefreshIcon}
+                  onClick={handleRefresh}
+                  color="info"
+                  variant="outlined"
+                  size="small"
+                  disabled={isLoading}
+                  loadingText="Refreshing..."
+                  asynchronous={true}
+                  showLoadingIndicator={true}
+                />
+                <SmartButton text="Add Investigation" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+              </Stack>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                placeholder="Search by code, name, short name or methods"
                 variant="outlined"
                 size="small"
-                disabled={isLoading}
-                loadingText="Refreshing..."
-                asynchronous={true}
-                showLoadingIndicator={true}
+                value={searchTerm}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchTerm && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={handleClearSearch}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
-              <SmartButton text="Add Investigation" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-            </Stack>
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Tooltip title="Filter Investigations">
+                <Stack direction="row" spacing={2}>
+                  <DropdownSelect
+                    label="Status"
+                    name="status"
+                    value={filters.status}
+                    options={statusOptions}
+                    onChange={(e) => handleFilterChange("status", e.target.value)}
+                    size="small"
+                    defaultText="All Status"
+                  />
+                  <DropdownSelect
+                    label="Report"
+                    name="report"
+                    value={filters.report}
+                    options={reportOptions}
+                    onChange={(e) => handleFilterChange("report", e.target.value)}
+                    size="small"
+                    defaultText="All"
+                  />
+                  <DropdownSelect
+                    label="Sample"
+                    name="sample"
+                    value={filters.sample}
+                    options={sampleOptions}
+                    onChange={(e) => handleFilterChange("sample", e.target.value)}
+                    size="small"
+                    defaultText="All"
+                  />
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {Object.values(filters).some((v) => v) && (
+                      <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
+                    )}
+                  </Box>
+                </Stack>
+              </Tooltip>
+            </Grid>
           </Grid>
+        </Paper>
 
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              fullWidth
-              placeholder="Search by code, name, short name or methods"
-              variant="outlined"
-              size="small"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: searchTerm && (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={handleClearSearch}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Tooltip title="Filter Investigations">
-              <Stack direction="row" spacing={2}>
-                <DropdownSelect
-                  label="Status"
-                  name="status"
-                  value={filters.status}
-                  options={statusOptions}
-                  onChange={(e) => handleFilterChange("status", e.target.value)}
-                  size="small"
-                  defaultText="All Status"
-                />
-                <DropdownSelect
-                  label="Report"
-                  name="report"
-                  value={filters.report}
-                  options={reportOptions}
-                  onChange={(e) => handleFilterChange("report", e.target.value)}
-                  size="small"
-                  defaultText="All"
-                />
-                <DropdownSelect
-                  label="Sample"
-                  name="sample"
-                  value={filters.sample}
-                  options={sampleOptions}
-                  onChange={(e) => handleFilterChange("sample", e.target.value)}
-                  size="small"
-                  defaultText="All"
-                />
-                <Box display="flex" alignItems="center" gap={1}>
-                  {Object.values(filters).some((v) => v) && (
-                    <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
-                  )}
-                </Box>
-              </Stack>
-            </Tooltip>
-          </Grid>
-        </Grid>
-      </Paper>
+        <Paper sx={{ p: 2 }}>
+          <CustomGrid
+            columns={columns}
+            data={filteredInvestigations}
+            maxHeight="calc(100vh - 280px)"
+            emptyStateMessage="No investigations found"
+            loading={isLoading}
+            customFilter={customFilter}
+            searchTerm={debouncedSearchTerm}
+          />
+        </Paper>
+      </TabPanel>
 
-      <Paper sx={{ p: 2 }}>
-        <CustomGrid
-          columns={columns}
-          data={filteredInvestigations}
-          maxHeight="calc(100vh - 280px)"
-          emptyStateMessage="No investigations found"
-          loading={isLoading}
-          customFilter={customFilter}
-          searchTerm={debouncedSearchTerm}
-        />
-      </Paper>
+      <TabPanel value={tabValue} index={1}>
+        <InvestigationPrintOrder invMastList={invMastList} fetchInvMastList={fetchInvMastList} saveInvMast={saveInvMast} isLoading={isLoading} />
+      </TabPanel>
 
       {isFormOpen && <InvestigationForm open={isFormOpen} onClose={handleFormClose} initialData={selectedInvestigation} viewOnly={isViewMode} />}
 
