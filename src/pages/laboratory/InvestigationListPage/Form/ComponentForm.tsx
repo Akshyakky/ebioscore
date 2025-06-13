@@ -5,6 +5,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { LCompNormalDto, LComponentDto, LCompTemplateDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
+import { LCENT_ID } from "@/types/lCentConstants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Box, Divider, Grid, Typography } from "@mui/material";
 import React, { useEffect } from "react";
@@ -13,7 +14,6 @@ import * as z from "zod";
 import MultipleSelectionEntryType, { multipleEntrySchema } from "../SubPage/MultipleSelectionEntryType";
 import ReferenceValueEntryType, { referenceValueSchema } from "../SubPage/ReferenceValueEntryType";
 import TemplateValueEntryType, { templateValueSchema } from "../SubPage/TemplateValueEntryType";
-
 interface ComponentFormProps {
   open: boolean;
   onClose: () => void;
@@ -30,8 +30,10 @@ const schema = z.object({
   compoTitle: z.string().optional().nullable(),
   invID: z.number().optional().nullable(),
   mGrpID: z.number().optional().nullable(),
+  mGrpCode: z.string().optional().nullable(),
   mGrpName: z.string().optional().nullable(),
   stitID: z.number().optional().nullable(),
+  stitCode: z.string().optional().nullable(),
   stitName: z.string().optional().nullable(),
   compInterpret: z.string().optional().nullable(),
   compUnit: z.string().optional().nullable(),
@@ -48,6 +50,8 @@ const schema = z.object({
   rActiveYN: z.string().optional().nullable(),
   transferYN: z.string().optional().nullable(),
   rNotes: z.string().optional().nullable(),
+  compoMethod: z.string().optional().nullable(),
+  compoSample: z.string().optional().nullable(),
   lCompMultipleDto: z.array(multipleEntrySchema).optional(),
   lCompNormalDto: z.array(referenceValueSchema).optional(),
   lCompTemplateDto: templateValueSchema.optional().nullable(),
@@ -58,7 +62,7 @@ type ComponentFormData = z.infer<typeof schema>;
 const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, initialData, invID }) => {
   const [entryTypes, setEntryTypes] = React.useState<any[]>([]);
   const [templateData, setTemplateData] = React.useState<LCompTemplateDto | null>(null);
-  const { componentUnit } = useDropdownValues(["componentUnit"]);
+  const { componentUnit, mainGroup, subTitle } = useDropdownValues(["componentUnit", "mainGroup", "subTitle"]);
   const defaultValues: ComponentFormData = {
     compoID: 0,
     compoCode: "",
@@ -236,18 +240,20 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       rActiveYN: data.rActiveYN || "Y",
       transferYN: data.transferYN || "N",
       rNotes: data.rNotes || "",
-      lCompMultipleDto: (watchedLCentID === 5 ? typedMultipleFields : []) as LCompMultipleDto[],
-      lCompNormalDto: (watchedLCentID === 6 ? typedReferenceFields : []) as LCompNormalDto[],
-      lCompTemplateDto: (watchedLCentID === 7 ? templateData : undefined) as LCompTemplateDto,
+      compoMethod: data.compoMethod || "",
+      compoSample: data.compoSample || "",
+      lCompMultipleDto: (watchedLCentID === LCENT_ID.MULTIPLE_SELECTION ? typedMultipleFields : []) as LCompMultipleDto[],
+      lCompNormalDto: (watchedLCentID === LCENT_ID.REFERENCE_VALUES ? typedReferenceFields : []) as LCompNormalDto[],
+      lCompTemplateDto: (watchedLCentID === LCENT_ID.TEMPLATE_VALUES ? templateData : undefined) as LCompTemplateDto,
     };
     onSave(componentData);
   };
 
   const isFormValid = () => {
     if (!isValid) return false;
-    if (watchedLCentID === 5 && multipleFields.length === 0) return false;
-    if (watchedLCentID === 6 && referenceFields.length === 0) return false;
-    if (watchedLCentID === 7 && !templateData) return false;
+    if (watchedLCentID === LCENT_ID.MULTIPLE_SELECTION && multipleFields.length === 0) return false;
+    if (watchedLCentID === LCENT_ID.REFERENCE_VALUES && referenceFields.length === 0) return false;
+    if (watchedLCentID === LCENT_ID.TEMPLATE_VALUES && !templateData) return false;
     return true;
   };
 
@@ -296,22 +302,62 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
               Component Settings
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
             <Grid container spacing={2}>
-              <Grid size={{ sm: 12, md: 6 }}>
-                <FormField name="compInterpret" control={control} label="Interpretation" type="text" size="small" fullWidth />
+              <Grid size={{ sm: 12, md: 4 }}>
+                <FormField
+                  name="mGrpCode"
+                  control={control}
+                  label="Main Group"
+                  type="select"
+                  required
+                  size="small"
+                  options={mainGroup || []}
+                  fullWidth
+                  onChange={(value: any) => {
+                    const selectedItem = mainGroup?.find((type) => type.value === value.value);
+                    if (selectedItem) {
+                      setValue("stitID", selectedItem.id);
+                      setValue("stitName", selectedItem.label);
+                    }
+                  }}
+                />
+              </Grid>
+              <Grid size={{ sm: 12, md: 4 }}>
+                <FormField
+                  name="stitCode"
+                  control={control}
+                  label="Subtitle"
+                  type="select"
+                  required
+                  size="small"
+                  options={subTitle || []}
+                  fullWidth
+                  onChange={(value: any) => {
+                    const selectedItem = subTitle?.find((type) => type.value === value.value);
+                    if (selectedItem) {
+                      setValue("stitID", selectedItem.id);
+                      setValue("stitName", selectedItem.label);
+                    }
+                  }}
+                />
+              </Grid>
+              <Grid size={{ sm: 12, md: 4 }}>
+                <FormField name="compUnit" control={control} label="Unit" type="select" required size="small" options={componentUnit || []} fullWidth />
               </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
-                <FormField name="compUnit" control={control} label="Unit" type="select" required size="small" options={componentUnit || []} fullWidth />
+                <FormField name="compoMethod" control={control} label="Method" type="textarea" size="small" fullWidth rows={2} />
+              </Grid>
+              <Grid size={{ sm: 12, md: 6 }}>
+                <FormField name="compoSample" control={control} label="Sample" type="textarea" size="small" fullWidth rows={2} />
+              </Grid>
+              <Grid size={{ sm: 12, md: 12 }}>
+                <FormField name="compInterpret" control={control} label="Interpretation" type="textarea" size="small" fullWidth rows={2} />
               </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="deltaValPercent" control={control} label="Delta Value (%)" type="number" size="small" fullWidth />
               </Grid>
               <Grid size={{ sm: 12, md: 4 }}>
                 <FormField name="compDetailYN" control={control} label="Detail Required" type="switch" size="small" />
-              </Grid>
-              <Grid size={{ sm: 12, md: 4 }}>
-                <FormField name="rActiveYN" control={control} label="Active" type="switch" size="small" />
               </Grid>
             </Grid>
           </Grid>
@@ -345,7 +391,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
           </Grid>
 
           {/* Multiple Values Section - when lCentID === 5 */}
-          {watchedLCentID === 5 && (
+          {watchedLCentID === LCENT_ID.MULTIPLE_SELECTION && (
             <MultipleSelectionEntryType
               invID={invID}
               compoID={watch("compoID") || 0}
@@ -357,7 +403,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
           )}
 
           {/* Reference Values Section - when lCentID === 6*/}
-          {watchedLCentID === 6 && (
+          {watchedLCentID === LCENT_ID.REFERENCE_VALUES && (
             <ReferenceValueEntryType
               compoID={watch("compoID") || 0}
               fields={typedReferenceFields}
@@ -369,7 +415,9 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
           )}
 
           {/* Template Values Section - when lCentID === 7 */}
-          {watchedLCentID === 7 && <TemplateValueEntryType invID={invID} compoID={watch("compoID") || 0} templateData={templateData} onUpdate={setTemplateData} />}
+          {watchedLCentID === LCENT_ID.TEMPLATE_VALUES && (
+            <TemplateValueEntryType invID={invID} compoID={watch("compoID") || 0} templateData={templateData} onUpdate={setTemplateData} />
+          )}
 
           {/* Notes */}
           <Grid size={{ sm: 12 }}>

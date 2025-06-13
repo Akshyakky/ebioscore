@@ -1,0 +1,5 @@
+export const LCENT_ID = {
+  MULTIPLE_SELECTION: 5,
+  REFERENCE_VALUES: 6,
+  TEMPLATE_VALUES: 7,
+} as const;

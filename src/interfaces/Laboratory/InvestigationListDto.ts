@@ -53,6 +53,8 @@ export interface LComponentDto extends BaseDto {
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;
+  compoMethod?: string;
+  compoSample?: string;
   lCompMultipleDto?: LCompMultipleDto[];
   lCompNormalDto?: LCompNormalDto[];
   lCompTemplateDto?: LCompTemplateDto;

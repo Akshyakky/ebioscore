@@ -217,10 +217,6 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
         </Grid>
 
         <Grid size={{ sm: 12 }}>
-          <FormField name="rNotes" control={control} label="Notes" type="textarea" size="small" fullWidth rows={2} placeholder="Any additional notes about this template" />
-        </Grid>
-
-        <Grid size={{ sm: 12 }}>
           <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
             {templateData && <SmartButton text="Clear Template" onClick={handleClearTemplate} variant="outlined" color="error" size="small" />}
             <SmartButton
