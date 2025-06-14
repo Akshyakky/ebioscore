@@ -41,6 +41,9 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
   const [showApplyConfirmation, setShowApplyConfirmation] = useState(false);
   const [importMenuAnchor, setImportMenuAnchor] = useState<null | HTMLElement>(null);
 
+  // New state to track if import has been performed
+  const [hasImported, setHasImported] = useState(false);
+
   // Form dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedOverview, setSelectedOverview] = useState<ProductOverviewDto | null>(null);
@@ -57,6 +60,8 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
   useEffect(() => {
     if (open && selectedProduct) {
       loadDepartmentOverviews();
+      // Reset import state when dialog opens
+      setHasImported(false);
     }
   }, [open, selectedProduct]);
 
@@ -204,6 +209,9 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
       })
     );
 
+    // Set hasImported to true when import is performed
+    setHasImported(true);
+
     setImportMenuAnchor(null);
     showAlert("Success", `Imported details from ${sourceRow.department} to selected departments`, "success");
   };
@@ -216,6 +224,11 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
 
     if (selectedDepartments.size === 0) {
       showAlert("Warning", "Please select at least one department", "warning");
+      return;
+    }
+
+    if (!hasImported) {
+      showAlert("Warning", "Please import data from a department before applying", "warning");
       return;
     }
 
@@ -240,6 +253,9 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
       if (successCount === results.length) {
         showAlert("Success", `Successfully saved ${successCount} department overviews`, "success");
         await loadDepartmentOverviews();
+        // Reset states after successful save
+        setHasImported(false);
+        setSelectedDepartments(new Set());
       } else {
         showAlert("Warning", `Saved ${successCount} out of ${results.length} department overviews`, "warning");
       }
@@ -350,6 +366,9 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
 
   const hasAnyConfiguredDepartment = departmentOverviews.some((row) => row.pvID !== 0);
 
+  // Check if Apply button should be enabled
+  const isApplyButtonEnabled = selectedDepartments.size > 0 && hasImported;
+
   // If no product is selected, show a message or close the dialog
   if (!selectedProduct && open) {
     return (
@@ -375,6 +394,7 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
           {selectedDepartments.size > 0 && (
             <Alert severity="info" sx={{ mb: 2 }}>
               {selectedDepartments.size} department(s) selected for bulk operations
+              {selectedDepartments.size > 0 && !hasImported && " - Import data from a department to enable Apply"}
             </Alert>
           )}
 
@@ -405,7 +425,7 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
                   onClick={() => setShowApplyConfirmation(true)}
                   variant="contained"
                   color="primary"
-                  disabled={selectedDepartments.size === 0}
+                  disabled={!isApplyButtonEnabled}
                   asynchronous={true}
                   showLoadingIndicator={true}
                   loadingText="Saving..."
@@ -464,5 +484,4 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
     </>
   );
 };
-
 export default ProductDepartmentOverview;
