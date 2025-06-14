@@ -4,14 +4,15 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { LCompTemplateDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, Box, Divider, Grid, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { debounce } from "lodash";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 export const templateValueSchema = z.object({
-  cTID: z.number().optional(),
+  cTID: z.number().optional().nullable(),
   tGroupID: z.number().min(1, "Please select a template group"),
-  tGroupCode: z.string().optional().nullable(), // Made optional
+  tGroupCode: z.string().optional().nullable(),
   tGroupName: z.string().optional().nullable(),
   cTText: z.string().nonempty("Template text is required"),
   isBlankYN: z.string().optional().nullable(),
@@ -36,6 +37,9 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
   const [error] = useState<string | null>(null);
   const { templateGroup } = useDropdownValues(["templateGroup"]);
 
+  // Use ref to track if we're updating from parent
+  const isUpdatingFromParent = useRef(false);
+
   const {
     control,
     handleSubmit,
@@ -43,6 +47,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     setValue,
     watch,
     formState: { errors, isDirty },
+    getValues,
   } = useForm<TemplateValueFormData>({
     defaultValues: {
       cTID: 0,
@@ -61,7 +66,30 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
     mode: "onChange",
   });
 
+  // Create a debounced update function
+  const debouncedUpdate = useRef(
+    debounce((formData: TemplateValueFormData) => {
+      const templateValue: LCompTemplateDto = {
+        cTID: formData.cTID || 0,
+        tGroupID: formData.tGroupID,
+        tGroupCode: formData.tGroupCode || "",
+        tGroupName: formData.tGroupName || "",
+        cTText: formData.cTText,
+        isBlankYN: formData.isBlankYN || "N",
+        compoID: compoID,
+        rActiveYN: "Y",
+        transferYN: "N",
+        rNotes: formData.rNotes || "",
+        invID: invID,
+      };
+      onUpdate(templateValue);
+    }, 500) // Debounce for 500ms
+  ).current;
+
+  // Update form when templateData changes from parent
   useEffect(() => {
+    isUpdatingFromParent.current = true;
+
     if (templateData) {
       reset({
         cTID: templateData.cTID || 0,
@@ -91,32 +119,38 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
         invID: invID,
       });
     }
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isUpdatingFromParent.current = false;
+    }, 100);
   }, [templateData, compoID, invID, reset]);
 
-  // Auto-save template data when form is valid
+  // Watch specific fields for auto-save
   const watchedTGroupID = watch("tGroupID");
   const watchedCTText = watch("cTText");
   const watchedIsBlankYN = watch("isBlankYN");
 
+  // Auto-save with debouncing
   useEffect(() => {
-    // Only auto-save if we have valid tGroupID and cTText
-    if (watchedTGroupID > 0 && watchedCTText) {
-      const templateValue: LCompTemplateDto = {
-        cTID: templateData?.cTID || 0,
-        tGroupID: watchedTGroupID,
-        tGroupCode: watch("tGroupCode") || "",
-        tGroupName: watch("tGroupName") || "",
-        cTText: watchedCTText,
-        isBlankYN: watchedIsBlankYN || "N",
-        compoID: compoID,
-        rActiveYN: "Y",
-        transferYN: "N",
-        rNotes: watch("rNotes") || "",
-        invID: invID,
-      };
-      onUpdate(templateValue);
+    // Skip if we're updating from parent or if required fields are not set
+    if (isUpdatingFromParent.current || !watchedTGroupID || !watchedCTText) {
+      return;
     }
-  }, [watchedTGroupID, watchedCTText, watchedIsBlankYN, compoID, invID, templateData, watch, onUpdate]);
+
+    // Get all current form values
+    const currentValues = getValues();
+
+    // Call debounced update
+    debouncedUpdate(currentValues);
+  }, [watchedTGroupID, watchedCTText, watchedIsBlankYN, getValues, debouncedUpdate]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedUpdate.cancel();
+    };
+  }, [debouncedUpdate]);
 
   const handleClearTemplate = () => {
     reset({
@@ -139,7 +173,7 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
   const templateGroupOptions = React.useMemo(() => {
     if (!templateGroup || templateGroup.length === 0) return [];
     return templateGroup.map((group) => ({
-      value: group.bchID || group.id || group.value, // Use bchID as the value
+      value: group.bchID || group.id || group.value,
       label: group.label || group.bchName || "",
     }));
   }, [templateGroup]);
@@ -192,7 +226,6 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
             helperText={errors.tGroupID?.message}
             disabled={templateGroupOptions.length === 0}
             onChange={(value: any) => {
-              // When tGroupID changes, update the related fields
               const selectedGroup = templateGroup?.find((group) => (group.bchID || group.id || group.value) === value.value);
               if (selectedGroup) {
                 setValue("tGroupCode", selectedGroup.bchCode || selectedGroup.code || "");
