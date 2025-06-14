@@ -9,6 +9,7 @@ import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOver
 import { useAlert } from "@/providers/AlertProvider";
 import { productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
 import {
+  Add,
   Send as ApplyIcon,
   ArrowDropDown as ArrowDropDownIcon,
   ContentCopy as CopyIcon,
@@ -269,7 +270,8 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
       header: "Select",
       visible: true,
       width: 50,
-      render: (row) => <Checkbox checked={row.isSelected || false} onChange={(e) => handleSelectDepartment(row.deptID, e.target.checked)} />,
+      render: (row) =>
+        row.pvID === 0 && <Checkbox checked={row.isSelected || false} onChange={(e) => handleSelectDepartment(row.deptID, e.target.checked)} disabled={row.pvID > 0} />,
     },
     {
       key: "department",
@@ -279,7 +281,6 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
       formatter: (value: string, row: DepartmentOverviewRow) => (
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="body2">{value}</Typography>
-          {row.pvID === 0 && <Chip size="small" color="info" label="New" />}
         </Stack>
       ),
     },
@@ -341,7 +342,7 @@ const ProductDepartmentOverview: React.FC<ProductDepartmentOverviewProps> = ({ o
       width: 120,
       render: (row) => (
         <IconButton size="small" color="primary" onClick={() => handleEditClick(row)}>
-          <EditIcon fontSize="small" />
+          {row.pvID === 0 ? <Add fontSize="small" /> : <EditIcon fontSize="small" />}
         </IconButton>
       ),
     },
