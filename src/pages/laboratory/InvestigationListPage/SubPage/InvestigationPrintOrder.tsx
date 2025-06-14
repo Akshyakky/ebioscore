@@ -3,7 +3,7 @@ import { LInvMastDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { ArrowDownward, ArrowUpward, DragIndicator, Refresh as RefreshIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Box, Chip, Grid, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface InvestigationPrintOrderProps {
   invMastList: LInvMastDto[];
@@ -16,6 +16,9 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ invMa
   const { showAlert } = useAlert();
   const [orderedInvestigations, setOrderedInvestigations] = useState<LInvMastDto[]>([]);
   const [hasOrderChanges, setHasOrderChanges] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<number | null>(null);
+  const dragCounter = useRef(0);
 
   useEffect(() => {
     if (invMastList && invMastList.length > 0) {
@@ -23,6 +26,74 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ invMa
       setOrderedInvestigations(sorted);
     }
   }, [invMastList]);
+
+  const handleDragStart = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
+    setDraggedItem(index);
+    e.dataTransfer.effectAllowed = "move";
+    // Add a slight transparency to the dragged element
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = "0.5";
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLTableRowElement>) => {
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = "1";
+    }
+    setDraggedItem(null);
+    setDragOverItem(null);
+    dragCounter.current = 0;
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
+    e.preventDefault();
+    dragCounter.current++;
+    if (draggedItem !== null && draggedItem !== index) {
+      setDragOverItem(index);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLTableRowElement>) => {
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setDragOverItem(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLTableRowElement>, dropIndex: number) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+
+    if (draggedItem === null || draggedItem === dropIndex) {
+      return;
+    }
+
+    const draggedItemContent = orderedInvestigations[draggedItem];
+    const newList = [...orderedInvestigations];
+
+    // Remove the dragged item
+    newList.splice(draggedItem, 1);
+
+    // Insert it at the new position
+    const adjustedDropIndex = draggedItem < dropIndex ? dropIndex - 1 : dropIndex;
+    newList.splice(adjustedDropIndex, 0, draggedItemContent);
+
+    // Update print order for all items
+    const updatedList = newList.map((item, idx) => ({
+      ...item,
+      invPrintOrder: idx + 1,
+    }));
+
+    setOrderedInvestigations(updatedList);
+    setHasOrderChanges(true);
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
 
   const moveInvestigation = (index: number, direction: "up" | "down") => {
     const newList = [...orderedInvestigations];
@@ -69,7 +140,7 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ invMa
               Investigation Print Order
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Use arrow buttons to reorder investigations for printing
+              Drag and drop rows or use arrow buttons to reorder investigations for printing
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
@@ -98,7 +169,25 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ invMa
             </TableHead>
             <TableBody>
               {orderedInvestigations.map((investigation, index) => (
-                <TableRow key={investigation.invID}>
+                <TableRow
+                  key={investigation.invID}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => handleDragEnter(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  sx={{
+                    cursor: "move",
+                    backgroundColor: dragOverItem === index ? "action.hover" : "inherit",
+                    opacity: draggedItem === index ? 0.5 : 1,
+                    transition: "background-color 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "action.hover",
+                    },
+                  }}
+                >
                   <TableCell>
                     <Typography variant="h6" color="primary">
                       {index + 1}
@@ -130,9 +219,11 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ invMa
                           </IconButton>
                         </span>
                       </Tooltip>
-                      <IconButton size="small" sx={{ cursor: "grab" }}>
-                        <DragIndicator fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="Drag to reorder">
+                        <IconButton size="small" sx={{ cursor: "grab", "&:active": { cursor: "grabbing" } }}>
+                          <DragIndicator fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Stack>
                   </TableCell>
                 </TableRow>
