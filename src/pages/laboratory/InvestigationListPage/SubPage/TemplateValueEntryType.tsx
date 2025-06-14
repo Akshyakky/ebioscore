@@ -42,11 +42,10 @@ const TemplateValueEntryType: React.FC<TemplateValueEntryTypeProps> = ({ invID, 
 
   const {
     control,
-    handleSubmit,
     reset,
     setValue,
     watch,
-    formState: { errors, isDirty },
+    formState: { errors },
     getValues,
   } = useForm<TemplateValueFormData>({
     defaultValues: {

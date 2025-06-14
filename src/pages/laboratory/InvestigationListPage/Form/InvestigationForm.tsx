@@ -264,7 +264,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     }
   };
 
-  const handleComponentDragLeave = (e: React.DragEvent<HTMLTableRowElement>) => {
+  const handleComponentDragLeave = (_e: React.DragEvent<HTMLTableRowElement>) => {
     componentDragCounter.current--;
     if (componentDragCounter.current === 0) {
       setDragOverComponentIndex(null);
@@ -359,7 +359,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
       setIsSaving(false);
       setLoading(false);
     }
-    return;
   };
 
   const performReset = () => {

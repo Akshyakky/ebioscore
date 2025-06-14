@@ -58,7 +58,7 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ invMa
     }
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLTableRowElement>) => {
+  const handleDragLeave = (_e: React.DragEvent<HTMLTableRowElement>) => {
     dragCounter.current--;
     if (dragCounter.current === 0) {
       setDragOverItem(null);
