@@ -595,7 +595,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
   }, []);
 
   return (
-    <Accordion expanded={expanded} onChange={onToggleExpand}>
+    <Accordion expanded={expanded} onChange={onToggleExpand} sx={{ mt: 2 }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box display="flex" alignItems="center" gap={1} width="100%">
           <MoneyIcon color="primary" sx={{ fontSize: 20 }} />
