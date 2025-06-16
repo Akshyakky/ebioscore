@@ -1,6 +1,4 @@
-import { InvestigationListDto, LCompAgeRangeDto, LComponentDto, LInvMastDto } from "@/interfaces/Laboratory/InvestigationListDto";
-import { LComponentEntryTypeDto } from "@/interfaces/Laboratory/LInvMastDto";
-import { LTemplateGroupDto } from "@/interfaces/Laboratory/LTemplateGroupDto";
+import { InvestigationListDto, LCompAgeRangeDto, LComponentDto, LComponentEntryTypeDto, LInvMastDto, LTemplateGroupDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
 export const componentEntryTypeService = createEntityService<LComponentEntryTypeDto>("LComponentEntryType", "laboratoryURL");

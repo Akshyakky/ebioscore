@@ -2,8 +2,8 @@ import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { LCompNormalDto, LComponentDto, LCompTemplateDto } from "@/interfaces/Laboratory/InvestigationListDto";
-import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
+import { LCompMultipleDto, LCompNormalDto, LComponentDto, LCompTemplateDto } from "@/interfaces/Laboratory/InvestigationListDto";
+
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { LCENT_ID } from "@/types/lCentConstants";
 import { zodResolver } from "@hookform/resolvers/zod";

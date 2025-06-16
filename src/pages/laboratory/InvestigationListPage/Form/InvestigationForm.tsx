@@ -32,6 +32,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useInvestigationList } from "../hooks/useInvestigationList";
+
+import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
 import ComponentForm from "./ComponentForm";
 
 interface InvestigationFormProps {
@@ -59,6 +61,7 @@ const schema = z.object({
   invSampleType: z.string().default(""),
   invShortName: z.string().default(""),
   methods: z.string().default(""),
+  chargeID: z.any().optional(),
   coopLabs: z.string().default(""),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().default("N"),
@@ -332,13 +335,32 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
         invShortName: data.invShortName,
         methods: data.methods,
         coopLabs: data.coopLabs,
+        chargeID: data.chargeID,
         rActiveYN: data.rActiveYN as "Y" | "N",
         transferYN: data.transferYN,
       };
 
+      const bChargeData: BChargeDto = {
+        chargeID: data.chargeID || 0,
+        chargeCode: data.invCode || "",
+        chargeDesc: data.invName,
+        chargesHDesc: data.invSTitle,
+        chargeDescLang: data.invName,
+        cShortName: data.invSTitle,
+        chargeType: data.invTypeCode,
+        bChID: data.bchID,
+        sGrpID: 0,
+        chargeTo: "",
+        chargeBreakYN: "N",
+        chargeStatus: "Y",
+        rActiveYN: data.rActiveYN,
+        transferYN: data.transferYN,
+        rNotes: "",
+      };
       const investigationListData: InvestigationListDto = {
         lInvMastDto: investigationData,
-        lComponentsDto: components, // Components already have updated compOrder
+        bChargeDto: bChargeData,
+        lComponentsDto: components,
       };
 
       console.log("Save", investigationListData);
