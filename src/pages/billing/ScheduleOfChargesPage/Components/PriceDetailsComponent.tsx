@@ -38,8 +38,6 @@ import {
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowModel, GridRowModesModel } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, useFieldArray } from "react-hook-form";
-
-// Updated interfaces to match ChargeDto structure
 interface PricingGridItem {
   id: string;
   picId: number;
@@ -85,13 +83,12 @@ interface PricingStatistics {
   doctorHospitalRatio: number;
 }
 
-// Flattened data structure for DataGrid
 interface FlattenedPricingData {
   id: string;
   picId: number;
   picName: string;
   selected: boolean;
-  [key: string]: any; // For dynamic ward category fields
+  [key: string]: any;
 }
 
 const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
@@ -292,7 +289,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     });
   }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid, pricingGridData]);
 
-  // Flatten data for DataGrid
   const flattenedData = useMemo((): FlattenedPricingData[] => {
     return displayedPricingData.map((item) => {
       const flattened: FlattenedPricingData = {
@@ -301,8 +297,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
         picName: item.picName,
         selected: item.selected,
       };
-
-      // Add ward category fields
       getFilteredWardCategories.forEach((category) => {
         const categoryData = item.wardCategories[category.name] || { DcValue: 0, hcValue: 0, chValue: 0 };
         flattened[`${category.name}_drAmt`] = categoryData.DcValue;
@@ -468,46 +462,32 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     updateChargeDetailsFromGrid();
   }, [gridData, getFilteredWardCategories, updateChargeDetailsFromGrid]);
 
-  // Handle DataGrid row updates
   const processRowUpdate = useCallback(
     (newRow: GridRowModel) => {
       const rowId = newRow.id as string;
-
-      // Update the gridData with the new values
       setGridData((prev) => {
         return prev.map((row) => {
           if (row.id !== rowId) return row;
-
           const updatedRow = { ...row, wardCategories: { ...row.wardCategories } };
-
-          // Update ward category values based on changed fields
           getFilteredWardCategories.forEach((category) => {
             const drField = `${category.name}_drAmt`;
             const hospField = `${category.name}_hospAmt`;
-
             if (!updatedRow.wardCategories[category.name]) {
               updatedRow.wardCategories[category.name] = { DcValue: 0, hcValue: 0, chValue: 0 };
             }
-
             const values = updatedRow.wardCategories[category.name];
-
-            // Update values if they changed in the row
             if (newRow[drField] !== undefined) {
               values.DcValue = Math.max(0, parseFloat(newRow[drField]) || 0);
             }
             if (newRow[hospField] !== undefined) {
               values.hcValue = Math.max(0, parseFloat(newRow[hospField]) || 0);
             }
-
-            // Recalculate total
             values.chValue = values.DcValue + values.hcValue;
           });
 
           return updatedRow;
         });
       });
-
-      // Update the charge details
       updateChargeDetailsFromGrid();
 
       return newRow;
@@ -519,22 +499,18 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     console.error("Row update error:", error);
   }, []);
 
-  // Create DataGrid columns
   const gridColumns = useMemo((): GridColDef[] => {
     const columns: GridColDef[] = [
       {
         field: "selected",
         headerName: "SELECT",
-        width: 100,
-        minWidth: 80,
-        maxWidth: 120,
         sortable: false,
         filterable: false,
         editable: false,
         headerAlign: "center",
         align: "center",
         renderCell: (params: GridRenderCellParams) => (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100%" sx={{ py: 2.5 }}>
+          <Box display="flex" justifyContent="center" alignItems="center" sx={{ py: 2.5 }}>
             <input
               type="checkbox"
               checked={isRowSelected(params.id as string)}
@@ -605,7 +581,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     ];
 
     getFilteredWardCategories.forEach((category) => {
-      // Doctor Amount Column
       columns.push({
         field: `${category.name}_drAmt`,
         headerName: `${category.name.toUpperCase()} - DOCTOR`,
@@ -653,7 +628,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
         },
       });
 
-      // Hospital Amount Column
       columns.push({
         field: `${category.name}_hospAmt`,
         headerName: `${category.name.toUpperCase()} - HOSPITAL`,
@@ -700,8 +674,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
           );
         },
       });
-
-      // Total Amount Column
       columns.push({
         field: `${category.name}_totalAmt`,
         headerName: `${category.name.toUpperCase()} - TOTAL`,
@@ -786,10 +758,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
       onChange={onToggleExpand}
       sx={{
         mt: 2,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-        "&:before": {
-          display: "none",
-        },
       }}
     >
       <AccordionSummary
@@ -806,14 +774,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
             PRICING CONFIGURATION
           </Typography>
 
-          <Chip
-            label={`${chargeDetailsArray.fields.length} entries`}
-            size="small"
-            // sx={{
-            //   fontWeight: 600,
-            //   fontSize: "0.75rem",
-            // }}
-          />
+          <Chip label={`${chargeDetailsArray.fields.length} entries`} size="small" />
 
           {pricingStatistics.totalConfigurations > 0 && (
             <Chip
@@ -897,7 +858,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
                 />
               </Grid>
 
-              {/* Advanced Controls */}
               <Fade in={showAdvancedControls}>
                 <Grid container spacing={2} sx={{ width: "100%", mt: 1 }}>
                   <Grid size={{ xs: 12 }}>
@@ -1049,7 +1009,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
             </Grid>
           </Paper>
 
-          {/* Enhanced DataGrid Section */}
           {(showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0 || pricingGridData.length > 0) && (
             <>
               <Box sx={{ mb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1080,7 +1039,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
                 </Box>
               </Box>
 
-              {/* Full Width Enhanced DataGrid */}
               <Paper
                 elevation={0}
                 sx={{
@@ -1205,7 +1163,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
             </>
           )}
 
-          {/* Success Notification */}
           <Snackbar open={applySuccess} autoHideDuration={3000} onClose={() => setApplySuccess(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
             <Alert severity="success" sx={{ width: "100%" }}>
               Price changes applied successfully!
