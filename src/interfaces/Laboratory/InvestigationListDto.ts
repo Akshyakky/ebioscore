@@ -1,7 +1,9 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
+import { BChargeDto } from "../Billing/BChargeDetails";
 
 export interface InvestigationListDto extends BaseDto {
   lInvMastDto: LInvMastDto;
+  bChargeDto: BChargeDto;
   lComponentsDto: LComponentDto[];
 }
 
@@ -119,6 +121,17 @@ export interface LCompTemplateDto extends BaseDto {
   cTText?: string;
   isBlankYN?: string;
   compoID?: number;
+  rActiveYN: string;
+  transferYN: string;
+  rNotes?: string;
+}
+
+export interface LTemplateGroupDto extends BaseDto {
+  tGroupID: number;
+  tRgpCode?: string;
+  tGroupName?: string;
+  modifyYN: string;
+  defaultYN: string;
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;

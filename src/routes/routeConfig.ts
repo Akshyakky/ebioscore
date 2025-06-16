@@ -3,7 +3,6 @@ import React, { lazy, Suspense } from "react";
 
 //const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
 const LogViewerPage = lazy(() => import("@/pages/common/LogViewerPage/LogViewerPage"));
-//const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 //const ComponentEntryTypePage = lazy(() => import("@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage"));
 
 // Lazy load components
@@ -49,6 +48,7 @@ const PatientRegistrationRouter = lazy(() => import("@/pages/patientAdministrati
 const DeptUnitAllocationPage = lazy(() => import("@/pages/hospitalAdministration/DeptUnitAllocation/MainPage/DeptUnitAllocationPage"));
 const MedicationRoutePage = lazy(() => import("@/pages/clinicalManagement/MedicationRoute/MainPage/MedicationRoutePage"));
 const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
+const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -470,16 +470,16 @@ const routeConfig: RouteConfig[] = [
   //     category: "clinical",
   //   },
   // },
-  // {
-  //   path: "/PurchaseOrderPage",
-  //   component: wrapWithSuspense(PurchaseOrderPage),
-  //   protected: true,
-  //   providers: [AlertProvider],
-  //   metadata: {
-  //     title: "Purchase Orders",
-  //     category: "inventory",
-  //   },
-  // },
+  {
+    path: "/PurchaseOrderPage",
+    component: wrapWithSuspense(PurchaseOrderPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Purchase Orders",
+      category: "inventory",
+    },
+  },
   {
     path: "/ForgotPasswordPage",
     component: wrapWithSuspense(ForgotPasswordPage),
