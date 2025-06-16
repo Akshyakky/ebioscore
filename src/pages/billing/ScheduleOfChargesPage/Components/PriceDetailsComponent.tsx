@@ -1,8 +1,8 @@
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import {
   Add as AddIcon,
   Calculate as CalculateIcon,
+  CheckCircle as CheckCircle2Icon,
   Check as CheckIcon,
   ExpandMore as ExpandMoreIcon,
   AttachMoney as MoneyIcon,
@@ -24,7 +24,6 @@ import {
   Divider,
   Fade,
   Grid,
-  IconButton,
   InputAdornment,
   Paper,
   Snackbar,
@@ -34,10 +33,13 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
+  alpha,
 } from "@mui/material";
+import { DataGrid, GridColDef, GridRenderCellParams, GridRowModel, GridRowModesModel } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, useFieldArray } from "react-hook-form";
 
+// Updated interfaces to match ChargeDto structure
 interface PricingGridItem {
   id: string;
   picId: number;
@@ -83,6 +85,15 @@ interface PricingStatistics {
   doctorHospitalRatio: number;
 }
 
+// Flattened data structure for DataGrid
+interface FlattenedPricingData {
+  id: string;
+  picId: number;
+  picName: string;
+  selected: boolean;
+  [key: string]: any; // For dynamic ward category fields
+}
+
 const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
   control,
   expanded,
@@ -105,6 +116,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
   const [applySuccess, setApplySuccess] = useState<boolean>(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showAdvancedControls, setShowAdvancedControls] = useState<boolean>(false);
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
   const chargeDetailsArray = useFieldArray({
     control,
@@ -118,6 +130,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     let configuredCount = 0;
     let totalPossibleConfigurations = 0;
     let hasInconsistencies = false;
+
     gridData.forEach((row) => {
       Object.values(row.wardCategories).forEach((category) => {
         totalPossibleConfigurations++;
@@ -163,6 +176,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
       setGridData([...pricingGridData]);
       const existingPicIds = [...new Set(pricingGridData.map((item) => item.picId.toString()))];
       const existingWardCategoryNames = new Set<string>();
+
       pricingGridData.forEach((item) => {
         Object.keys(item.wardCategories).forEach((wcName) => {
           const category = item.wardCategories[wcName];
@@ -199,6 +213,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
 
   const picOptions = useMemo(() => pic.map((option) => ({ value: option.value, label: option.label })), [pic]);
   const wardCategoryOptions = useMemo(() => bedCategory.map((option) => ({ value: option.value, label: option.label })), [bedCategory]);
+
   const getFilteredWardCategories = useMemo(() => {
     if (wardCategoryFilters.length === 0) {
       return bedCategory.map((category) => ({
@@ -230,6 +245,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     if (!shouldShowGrid) {
       return [];
     }
+
     let filteredByPIC: PricingGridItem[] = [];
     if (picFilters.length > 0) {
       filteredByPIC = picFilters.map((picId) => {
@@ -275,6 +291,28 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
       return updatedItem;
     });
   }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid, pricingGridData]);
+
+  // Flatten data for DataGrid
+  const flattenedData = useMemo((): FlattenedPricingData[] => {
+    return displayedPricingData.map((item) => {
+      const flattened: FlattenedPricingData = {
+        id: item.id,
+        picId: item.picId,
+        picName: item.picName,
+        selected: item.selected,
+      };
+
+      // Add ward category fields
+      getFilteredWardCategories.forEach((category) => {
+        const categoryData = item.wardCategories[category.name] || { DcValue: 0, hcValue: 0, chValue: 0 };
+        flattened[`${category.name}_drAmt`] = categoryData.DcValue;
+        flattened[`${category.name}_hospAmt`] = categoryData.hcValue;
+        flattened[`${category.name}_totalAmt`] = categoryData.chValue;
+      });
+
+      return flattened;
+    });
+  }, [displayedPricingData, getFilteredWardCategories]);
 
   const selectAllRows = useCallback(() => {
     if (selectedRows.length === displayedPricingData.length) {
@@ -332,18 +370,22 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     const updatedGridData = [...gridData];
     const rowsToUpdate = selectedRows.length > 0 ? selectedRows : updatedGridData.map((row) => row.id);
     let changesMade = false;
+
     updatedGridData.forEach((row) => {
       if (selectedRows.length > 0 && !rowsToUpdate.includes(row.id)) {
         return;
       }
+
       getFilteredWardCategories.forEach((category) => {
         const catName = category.name;
         if (!row.wardCategories[catName]) {
           row.wardCategories[catName] = { DcValue: 0, hcValue: 0, chValue: 0 };
         }
+
         const values = row.wardCategories[catName];
         const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
         const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
+
         if (updateDr) {
           const currentValue = values.DcValue || 0;
           let newValue;
@@ -356,6 +398,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
           values.DcValue = Math.max(0, newValue);
           changesMade = true;
         }
+
         if (updateHosp) {
           const currentValue = values.hcValue || 0;
           let newValue;
@@ -368,9 +411,11 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
           values.hcValue = Math.max(0, newValue);
           changesMade = true;
         }
+
         values.chValue = values.DcValue + values.hcValue;
       });
     });
+
     if (changesMade) {
       setGridData([...updatedGridData]);
       updateChargeDetailsFromGrid();
@@ -398,10 +443,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     const valueDisplay = isPercentage ? `${amountValue}%` : `₹${amountValue}`;
     return `${actionSymbol}${valueDisplay}`;
   }, [isApplyReady, priceChangeType, isPercentage, amountValue]);
+
   const generateOptimalPricing = useCallback(() => {
     const avgMarketPrice = 1000;
     const doctorShare = 0.6;
     const updatedGridData = [...gridData];
+
     updatedGridData.forEach((row) => {
       getFilteredWardCategories.forEach((category) => {
         const catName = category.name;
@@ -409,6 +456,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
         if (!row.wardCategories[catName]) {
           row.wardCategories[catName] = { DcValue: 0, hcValue: 0, chValue: 0 };
         }
+
         const values = row.wardCategories[catName];
         values.DcValue = Math.round(avgMarketPrice * doctorShare);
         values.hcValue = Math.round(avgMarketPrice * (1 - doctorShare));
@@ -420,151 +468,289 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     updateChargeDetailsFromGrid();
   }, [gridData, getFilteredWardCategories, updateChargeDetailsFromGrid]);
 
-  const gridColumns = useMemo((): Column<PricingGridItem>[] => {
-    const columns: Column<PricingGridItem>[] = [
+  // Handle DataGrid row updates
+  const processRowUpdate = useCallback(
+    (newRow: GridRowModel) => {
+      const rowId = newRow.id as string;
+
+      // Update the gridData with the new values
+      setGridData((prev) => {
+        return prev.map((row) => {
+          if (row.id !== rowId) return row;
+
+          const updatedRow = { ...row, wardCategories: { ...row.wardCategories } };
+
+          // Update ward category values based on changed fields
+          getFilteredWardCategories.forEach((category) => {
+            const drField = `${category.name}_drAmt`;
+            const hospField = `${category.name}_hospAmt`;
+
+            if (!updatedRow.wardCategories[category.name]) {
+              updatedRow.wardCategories[category.name] = { DcValue: 0, hcValue: 0, chValue: 0 };
+            }
+
+            const values = updatedRow.wardCategories[category.name];
+
+            // Update values if they changed in the row
+            if (newRow[drField] !== undefined) {
+              values.DcValue = Math.max(0, parseFloat(newRow[drField]) || 0);
+            }
+            if (newRow[hospField] !== undefined) {
+              values.hcValue = Math.max(0, parseFloat(newRow[hospField]) || 0);
+            }
+
+            // Recalculate total
+            values.chValue = values.DcValue + values.hcValue;
+          });
+
+          return updatedRow;
+        });
+      });
+
+      // Update the charge details
+      updateChargeDetailsFromGrid();
+
+      return newRow;
+    },
+    [getFilteredWardCategories, updateChargeDetailsFromGrid]
+  );
+
+  const handleProcessRowUpdateError = useCallback((error: Error) => {
+    console.error("Row update error:", error);
+  }, []);
+
+  // Create DataGrid columns
+  const gridColumns = useMemo((): GridColDef[] => {
+    const columns: GridColDef[] = [
       {
-        key: "selected",
-        header: "Select",
-        visible: true,
-        width: 70,
-        render: (item: PricingGridItem) => (
-          <input type="checkbox" checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} style={{ transform: "scale(1.2)" }} disabled={disabled} />
+        field: "selected",
+        headerName: "SELECT",
+        width: 100,
+        minWidth: 80,
+        maxWidth: 120,
+        sortable: false,
+        filterable: false,
+        editable: false,
+        headerAlign: "center",
+        align: "center",
+        renderCell: (params: GridRenderCellParams) => (
+          <Box display="flex" justifyContent="center" alignItems="center" height="100%" sx={{ py: 2.5 }}>
+            <input
+              type="checkbox"
+              checked={isRowSelected(params.id as string)}
+              onChange={() => toggleRowSelection(params.id as string)}
+              style={{
+                transform: "scale(1.4)",
+                cursor: disabled ? "not-allowed" : "pointer",
+                accentColor: "#1976d2",
+              }}
+              disabled={disabled}
+            />
+          </Box>
         ),
       },
       {
-        key: "picName",
-        header: "Patient Type",
-        visible: true,
-        width: 200,
-        render: (item: PricingGridItem) => (
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="body2" fontWeight="medium">
-              {item.picName}
-            </Typography>
-            {Object.values(item.wardCategories).some((cat) => cat.chValue > 0) && <Chip label="Configured" size="small" color="success" variant="outlined" />}
-          </Box>
-        ),
+        field: "picName",
+        headerName: "PATIENT TYPE (PIC)",
+        width: 280,
+        minWidth: 220,
+        maxWidth: 350,
+        sortable: false,
+        editable: false,
+        headerAlign: "left",
+        align: "left",
+        renderCell: (params: GridRenderCellParams) => {
+          const rowData = displayedPricingData.find((row) => row.id === params.id);
+          const hasConfiguredCategories = rowData ? Object.values(rowData.wardCategories).some((cat: any) => cat.chValue > 0) : false;
+
+          return (
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={2}
+              sx={{
+                py: 2.5,
+                px: 1,
+                height: "100%",
+                minHeight: "80px",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", minWidth: "24px" }}>
+                {hasConfiguredCategories && (
+                  <CheckCircle2Icon
+                    sx={{
+                      fontSize: 20,
+                      color: "success.main",
+                      filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))",
+                    }}
+                  />
+                )}
+              </Box>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: hasConfiguredCategories ? 600 : 500,
+                  fontSize: "0.9rem",
+                  letterSpacing: "0.01em",
+                  color: hasConfiguredCategories ? "text.primary" : "text.secondary",
+                  lineHeight: 1.4,
+                }}
+              >
+                {params.value}
+              </Typography>
+            </Box>
+          );
+        },
       },
     ];
 
     getFilteredWardCategories.forEach((category) => {
+      // Doctor Amount Column
       columns.push({
-        key: `${category.name}_drAmt`,
-        header: `${category.name} - Doctor`,
-        visible: true,
-        width: 140,
-        render: (item: PricingGridItem) => {
-          const currentValue = item.wardCategories[category.name]?.DcValue || 0;
-          const isValid = currentValue >= 0;
+        field: `${category.name}_drAmt`,
+        headerName: `${category.name.toUpperCase()} - DOCTOR`,
+        width: 180,
+        minWidth: 150,
+        maxWidth: 220,
+        type: "number",
+        editable: !disabled,
+        sortable: false,
+        headerAlign: "center",
+        align: "right",
+        preProcessEditCellProps: (params) => {
+          const hasError = params.props.value < 0;
+          return { ...params.props, error: hasError };
+        },
+        renderCell: (params: GridRenderCellParams) => {
+          const value = params.value || 0;
+          const isConfigured = value > 0;
           return (
-            <TextField
-              type="number"
-              size="small"
-              value={currentValue}
-              onChange={(e) => {
-                const numValue = parseFloat(e.target.value) || 0;
-                if (numValue >= 0) {
-                  const updatedItem = {
-                    ...item,
-                    wardCategories: {
-                      ...item.wardCategories,
-                      [category.name]: {
-                        DcValue: numValue,
-                        hcValue: item.wardCategories[category.name]?.hcValue || 0,
-                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0),
-                      },
-                    },
-                  };
-                  setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
-                }
-              }}
-              fullWidth
-              variant="outlined"
-              inputProps={{ min: 0, step: "0.01" }}
-              disabled={disabled}
-              error={!isValid}
-              helperText={!isValid ? "Must be positive" : undefined}
+            <Box
+              display="flex"
+              justifyContent="flex-end"
+              alignItems="center"
+              height="100%"
               sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&.Mui-error": {
-                    "& fieldset": {
-                      borderColor: "error.main",
-                    },
-                  },
-                },
+                pr: 2,
+                minHeight: "80px",
+                backgroundColor: isConfigured ? alpha("#2196f3", 0.04) : "transparent",
               }}
-            />
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: isConfigured ? 600 : 400,
+                  fontSize: "0.9rem",
+                  fontFamily: "monospace",
+                  letterSpacing: "0.02em",
+                  color: isConfigured ? "primary.main" : "text.secondary",
+                }}
+              >
+                ₹{value.toFixed(2)}
+              </Typography>
+            </Box>
           );
         },
       });
 
+      // Hospital Amount Column
       columns.push({
-        key: `${category.name}_hospAmt`,
-        header: `${category.name} - Hospital`,
-        visible: true,
-        width: 140,
-        render: (item: PricingGridItem) => {
-          const currentValue = item.wardCategories[category.name]?.hcValue || 0;
-          const isValid = currentValue >= 0;
-
+        field: `${category.name}_hospAmt`,
+        headerName: `${category.name.toUpperCase()} - HOSPITAL`,
+        width: 180,
+        minWidth: 150,
+        maxWidth: 220,
+        type: "number",
+        editable: !disabled,
+        sortable: false,
+        headerAlign: "center",
+        align: "right",
+        preProcessEditCellProps: (params) => {
+          const hasError = params.props.value < 0;
+          return { ...params.props, error: hasError };
+        },
+        renderCell: (params: GridRenderCellParams) => {
+          const value = params.value || 0;
+          const isConfigured = value > 0;
           return (
-            <TextField
-              type="number"
-              size="small"
-              value={currentValue}
-              onChange={(e) => {
-                const numValue = parseFloat(e.target.value) || 0;
-
-                if (numValue >= 0) {
-                  const updatedItem = {
-                    ...item,
-                    wardCategories: {
-                      ...item.wardCategories,
-                      [category.name]: {
-                        DcValue: item.wardCategories[category.name]?.DcValue || 0,
-                        hcValue: numValue,
-                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue,
-                      },
-                    },
-                  };
-
-                  setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
-                }
+            <Box
+              display="flex"
+              justifyContent="flex-end"
+              alignItems="center"
+              height="100%"
+              sx={{
+                pr: 2,
+                minHeight: "80px",
+                backgroundColor: isConfigured ? alpha("#ff9800", 0.04) : "transparent",
               }}
-              fullWidth
-              variant="outlined"
-              inputProps={{ min: 0, step: "0.01" }}
-              disabled={disabled}
-              error={!isValid}
-              helperText={!isValid ? "Must be positive" : undefined}
-            />
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: isConfigured ? 600 : 400,
+                  fontSize: "0.9rem",
+                  fontFamily: "monospace",
+                  letterSpacing: "0.02em",
+                  color: isConfigured ? "warning.main" : "text.secondary",
+                }}
+              >
+                ₹{value.toFixed(2)}
+              </Typography>
+            </Box>
           );
         },
       });
 
+      // Total Amount Column
       columns.push({
-        key: `${category.name}_totalAmt`,
-        header: `${category.name} - Total`,
-        visible: true,
-        width: 140,
-        render: (item: PricingGridItem) => {
-          const totalAmount = (item.wardCategories[category.name]?.DcValue || 0) + (item.wardCategories[category.name]?.hcValue || 0);
+        field: `${category.name}_totalAmt`,
+        headerName: `${category.name.toUpperCase()} - TOTAL`,
+        width: 200,
+        minWidth: 170,
+        maxWidth: 250,
+        sortable: false,
+        filterable: false,
+        editable: false,
+        headerAlign: "center",
+        align: "right",
+        renderCell: (params: GridRenderCellParams) => {
+          const drValue = params.row[`${category.name}_drAmt`] || 0;
+          const hospValue = params.row[`${category.name}_hospAmt`] || 0;
+          const totalAmount = drValue + hospValue;
           const isConfigured = totalAmount > 0;
 
           return (
-            <Box display="flex" alignItems="center" gap={1}>
-              <TextField
-                value={totalAmount.toFixed(2)}
-                disabled
-                size="small"
-                fullWidth
-                variant="outlined"
-                InputProps={{
-                  readOnly: true,
-                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+            <Box
+              display="flex"
+              justifyContent="flex-end"
+              alignItems="center"
+              gap={1.5}
+              height="100%"
+              sx={{
+                pr: 2,
+                minHeight: "80px",
+                borderLeft: "3px solid",
+                borderColor: isConfigured ? "success.main" : "divider",
+                backgroundColor: isConfigured ? alpha("#4caf50", 0.06) : alpha("#f5f5f5", 0.3),
+              }}
+            >
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  fontFamily: "monospace",
+                  letterSpacing: "0.02em",
+                  color: isConfigured ? "success.dark" : "text.secondary",
                 }}
-              />
-              {isConfigured && <CheckIcon color="success" sx={{ fontSize: 16 }} />}
+              >
+                ₹{totalAmount.toFixed(2)}
+              </Typography>
+              {isConfigured && (
+                <Box sx={{ ml: 0.5 }}>
+                  <CheckCircle2Icon sx={{ fontSize: 18, color: "success.main" }} />
+                </Box>
+              )}
             </Box>
           );
         },
@@ -572,7 +758,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     });
 
     return columns;
-  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection, disabled]);
+  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection, disabled, displayedPricingData]);
 
   const handlePriceChangeTypeChange = useCallback((e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
     if (newValue) {
@@ -595,38 +781,63 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
   }, []);
 
   return (
-    <Accordion expanded={expanded} onChange={onToggleExpand}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Box display="flex" alignItems="center" gap={1} width="100%">
-          <MoneyIcon color="primary" sx={{ fontSize: 20 }} />
-          <Typography variant="subtitle1" fontWeight={600}>
-            Pricing Configuration
+    <Accordion
+      expanded={expanded}
+      onChange={onToggleExpand}
+      sx={{
+        mt: 2,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        "&:before": {
+          display: "none",
+        },
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        sx={{
+          backgroundColor: "grey.50",
+          borderBottom: expanded ? "1px solid" : "none",
+          borderColor: "divider",
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={2} width="100%">
+          <MoneyIcon sx={{ fontSize: 22, color: "primary.main" }} />
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: "1.1rem", letterSpacing: "0.02em" }}>
+            PRICING CONFIGURATION
           </Typography>
 
-          <Chip label={`${chargeDetailsArray.fields.length} entries`} size="small" color="primary" variant="outlined" />
+          <Chip
+            label={`${chargeDetailsArray.fields.length} entries`}
+            size="small"
+            // sx={{
+            //   fontWeight: 600,
+            //   fontSize: "0.75rem",
+            // }}
+          />
 
           {pricingStatistics.totalConfigurations > 0 && (
             <Chip
               label={`${pricingStatistics.configurationPercentage.toFixed(0)}% configured`}
               size="small"
-              color={pricingStatistics.configurationPercentage >= 80 ? "success" : "warning"}
-              variant="filled"
+              sx={{
+                fontWeight: 600,
+                fontSize: "0.75rem",
+              }}
             />
           )}
 
           {pricingStatistics.hasInconsistencies && (
             <Tooltip title="Price inconsistencies detected" arrow>
-              <WarningIcon color="warning" sx={{ fontSize: 16 }} />
+              <WarningIcon sx={{ fontSize: 20, color: "error.main" }} />
             </Tooltip>
           )}
         </Box>
       </AccordionSummary>
 
-      <AccordionDetails sx={{ padding: "16px" }}>
-        <Stack spacing={3}>
-          {/* Validation Errors */}
+      <AccordionDetails sx={{ padding: "32px" }}>
+        <Stack spacing={4}>
           {validationErrors.length > 0 && (
-            <Alert severity="error" variant="outlined">
+            <Alert severity="error" variant="outlined" sx={{ borderRadius: 2 }}>
               <Typography variant="body2" fontWeight={500} gutterBottom>
                 Configuration Issues Found:
               </Typography>
@@ -650,9 +861,9 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
               <Typography variant="subtitle2" gutterBottom color="primary" fontWeight={600}>
                 Configuration Controls
               </Typography>
-              <IconButton size="small" onClick={() => setShowAdvancedControls(!showAdvancedControls)} color="primary">
-                <CalculateIcon />
-              </IconButton>
+              <Button size="medium" onClick={() => setShowAdvancedControls(!showAdvancedControls)} color="primary" startIcon={<CalculateIcon />}>
+                Bulk Price Operations
+              </Button>
             </Box>
 
             <Grid container spacing={2} alignItems="center">
@@ -758,7 +969,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
                     </Box>
 
                     {isApplyReady && (
-                      <Box sx={{ mt: 1, p: 1, border: "1px solid #e0e0e0", borderRadius: 1, bgcolor: "background.paper" }}>
+                      <Box sx={{ mt: 1, p: 1, border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
                         <Typography variant="body2" align="center">
                           Preview: <strong>100</strong> →{" "}
                           <strong>
@@ -838,7 +1049,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
             </Grid>
           </Paper>
 
-          {/* Enhanced Grid Display */}
+          {/* Enhanced DataGrid Section */}
           {(showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0 || pricingGridData.length > 0) && (
             <>
               <Box sx={{ mb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -869,18 +1080,127 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
                 </Box>
               </Box>
 
-              <Paper elevation={1} sx={{ borderRadius: 2 }}>
-                <CustomGrid
-                  columns={gridColumns}
-                  data={displayedPricingData}
-                  maxHeight="500px"
-                  density="small"
-                  showDensityControls={false}
-                  emptyStateMessage="No pricing data available. Please select patient types and ward categories to begin configuration."
-                  rowKeyField="id"
-                  pagination={false}
-                  selectable={false}
-                />
+              {/* Full Width Enhanced DataGrid */}
+              <Paper
+                elevation={0}
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                }}
+              >
+                <Box>
+                  <DataGrid
+                    rows={flattenedData}
+                    columns={gridColumns}
+                    rowModesModel={rowModesModel}
+                    onRowModesModelChange={setRowModesModel}
+                    processRowUpdate={processRowUpdate}
+                    onProcessRowUpdateError={handleProcessRowUpdateError}
+                    density="comfortable"
+                    disableRowSelectionOnClick
+                    hideFooterSelectedRowCount
+                    pageSizeOptions={[10, 25, 50]}
+                    initialState={{
+                      pagination: {
+                        paginationModel: { pageSize: 25 },
+                      },
+                    }}
+                    sx={{
+                      border: "none",
+                      "& .MuiDataGrid-root": {
+                        fontSize: "0.9rem",
+                      },
+                      "& .MuiDataGrid-row": {
+                        minHeight: "80px !important",
+                        "&:hover": {
+                          transition: "background-color 0.2s ease-in-out",
+                        },
+                        "&:nth-of-type(even)": {},
+                      },
+                      "& .MuiDataGrid-cell": {
+                        borderRight: "1px solid",
+                        borderColor: "divider",
+                        padding: "0",
+                        fontSize: "0.9rem",
+                        display: "flex",
+                        alignItems: "center",
+                        minHeight: "80px !important",
+                        "&:focus": {
+                          outline: "2px solid",
+                          outlineColor: "primary.main",
+                          outlineOffset: "-2px",
+                        },
+                      },
+                      "& .MuiDataGrid-columnHeaders": {
+                        backgroundColor: "primary.main",
+                        borderBottom: "2px solid",
+                        borderColor: "primary.dark",
+                        minHeight: "64px !important",
+                        "& .MuiDataGrid-columnHeader": {
+                          padding: "16px 12px",
+                          "&:focus": {
+                            outline: "2px solid",
+                            outlineColor: "primary.light",
+                            outlineOffset: "-2px",
+                          },
+                        },
+                        "& .MuiDataGrid-columnHeaderTitle": {
+                          fontSize: "0.85rem",
+                          fontWeight: "700",
+                          letterSpacing: "0.1em",
+                          lineHeight: 1.3,
+                        },
+                        "& .MuiDataGrid-iconSeparator": {},
+                      },
+                      "& .MuiDataGrid-cell--editable": {
+                        position: "relative",
+                        "&:hover": {},
+                      },
+                      "& .MuiDataGrid-cell--editing": {
+                        boxShadow: `inset 0 0 0 2px ${alpha("#1976d2", 0.5)}`,
+                      },
+                      "& .MuiDataGrid-footerContainer": {
+                        borderTop: "2px solid",
+                        borderColor: "divider",
+
+                        minHeight: "64px",
+                      },
+                      "& .MuiTablePagination-root": {
+                        fontSize: "0.875rem",
+                      },
+                      "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                        fontSize: "0.875rem",
+                        fontWeight: "500",
+                      },
+                    }}
+                    slots={{
+                      noRowsOverlay: () => (
+                        <Box
+                          sx={{
+                            p: 6,
+                            textAlign: "center",
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            backgroundColor: "grey.50",
+                          }}
+                        >
+                          <MoneyIcon sx={{ fontSize: 64, color: "grey.400", mb: 3 }} />
+                          <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 600, mb: 1 }}>
+                            No Pricing Data Available
+                          </Typography>
+                          <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: "400px" }}>
+                            Please select patient types and ward categories to begin configuration.
+                          </Typography>
+                        </Box>
+                      ),
+                    }}
+                  />
+                </Box>
               </Paper>
             </>
           )}
