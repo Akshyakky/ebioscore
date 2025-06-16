@@ -28,7 +28,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useInvestigationList } from "../hooks/useInvestigationList";
@@ -81,6 +81,11 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const [components, setComponents] = useState<LComponentDto[]>([]);
   const { sampleType, serviceType } = useDropdownValues(["sampleType", "serviceType"]);
   const [repEntryServiceTypes, setRepEntryServiceTypes] = useState<any[]>([]);
+
+  // Drag and Drop states for components
+  const [draggedComponentIndex, setDraggedComponentIndex] = useState<number | null>(null);
+  const [dragOverComponentIndex, setDragOverComponentIndex] = useState<number | null>(null);
+  const componentDragCounter = useRef(0);
 
   useEffect(() => {
     if (Array.isArray(serviceType) && serviceType.length > 0) {
@@ -228,6 +233,73 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     }
   };
 
+  // Drag and Drop handlers for components
+  const handleComponentDragStart = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
+    setDraggedComponentIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = "0.5";
+    }
+  };
+
+  const handleComponentDragEnd = (e: React.DragEvent<HTMLTableRowElement>) => {
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = "1";
+    }
+    setDraggedComponentIndex(null);
+    setDragOverComponentIndex(null);
+    componentDragCounter.current = 0;
+  };
+
+  const handleComponentDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleComponentDragEnter = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
+    e.preventDefault();
+    componentDragCounter.current++;
+    if (draggedComponentIndex !== null && draggedComponentIndex !== index) {
+      setDragOverComponentIndex(index);
+    }
+  };
+
+  const handleComponentDragLeave = (_e: React.DragEvent<HTMLTableRowElement>) => {
+    componentDragCounter.current--;
+    if (componentDragCounter.current === 0) {
+      setDragOverComponentIndex(null);
+    }
+  };
+
+  const handleComponentDrop = (e: React.DragEvent<HTMLTableRowElement>, dropIndex: number) => {
+    e.preventDefault();
+    componentDragCounter.current = 0;
+
+    if (draggedComponentIndex === null || draggedComponentIndex === dropIndex) {
+      return;
+    }
+
+    const draggedComponent = components[draggedComponentIndex];
+    const newComponents = [...components];
+
+    // Remove the dragged component
+    newComponents.splice(draggedComponentIndex, 1);
+
+    // Insert it at the new position
+    const adjustedDropIndex = draggedComponentIndex < dropIndex ? dropIndex - 1 : dropIndex;
+    newComponents.splice(adjustedDropIndex, 0, draggedComponent);
+
+    // Update compOrder for all components
+    const reorderedComponents = newComponents.map((comp, idx) => ({
+      ...comp,
+      compOrder: idx + 1,
+    }));
+
+    setComponents(reorderedComponents);
+    setDraggedComponentIndex(null);
+    setDragOverComponentIndex(null);
+  };
+
   const onSubmit = async (data: InvestigationFormData) => {
     if (viewOnly) return;
 
@@ -287,7 +359,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
       setIsSaving(false);
       setLoading(false);
     }
-    return;
   };
 
   const performReset = () => {
@@ -477,7 +548,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                       <Typography variant="h6">Components</Typography>
                       {!viewOnly && (
                         <Typography variant="body2" color="text.secondary">
-                          Use arrow buttons to reorder components
+                          Drag and drop rows or use arrow buttons to reorder components
                         </Typography>
                       )}
                     </Box>
@@ -504,7 +575,27 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                         </TableHead>
                         <TableBody>
                           {components.map((component, index) => (
-                            <TableRow key={index}>
+                            <TableRow
+                              key={index}
+                              draggable={!viewOnly}
+                              onDragStart={!viewOnly ? (e) => handleComponentDragStart(e, index) : undefined}
+                              onDragEnd={!viewOnly ? handleComponentDragEnd : undefined}
+                              onDragOver={!viewOnly ? handleComponentDragOver : undefined}
+                              onDragEnter={!viewOnly ? (e) => handleComponentDragEnter(e, index) : undefined}
+                              onDragLeave={!viewOnly ? handleComponentDragLeave : undefined}
+                              onDrop={!viewOnly ? (e) => handleComponentDrop(e, index) : undefined}
+                              sx={{
+                                cursor: !viewOnly ? "move" : "default",
+                                backgroundColor: dragOverComponentIndex === index ? "action.hover" : "inherit",
+                                opacity: draggedComponentIndex === index ? 0.5 : 1,
+                                transition: "background-color 0.2s ease",
+                                "&:hover": !viewOnly
+                                  ? {
+                                      backgroundColor: "action.hover",
+                                    }
+                                  : {},
+                              }}
+                            >
                               <TableCell>
                                 <Typography variant="h6" color="primary">
                                   {index + 1}
@@ -518,9 +609,11 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                               </TableCell>
                               <TableCell>
                                 {viewOnly ? (
-                                  <IconButton size="small" sx={{ cursor: "default" }}>
-                                    <DragIndicator fontSize="small" />
-                                  </IconButton>
+                                  <Tooltip title="View Only">
+                                    <IconButton size="small" sx={{ cursor: "default" }}>
+                                      <DragIndicator fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
                                 ) : (
                                   <Stack direction="row" spacing={1}>
                                     <Tooltip title="Move Up">
@@ -536,6 +629,11 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                                           <ArrowDownward fontSize="small" />
                                         </IconButton>
                                       </span>
+                                    </Tooltip>
+                                    <Tooltip title="Drag to reorder">
+                                      <IconButton size="small" sx={{ cursor: "grab", "&:active": { cursor: "grabbing" } }}>
+                                        <DragIndicator fontSize="small" />
+                                      </IconButton>
                                     </Tooltip>
                                     <Tooltip title="Edit Component">
                                       <IconButton size="small" color="info" onClick={() => handleEditComponent(component, index)}>
