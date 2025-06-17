@@ -564,14 +564,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                           chipColor={formData.rActiveYN === "Y" ? "success" : "error"}
                         />
                       </Grid>
-                      <Grid size={{ sm: 12, md: 3 }}>
-                        <DisplayField
-                          label="Transfer"
-                          value={formData.transferYN === "Y" ? "Yes" : "No"}
-                          chip={true}
-                          chipColor={formData.transferYN === "Y" ? "info" : "default"}
-                        />
-                      </Grid>
+
                       <Grid size={{ sm: 12, md: 4 }}>
                         <DisplayField label="Investigation Type" value={getServiceTypeName(formData.bchID)} />
                       </Grid>
@@ -585,46 +578,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                   </CardContent>
                 </Card>
               </Grid>
-
-              {/* Billing Information Section */}
-              {initialData?.bChargeDto && (
-                <Grid size={{ sm: 12 }}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom color="primary">
-                        Billing Information
-                      </Typography>
-                      <Divider sx={{ mb: 3 }} />
-
-                      <Grid container spacing={3}>
-                        <Grid size={{ sm: 12, md: 3 }}>
-                          <DisplayField label="Charge ID" value={initialData.bChargeDto.chargeID} />
-                        </Grid>
-                        <Grid size={{ sm: 12, md: 3 }}>
-                          <DisplayField label="Charge Code" value={initialData.bChargeDto.chargeCode} />
-                        </Grid>
-                        <Grid size={{ sm: 12, md: 6 }}>
-                          <DisplayField label="Charge Description" value={initialData.bChargeDto.chargeDesc} />
-                        </Grid>
-                        <Grid size={{ sm: 12, md: 4 }}>
-                          <DisplayField label="Short Description" value={initialData.bChargeDto.chargesHDesc} />
-                        </Grid>
-                        <Grid size={{ sm: 12, md: 4 }}>
-                          <DisplayField label="Short Name" value={initialData.bChargeDto.cShortName} />
-                        </Grid>
-                        <Grid size={{ sm: 12, md: 4 }}>
-                          <DisplayField
-                            label="Charge Status"
-                            value={initialData.bChargeDto.chargeStatus === "Y" ? "Active" : "Inactive"}
-                            chip={true}
-                            chipColor={initialData.bChargeDto.chargeStatus === "Y" ? "success" : "error"}
-                          />
-                        </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
 
               {/* Components Section */}
               <Grid size={{ sm: 12 }}>

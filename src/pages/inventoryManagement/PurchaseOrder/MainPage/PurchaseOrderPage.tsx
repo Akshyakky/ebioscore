@@ -1,17 +1,15 @@
-// src/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage.tsx
-
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
-import { DateFilterType } from "@/interfaces/Common/FilterDto";
 import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
   Add as AddIcon,
   CheckCircle as ApprovedIcon,
+  CheckCircle,
   Close as CloseIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -20,52 +18,29 @@ import {
   Pending as PendingIcon,
   Refresh as RefreshIcon,
   Cancel as RejectedIcon,
-  Schedule as ScheduledIcon,
   Search as SearchIcon,
-  LocalShipping as ShippingIcon,
   ShoppingCart as ShoppingCartIcon,
   TrendingUp as TotalIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Chip from "@mui/material/Chip";
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import PurchaseOrderForm from "../Form/PurchaseOrderForm";
 import { usePurchaseOrder } from "../hooks/usePurchaseOrder";
 
 const statusOptions = [
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-  { value: "partial", label: "Partially Received" },
-  { value: "completed", label: "Completed" },
+  { value: "PENDING", label: "Pending" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "PARTIAL", label: "Partially Received" },
+  { value: "COMPLETED", label: "Completed" },
 ];
 
 const poTypeOptions = [
-  { value: "regular", label: "Regular" },
-  { value: "urgent", label: "Urgent" },
-  { value: "emergency", label: "Emergency" },
-];
-
-const dateFilterOptions = [
-  { value: DateFilterType.Today, label: "Today" },
-  { value: DateFilterType.Yesterday, label: "Yesterday" },
-  { value: DateFilterType.ThisWeek, label: "This Week" },
-  { value: DateFilterType.ThisMonth, label: "This Month" },
-  { value: DateFilterType.ThisYear, label: "This Year" },
-  { value: DateFilterType.DateRange, label: "Custom Range" },
+  { value: "RVPO", label: "Revenue Purchase Order" },
+  { value: "URGENT", label: "Urgent" },
+  { value: "EMERGENCY", label: "Emergency" },
 ];
 
 const PurchaseOrderPage: React.FC = () => {
@@ -77,13 +52,10 @@ const PurchaseOrderPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(true);
-  const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.ThisMonth);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
 
-  const { purchaseOrderList, isLoading, error, fetchPurchaseOrderList, deletePurchaseOrder, getPurchaseOrdersByDepartment, getPurchaseOrderStatistics } = usePurchaseOrder();
+  const { purchaseOrderList, isLoading, error, deletePurchaseOrder, getPurchaseOrdersByDepartment, getPurchaseOrderStatistics } = usePurchaseOrder();
 
-  const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
+  const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection();
 
   const [filters, setFilters] = useState<{
     status: string;
@@ -105,24 +77,17 @@ const PurchaseOrderPage: React.FC = () => {
     if (isDepartmentSelected && deptId) {
       handleRefresh();
     }
-  }, [isDepartmentSelected, deptId, dateFilter, startDate, endDate]);
+  }, [isDepartmentSelected, deptId]);
 
   const handleRefresh = useCallback(async () => {
     if (isDepartmentSelected && deptId) {
       try {
-        await getPurchaseOrdersByDepartment(deptId, {
-          dateFilter,
-          startDate,
-          endDate,
-          pageIndex: 1,
-          pageSize: 100,
-          statusFilter: filters.status || undefined,
-        });
+        await getPurchaseOrdersByDepartment(deptId);
       } catch (error) {
         showAlert("Error", "Failed to fetch purchase orders", "error");
       }
     }
-  }, [isDepartmentSelected, deptId, dateFilter, startDate, endDate, filters.status, getPurchaseOrdersByDepartment, showAlert]);
+  }, [isDepartmentSelected, deptId, getPurchaseOrdersByDepartment, showAlert]);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
@@ -236,15 +201,8 @@ const PurchaseOrderPage: React.FC = () => {
         po.supplierName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         po.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      const matchesStatus =
-        filters.status === "" ||
-        (filters.status === "pending" && po.pOStatusCode === "PENDING") ||
-        (filters.status === "approved" && po.pOApprovedYN === "Y") ||
-        (filters.status === "rejected" && po.pOStatusCode === "REJECTED") ||
-        (filters.status === "completed" && po.pOStatusCode === "COMPLETED") ||
-        (filters.status === "partial" && po.pOStatusCode === "PARTIAL");
-
-      const matchesType = filters.poType === "" || po.pOTypeValue?.toLowerCase() === filters.poType.toLowerCase();
+      const matchesStatus = filters.status === "" || po.pOStatusCode === filters.status;
+      const matchesType = filters.poType === "" || po.pOTypeValue === filters.poType;
 
       return matchesSearch && matchesStatus && matchesType;
     });
@@ -317,7 +275,7 @@ const PurchaseOrderPage: React.FC = () => {
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
-                <ScheduledIcon fontSize="small" />
+                <CheckCircle fontSize="small" />
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#2196f3" fontWeight="bold">
@@ -391,16 +349,15 @@ const PurchaseOrderPage: React.FC = () => {
   };
 
   const getTypeChip = (po: PurchaseOrderMastDto) => {
-    const type = po.pOTypeValue?.toUpperCase() || "REGULAR";
     const typeConfig = {
-      URGENT: { color: "warning" as const, icon: <ShippingIcon fontSize="small" /> },
-      EMERGENCY: { color: "error" as const, icon: <ShippingIcon fontSize="small" /> },
-      REGULAR: { color: "default" as const, icon: null },
+      URGENT: { color: "warning" as const },
+      EMERGENCY: { color: "error" as const },
+      RVPO: { color: "default" as const },
     };
 
-    const config = typeConfig[type as keyof typeof typeConfig] || typeConfig.REGULAR;
+    const config = typeConfig[po.pOTypeValue as keyof typeof typeConfig] || typeConfig.RVPO;
 
-    return <Chip size="small" color={config.color} label={po.pOType || type} icon={config.icon} />;
+    return <Chip size="small" color={config.color} label={po.pOType || po.pOTypeValue} />;
   };
 
   const columns: Column<PurchaseOrderMastDto>[] = [
@@ -554,24 +511,8 @@ const PurchaseOrderPage: React.FC = () => {
                 </Stack>
               </Grid>
 
-              {/* Date Filter */}
-              <Grid size={{ xs: 12, md: 3 }}>
-                <DropdownSelect
-                  label="Date Filter"
-                  name="dateFilter"
-                  value={dateFilter.toString()}
-                  options={dateFilterOptions.map((option) => ({
-                    value: option.value.toString(),
-                    label: option.label,
-                  }))}
-                  onChange={(e) => setDateFilter(Number(e.target.value) as DateFilterType)}
-                  size="small"
-                  defaultText="Select Date Range"
-                />
-              </Grid>
-
               {/* Action Buttons */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid size={{ xs: 12, md: 9 }}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
                   <SmartButton
                     text="Refresh"
