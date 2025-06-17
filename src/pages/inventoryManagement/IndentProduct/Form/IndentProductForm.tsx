@@ -1271,7 +1271,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                 </Box>
                 <CardContent sx={{ pt: 3 }}>
                   {indentDetails.length > 0 ? (
-                    <Box sx={{ height: 600, width: "100%" }}>
+                    <Box>
                       <DataGrid
                         rows={indentDetails}
                         columns={visibleColumns}
