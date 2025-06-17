@@ -1,3 +1,5 @@
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
+
 export interface ContactMastData {
   conID: number;
   conCode: string;
@@ -95,4 +97,49 @@ export interface ContactMastShortDto {
   consValue: string;
   deptID?: number;
   deptName: string;
+}
+
+export interface ContactMastDto extends BaseDto {
+  conID: number;
+  conCode: string;
+  conTitle: string;
+  conFName: string;
+  conLName?: string;
+  conMName?: string;
+  conDob: Date;
+  conGender?: string;
+  conSSNID?: string;
+  conBldGrp?: string;
+  conCat: string;
+  consValue: string;
+  conEmpYN: string;
+  conEmpStatus?: string;
+  allergicToAllergence?: string;
+  allergicToMedicine?: string;
+  aPHYRMID: number;
+  aPhyRoomName?: string;
+  deptID: number;
+  deptName?: string;
+  designation?: string;
+  emergenContactName?: string;
+  iPP: number;
+  oPP: number;
+  isAuthorizedUserYN?: string;
+  isContractYN?: string;
+  isSuperSpecialtyYN?: string;
+  isEmployeeYN?: string;
+  isRefferalYN?: string;
+  isAppointmentYN?: string;
+  isUserRequiredYN?: string;
+  maritalStatus?: string;
+  tINNo?: string;
+  accCode?: string;
+  accPayCode?: string;
+  gESYCode?: string;
+  digSignPath?: string;
+  stampPath?: string;
+  payPolicy: number;
+  rActiveYN: string;
+  rNotes?: string;
+  transferYN?: string;
 }
