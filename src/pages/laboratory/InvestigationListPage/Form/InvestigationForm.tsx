@@ -7,7 +7,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { InvestigationListDto, LComponentDto, LInvMastDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Add as AddIcon, ArrowDownward, ArrowUpward, Cancel, Delete as DeleteIcon, DragIndicator, Edit as EditIcon, Save } from "@mui/icons-material";
+import { Add as AddIcon, ArrowDownward, ArrowUpward, Cancel, Delete as DeleteIcon, DragIndicator, Edit as EditIcon, Save, Visibility } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -134,6 +134,8 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     mode: "onChange",
   });
 
+  const formData = watch();
+
   const generateInvestigationCode = useCallback(async () => {
     if (!isAddMode) return;
 
@@ -185,6 +187,12 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const handleEditComponent = (component: LComponentDto, index: number) => {
     setSelectedComponent(component);
     setSelectedComponentIndex(index);
+    setIsComponentFormOpen(true);
+  };
+
+  const handleViewComponent = (component: LComponentDto) => {
+    setSelectedComponent(component);
+    setSelectedComponentIndex(-1);
     setIsComponentFormOpen(true);
   };
 
@@ -407,17 +415,17 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     }
   };
 
-  const handleResetConfirm = () => {
-    performReset();
-    setShowResetConfirmation(false);
-  };
-
   const handleCancel = () => {
     if (isDirty || components.length > 0) {
       setShowCancelConfirmation(true);
     } else {
       onClose();
     }
+  };
+
+  const handleResetConfirm = () => {
+    performReset();
+    setShowResetConfirmation(false);
   };
 
   const handleCancelConfirm = () => {
@@ -449,6 +457,290 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
       </Box>
     </Box>
   );
+
+  // Helper function to display field value
+  const DisplayField = ({
+    label,
+    value,
+    chip = false,
+    chipColor = "default",
+  }: {
+    label: string;
+    value: any;
+    chip?: boolean;
+    chipColor?: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
+  }) => (
+    <Box sx={{ mb: 1.5 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        {label}
+      </Typography>
+      {chip ? (
+        <Chip size="small" label={value || "N/A"} color={chipColor} />
+      ) : (
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+          {value || "N/A"}
+        </Typography>
+      )}
+    </Box>
+  );
+
+  const getSampleTypeName = (code: string) => {
+    const type = sampleType?.find((t) => t.value === code);
+    return type ? type.label : code;
+  };
+
+  const getServiceTypeName = (id: number) => {
+    const type = repEntryServiceTypes?.find((t) => Number(t.value) === id);
+    return type ? type.label : "Unknown";
+  };
+
+  if (viewOnly) {
+    return (
+      <>
+        <GenericDialog open={open} onClose={() => onClose()} title={dialogTitle} maxWidth="lg" fullWidth showCloseButton actions={dialogActions}>
+          <Box sx={{ p: 1 }}>
+            <Grid container spacing={3}>
+              {/* Basic Information Section */}
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom color="primary">
+                      Basic Information
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Grid container spacing={3}>
+                      <Grid size={{ sm: 12, md: 4 }}>
+                        <DisplayField label="Investigation Code" value={formData.invCode} />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 8 }}>
+                        <DisplayField label="Investigation Name" value={formData.invName} />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 4 }}>
+                        <DisplayField label="Short Name" value={formData.invShortName} />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 8 }}>
+                        <DisplayField label="Title" value={formData.invTitle} />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 12 }}>
+                        <DisplayField label="Comments" value={initialData?.lInvMastDto.rNotes} />
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Settings Section */}
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom color="primary">
+                      Investigation Settings
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Grid container spacing={3}>
+                      <Grid size={{ sm: 12, md: 3 }}>
+                        <DisplayField
+                          label="Report Entry Required"
+                          value={formData.invReportYN === "Y" ? "Yes" : "No"}
+                          chip={true}
+                          chipColor={formData.invReportYN === "Y" ? "success" : "error"}
+                        />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 3 }}>
+                        <DisplayField
+                          label="Sample Required"
+                          value={formData.invSampleYN === "Y" ? "Yes" : "No"}
+                          chip={true}
+                          chipColor={formData.invSampleYN === "Y" ? "success" : "error"}
+                        />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 3 }}>
+                        <DisplayField
+                          label="Status"
+                          value={formData.rActiveYN === "Y" ? "Active" : "Inactive"}
+                          chip={true}
+                          chipColor={formData.rActiveYN === "Y" ? "success" : "error"}
+                        />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 3 }}>
+                        <DisplayField
+                          label="Transfer"
+                          value={formData.transferYN === "Y" ? "Yes" : "No"}
+                          chip={true}
+                          chipColor={formData.transferYN === "Y" ? "info" : "default"}
+                        />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 4 }}>
+                        <DisplayField label="Investigation Type" value={getServiceTypeName(formData.bchID)} />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 4 }}>
+                        <DisplayField label="Sample Type" value={getSampleTypeName(formData.invSampleType)} />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 4 }}>
+                        <DisplayField label="Methods" value={formData.methods} />
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Billing Information Section */}
+              {initialData?.bChargeDto && (
+                <Grid size={{ sm: 12 }}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="primary">
+                        Billing Information
+                      </Typography>
+                      <Divider sx={{ mb: 3 }} />
+
+                      <Grid container spacing={3}>
+                        <Grid size={{ sm: 12, md: 3 }}>
+                          <DisplayField label="Charge ID" value={initialData.bChargeDto.chargeID} />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 3 }}>
+                          <DisplayField label="Charge Code" value={initialData.bChargeDto.chargeCode} />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 6 }}>
+                          <DisplayField label="Charge Description" value={initialData.bChargeDto.chargeDesc} />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 4 }}>
+                          <DisplayField label="Short Description" value={initialData.bChargeDto.chargesHDesc} />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 4 }}>
+                          <DisplayField label="Short Name" value={initialData.bChargeDto.cShortName} />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 4 }}>
+                          <DisplayField
+                            label="Charge Status"
+                            value={initialData.bChargeDto.chargeStatus === "Y" ? "Active" : "Inactive"}
+                            chip={true}
+                            chipColor={initialData.bChargeDto.chargeStatus === "Y" ? "success" : "error"}
+                          />
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
+
+              {/* Components Section */}
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom color="primary">
+                      Components ({components.length})
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {components.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                        No components configured for this investigation.
+                      </Typography>
+                    ) : (
+                      <TableContainer component={Paper} sx={{ maxHeight: "500px" }}>
+                        <Table size="small" stickyHeader>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell width={60}>
+                                <strong>Order</strong>
+                              </TableCell>
+                              <TableCell>
+                                <strong>Component Name</strong>
+                              </TableCell>
+                              <TableCell>
+                                <strong>Code</strong>
+                              </TableCell>
+                              <TableCell>
+                                <strong>Unit</strong>
+                              </TableCell>
+                              <TableCell>
+                                <strong>Entry Type</strong>
+                              </TableCell>
+                              <TableCell>
+                                <strong>Section</strong>
+                              </TableCell>
+                              <TableCell>
+                                <strong>Status</strong>
+                              </TableCell>
+                              <TableCell width={100}>
+                                <strong>Actions</strong>
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {components.map((component, index) => (
+                              <TableRow key={index} hover>
+                                <TableCell>
+                                  <Typography variant="h6" color="primary">
+                                    {component.compOrder}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Box>
+                                    <Typography variant="body2" fontWeight="medium">
+                                      {component.compoName}
+                                    </Typography>
+                                    {component.compoTitle && (
+                                      <Typography variant="caption" color="text.secondary">
+                                        {component.compoTitle}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" fontFamily="monospace">
+                                    {component.compoCode}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>{component.compUnit || "-"}</TableCell>
+                                <TableCell>
+                                  <Box>
+                                    <Typography variant="body2">{component.lCentName}</Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {component.lCentType}
+                                    </Typography>
+                                  </Box>
+                                </TableCell>
+                                <TableCell>{component.stitName || "-"}</TableCell>
+                                <TableCell>
+                                  <Chip size="small" color={component.rActiveYN === "Y" ? "success" : "error"} label={component.rActiveYN === "Y" ? "Active" : "Inactive"} />
+                                </TableCell>
+                                <TableCell>
+                                  <Tooltip title="View Component Details">
+                                    <IconButton size="small" color="primary" onClick={() => handleViewComponent(component)}>
+                                      <Visibility fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </Box>
+        </GenericDialog>
+
+        {isComponentFormOpen && (
+          <ComponentForm
+            open={isComponentFormOpen}
+            onClose={() => setIsComponentFormOpen(false)}
+            onSave={handleComponentSave}
+            initialData={selectedComponent}
+            invID={watch("invID")}
+            viewOnly={true}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -690,6 +982,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
           onSave={handleComponentSave}
           initialData={selectedComponent}
           invID={watch("invID")}
+          viewOnly={false}
         />
       )}
 

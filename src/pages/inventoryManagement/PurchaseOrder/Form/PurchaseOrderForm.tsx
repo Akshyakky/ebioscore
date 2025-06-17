@@ -58,8 +58,8 @@ const purchaseOrderFormSchema = z.object({
   supplierName: z.string().min(1, "Supplier name is required"),
   fromDeptID: z.number().min(1, "From department is required"),
   fromDeptName: z.string().min(1, "From department name is required"),
-  pOTypeValue: z.string().default("REGULAR"),
-  pOType: z.string().default("Regular"),
+  pOTypeValue: z.string().default("RVPO"),
+  pOType: z.string().default("Revenue Purchase Order"),
   discAmt: z.number().default(0),
   taxAmt: z.number().default(0),
   totalAmt: z.number().default(0),
@@ -105,7 +105,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
   const productSearchRef = useRef<ProductSearchRef>(null);
 
   // Load dropdown values
-  const { contacts: suppliers } = useContactMastByCategory({ consValue: "PHY" });
+  const { contacts: suppliers } = useContactMastByCategory({ consValue: "SUPP" });
   const isAddMode = !initialData;
 
   // Form setup

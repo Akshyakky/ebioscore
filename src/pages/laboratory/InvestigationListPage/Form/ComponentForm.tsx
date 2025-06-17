@@ -3,23 +3,24 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { LCompMultipleDto, LCompNormalDto, LComponentDto, LCompTemplateDto } from "@/interfaces/Laboratory/InvestigationListDto";
-
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { LCENT_ID } from "@/types/lCentConstants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Box, Divider, Grid, Typography } from "@mui/material";
-import React, { useEffect } from "react";
+import { Box, Card, CardContent, Chip, Divider, Grid, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 import MultipleSelectionEntryType, { multipleEntrySchema } from "../SubPage/MultipleSelectionEntryType";
 import ReferenceValueEntryType, { referenceValueSchema } from "../SubPage/ReferenceValueEntryType";
 import TemplateValueEntryType, { templateValueSchema } from "../SubPage/TemplateValueEntryType";
+
 interface ComponentFormProps {
   open: boolean;
   onClose: () => void;
   onSave: (componentData: LComponentDto) => void;
   initialData: LComponentDto | null;
   invID: number;
+  viewOnly: boolean;
 }
 
 // Main schema
@@ -59,10 +60,11 @@ const schema = z.object({
 
 type ComponentFormData = z.infer<typeof schema>;
 
-const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, initialData, invID }) => {
-  const [entryTypes, setEntryTypes] = React.useState<any[]>([]);
-  const [templateData, setTemplateData] = React.useState<LCompTemplateDto | null>(null);
+const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, initialData, invID, viewOnly }) => {
+  const [entryTypes, setEntryTypes] = useState<any[]>([]);
+  const [templateData, setTemplateData] = useState<LCompTemplateDto | null>(null);
   const { componentUnit, mainGroup, subTitle } = useDropdownValues(["componentUnit", "mainGroup", "subTitle"]);
+
   const defaultValues: ComponentFormData = {
     compoID: 0,
     compoCode: "",
@@ -178,6 +180,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
   // Watch lCentID to show/hide appropriate sections
   const watchedLCentID = watch("lCentID");
   const watchedCompUnit = watch("compUnit");
+  const formData = watch();
 
   useEffect(() => {
     if (initialData) {
@@ -263,6 +266,313 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     return true;
   };
 
+  // Helper function to display field value
+  const DisplayField = ({
+    label,
+    value,
+    chip = false,
+    chipColor = "default",
+  }: {
+    label: string;
+    value: any;
+    chip?: boolean;
+    chipColor?: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
+  }) => (
+    <Box sx={{ mb: 1.5 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        {label}
+      </Typography>
+      {chip ? (
+        <Chip size="small" label={value || "N/A"} color={chipColor} />
+      ) : (
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+          {value || "N/A"}
+        </Typography>
+      )}
+    </Box>
+  );
+
+  const getMainGroupName = (code: string) => {
+    const group = mainGroup?.find((g) => g.value === code);
+    return group ? group.label : code || "N/A";
+  };
+
+  const getSubTitleName = (code: string) => {
+    const subtitle = subTitle?.find((s) => s.value === code);
+    return subtitle ? subtitle.label : code || "N/A";
+  };
+
+  const getEntryTypeName = (id: number) => {
+    const type = entryTypes.find((t) => Number(t.value) === id);
+    return type ? type.label : "N/A";
+  };
+
+  const getUnitName = (code: string) => {
+    const unit = componentUnit?.find((u) => u.value === code);
+    return unit ? unit.label : code || "N/A";
+  };
+
+  if (viewOnly) {
+    return (
+      <GenericDialog
+        open={open}
+        onClose={onClose}
+        title="View Component Details"
+        maxWidth="md"
+        fullWidth
+        showCloseButton
+        actions={<SmartButton text="Close" onClick={onClose} variant="contained" color="primary" />}
+      >
+        <Box sx={{ p: 2 }}>
+          <Grid container spacing={3}>
+            {/* Component Information */}
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Component Information
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
+                  <Grid container spacing={3}>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField label="Component Code" value={formData.compoCode} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 8 }}>
+                      <DisplayField label="Component Name" value={formData.compoName} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField label="Short Name" value={formData.cShortName} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 8 }}>
+                      <DisplayField label="Component Title" value={formData.compoTitle} />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Settings */}
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Component Settings
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
+                  <Grid container spacing={3}>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField label="Main Group" value={getMainGroupName(formData.mGrpCode)} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField label="Subtitle" value={getSubTitleName(formData.stitCode)} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField label="Unit" value={getUnitName(formData.compUnit)} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <DisplayField label="Method" value={formData.compoMethod} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <DisplayField label="Sample" value={formData.compoSample} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 12 }}>
+                      <DisplayField label="Interpretation" value={formData.compInterpret} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField label="Delta Value (%)" value={formData.deltaValPercent} />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField
+                        label="Detail Required"
+                        value={formData.compDetailYN === "Y" ? "Yes" : "No"}
+                        chip
+                        chipColor={formData.compDetailYN === "Y" ? "success" : "error"}
+                      />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <DisplayField label="Status" value={formData.rActiveYN === "Y" ? "Active" : "Inactive"} chip chipColor={formData.rActiveYN === "Y" ? "success" : "error"} />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Entry Type Settings */}
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Entry Type Settings
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
+                  <Grid container spacing={3}>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <DisplayField label="Entry Type" value={getEntryTypeName(formData.lCentID)} />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Multiple Selection Section */}
+            {watchedLCentID === LCENT_ID.MULTIPLE_SELECTION && (
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom color="primary">
+                      Multiple Selection Values
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    {typedMultipleFields.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                        No multiple selection values configured.
+                      </Typography>
+                    ) : (
+                      <Table size="small" stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Value</TableCell>
+                            <TableCell>Default</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell>Notes</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {typedMultipleFields.map((field, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{field.cmValues}</TableCell>
+                              <TableCell>
+                                <Chip size="small" label={field.defaultYN === "Y" ? "Yes" : "No"} color={field.defaultYN === "Y" ? "success" : "default"} />
+                              </TableCell>
+                              <TableCell>
+                                <Chip size="small" label={field.rActiveYN === "Y" ? "Active" : "Inactive"} color={field.rActiveYN === "Y" ? "success" : "error"} />
+                              </TableCell>
+                              <TableCell>{field.rNotes || "N/A"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+
+            {/* Reference Values Section */}
+            {watchedLCentID === LCENT_ID.REFERENCE_VALUES && (
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom color="primary">
+                      Reference Values
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    {typedReferenceFields.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                        No reference values configured.
+                      </Typography>
+                    ) : (
+                      <Table size="small" stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Apply To</TableCell>
+                            <TableCell>Sex</TableCell>
+                            <TableCell>Age Limit</TableCell>
+                            <TableCell>Lower</TableCell>
+                            <TableCell>Upper</TableCell>
+                            <TableCell>Units</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell>Notes</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {typedReferenceFields.map((field, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{field.cnApply}</TableCell>
+                              <TableCell>{field.cnSex}</TableCell>
+                              <TableCell>{field.cnAgeLmt}</TableCell>
+                              <TableCell>{field.cnLower}</TableCell>
+                              <TableCell>{field.cnUpper}</TableCell>
+                              <TableCell>{field.cnUnits}</TableCell>
+                              <TableCell>
+                                <Chip size="small" label={field.rActiveYN === "Y" ? "Active" : "Inactive"} color={field.rActiveYN === "Y" ? "success" : "error"} />
+                              </TableCell>
+                              <TableCell>{field.rNotes || "N/A"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+
+            {/* Template Values Section */}
+            {watchedLCentID === LCENT_ID.TEMPLATE_VALUES && (
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom color="primary">
+                      Template Values
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                    {templateData ? (
+                      <Grid container spacing={3}>
+                        <Grid size={{ sm: 12, md: 6 }}>
+                          <DisplayField label="Template Group" value={templateData.tGroupName} />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 6 }}>
+                          <DisplayField
+                            label="Blank Allowed"
+                            value={templateData.isBlankYN === "Y" ? "Yes" : "No"}
+                            chip
+                            chipColor={templateData.isBlankYN === "Y" ? "success" : "error"}
+                          />
+                        </Grid>
+                        <Grid size={{ sm: 12 }}>
+                          <DisplayField label="Template Text" value={templateData.cTText} />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 6 }}>
+                          <DisplayField
+                            label="Status"
+                            value={templateData.rActiveYN === "Y" ? "Active" : "Inactive"}
+                            chip
+                            chipColor={templateData.rActiveYN === "Y" ? "success" : "error"}
+                          />
+                        </Grid>
+                        <Grid size={{ sm: 12, md: 6 }}>
+                          <DisplayField label="Notes" value={templateData.rNotes} />
+                        </Grid>
+                      </Grid>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                        No template values configured.
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+
+            {/* Notes */}
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Notes
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
+                  <DisplayField label="Notes" value={formData.rNotes} />
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      </GenericDialog>
+    );
+  }
+
   return (
     <GenericDialog
       open={open}
@@ -285,7 +595,6 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
               Component Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
             <Grid container spacing={2}>
               <Grid size={{ sm: 12, md: 4 }}>
                 <FormField name="compoCode" control={control} label="Component Code" type="text" required size="small" fullWidth />
@@ -396,7 +705,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
             </Grid>
           </Grid>
 
-          {/* Multiple Values Section - when lCentID === 5 */}
+          {/* Multiple Values Section */}
           {watchedLCentID === LCENT_ID.MULTIPLE_SELECTION && (
             <MultipleSelectionEntryType
               invID={invID}
@@ -408,7 +717,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
             />
           )}
 
-          {/* Reference Values Section - when lCentID === 6*/}
+          {/* Reference Values Section */}
           {watchedLCentID === LCENT_ID.REFERENCE_VALUES && (
             <ReferenceValueEntryType
               compoID={watch("compoID") || 0}
@@ -420,7 +729,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
             />
           )}
 
-          {/* Template Values Section - when lCentID === 7 */}
+          {/* Template Values Section */}
           {watchedLCentID === LCENT_ID.TEMPLATE_VALUES && (
             <TemplateValueEntryType invID={invID} compoID={watch("compoID") || 0} templateData={templateData} onUpdate={setTemplateData} />
           )}
