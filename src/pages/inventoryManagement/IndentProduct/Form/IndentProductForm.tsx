@@ -47,9 +47,7 @@ interface IndentProductFormProps {
   onChangeDepartment?: () => void;
 }
 
-// Validation schema
 const indentFormSchema = z.object({
-  // Master data
   indentID: z.number().default(0),
   indentCode: z.string().min(1, "Indent code is required"),
   indentDate: z.date().default(() => new Date()),
@@ -73,40 +71,28 @@ type IndentFormData = z.infer<typeof indentFormSchema>;
 interface IndentDetailRow extends IndentDetailDto {
   isNew?: boolean;
   tempId?: string;
-  id?: string | number; // Required for DataGrid
+  id?: string | number;
 }
 
-const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
+const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment }) => {
   const theme = useTheme();
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const { saveIndent, getNextIndentCode } = useIndentProduct();
-
-  // State management
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-
-  // Product selection state
   const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
   const [indentDetails, setIndentDetails] = useState<IndentDetailRow[]>([]);
-
-  // Patient selection state
-  const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
+  const [, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [clearPatientTrigger, setClearPatientTrigger] = useState(0);
-
-  // State to track if code has been generated
   const [hasGeneratedCode, setHasGeneratedCode] = useState(false);
-
-  // Product search ref
   const productSearchRef = useRef<ProductSearchRef>(null);
-
-  // Load valid dropdown values
   const { department: departments, departmentIndent, productUnit: productOptions } = useDropdownValues(["department", "departmentIndent", "productUnit"]);
-
-  // Use static data for supplier and package to fix TypeScript error
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
+  const isAddMode = !initialData;
   const supplierOptions = [
     { value: "1", label: "Supplier 1" },
     { value: "2", label: "Supplier 2" },
@@ -119,9 +105,46 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     { value: "3", label: "Package 3" },
   ];
 
-  const isAddMode = !initialData;
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { isDirty, isValid },
+  } = useForm<IndentFormData>({
+    resolver: zodResolver(indentFormSchema),
+    mode: "onChange",
+  });
+  const watchedIndentTypeValue = useWatch({ control, name: "indentTypeValue" });
+  const watchedFromDeptID = useWatch({ control, name: "fromDeptID" });
 
-  // Form setup
+  useEffect(() => {
+    if (watchedIndentTypeValue && departmentIndent) {
+      const selectedOption = departmentIndent.find((option) => option.value === watchedIndentTypeValue);
+      if (selectedOption) {
+        setValue("indentType", selectedOption.label || "", { shouldValidate: true });
+      }
+    }
+  }, [watchedIndentTypeValue, departmentIndent, setValue]);
+
+  const generateIndentCode = useCallback(async () => {
+    if (!isAddMode || !selectedDepartment.deptID) return;
+    try {
+      setIsGeneratingCode(true);
+      const currentYear = new Date().getFullYear();
+      const deptCode = selectedDepartment.department.substring(0, 4).toUpperCase();
+      const nextCode = await getNextIndentCode("IND", 3);
+      if (nextCode) {
+        const generatedCode = `${deptCode}/${currentYear}/${nextCode.substring(nextCode.length - 3)}`;
+        setValue("indentCode", generatedCode, { shouldValidate: true, shouldDirty: true });
+      }
+    } catch (error) {
+      showAlert("Warning", "Failed to generate indent code. Please enter manually.", "warning");
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  }, [isAddMode, selectedDepartment.deptID, selectedDepartment.department, getNextIndentCode, setValue, showAlert]);
+
   const defaultValues: IndentFormData = useMemo(
     () => ({
       indentID: initialData?.indentID || 0,
@@ -141,50 +164,83 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       rActiveYN: initialData?.rActiveYN || "Y",
       transferYN: initialData?.transferYN || "N",
     }),
-    [initialData, selectedDepartment]
+    [initialData?.indentID]
   );
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { isDirty, isValid, errors },
-  } = useForm<IndentFormData>({
-    defaultValues,
-    resolver: zodResolver(indentFormSchema),
-    mode: "onChange",
-  });
-
-  // Watch form values
-  const watchedIndentTypeValue = useWatch({ control, name: "indentTypeValue" });
-  const watchedFromDeptID = useWatch({ control, name: "fromDeptID" });
-  const watchedToDeptID = useWatch({ control, name: "toDeptID" });
-
-  // Effect to update indentType when indentTypeValue changes
   useEffect(() => {
-    if (watchedIndentTypeValue && departmentIndent) {
-      const selectedOption = departmentIndent.find((option) => option.value === watchedIndentTypeValue);
-      if (selectedOption) {
-        setValue("indentType", selectedOption.label || "", { shouldValidate: true });
-      }
-    }
-  }, [watchedIndentTypeValue, departmentIndent, setValue]);
+    if (open && !isFormInitialized) {
+      const formValues = {
+        indentID: initialData?.indentID || 0,
+        indentCode: initialData?.indentCode || "",
+        indentDate: initialData?.indentDate ? new Date(initialData.indentDate) : new Date(),
+        indentType: initialData?.indentType || "",
+        indentTypeValue: initialData?.indentTypeValue || "",
+        fromDeptID: selectedDepartment.deptID,
+        fromDeptName: selectedDepartment.department,
+        toDeptID: initialData?.toDeptID || 0,
+        toDeptName: initialData?.toDeptName || "",
+        pChartID: initialData?.pChartID || 0,
+        pChartCode: initialData?.pChartCode || "",
+        autoIndentYN: initialData?.autoIndentYN || "N",
+        indentAcknowledgement: initialData?.indentAcknowledgement || "",
+        rNotes: initialData?.rNotes || "",
+        rActiveYN: initialData?.rActiveYN || "Y",
+        transferYN: initialData?.transferYN || "N",
+      };
 
-  const fetchProductDetails = async (productID: number, basicInfo: ProductSearchResult) => {
+      reset(formValues);
+      setIsFormInitialized(true);
+      setHasGeneratedCode(!!initialData);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setIsFormInitialized(false);
+    }
+  }, [open]);
+
+  const performReset = useCallback(() => {
+    const resetValues = {
+      indentID: initialData?.indentID || 0,
+      indentCode: initialData?.indentCode || "",
+      indentDate: initialData?.indentDate ? new Date(initialData.indentDate) : new Date(),
+      indentType: initialData?.indentType || "",
+      indentTypeValue: initialData?.indentTypeValue || "",
+      fromDeptID: selectedDepartment.deptID,
+      fromDeptName: selectedDepartment.department,
+      toDeptID: initialData?.toDeptID || 0,
+      toDeptName: initialData?.toDeptName || "",
+      pChartID: initialData?.pChartID || 0,
+      pChartCode: initialData?.pChartCode || "",
+      autoIndentYN: initialData?.autoIndentYN || "N",
+      indentAcknowledgement: initialData?.indentAcknowledgement || "",
+      rNotes: initialData?.rNotes || "",
+      rActiveYN: initialData?.rActiveYN || "Y",
+      transferYN: initialData?.transferYN || "N",
+    };
+    reset(resetValues);
+    setIndentDetails([]);
+    setSelectedProduct(null);
+    setSelectedPatient(null);
+    setFormError(null);
+    setClearPatientTrigger((prev) => prev + 1);
+    productSearchRef.current?.clearSelection();
+
+    if (isAddMode) {
+      generateIndentCode();
+    }
+  }, [reset, initialData, selectedDepartment, isAddMode, generateIndentCode]);
+
+  const fetchProductDetails = async (productID: number) => {
     try {
       setLoading(true);
       const [productRes, productOverviewRes] = await Promise.all([productListService.getById(productID), productOverviewService.getAll()]);
-
       const product: ProductListDto = productRes.data ?? ({} as ProductListDto);
-
       if (!product || !product.productID) {
         showAlert("Warning", "Product data not found.", "warning");
         return;
       }
-
-      // Create default overview data if not found
       const productOverview = productOverviewRes.data?.find((p: ProductOverviewDto) => p.productID === productID) || {
         stockLevel: 0,
         avgDemand: 0,
@@ -193,10 +249,8 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         maxLevelUnits: 0,
         productLocation: "",
       };
-
       const indentID = initialData?.indentID || 0;
       const tempId = `temp-${Date.now()}`;
-
       const newRow: IndentDetailRow = {
         indentDetID: 0,
         indentID: indentID,
@@ -259,23 +313,19 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         tempId: tempId,
         id: tempId,
       };
-
       const updatedGrid = [...indentDetails, newRow];
       setIndentDetails(updatedGrid);
     } catch (err) {
-      console.error("Error in fetchProductDetails:", err);
       showAlert("Error", "Failed to fetch product details.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle cell value changes for the grid
   const handleCellValueChange = useCallback((rowIndex: number, field: keyof IndentDetailRow, value: any) => {
     setIndentDetails((prev) => prev.map((item, index) => (index === rowIndex ? { ...item, [field]: value } : item)));
   }, []);
 
-  // Render functions for different field types
   const renderNumberField = (params: GridRenderCellParams, field: keyof IndentDetailRow) => (
     <TextField
       size="small"
@@ -297,13 +347,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     <TextField size="small" type="number" value={params.row[field] ?? 0} disabled sx={{ width: "100%" }} inputProps={{ style: { textAlign: "right" } }} />
   );
 
-  const renderSelect = (
-    params: GridRenderCellParams,
-    valueField: keyof IndentDetailRow,
-    nameField: keyof IndentDetailRow,
-    options: { value: string; label: string }[],
-    type: "package" | "supplier" | "unit" = "package"
-  ) => (
+  const renderSelect = (params: GridRenderCellParams, valueField: keyof IndentDetailRow, nameField: keyof IndentDetailRow, options: { value: string; label: string }[]) => (
     <Select
       size="small"
       value={params.row[valueField] || ""}
@@ -335,43 +379,16 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     </Select>
   );
 
-  // Generate indent code based on department and year
-  const generateIndentCode = useCallback(async () => {
-    if (!isAddMode || !selectedDepartment.deptID) return;
-
-    try {
-      setIsGeneratingCode(true);
-      const currentYear = new Date().getFullYear();
-      const deptCode = selectedDepartment.department.substring(0, 4).toUpperCase();
-
-      // Get next sequence number
-      const nextCode = await getNextIndentCode("IND", 3);
-      if (nextCode) {
-        const generatedCode = `${deptCode}/${currentYear}/${nextCode.substring(nextCode.length - 3)}`;
-        setValue("indentCode", generatedCode, { shouldValidate: true, shouldDirty: true });
-      }
-    } catch (error) {
-      console.error("Error generating indent code:", error);
-      showAlert("Warning", "Failed to generate indent code. Please enter manually.", "warning");
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  }, [isAddMode, selectedDepartment.deptID, selectedDepartment.department, getNextIndentCode, setValue, showAlert]);
-
-  // Initialize form
   useEffect(() => {
     if (initialData) {
       reset(defaultValues);
-      setHasGeneratedCode(true); // Don't generate code for existing data
-      // Load existing details if editing
-      // This would typically come from a service call
+      setHasGeneratedCode(true);
     } else {
       reset(defaultValues);
-      setHasGeneratedCode(false); // Reset flag for new forms
+      setHasGeneratedCode(false);
     }
   }, [initialData, reset, defaultValues]);
 
-  // Generate code only once for new forms when department is available
   useEffect(() => {
     if (isAddMode && selectedDepartment.deptID && !hasGeneratedCode) {
       generateIndentCode().then(() => {
@@ -380,12 +397,10 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     }
   }, [isAddMode, selectedDepartment.deptID, hasGeneratedCode, generateIndentCode]);
 
-  // Handle product selection
   const handleProductSelect = useCallback((product: ProductSearchResult | null) => {
     setSelectedProduct(product);
   }, []);
 
-  // Handle patient selection
   const handlePatientSelect = useCallback(
     (patient: PatientSearchResult | null) => {
       setSelectedPatient(patient);
@@ -400,17 +415,13 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     [setValue]
   );
 
-  // Add product to indent details
   const handleAddProduct = useCallback(async () => {
     if (!selectedProduct) {
       showAlert("Warning", "Please select a product", "warning");
       return;
     }
-
-    // Check if product already exists
     const existingProduct = indentDetails.find((detail) => detail.productID === selectedProduct.productID);
     if (existingProduct) {
-      // Show confirmation dialog
       const confirmed = await new Promise<boolean>((resolve) => {
         showAlert("Duplicate Product", "This product is already in the grid. Are you sure you want to add it again?", "warning", {
           showConfirmButton: true,
@@ -421,23 +432,17 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
           onCancel: () => resolve(false),
         });
       });
-
       if (!confirmed) {
         setSelectedProduct(null);
         productSearchRef.current?.clearSelection();
         return;
       }
     }
-
-    // Use the enhanced fetch function
-    await fetchProductDetails(selectedProduct.productID, selectedProduct);
-
-    // Clear selections
+    await fetchProductDetails(selectedProduct.productID);
     setSelectedProduct(null);
     productSearchRef.current?.clearSelection();
   }, [selectedProduct, indentDetails, showAlert, fetchProductDetails]);
 
-  // Remove product from indent details
   const handleRemoveProduct = useCallback(
     (id: string | number) => {
       showAlert("Confirm Deletion", "Are you sure you want to delete this product?", "warning", {
@@ -450,7 +455,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     [showAlert]
   );
 
-  // Handle department change
   const handleToDepartmentChange = useCallback(
     (value: any) => {
       try {
@@ -481,7 +485,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     [departments, setValue, showAlert]
   );
 
-  // Enhanced DataGrid columns with comprehensive fields matching DTO structure
   const detailColumns: GridColDef[] = useMemo(
     () => [
       {
@@ -489,7 +492,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         headerName: "Supplier Name",
         width: 150,
         sortable: false,
-        renderCell: (params) => renderSelect(params, "supplierID", "supplierName", supplierOptions || [], "supplier"),
+        renderCell: (params) => renderSelect(params, "supplierID", "supplierName", supplierOptions || []),
       },
       {
         field: "productName",
@@ -541,14 +544,14 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         headerName: "Units",
         width: 150,
         sortable: false,
-        renderCell: (params) => renderSelect(params, "pUnitID", "pUnitName", productOptions || [], "unit"),
+        renderCell: (params) => renderSelect(params, "pUnitID", "pUnitName", productOptions || []),
       },
       {
         field: "ppkgName",
         headerName: "Package",
         width: 150,
         sortable: false,
-        renderCell: (params) => renderSelect(params, "ppkgID", "ppkgName", packageOptions || [], "package"),
+        renderCell: (params) => renderSelect(params, "ppkgID", "ppkgName", packageOptions || []),
       },
       {
         field: "groupName",
@@ -626,52 +629,37 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     ],
     [supplierOptions, packageOptions, productOptions, viewOnly, handleRemoveProduct]
   );
-
-  // Filter columns based on viewOnly
   const visibleColumns = viewOnly ? detailColumns.filter((col) => col.field !== "actions") : detailColumns;
 
-  // Form submission
   const onSubmit = async (data: IndentFormData) => {
-    debugger;
     if (viewOnly) return;
-
-    // Validate required fields
     if (!data.indentTypeValue || !data.indentCode) {
       showAlert("Error", "Indent Type and Indent Code are required.", "error");
       return;
     }
-
     if (indentDetails.length === 0) {
       showAlert("Warning", "Please add at least one product to the indent", "warning");
       return;
     }
-
-    // Validate based on indent type
     if (!data.toDeptID) {
       showAlert("Error", "To Department is required.", "error");
       return;
     }
-
     if ((data.indentTypeValue === "departmentIndent01" || data.indentType === "Patient Indent") && !data.pChartID) {
       showAlert("Warning", "Please select a patient for patient indent", "warning");
       return;
     }
-
     const validIndentDetails = indentDetails.filter((detail) => detail.productID && (detail.requiredQty || 0) > 0);
     if (validIndentDetails.length === 0) {
       showAlert("Error", "Indent Details cannot be empty or incomplete.", "error");
       return;
     }
-
     setFormError(null);
-
     try {
       setIsSaving(true);
       setLoading(true);
-
       const isUpdate = initialData && initialData.indentID > 0;
       const indentID = isUpdate ? initialData.indentID : 0;
-
       const indentMaster: IndentMastDto = {
         indentID: indentID,
         indentCode: data.indentCode,
@@ -706,11 +694,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         IndentMaster: indentMaster,
         IndentDetails: indentDetailsData,
       };
-
-      console.log("Payload being sent to API:", saveRequest);
-
       const response = await saveIndent(saveRequest);
-
       if (response.success) {
         showAlert("Success", isAddMode ? "Indent created successfully" : "Indent updated successfully", "success");
         onClose(true);
@@ -726,21 +710,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       setLoading(false);
     }
   };
-
-  // Reset form
-  const performReset = useCallback(() => {
-    reset(defaultValues);
-    setIndentDetails([]);
-    setSelectedProduct(null);
-    setSelectedPatient(null);
-    setFormError(null);
-    setClearPatientTrigger((prev) => prev + 1);
-    productSearchRef.current?.clearSelection();
-
-    if (isAddMode) {
-      generateIndentCode();
-    }
-  }, [reset, defaultValues, isAddMode, generateIndentCode]);
 
   const handleReset = useCallback(() => {
     if (isDirty || indentDetails.length > 0) {
@@ -758,9 +727,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     }
   }, [isDirty, indentDetails.length, onClose]);
 
-  // Get indent type icon and label
   const getIndentTypeInfo = (type: string) => {
-    // Check both the code and label values to handle different dropdown configurations
     if (type === "departmentIndent" || type === "Department Indent") {
       return { icon: DepartmentIcon, label: "Department Indent", color: theme.palette.primary.main };
     } else if (type === "departmentIndent01" || type === "Patient Indent") {
@@ -773,15 +740,12 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
   };
 
   const currentTypeInfo = getIndentTypeInfo(watchedIndentTypeValue);
-
-  // Dialog title
   const dialogTitle = useMemo(() => {
     if (viewOnly) return "View Indent Details";
     if (isAddMode) return "Create New Indent";
     return `Edit Indent - ${initialData?.indentCode}`;
   }, [viewOnly, isAddMode, initialData]);
 
-  // Dialog actions
   const dialogActions = useMemo(() => {
     if (viewOnly) {
       return <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />;
@@ -809,7 +773,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     );
   }, [viewOnly, handleCancel, handleReset, handleSubmit, onSubmit, onClose, isSaving, isDirty, isValid, indentDetails.length, isAddMode]);
 
-  // Filter departments for "To Department" (exclude stores if needed)
   const toDepartmentOptions = useMemo(() => {
     return (departments || [])
       .filter((d: any) => d.value !== watchedFromDeptID.toString())
@@ -840,7 +803,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
           )}
 
           <Grid container spacing={3}>
-            {/* Header Section */}
             <Grid size={{ xs: 12 }}>
               <Paper
                 elevation={0}
@@ -874,7 +836,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
               </Paper>
             </Grid>
 
-            {/* Basic Information Section */}
             <Grid size={{ xs: 12 }}>
               <Card variant="outlined" sx={{ borderLeft: "3px solid #1976d2" }}>
                 <CardContent>
@@ -943,7 +904,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                       />
                     </Grid>
 
-                    {/* Conditional patient selection based on indent type */}
                     {(watchedIndentTypeValue === "departmentIndent01" || watchedIndentTypeValue === "Patient Indent") && (
                       <Grid size={{ xs: 12, md: 6 }}>
                         <PatientSearch onPatientSelect={handlePatientSelect} clearTrigger={clearPatientTrigger} label="Select Patient" disabled={viewOnly} />
@@ -963,7 +923,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
               </Card>
             </Grid>
 
-            {/* Product Selection Section */}
             {!viewOnly && (
               <Grid size={{ xs: 12 }}>
                 <Card
@@ -1039,7 +998,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
               </Grid>
             )}
 
-            {/* Enhanced Indent Details DataGrid */}
             <Grid size={{ xs: 12 }}>
               <Card
                 variant="outlined"
@@ -1115,7 +1073,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                           },
                           columns: {
                             columnVisibilityModel: {
-                              // Hide some columns by default for better UX
                               baseUnit: false,
                               leadTime: false,
                               maxLevelUnits: false,
@@ -1188,7 +1145,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                           variant="outlined"
                           color="info"
                           onClick={() => {
-                            // Focus the product search field
                             const searchField = document.querySelector(".product-search-field input");
                             if (searchField) {
                               (searchField as HTMLInputElement).focus();
@@ -1211,7 +1167,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
               </Card>
             </Grid>
 
-            {/* Additional Information Section */}
             <Grid size={{ xs: 12 }}>
               <Card
                 variant="outlined"
@@ -1294,7 +1249,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         </Box>
       </GenericDialog>
 
-      {/* Confirmation Dialogs */}
       <ConfirmationDialog
         open={showResetConfirmation}
         onClose={() => setShowResetConfirmation(false)}
