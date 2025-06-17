@@ -1,6 +1,6 @@
 export interface IndentSaveRequestDto {
-  IndentMaster: IndentMastDto;
-  IndentDetails: IndentDetailDto[];
+  indentMaster: IndentMastDto;
+  indentDetails: IndentDetailDto[];
 }
 export interface IndentMastDto {
   indentID: number;
