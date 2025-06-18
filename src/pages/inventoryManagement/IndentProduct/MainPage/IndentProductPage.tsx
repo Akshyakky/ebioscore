@@ -604,7 +604,9 @@ const IndentProductPage: React.FC = () => {
           </Paper>
         </>
       )}
+
       <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} initialDeptId={deptId} requireSelection={true} />
+
       {isFormOpen && isDepartmentSelected && (
         <IndentProductForm
           open={isFormOpen}
@@ -615,6 +617,7 @@ const IndentProductPage: React.FC = () => {
           onChangeDepartment={handleDepartmentChange}
         />
       )}
+
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}

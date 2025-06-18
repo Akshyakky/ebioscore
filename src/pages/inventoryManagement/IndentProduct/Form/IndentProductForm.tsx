@@ -895,7 +895,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
 
   const toDepartmentOptions = useMemo(() => {
     return (departments || [])
-      .filter((d: any) => d.value !== watchedFromDeptID.toString())
+      .filter((d: any) => d.value !== watchedFromDeptID.toString() && d.isStoreYN === "Y")
       .map((dept: any) => ({
         value: parseInt(dept.value.toString()),
         label: dept.label,
