@@ -2,6 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import { DateFilterType } from "@/interfaces/Common/FilterDto";
 import { IndentMastDto } from "@/interfaces/InventoryManagement/IndentProductDto";
@@ -23,8 +24,9 @@ import {
   TrendingUp as TotalIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Chip, Collapse, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import IndentProductForm from "../Form/IndentProductForm";
 import { useIndentProduct } from "../hooks/useIndentProduct";
@@ -46,6 +48,11 @@ const dateFilterOptions = [
   { value: DateFilterType.DateRange, label: "Custom Range" },
 ];
 
+interface DateRangeForm {
+  startDate: Date | null;
+  endDate: Date | null;
+}
+
 const IndentProductPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -56,10 +63,28 @@ const IndentProductPage: React.FC = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.ThisMonth);
-  const [startDate] = useState<Date | null>(null);
-  const [endDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const { indentList, isLoading, error, deleteIndent, getIndentsByDepartment } = useIndentProduct();
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
+
+  // Form setup for date range selection
+  const { control, watch, setValue } = useForm<DateRangeForm>({
+    defaultValues: {
+      startDate: null,
+      endDate: null,
+    },
+  });
+
+  // Watch form values to sync with state
+  const watchedStartDate = watch("startDate");
+  const watchedEndDate = watch("endDate");
+
+  // Sync form values with state
+  useEffect(() => {
+    setStartDate(watchedStartDate);
+    setEndDate(watchedEndDate);
+  }, [watchedStartDate, watchedEndDate]);
 
   const [filters, setFilters] = useState<{
     status: string;
@@ -193,6 +218,22 @@ const IndentProductPage: React.FC = () => {
       indentType: "",
     });
   }, []);
+
+  const handleDateFilterChange = useCallback(
+    (event: any) => {
+      const newFilter = Number(event.target.value) as DateFilterType;
+      setDateFilter(newFilter);
+
+      // Reset custom date range when switching away from custom range
+      if (newFilter !== DateFilterType.DateRange) {
+        setStartDate(null);
+        setEndDate(null);
+        setValue("startDate", null);
+        setValue("endDate", null);
+      }
+    },
+    [setValue]
+  );
 
   const stats = useMemo(() => {
     if (!indentList.length) {
@@ -504,13 +545,11 @@ const IndentProductPage: React.FC = () => {
           {showStats && renderStatsDashboard()}
           <Paper sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2} alignItems="center">
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <SmartButton text={`Change Dept: ${deptName}`} onClick={handleDepartmentChange} variant="outlined" size="small" color="warning" />
-                </Stack>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <SmartButton text={`Change Dept: ${deptName}`} onClick={handleDepartmentChange} variant="outlined" size="small" color="warning" />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <DropdownSelect
                   label="Date Filter"
                   name="dateFilter"
@@ -519,12 +558,13 @@ const IndentProductPage: React.FC = () => {
                     value: option.value.toString(),
                     label: option.label,
                   }))}
-                  onChange={(e) => setDateFilter(Number(e.target.value) as DateFilterType)}
+                  onChange={handleDateFilterChange}
                   size="small"
                   defaultText="Select Date Range"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
                   <SmartButton
                     text="Refresh"
@@ -541,7 +581,53 @@ const IndentProductPage: React.FC = () => {
                   <SmartButton text="Create Indent" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
                 </Stack>
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
+
+              {/* Custom Date Range Fields - Collapsible */}
+              <Collapse in={dateFilter === DateFilterType.DateRange} sx={{ width: "100%" }}>
+                <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormField
+                      name="startDate"
+                      control={control}
+                      type="datepicker"
+                      label="From Date"
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      format="DD/MM/YYYY"
+                      helperText="Select start date for custom range"
+                      onChange={(value) => {
+                        setStartDate(value);
+                        // Clear end date if it's before start date
+                        if (endDate && value && new Date(value) > new Date(endDate)) {
+                          setValue("endDate", null);
+                          setEndDate(null);
+                        }
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormField
+                      name="endDate"
+                      control={control}
+                      type="datepicker"
+                      label="To Date"
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      format="DD/MM/YYYY"
+                      helperText="Select end date for custom range"
+                      disabled={!watchedStartDate}
+                      onChange={(value) => {
+                        setEndDate(value);
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Collapse>
+
+              {/* Second Row - Search and Filters */}
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   placeholder="Search by code, department, patient, or notes"
@@ -565,26 +651,23 @@ const IndentProductPage: React.FC = () => {
                   }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 8 }}>
-                <Tooltip title="Filter Indents">
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <FilterIcon color="action" />
-                    <DropdownSelect
-                      label="Status"
-                      name="status"
-                      value={filters.status}
-                      options={statusOptions}
-                      onChange={(e) => handleFilterChange("status", e.target.value)}
-                      size="small"
-                      defaultText="All Status"
-                    />
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {Object.values(filters).some(Boolean) && (
-                        <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
-                      )}
-                    </Box>
-                  </Stack>
-                </Tooltip>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <FilterIcon color="action" />
+                  <DropdownSelect
+                    label="Status"
+                    name="status"
+                    value={filters.status}
+                    options={statusOptions}
+                    onChange={(e) => handleFilterChange("status", e.target.value)}
+                    size="small"
+                    defaultText="All Status"
+                  />
+                  {Object.values(filters).some(Boolean) && (
+                    <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
+                  )}
+                </Stack>
               </Grid>
             </Grid>
           </Paper>
