@@ -34,6 +34,7 @@ const purchaseOrderFormSchema = z.object({
   pODate: z.string().min(1, "Date is required"),
   supplierID: z.number().min(1, "Supplier is required"),
   supplierName: z.string().min(1, "Supplier name is required"),
+  conID: z.string().min(1, "Supplier is required"),
   fromDeptID: z.number().min(1, "Department is required"),
   fromDeptName: z.string().min(1, "Department name is required"),
   pOTypeValue: z.string().default("RVPO"),
