@@ -6,7 +6,7 @@ import { PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } fr
 import { useAlert } from "@/providers/AlertProvider";
 import { OperationResult } from "@/services/GenericEntityService/GenericEntityService";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
-import { purchaseOrderMastService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { purchaseOrderMastService, purchaseOrderService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { useCallback, useState } from "react";
 
 export const usePurchaseOrder = () => {
@@ -109,32 +109,26 @@ export const usePurchaseOrder = () => {
    */
   const savePurchaseOrder = useCallback(
     async (purchaseOrderData: purchaseOrderSaveDto): Promise<OperationResult<purchaseOrderSaveDto>> => {
-      //   try {
-      //     setLoading(true);
-      //     const response = await purchaseOrderMastServices.save(purchaseOrderData);
-      //     if (response.success) {
-      //       await fetchPurchaseOrderList();
-      //       return response;
-      //     } else {
-      //       throw new Error(response.errorMessage || "Failed to save purchase order");
-      //     }
-      //   } catch (error) {
-      //     const errorMessage = error instanceof Error ? error.message : "Failed to save purchase order";
-      //     showAlert("Error", errorMessage, "error");
-      //     return {
-      //       success: false,
-      //       errorMessage,
-      //       data: undefined,
-      //     };
-      //   } finally {
-      //     setLoading(false);
-      //   }
-
-      return {
-        success: false,
-        errorMessage: "",
-        data: undefined,
-      };
+      try {
+        setLoading(true);
+        const response = await purchaseOrderService.save(purchaseOrderData);
+        if (response.success) {
+          await fetchPurchaseOrderList();
+          return response;
+        } else {
+          throw new Error(response.errorMessage || "Failed to save purchase order");
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to save purchase order";
+        showAlert("Error", errorMessage, "error");
+        return {
+          success: false,
+          errorMessage,
+          data: undefined,
+        };
+      } finally {
+        setLoading(false);
+      }
     },
     [showAlert, fetchPurchaseOrderList, setLoading]
   );

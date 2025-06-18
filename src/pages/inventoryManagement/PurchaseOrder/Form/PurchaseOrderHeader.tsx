@@ -12,11 +12,10 @@ interface PurchaseOrderHeaderProps {
   control: Control<any>;
   setValue: UseFormSetValue<any>;
   onProductSelect: (product: ProductSearchResult | null) => void;
-  selectedProduct: ProductSearchResult | null;
   approvedDisable: boolean;
 }
 
-const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setValue, onProductSelect, selectedProduct, approvedDisable }) => {
+const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setValue, onProductSelect, approvedDisable }) => {
   const { showAlert } = useAlert();
   const { contacts: suppliers } = useContactMastByCategory({ consValue: "PHY" });
   console.log(suppliers);
@@ -59,7 +58,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setV
                   required
                   disabled={approvedDisable}
                   onChange={(value) => {
-                    const selected = suppliers.find((opt) => Number(opt.value) === Number(value));
+                    const selected = suppliers.find((opt) => Number(opt.value) === Number(value.value));
                     if (selected) {
                       setValue("supplierName", selected.label);
                       setValue("supplierID", selected.conID);
