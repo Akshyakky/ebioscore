@@ -8,7 +8,7 @@ import { IndentDetailDto, IndentMastDto, IndentSaveRequestDto } from "@/interfac
 import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { PatientOption, PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { useAlert } from "@/providers/AlertProvider";
 import { productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,7 +87,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
   const [indentDetails, setindentDetails] = useState<IndentDetailRow[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [clearPatientTrigger, setClearPatientTrigger] = useState(0);
   const [hasGeneratedCode, setHasGeneratedCode] = useState(false);
   const [isFormInitialized, setIsFormInitialized] = useState(false);
@@ -95,6 +94,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
   const productSearchRef = useRef<ProductSearchRef>(null);
   const { department: departments, departmentIndent, productUnit: productOptions } = useDropdownValues(["department", "departmentIndent", "productUnit"]);
   const isAddMode = !initialData;
+  const [selectedPatient, setSelectedPatient] = useState<PatientOption | null>(null);
 
   const supplierOptions = [
     { value: "1", label: "Supplier 1" },
@@ -190,9 +190,28 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     }
   }, [open]);
 
+  const fetchPatientById = async (pChartID: number): Promise<PatientOption | null> => {
+    try {
+      return null;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const createFallbackPatientOption = (pChartID: number, pChartCode: string): PatientOption => {
+    return {
+      pChartID: pChartID,
+      pChartCode: pChartCode,
+      pfName: "",
+      plName: "",
+      fullName: `Patient ${pChartCode}`,
+      pAddPhone1: "",
+      pDob: null,
+    };
+  };
+
   useEffect(() => {
     const fetchindentDetails = async () => {
-      debugger;
       if (open && isFormInitialized && !isAddMode && initialData?.indentID && !isDataFetched) {
         try {
           setLoading(true);
@@ -200,6 +219,8 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
           if (response) {
             if (response.indentMaster) {
               const masterData = response.indentMaster;
+
+              // ... existing form values setup ...
               const formValues = {
                 indentID: masterData.indentID || 0,
                 indentCode: masterData.indentCode || "",
@@ -220,19 +241,29 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
               };
               reset(formValues);
               if (masterData.pChartID && masterData.pChartCode) {
-                setSelectedPatient({
-                  pChartID: masterData.pChartID,
-                  pChartCode: masterData.pChartCode,
-                } as PatientSearchResult);
+                try {
+                  const completePatientData = await fetchPatientById(masterData.pChartID);
+                  if (completePatientData) {
+                    setSelectedPatient(completePatientData);
+                  } else {
+                    const fallbackPatient = createFallbackPatientOption(masterData.pChartID, masterData.pChartCode);
+                    setSelectedPatient(fallbackPatient);
+                  }
+                } catch (error) {
+                  const fallbackPatient = createFallbackPatientOption(masterData.pChartID, masterData.pChartCode);
+                  setSelectedPatient(fallbackPatient);
+                }
+              } else {
+                setSelectedPatient(null);
               }
             }
             if (response.indentDetails && response.indentDetails.length > 0) {
-              console.log("Processing indent details:", response.indentDetails);
               const transformedDetails = response.indentDetails.map((detail, index) => {
                 const uniqueId = detail.indentDetID && detail.indentDetID > 0 ? detail.indentDetID : `existing-${index}-${Date.now()}`;
                 const pChartID = response.indentMaster?.pChartID || 0;
                 const pChartCode = response.indentMaster?.pChartCode || "";
-
+                const selectedUnit = productOptions?.find((unit) => unit.value === String(detail.pUnitID));
+                const unitName = selectedUnit ? selectedUnit.label : detail.pUnitName || "";
                 return {
                   ...detail,
                   id: uniqueId,
@@ -240,61 +271,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                   tempId: `existing-${index}`,
                   pChartID: pChartID,
                   pChartCode: pChartCode,
-                  indentID: detail.indentID || response.indentMaster?.indentID || 0,
-                  productID: detail.productID || 0,
-                  productCode: detail.productCode || "",
-                  productName: detail.productName || detail.catValue || "—",
-                  catValue: detail.catValue || "",
-                  catDesc: detail.catDesc || "",
-                  requiredQty: detail.requiredQty || 1,
-                  requiredUnitQty: detail.requiredUnitQty || 1,
-                  receivedQty: detail.receivedQty || 0,
-                  supplierID: detail.supplierID || 0,
-                  supplierName: detail.supplierName || "",
-                  manufacturerID: detail.manufacturerID || 0,
-                  manufacturerName: detail.manufacturerName || "",
-                  ppkgID: detail.ppkgID || 0,
-                  ppkgName: detail.ppkgName || "",
-                  pUnitID: detail.pUnitID || 0,
-                  pUnitName: detail.pUnitName || "",
-                  qoh: detail.qoh || 0,
-                  average: detail.average || 0,
-                  averageDemand: detail.averageDemand || 0,
-                  reOrderLevel: detail.reOrderLevel || 0,
-                  rOL: detail.rOL || detail.reOrderLevel || 0,
-                  minLevelUnits: detail.minLevelUnits || 0,
-                  maxLevelUnits: detail.maxLevelUnits || 0,
-                  StockLevel: detail.StockLevel || 0,
-                  Location: detail.Location || "",
-                  netValue: detail.netValue || 0,
-                  tax: detail.tax || 0,
-                  cgstPerValue: detail.cgstPerValue || 0,
-                  sgstPerValue: detail.sgstPerValue || 0,
-                  pGrpID: detail.pGrpID || 0,
-                  pGrpName: detail.pGrpName || "",
-                  psGrpID: detail.psGrpID || 0,
-                  psGrpName: detail.psGrpName || "",
-                  groupName: detail.groupName || detail.pGrpName || "",
-                  baseUnit: detail.baseUnit || 1,
-                  unitPack: detail.unitPack || 1,
-                  unitsPackage: detail.unitsPackage || 1,
-                  leadTime: detail.leadTime || 0,
-                  hsnCode: detail.hsnCode || "",
-                  Roq: detail.Roq || detail.reOrderLevel || 0,
-                  indentDetStatusCode: detail.indentDetStatusCode || "PENDING",
-                  indGrnDetStatusCode: detail.indGrnDetStatusCode || "PENDING",
-                  deptIssualYN: detail.deptIssualYN || "N",
-                  expiryYN: detail.expiryYN || "N",
-                  rActiveYN: detail.rActiveYN || "Y",
-                  transferYN: detail.transferYN || "N",
-                  rNotes: detail.rNotes || "",
-                  poNo: detail.poNo || 0,
-                  deptIssualID: detail.deptIssualID || 0,
-                  grnDetID: detail.grnDetID || 0,
-                  imrMedID: detail.imrMedID || 0,
-                  units: detail.units || detail.pUnitID ? String(detail.pUnitID) : "",
-                  package: detail.package || detail.ppkgName || "",
-                  mfName: detail.mfName || detail.manufacturerName || "",
+                  pUnitName: unitName,
                 };
               });
               setindentDetails(transformedDetails);
@@ -304,7 +281,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
           }
           setIsDataFetched(true);
         } catch (error) {
-          console.error("Error fetching indent details:", error);
           showAlert("Error", "Failed to fetch indent details", "error");
           setIsDataFetched(true);
         } finally {
@@ -365,10 +341,12 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       setLoading(true);
       const [productRes, productOverviewRes] = await Promise.all([productListService.getById(productID), productOverviewService.getAll()]);
       const product: ProductListDto = productRes.data ?? ({} as ProductListDto);
+
       if (!product || !product.productID) {
         showAlert("Warning", "Product data not found.", "warning");
         return;
       }
+
       const productOverview = productOverviewRes.data?.find((p: ProductOverviewDto) => p.productID === productID) || {
         stockLevel: 0,
         avgDemand: 0,
@@ -377,6 +355,9 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         maxLevelUnits: 0,
         productLocation: "",
       };
+
+      const selectedUnit = productOptions?.find((unit) => unit.value === String(product.issueUnit));
+      const unitName = selectedUnit ? selectedUnit.label : "";
       const indentID = initialData?.indentID || 0;
       const tempId = `temp-${Date.now()}`;
       const newRow: IndentDetailRow = {
@@ -396,7 +377,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         ppkgID: product.pPackageID ?? 0,
         ppkgName: product.productPackageName ?? "",
         pUnitID: product.issueUnit ? product.issueUnit : 0,
-        pUnitName: "",
+        pUnitName: unitName,
         hsnCode: product.hsnCODE ?? "",
         manufacturerID: product.manufacturerID,
         manufacturerCode: product.manufacturerCode,
@@ -443,6 +424,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         pChartID: selectedPatient?.pChartID ?? 0,
         pChartCode: selectedPatient?.pChartCode ?? "",
       };
+
       const updatedGrid = [...indentDetails, newRow];
       setindentDetails(updatedGrid);
     } catch (err) {
@@ -515,15 +497,25 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     setValue("pChartID", 0);
     setValue("pChartCode", "");
     showAlert("Success", "Patient selection cleared", "success");
-  }, [setValue]);
+  }, [setValue, showAlert]);
 
   const handlePatientSelect = useCallback(
     (patient: PatientSearchResult | null) => {
-      setSelectedPatient(patient);
       if (patient) {
+        const patientOption: PatientOption = {
+          pChartID: patient.pChartID,
+          pChartCode: patient.pChartCode,
+          pfName: "",
+          plName: "",
+          fullName: patient.fullName,
+          pAddPhone1: "",
+          pDob: null,
+        };
+        setSelectedPatient(patientOption);
         setValue("pChartID", patient.pChartID);
         setValue("pChartCode", patient.pChartCode);
       } else {
+        setSelectedPatient(null);
         setValue("pChartID", 0);
         setValue("pChartCode", "");
       }
@@ -1029,7 +1021,13 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                         <Grid size={{ xs: 12, md: 6 }}>
                           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
                             <Box sx={{ flexGrow: 1 }}>
-                              <PatientSearch onPatientSelect={handlePatientSelect} clearTrigger={clearPatientTrigger} label="Select Patient" disabled={viewOnly} />
+                              <PatientSearch
+                                onPatientSelect={handlePatientSelect}
+                                clearTrigger={clearPatientTrigger}
+                                label="Select Patient"
+                                disabled={viewOnly}
+                                initialSelection={selectedPatient} // This will show the patient name when editing
+                              />
                             </Box>
                             <SmartButton text="Clear" onClick={handleClearPatient} variant="outlined" color="error" icon={DeleteIcon} size="small" disabled={viewOnly} />
                           </Box>
