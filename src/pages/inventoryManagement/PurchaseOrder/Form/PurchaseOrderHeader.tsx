@@ -79,30 +79,31 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setV
           </CardContent>
         </Card>
       </Grid>
-
-      <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-        <Card variant="outlined" sx={{ borderLeft: "3px solid #2e7d32" }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom color="#2e7d32" fontWeight="bold">
-              <AddIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-              Add Products
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Grid container spacing={2} marginTop={2}>
-              <Grid size={{ xs: 12, sm: 12, md: 6, lg: 6, xl: 6 }}>
-                <ProductSearch
-                  onProductSelect={handleProductSelectLocal}
-                  label="Search Product"
-                  placeholder="Search product..."
-                  initialSelection={null}
-                  disabled={approvedDisable}
-                  className="product-search-field"
-                />
+      {!approvedDisable && (
+        <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+          <Card variant="outlined" sx={{ borderLeft: "3px solid #2e7d32" }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom color="#2e7d32" fontWeight="bold">
+                <AddIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+                Add Products
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Grid container spacing={2} marginTop={2}>
+                <Grid size={{ xs: 12, sm: 12, md: 6, lg: 6, xl: 6 }}>
+                  <ProductSearch
+                    onProductSelect={handleProductSelectLocal}
+                    label="Search Product"
+                    placeholder="Search product..."
+                    initialSelection={null}
+                    disabled={approvedDisable}
+                    className="product-search-field"
+                  />
+                </Grid>
               </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+      )}
     </Paper>
   );
 };
