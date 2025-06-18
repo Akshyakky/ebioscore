@@ -1009,6 +1009,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                         type="select"
                         label="To Department"
                         options={toDepartmentOptions}
+                        disabled={viewOnly}
                         required
                         size="small"
                         onChange={handleToDepartmentChange}
