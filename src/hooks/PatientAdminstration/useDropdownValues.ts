@@ -107,7 +107,8 @@ export type DropdownType =
   | "dischargeType"
   | "alertCategory"
   | "productBaseUnit"
-  | "componentUnit";
+  | "componentUnit"
+  | "indentStatus";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -233,6 +234,11 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       statusFilter: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "STATUSFILTER");
+        return response;
+      },
+
+      indentStatus: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INDENTSTATUS");
         return response;
       },
 

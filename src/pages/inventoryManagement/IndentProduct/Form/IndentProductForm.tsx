@@ -60,6 +60,7 @@ const indentFormSchema = z.object({
   pChartCode: z.string().optional(),
   autoIndentYN: z.string().default("N"),
   indentAcknowledgement: z.string().optional(),
+  indentApprovedYN: z.string().default("N"),
   rNotes: z.string().optional(),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().default("N"),
@@ -118,8 +119,14 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     resolver: zodResolver(indentFormSchema),
     mode: "onChange",
   });
+
   const watchedIndentTypeValue = useWatch({ control, name: "indentTypeValue" });
   const watchedFromDeptID = useWatch({ control, name: "fromDeptID" });
+
+  const handleIndentApprovedToggle = (event: any) => {
+    const newValue = event.target.checked ? "N" : "Y";
+    setValue("indentApprovedYN", newValue);
+  };
 
   useEffect(() => {
     if (watchedIndentTypeValue && departmentIndent) {
@@ -163,6 +170,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       pChartCode: initialData?.pChartCode || "",
       autoIndentYN: initialData?.autoIndentYN || "N",
       indentAcknowledgement: initialData?.indentAcknowledgement || "",
+      indentApprovedYN: initialData?.indentApprovedYN || "N",
       rNotes: initialData?.rNotes || "",
       rActiveYN: initialData?.rActiveYN || "Y",
       transferYN: initialData?.transferYN || "N",
@@ -219,8 +227,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
           if (response) {
             if (response.indentMaster) {
               const masterData = response.indentMaster;
-
-              // ... existing form values setup ...
               const formValues = {
                 indentID: masterData.indentID || 0,
                 indentCode: masterData.indentCode || "",
@@ -235,6 +241,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                 pChartCode: masterData.pChartCode || "",
                 autoIndentYN: masterData.autoIndentYN || "N",
                 indentAcknowledgement: masterData.indentAcknowledgement || "",
+                indentApprovedYN: masterData.indentApprovedYN || "N",
                 rNotes: masterData.rNotes || "",
                 rActiveYN: masterData.rActiveYN || "Y",
                 transferYN: masterData.transferYN || "N",
@@ -315,6 +322,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       pChartCode: initialData?.pChartCode || "",
       autoIndentYN: initialData?.autoIndentYN || "N",
       indentAcknowledgement: initialData?.indentAcknowledgement || "",
+      indentApprovedYN: initialData?.indentApprovedYN || "N",
       rNotes: initialData?.rNotes || "",
       rActiveYN: initialData?.rActiveYN || "Y",
       transferYN: initialData?.transferYN || "N",
@@ -785,7 +793,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         pChartID: data.pChartID || 0,
         pChartCode: data.pChartCode || "",
         autoIndentYN: data.autoIndentYN,
-        indentApprovedYN: "N",
+        indentApprovedYN: data.indentApprovedYN || "N", // Updated to use form value instead of hardcoded "N"
         indentAcknowledgement: data.indentAcknowledgement || "",
         indStatusCode: "PENDING",
         indStatus: "Pending",
@@ -943,6 +951,16 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                       <Chip icon={<InventoryIcon />} label="Products" variant="outlined" color="primary" />
                     </Badge>
                     <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
+                    {/* Added Finalize Indent field here */}
+                    <FormField
+                      name="indentApprovedYN"
+                      control={control}
+                      label="Finalize Indent"
+                      type="switch"
+                      onChange={handleIndentApprovedToggle}
+                      disabled={viewOnly}
+                      size="small"
+                    />
                   </Box>
                 </Box>
               </Paper>
@@ -1027,7 +1045,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                                 clearTrigger={clearPatientTrigger}
                                 label="Select Patient"
                                 disabled={viewOnly}
-                                initialSelection={selectedPatient} // This will show the patient name when editing
+                                initialSelection={selectedPatient}
                               />
                             </Box>
                             <SmartButton text="Clear" onClick={handleClearPatient} variant="outlined" color="error" icon={DeleteIcon} size="small" disabled={viewOnly} />
@@ -1082,8 +1100,8 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                               {selectedPatient ? (
                                 <PatientDemographics
                                   pChartID={selectedPatient.pChartID}
-                                  showEditButton={true}
-                                  showRefreshButton={true}
+                                  showEditButton={false}
+                                  showRefreshButton={false}
                                   onEditClick={() => showAlert("Info", "Edit patient clicked", "info")}
                                   variant="detailed"
                                   emptyStateMessage="No demographics information available"
@@ -1100,7 +1118,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                                   <Box
                                     sx={{
                                       display: "flex",
-                                      alignItems: "center",
                                       justifyContent: "center",
                                       width: 64,
                                       height: 64,
@@ -1127,7 +1144,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
 
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Box>
-                        <FormField name="autoIndentYN" control={control} label="Auto Indent" type="switch" disabled={viewOnly} size="small" />
+                        <FormField name="autoIndentYN" control={control} label="Auto Indent" type="switch" disabled size="small" />
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                           Enable automatic indent generation based on stock levels
                         </Typography>
