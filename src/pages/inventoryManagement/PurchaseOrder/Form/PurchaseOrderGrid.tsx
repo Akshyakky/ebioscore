@@ -178,7 +178,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
       const receivedQty = currentRow.receivedQty || 0;
       const unitPack = currentRow.unitPack || 1;
       const unitPrice = currentRow.unitPrice || 0;
-      const gstPerValue = currentRow.gstPerValue || 0;
+      const totAmt = currentRow.totAmt || 0;
 
       currentRow.requiredUnitQty = receivedQty * unitPack;
       const totalPrice = unitPrice * receivedQty;
@@ -202,11 +202,19 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
       currentRow.cgstTaxAmt = (totalPrice * (currentRow.cgstPerValue || 0)) / 100 || 0;
       currentRow.sgstTaxAmt = (totalPrice * (currentRow.sgstPerValue || 0)) / 100 || 0;
       currentRow.gstPerValue = (currentRow.cgstPerValue || 0) + (currentRow.sgstPerValue || 0);
+      const gstTaxAmt = (totalPrice * (currentRow.gstPerValue || 0)) / 100;
       currentRow.taxAmt = currentRow.cgstTaxAmt + currentRow.sgstTaxAmt;
 
       // Calculate net amount
-      currentRow.netAmount = totalPrice + currentRow.taxAmt - discAmt;
+      currentRow.netAmount = totalPrice + gstTaxAmt - discAmt;
       currentRow.totAmt = currentRow.netAmount;
+
+      // Additional calculations
+      // currentRow.mrpAbdated = (Number(((totAmt * 100) / (currentRow.gstPerValue + 100)).toFixed(2)));
+      currentRow.mrpAbdated = 10;
+      currentRow.taxAmtOnMrp = (totAmt * receivedQty * gstTaxAmt) / 100;
+      currentRow.taxAfterDiscOnMrp = "N";
+      currentRow.taxAfterDiscYN = "N";
 
       onDetailsUpdate(updatedDetails);
     },
