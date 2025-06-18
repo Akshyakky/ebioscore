@@ -51,7 +51,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setV
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}>
                 <FormField
                   control={control}
-                  name="conID"
+                  name="supplierID"
                   type="select"
                   label="Supplier Name"
                   options={suppliers}
