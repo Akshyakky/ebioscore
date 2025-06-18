@@ -44,6 +44,9 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
       .map((row, index) => ({
         ...row,
         id: row.pODetID || `temp-${index}`,
+        taxAfterDiscOnMrp: "N",
+        taxOnUnitPrice: "N",
+        transferYN: "N",
       }));
   }, [purchaseOrderDetails]);
   console.log("gridRows", gridRows);

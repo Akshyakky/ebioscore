@@ -90,7 +90,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setV
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2} marginTop={2}>
-              <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 3 }}>
+              <Grid size={{ xs: 12, sm: 12, md: 6, lg: 6, xl: 6 }}>
                 <ProductSearch
                   onProductSelect={handleProductSelectLocal}
                   label="Search Product"
