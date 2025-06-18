@@ -19,7 +19,7 @@ interface PurchaseOrderHeaderProps {
 const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setValue, onProductSelect, selectedProduct, approvedDisable }) => {
   const { showAlert } = useAlert();
   const { contacts: suppliers } = useContactMastByCategory({ consValue: "PHY" });
-
+  console.log(suppliers);
   const departmentId = control._formValues.fromDeptID;
 
   const handleProductSelectLocal = (product: ProductSearchResult | null) => {
@@ -52,7 +52,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setV
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}>
                 <FormField
                   control={control}
-                  name="supplierID"
+                  name="conID"
                   type="select"
                   label="Supplier Name"
                   options={suppliers}
@@ -62,6 +62,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setV
                     const selected = suppliers.find((opt) => Number(opt.value) === Number(value));
                     if (selected) {
                       setValue("supplierName", selected.label);
+                      setValue("supplierID", selected.conID);
                     }
                     return value;
                   }}
