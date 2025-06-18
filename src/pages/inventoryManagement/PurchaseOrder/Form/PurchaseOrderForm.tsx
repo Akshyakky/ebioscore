@@ -67,7 +67,7 @@ const purchaseOrderFormSchema = z.object({
 
 type PurchaseOrderFormData = z.infer<typeof purchaseOrderFormSchema>;
 
-const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
+const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment }) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const { savePurchaseOrder, generatePurchaseOrderCode, getProductDetailsForPO, getPurchaseOrderById } = usePurchaseOrder();
@@ -201,6 +201,66 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
     try {
       setIsSaving(true);
       setLoading(true);
+      const purchaseOrderDetail = [
+        {
+          pODetID: 0,
+          pOID: 2024,
+          indentID: 305,
+          indentDetID: 501,
+          productID: 1201,
+          productCode: "PRD-456",
+          catValue: "MED-001",
+          pGrpID: 5,
+          pSGrpID: 9,
+          pUnitID: 2,
+          pUnitName: "Box",
+          pPkgID: 10,
+          unitPack: 12,
+          requiredUnitQty: 100,
+          pOYN: "Y",
+          grnDetID: 1501,
+          receivedQty: 95,
+          manufacturerID: 301,
+          manufacturerCode: "MFR-003",
+          manufacturerName: "MediCorp Ltd.",
+          discAmt: 500,
+          discPercentageAmt: 5,
+          freeQty: 2,
+          isFreeItemYN: "N",
+          mfID: 301,
+          mrpAbdated: 180,
+          netAmount: 9500,
+          pODetStatusCode: "APPROVED",
+          profitOnMrp: 12,
+          taxAfterDiscOnMrp: "Y",
+          taxAfterDiscYN: "Y",
+          taxAmtOnMrp: 450,
+          taxAmt: 480,
+          taxModeCode: "EXCL",
+          taxModeDescription: "Exclusive Tax",
+          taxModeID: 2,
+          taxOnFreeItemYN: "N",
+          taxOnMrpYN: "Y",
+          taxOnUnitPrice: "Y",
+          totAmt: 9980,
+          catDesc: "Medicine",
+          mfName: "MediCorp Ltd.",
+          pGrpName: "Tablets",
+          pPkgName: "Strip",
+          productName: "Paracetamol 500mg",
+          pSGrpName: "Pain Relief",
+          hsnCode: "30045010",
+          cgstPerValue: 6,
+          cgstTaxAmt: 240,
+          sgstPerValue: 6,
+          sgstTaxAmt: 240,
+          taxableAmt: 9600,
+          transferYN: "N",
+          rNotes: "Urgent requirement for IP Ward",
+          gstPerValue: 12,
+          unitPrice: 96,
+        },
+      ];
 
       const purchaseOrderData: purchaseOrderSaveDto = {
         purchaseOrderMastDto: {
@@ -211,16 +271,72 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
           auGrpID: 18,
           catDesc: "REVENUE",
           catValue: "MEDI",
+          pOID: data.pOID || 0,
+          supplierID: data.supplierID || 0,
+          fromDeptID: data.fromDeptID || 0,
+          transferYN: "N",
+          rActiveYN: data.rActiveYN || "Y",
         } as PurchaseOrderMastDto,
         purchaseOrderDetailDto: purchaseOrderDetails
           .filter((d) => d.rActiveYN === "Y")
           .map((detail) => ({
             ...detail,
-            pOID: data.pOID,
-            pOYN: data.pOApprovedYN,
+            pOID: data.pOID || 0,
+            pOYN: data.pOApprovedYN || "N",
             pODetStatusCode: data.pOApprovedYN === "Y" ? "CMP" : "PND",
-            taxOnUnitPrice: "Y",
-            transferYN: "Y",
+            pODetID: detail.pODetID || 0,
+            indentID: detail.indentID || 0,
+            indentDetID: detail.indentDetID || 0,
+            productID: detail.productID || 0,
+            pGrpID: detail.pGrpID || 0,
+            pSGrpID: detail.pSGrpID || 0,
+            pUnitID: detail.pUnitID || 0,
+            pUnitName: detail.pUnitName || "Box",
+            pPkgID: detail.pPkgID || 10,
+            unitPack: detail.unitPack || 12,
+            requiredUnitQty: detail.requiredUnitQty || 100,
+            grnDetID: detail.grnDetID || 1501,
+            receivedQty: detail.receivedQty || 95,
+            manufacturerID: detail.manufacturerID || 301,
+            manufacturerCode: detail.manufacturerCode || "MFR-003",
+            manufacturerName: detail.manufacturerName || "MediCorp Ltd.",
+            discAmt: detail.discAmt || 500,
+            discPercentageAmt: detail.discPercentageAmt || 5,
+            freeQty: detail.freeQty || 2,
+            isFreeItemYN: detail.isFreeItemYN || "N",
+            mfID: detail.mfID || 301,
+            profitOnMrp: detail.profitOnMrp || 12,
+            taxAmtOnMrp: detail.taxAmtOnMrp || 450,
+            taxAmt: detail.taxAmt || 480,
+            taxModeID: detail.taxModeID || 2,
+            mfName: detail.mfName || "MediCorp Ltd.",
+            pGrpName: detail.pGrpName || "Tablets",
+            pPkgName: detail.pPkgName || "Strip",
+            productName: detail.productName || "Paracetamol 500mg",
+            pSGrpName: detail.pSGrpName || "Pain Relief",
+            cgstPerValue: detail.cgstPerValue || 6,
+            cgstTaxAmt: detail.cgstTaxAmt || 240,
+            sgstPerValue: detail.sgstPerValue || 6,
+            sgstTaxAmt: detail.sgstTaxAmt || 240,
+            taxableAmt: detail.taxableAmt || 9600,
+            gstPerValue: detail.gstPerValue || 12,
+            unitPrice: detail.unitPrice || 96,
+            catDesc: detail.catDesc || "REVENUE",
+            catValue: detail.catValue || "MEDI",
+            taxModeCode: detail.taxModeCode || "EXCL",
+            taxModeDescription: detail.taxModeDescription || "Exclusive Tax",
+            taxOnFreeItemYN: detail.taxOnFreeItemYN || "N",
+            taxOnMrpYN: detail.taxOnMrpYN || "Y",
+            totAmt: detail.totAmt || 9980,
+            hsnCode: detail.hsnCode || "30045010",
+            taxOnUnitPrice: detail.taxOnUnitPrice || "Y",
+            taxAfterDiscYN: detail.taxAfterDiscYN || "N",
+            taxAfterDiscOnMrp: detail.taxAfterDiscOnMrp || "N",
+            mrpAbdated: detail.mrpAbdated || 5,
+            netAmount: detail.netAmount || 5,
+            rNotes: detail.rNotes || "Urgent requirement for IP Ward",
+            transferYN: "N",
+            rActiveYN: detail.rActiveYN || "Y",
           })),
       };
 
@@ -381,13 +497,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
 
             {/* Purchase Order Header */}
             <Grid size={{ xs: 12 }}>
-              <PurchaseOrderHeader
-                control={control}
-                setValue={setValue}
-                onProductSelect={handleProductSelect}
-                selectedProduct={selectedProduct}
-                approvedDisable={viewOnly || disableApprovedFields}
-              />
+              <PurchaseOrderHeader control={control} setValue={setValue} onProductSelect={handleProductSelect} approvedDisable={viewOnly || disableApprovedFields} />
             </Grid>
 
             {/* Purchase Order Grid */}
