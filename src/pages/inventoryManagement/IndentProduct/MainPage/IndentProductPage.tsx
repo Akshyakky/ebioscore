@@ -1,5 +1,3 @@
-// src/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage.tsx
-
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
@@ -58,11 +56,9 @@ const IndentProductPage: React.FC = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.ThisMonth);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-
-  const { indentList, isLoading, error, fetchIndentList, deleteIndent, getIndentsByDepartment } = useIndentProduct();
-
+  const [startDate] = useState<Date | null>(null);
+  const [endDate] = useState<Date | null>(null);
+  const { indentList, isLoading, error, deleteIndent, getIndentsByDepartment } = useIndentProduct();
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
 
   const [filters, setFilters] = useState<{
@@ -73,14 +69,12 @@ const IndentProductPage: React.FC = () => {
     indentType: "",
   });
 
-  // Ensure department selection on mount
   useEffect(() => {
     if (!isDepartmentSelected && !isDialogOpen) {
       openDialog();
     }
   }, [isDepartmentSelected, isDialogOpen, openDialog]);
 
-  // Fetch indents when department is selected
   useEffect(() => {
     if (isDepartmentSelected && deptId) {
       handleRefresh();
@@ -200,7 +194,6 @@ const IndentProductPage: React.FC = () => {
     });
   }, []);
 
-  // Calculate statistics
   const stats = useMemo(() => {
     if (!indentList.length) {
       return {
@@ -226,10 +219,8 @@ const IndentProductPage: React.FC = () => {
     };
   }, [indentList]);
 
-  // Filter indents based on search and filters
   const filteredIndents = useMemo(() => {
     if (!indentList.length) return [];
-
     return indentList.filter((indent) => {
       const matchesSearch =
         debouncedSearchTerm === "" ||
@@ -237,7 +228,6 @@ const IndentProductPage: React.FC = () => {
         indent.toDeptName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         indent.pChartCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         indent.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-
       const matchesStatus =
         filters.status === "" ||
         (filters.status === "pending" && indent.indStatusCode === "PENDING") ||
@@ -246,7 +236,6 @@ const IndentProductPage: React.FC = () => {
         (filters.status === "completed" && indent.indStatusCode === "COMPLETED");
 
       const matchesType = filters.indentType === "" || indent.indentTypeValue?.toLowerCase() === filters.indentType.toLowerCase();
-
       return matchesSearch && matchesStatus && matchesType;
     });
   }, [indentList, debouncedSearchTerm, filters]);
@@ -505,7 +494,6 @@ const IndentProductPage: React.FC = () => {
     <Box sx={{ p: 2 }}>
       {isDepartmentSelected && (
         <>
-          {/* Header */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
             <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
               <IndentIcon sx={{ mr: 1, verticalAlign: "middle" }} />
@@ -513,21 +501,15 @@ const IndentProductPage: React.FC = () => {
             </Typography>
             <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
           </Box>
-
-          {/* Statistics Dashboard */}
           {showStats && renderStatsDashboard()}
-
-          {/* Filters and Actions */}
           <Paper sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2} alignItems="center">
-              {/* Department Selection */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <SmartButton text={`Change Dept: ${deptName}`} onClick={handleDepartmentChange} variant="outlined" size="small" color="warning" />
                 </Stack>
               </Grid>
 
-              {/* Date Filter */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <DropdownSelect
                   label="Date Filter"
@@ -542,8 +524,6 @@ const IndentProductPage: React.FC = () => {
                   defaultText="Select Date Range"
                 />
               </Grid>
-
-              {/* Action Buttons */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
                   <SmartButton
@@ -561,8 +541,6 @@ const IndentProductPage: React.FC = () => {
                   <SmartButton text="Create Indent" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
                 </Stack>
               </Grid>
-
-              {/* Search Field */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
@@ -587,8 +565,6 @@ const IndentProductPage: React.FC = () => {
                   }}
                 />
               </Grid>
-
-              {/* Status Filters */}
               <Grid size={{ xs: 12, md: 8 }}>
                 <Tooltip title="Filter Indents">
                   <Stack direction="row" spacing={2} alignItems="center">
@@ -602,7 +578,6 @@ const IndentProductPage: React.FC = () => {
                       size="small"
                       defaultText="All Status"
                     />
-
                     <Box display="flex" alignItems="center" gap={1}>
                       {Object.values(filters).some(Boolean) && (
                         <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
@@ -614,7 +589,6 @@ const IndentProductPage: React.FC = () => {
             </Grid>
           </Paper>
 
-          {/* Indents Grid */}
           <Paper sx={{ p: 2 }}>
             <CustomGrid
               columns={columns}
@@ -630,11 +604,7 @@ const IndentProductPage: React.FC = () => {
           </Paper>
         </>
       )}
-
-      {/* Department Selection Dialog */}
       <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} initialDeptId={deptId} requireSelection={true} />
-
-      {/* Indent Form Dialog */}
       {isFormOpen && isDepartmentSelected && (
         <IndentProductForm
           open={isFormOpen}
@@ -645,8 +615,6 @@ const IndentProductPage: React.FC = () => {
           onChangeDepartment={handleDepartmentChange}
         />
       )}
-
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}

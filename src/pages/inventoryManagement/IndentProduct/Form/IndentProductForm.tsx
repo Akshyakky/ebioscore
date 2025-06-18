@@ -1,5 +1,3 @@
-// src/pages/inventoryManagement/IndentProduct/Form/IndentProductForm.tsx
-
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
@@ -34,6 +32,7 @@ import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
+import { PatientDemographics } from "../../../patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "../../../patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
 import { useIndentProduct } from "../hooks/useIndentProduct";
@@ -72,27 +71,31 @@ interface IndentDetailRow extends IndentDetailDto {
   isNew?: boolean;
   tempId?: string;
   id?: string | number;
+  pChartID?: number;
+  pChartCode?: string;
 }
 
 const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment }) => {
   const theme = useTheme();
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
-  const { saveIndent, getNextIndentCode } = useIndentProduct();
+  const { saveIndent, getNextIndentCode, getIndentById } = useIndentProduct();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
-  const [indentDetails, setIndentDetails] = useState<IndentDetailRow[]>([]);
-  const [, setSelectedPatient] = useState<PatientSearchResult | null>(null);
+  const [indentDetails, setindentDetails] = useState<IndentDetailRow[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [clearPatientTrigger, setClearPatientTrigger] = useState(0);
   const [hasGeneratedCode, setHasGeneratedCode] = useState(false);
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
+  const [isDataFetched, setIsDataFetched] = useState(false);
   const productSearchRef = useRef<ProductSearchRef>(null);
   const { department: departments, departmentIndent, productUnit: productOptions } = useDropdownValues(["department", "departmentIndent", "productUnit"]);
-  const [isFormInitialized, setIsFormInitialized] = useState(false);
   const isAddMode = !initialData;
+
   const supplierOptions = [
     { value: "1", label: "Supplier 1" },
     { value: "2", label: "Supplier 2" },
@@ -164,41 +167,162 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       rActiveYN: initialData?.rActiveYN || "Y",
       transferYN: initialData?.transferYN || "N",
     }),
-    [initialData?.indentID]
+    [initialData, selectedDepartment]
   );
 
   useEffect(() => {
     if (open && !isFormInitialized) {
-      const formValues = {
-        indentID: initialData?.indentID || 0,
-        indentCode: initialData?.indentCode || "",
-        indentDate: initialData?.indentDate ? new Date(initialData.indentDate) : new Date(),
-        indentType: initialData?.indentType || "",
-        indentTypeValue: initialData?.indentTypeValue || "",
-        fromDeptID: selectedDepartment.deptID,
-        fromDeptName: selectedDepartment.department,
-        toDeptID: initialData?.toDeptID || 0,
-        toDeptName: initialData?.toDeptName || "",
-        pChartID: initialData?.pChartID || 0,
-        pChartCode: initialData?.pChartCode || "",
-        autoIndentYN: initialData?.autoIndentYN || "N",
-        indentAcknowledgement: initialData?.indentAcknowledgement || "",
-        rNotes: initialData?.rNotes || "",
-        rActiveYN: initialData?.rActiveYN || "Y",
-        transferYN: initialData?.transferYN || "N",
-      };
-
-      reset(formValues);
+      reset(defaultValues);
       setIsFormInitialized(true);
       setHasGeneratedCode(!!initialData);
+      setIsDataFetched(false);
+      setindentDetails([]);
+      setSelectedProduct(null);
+      setSelectedPatient(null);
+      setFormError(null);
     }
-  }, [open]);
+  }, [open, defaultValues, reset, isFormInitialized, initialData]);
 
   useEffect(() => {
     if (!open) {
       setIsFormInitialized(false);
+      setIsDataFetched(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    const fetchindentDetails = async () => {
+      debugger;
+      if (open && isFormInitialized && !isAddMode && initialData?.indentID && !isDataFetched) {
+        try {
+          setLoading(true);
+          const response = await getIndentById(initialData.indentID);
+          if (response) {
+            if (response.indentMaster) {
+              const masterData = response.indentMaster;
+              const formValues = {
+                indentID: masterData.indentID || 0,
+                indentCode: masterData.indentCode || "",
+                indentDate: masterData.indentDate ? new Date(masterData.indentDate) : new Date(),
+                indentType: masterData.indentType || "",
+                indentTypeValue: masterData.indentTypeValue || "",
+                fromDeptID: selectedDepartment.deptID,
+                fromDeptName: selectedDepartment.department,
+                toDeptID: masterData.toDeptID || 0,
+                toDeptName: masterData.toDeptName || "",
+                pChartID: masterData.pChartID || 0,
+                pChartCode: masterData.pChartCode || "",
+                autoIndentYN: masterData.autoIndentYN || "N",
+                indentAcknowledgement: masterData.indentAcknowledgement || "",
+                rNotes: masterData.rNotes || "",
+                rActiveYN: masterData.rActiveYN || "Y",
+                transferYN: masterData.transferYN || "N",
+              };
+              reset(formValues);
+              if (masterData.pChartID && masterData.pChartCode) {
+                setSelectedPatient({
+                  pChartID: masterData.pChartID,
+                  pChartCode: masterData.pChartCode,
+                } as PatientSearchResult);
+              }
+            }
+            if (response.indentDetails && response.indentDetails.length > 0) {
+              console.log("Processing indent details:", response.indentDetails);
+              const transformedDetails = response.indentDetails.map((detail, index) => {
+                const uniqueId = detail.indentDetID && detail.indentDetID > 0 ? detail.indentDetID : `existing-${index}-${Date.now()}`;
+                const pChartID = response.indentMaster?.pChartID || 0;
+                const pChartCode = response.indentMaster?.pChartCode || "";
+
+                return {
+                  ...detail,
+                  id: uniqueId,
+                  isNew: false,
+                  tempId: `existing-${index}`,
+                  pChartID: pChartID,
+                  pChartCode: pChartCode,
+                  indentID: detail.indentID || response.indentMaster?.indentID || 0,
+                  productID: detail.productID || 0,
+                  productCode: detail.productCode || "",
+                  productName: detail.productName || detail.catValue || "—",
+                  catValue: detail.catValue || "",
+                  catDesc: detail.catDesc || "",
+                  requiredQty: detail.requiredQty || 1,
+                  requiredUnitQty: detail.requiredUnitQty || 1,
+                  receivedQty: detail.receivedQty || 0,
+                  supplierID: detail.supplierID || 0,
+                  supplierName: detail.supplierName || "",
+                  manufacturerID: detail.manufacturerID || 0,
+                  manufacturerName: detail.manufacturerName || "",
+                  ppkgID: detail.ppkgID || 0,
+                  ppkgName: detail.ppkgName || "",
+                  pUnitID: detail.pUnitID || 0,
+                  pUnitName: detail.pUnitName || "",
+                  qoh: detail.qoh || 0,
+                  average: detail.average || 0,
+                  averageDemand: detail.averageDemand || 0,
+                  reOrderLevel: detail.reOrderLevel || 0,
+                  rOL: detail.rOL || detail.reOrderLevel || 0,
+                  minLevelUnits: detail.minLevelUnits || 0,
+                  maxLevelUnits: detail.maxLevelUnits || 0,
+                  StockLevel: detail.StockLevel || 0,
+                  Location: detail.Location || "",
+                  netValue: detail.netValue || 0,
+                  tax: detail.tax || 0,
+                  cgstPerValue: detail.cgstPerValue || 0,
+                  sgstPerValue: detail.sgstPerValue || 0,
+                  pGrpID: detail.pGrpID || 0,
+                  pGrpName: detail.pGrpName || "",
+                  psGrpID: detail.psGrpID || 0,
+                  psGrpName: detail.psGrpName || "",
+                  groupName: detail.groupName || detail.pGrpName || "",
+                  baseUnit: detail.baseUnit || 1,
+                  unitPack: detail.unitPack || 1,
+                  unitsPackage: detail.unitsPackage || 1,
+                  leadTime: detail.leadTime || 0,
+                  hsnCode: detail.hsnCode || "",
+                  Roq: detail.Roq || detail.reOrderLevel || 0,
+                  indentDetStatusCode: detail.indentDetStatusCode || "PENDING",
+                  indGrnDetStatusCode: detail.indGrnDetStatusCode || "PENDING",
+                  deptIssualYN: detail.deptIssualYN || "N",
+                  expiryYN: detail.expiryYN || "N",
+                  rActiveYN: detail.rActiveYN || "Y",
+                  transferYN: detail.transferYN || "N",
+                  rNotes: detail.rNotes || "",
+                  poNo: detail.poNo || 0,
+                  deptIssualID: detail.deptIssualID || 0,
+                  grnDetID: detail.grnDetID || 0,
+                  imrMedID: detail.imrMedID || 0,
+                  units: detail.units || detail.pUnitID ? String(detail.pUnitID) : "",
+                  package: detail.package || detail.ppkgName || "",
+                  mfName: detail.mfName || detail.manufacturerName || "",
+                };
+              });
+              setindentDetails(transformedDetails);
+            } else {
+              setindentDetails([]);
+            }
+          }
+          setIsDataFetched(true);
+        } catch (error) {
+          console.error("Error fetching indent details:", error);
+          showAlert("Error", "Failed to fetch indent details", "error");
+          setIsDataFetched(true);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchindentDetails();
+  }, [open, isFormInitialized, isAddMode, initialData?.indentID, isDataFetched, getIndentById, setLoading, showAlert, reset, selectedDepartment]);
+
+  useEffect(() => {
+    if (isAddMode && selectedDepartment.deptID && !hasGeneratedCode && isFormInitialized) {
+      generateIndentCode().then(() => {
+        setHasGeneratedCode(true);
+      });
+    }
+  }, [isAddMode, selectedDepartment.deptID, hasGeneratedCode, generateIndentCode, isFormInitialized]);
 
   const performReset = useCallback(() => {
     const resetValues = {
@@ -220,7 +344,11 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       transferYN: initialData?.transferYN || "N",
     };
     reset(resetValues);
-    setIndentDetails([]);
+    if (isAddMode) {
+      setindentDetails([]);
+    } else {
+      setIsDataFetched(false);
+    }
     setSelectedProduct(null);
     setSelectedPatient(null);
     setFormError(null);
@@ -312,9 +440,11 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         isNew: true,
         tempId: tempId,
         id: tempId,
+        pChartID: selectedPatient?.pChartID ?? 0,
+        pChartCode: selectedPatient?.pChartCode ?? "",
       };
       const updatedGrid = [...indentDetails, newRow];
-      setIndentDetails(updatedGrid);
+      setindentDetails(updatedGrid);
     } catch (err) {
       showAlert("Error", "Failed to fetch product details.", "error");
     } finally {
@@ -323,7 +453,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
   };
 
   const handleCellValueChange = useCallback((rowIndex: number, field: keyof IndentDetailRow, value: any) => {
-    setIndentDetails((prev) => prev.map((item, index) => (index === rowIndex ? { ...item, [field]: value } : item)));
+    setindentDetails((prev) => prev.map((item, index) => (index === rowIndex ? { ...item, [field]: value } : item)));
   }, []);
 
   const renderNumberField = (params: GridRenderCellParams, field: keyof IndentDetailRow) => (
@@ -379,27 +509,13 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     </Select>
   );
 
-  useEffect(() => {
-    if (initialData) {
-      reset(defaultValues);
-      setHasGeneratedCode(true);
-    } else {
-      reset(defaultValues);
-      setHasGeneratedCode(false);
-    }
-  }, [initialData, reset, defaultValues]);
-
-  useEffect(() => {
-    if (isAddMode && selectedDepartment.deptID && !hasGeneratedCode) {
-      generateIndentCode().then(() => {
-        setHasGeneratedCode(true);
-      });
-    }
-  }, [isAddMode, selectedDepartment.deptID, hasGeneratedCode, generateIndentCode]);
-
-  const handleProductSelect = useCallback((product: ProductSearchResult | null) => {
-    setSelectedProduct(product);
-  }, []);
+  const handleClearPatient = useCallback(() => {
+    setSelectedPatient(null);
+    setClearPatientTrigger((prev) => prev + 1);
+    setValue("pChartID", 0);
+    setValue("pChartCode", "");
+    showAlert("Success", "Patient selection cleared", "success");
+  }, [setValue]);
 
   const handlePatientSelect = useCallback(
     (patient: PatientSearchResult | null) => {
@@ -414,6 +530,10 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     },
     [setValue]
   );
+
+  const handleProductSelect = useCallback((product: ProductSearchResult | null) => {
+    setSelectedProduct(product);
+  }, []);
 
   const handleAddProduct = useCallback(async () => {
     if (!selectedProduct) {
@@ -447,7 +567,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
     (id: string | number) => {
       showAlert("Confirm Deletion", "Are you sure you want to delete this product?", "warning", {
         onConfirm: () => {
-          setIndentDetails((prev) => prev.filter((detail) => detail.id !== id));
+          setindentDetails((prev) => prev.filter((detail) => detail.id !== id));
         },
         onCancel: () => {},
       });
@@ -649,8 +769,8 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       showAlert("Warning", "Please select a patient for patient indent", "warning");
       return;
     }
-    const validIndentDetails = indentDetails.filter((detail) => detail.productID && (detail.requiredQty || 0) > 0);
-    if (validIndentDetails.length === 0) {
+    const validindentDetails = indentDetails.filter((detail) => detail.productID && (detail.requiredQty || 0) > 0);
+    if (validindentDetails.length === 0) {
       showAlert("Error", "Indent Details cannot be empty or incomplete.", "error");
       return;
     }
@@ -664,7 +784,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         indentID: indentID,
         indentCode: data.indentCode,
         indentDate: data.indentDate,
-        indentType: data.indentType || data.indentTypeValue, // Fallback to code if name not set
+        indentType: data.indentType || data.indentTypeValue,
         indentTypeValue: data.indentTypeValue,
         fromDeptID: data.fromDeptID,
         fromDeptName: data.fromDeptName,
@@ -682,7 +802,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         rNotes: data.rNotes || "",
       };
 
-      const indentDetailsData: IndentDetailDto[] = validIndentDetails.map((detail) => {
+      const indentDetailsData: IndentDetailDto[] = validindentDetails.map((detail) => {
         const { isNew, tempId, id, ...cleanDetail } = detail;
         return {
           ...cleanDetail,
@@ -691,8 +811,8 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       });
 
       const saveRequest: IndentSaveRequestDto = {
-        IndentMaster: indentMaster,
-        IndentDetails: indentDetailsData,
+        indentMaster: indentMaster,
+        indentDetails: indentDetailsData,
       };
       const response = await saveIndent(saveRequest);
       if (response.success) {
@@ -905,9 +1025,105 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                     </Grid>
 
                     {(watchedIndentTypeValue === "departmentIndent01" || watchedIndentTypeValue === "Patient Indent") && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <PatientSearch onPatientSelect={handlePatientSelect} clearTrigger={clearPatientTrigger} label="Select Patient" disabled={viewOnly} />
-                      </Grid>
+                      <>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                            <Box sx={{ flexGrow: 1 }}>
+                              <PatientSearch onPatientSelect={handlePatientSelect} clearTrigger={clearPatientTrigger} label="Select Patient" disabled={viewOnly} />
+                            </Box>
+                            <SmartButton text="Clear" onClick={handleClearPatient} variant="outlined" color="error" icon={DeleteIcon} size="small" disabled={viewOnly} />
+                          </Box>
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <Card
+                            variant="outlined"
+                            sx={{
+                              borderRadius: 2,
+                              overflow: "hidden",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                              transition: "box-shadow 0.3s ease",
+                              "&:hover": {
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                              },
+                              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                              width: "100%",
+                              mt: 2,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                p: 2,
+                                borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: "8px",
+                                }}
+                              >
+                                <PatientIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+                              </Box>
+                              <Typography variant="h6" fontWeight="600" color="primary.main">
+                                Patient Demographics
+                              </Typography>
+                              <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: alpha(theme.palette.primary.main, 0.2) }} />
+                              <Typography variant="body2" color="text.secondary">
+                                {selectedPatient ? "View patient details" : "Select a patient to view details"}
+                              </Typography>
+                            </Box>
+                            <CardContent sx={{ p: 2 }}>
+                              {selectedPatient ? (
+                                <PatientDemographics
+                                  pChartID={selectedPatient.pChartID}
+                                  showEditButton={true}
+                                  showRefreshButton={true}
+                                  onEditClick={() => showAlert("Info", "Edit patient clicked", "info")}
+                                  variant="detailed"
+                                  emptyStateMessage="No demographics information available"
+                                />
+                              ) : (
+                                <Paper
+                                  sx={{
+                                    p: 4,
+                                    textAlign: "center",
+                                    borderRadius: 2,
+                                    border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      width: 64,
+                                      height: 64,
+                                      borderRadius: "50%",
+                                      mx: "auto",
+                                      mb: 2,
+                                    }}
+                                  >
+                                    <PatientIcon sx={{ fontSize: 32, color: alpha(theme.palette.primary.main, 0.7) }} />
+                                  </Box>
+                                  <Typography variant="h6" fontWeight="600" color="text.primary" gutterBottom>
+                                    No Patient Selected
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: "auto" }}>
+                                    Use the patient search above to select a patient and view their demographics information
+                                  </Typography>
+                                </Paper>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      </>
                     )}
 
                     <Grid size={{ xs: 12, md: 6 }}>
@@ -941,7 +1157,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                   <Box
                     sx={{
                       p: 2,
-                      bgcolor: alpha(theme.palette.success.main, 0.04),
                       borderBottom: `1px solid ${alpha(theme.palette.success.main, 0.12)}`,
                       display: "flex",
                       alignItems: "center",
@@ -956,7 +1171,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                         width: 32,
                         height: 32,
                         borderRadius: "8px",
-                        bgcolor: alpha(theme.palette.success.main, 0.1),
                       }}
                     >
                       <AddProductIcon sx={{ color: theme.palette.success.main, fontSize: 18 }} />
@@ -1015,7 +1229,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                 <Box
                   sx={{
                     p: 2,
-                    bgcolor: alpha(theme.palette.info.main, 0.04),
                     borderBottom: `1px solid ${alpha(theme.palette.info.main, 0.12)}`,
                     display: "flex",
                     alignItems: "center",
@@ -1031,7 +1244,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                         width: 32,
                         height: 32,
                         borderRadius: "8px",
-                        bgcolor: alpha(theme.palette.info.main, 0.1),
                       }}
                     >
                       <ProductListIcon sx={{ color: theme.palette.info.main, fontSize: 18 }} />
@@ -1059,7 +1271,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                 </Box>
                 <CardContent sx={{ pt: 3 }}>
                   {indentDetails.length > 0 ? (
-                    <Box sx={{ height: 600, width: "100%" }}>
+                    <Box>
                       <DataGrid
                         rows={indentDetails}
                         columns={visibleColumns}
@@ -1113,7 +1325,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                       sx={{
                         p: 4,
                         textAlign: "center",
-                        bgcolor: alpha(theme.palette.grey[50], 0.8),
                         borderRadius: 2,
                         border: `2px dashed ${alpha(theme.palette.info.main, 0.3)}`,
                       }}
@@ -1126,7 +1337,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                           width: 64,
                           height: 64,
                           borderRadius: "50%",
-                          bgcolor: alpha(theme.palette.info.main, 0.1),
                           mx: "auto",
                           mb: 2,
                         }}
@@ -1156,7 +1366,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                             borderWidth: 2,
                             "&:hover": {
                               borderWidth: 2,
-                              bgcolor: alpha(theme.palette.info.main, 0.04),
                             },
                           }}
                         />
@@ -1184,7 +1393,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                 <Box
                   sx={{
                     p: 2,
-                    bgcolor: alpha(theme.palette.secondary.main, 0.04),
                     borderBottom: `1px solid ${alpha(theme.palette.secondary.main, 0.12)}`,
                     display: "flex",
                     alignItems: "center",
@@ -1199,7 +1407,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                       width: 32,
                       height: 32,
                       borderRadius: "8px",
-                      bgcolor: alpha(theme.palette.secondary.main, 0.1),
                     }}
                   >
                     <InfoIcon sx={{ color: theme.palette.secondary.main, fontSize: 18 }} />
