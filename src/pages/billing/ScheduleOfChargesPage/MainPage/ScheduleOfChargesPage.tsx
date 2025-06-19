@@ -27,7 +27,11 @@ interface EnhancedChargeDto extends ChargeWithAllDetailsDto {
   lowestPrice?: number;
   highestPrice?: number;
   priceRange?: string;
-  totalDoctorShares?: number;
+  doctorShareInfo?: {
+    isEnabled: boolean;
+    doctorCount: number;
+    hasValidShares: boolean;
+  };
   aliasCount?: number;
   packCount?: number;
   serviceGroupDisplay?: string;
@@ -58,6 +62,26 @@ const ScheduleOfChargesPage: React.FC = () => {
     console.log("Loading state:", loading);
     console.log("ServiceType dropdown:", serviceType);
     console.log("ServiceGroup dropdown:", serviceGroup);
+
+    // Debug the first few charges to see structure
+    if (charges && charges.length > 0) {
+      console.log("=== SAMPLE CHARGE STRUCTURES ===");
+      charges.slice(0, 3).forEach((charge, index) => {
+        console.log(`Sample charge ${index + 1}:`, {
+          chargeCode: charge.chargeCode,
+          chargeType: charge.chargeType,
+          doctorShareYN: charge.doctorShareYN,
+          DoctorShares: charge.DoctorShares,
+          doctorShares: charge.doctorShares,
+          ChargeDetails: charge.ChargeDetails,
+          chargeDetails: charge.chargeDetails,
+          serviceGroupID: charge.serviceGroupID,
+          // Show all keys to identify field names
+          allKeys: Object.keys(charge),
+        });
+      });
+    }
+
     console.log("=== END DEBUG ===");
   }, [charges, loading, serviceType, serviceGroup]);
 
@@ -138,6 +162,7 @@ const ScheduleOfChargesPage: React.FC = () => {
 
         // Enhanced Doctor Share calculation
         let totalDoctorShares = 0;
+        let doctorShareInfo = { isEnabled: false, doctorCount: 0, hasValidShares: false };
         if (charge.DoctorShares && Array.isArray(charge.DoctorShares)) {
           totalDoctorShares = charge.DoctorShares.reduce((sum, share) => {
             if (share && typeof share === "object") {
@@ -146,6 +171,11 @@ const ScheduleOfChargesPage: React.FC = () => {
             }
             return sum;
           }, 0);
+          doctorShareInfo = {
+            isEnabled: String(charge.doctorShareYN) === "Y" || String(charge.doctorShareYN) === "1",
+            doctorCount: charge.DoctorShares.length,
+            hasValidShares: charge.DoctorShares.length > 0 && totalDoctorShares > 0,
+          };
           console.log(`  Total doctor shares for ${charge.chargeCode}: ${totalDoctorShares}%`);
         }
 
@@ -203,7 +233,7 @@ const ScheduleOfChargesPage: React.FC = () => {
           lowestPrice,
           highestPrice,
           priceRange,
-          totalDoctorShares,
+          doctorShareInfo, // Use the new structure instead of totalDoctorShares
           aliasCount,
           packCount,
           serviceGroupDisplay,
@@ -212,7 +242,7 @@ const ScheduleOfChargesPage: React.FC = () => {
         console.log(`  Enhanced charge ${charge.chargeCode}:`, {
           priceRange: enhancedCharge.priceRange,
           serviceGroupDisplay: enhancedCharge.serviceGroupDisplay,
-          totalDoctorShares: enhancedCharge.totalDoctorShares,
+          doctorShareInfo: enhancedCharge.doctorShareInfo,
         });
 
         return enhancedCharge;
@@ -224,7 +254,7 @@ const ScheduleOfChargesPage: React.FC = () => {
           lowestPrice: 0,
           highestPrice: 0,
           priceRange: "No pricing",
-          totalDoctorShares: 0,
+          doctorShareInfo: { isEnabled: false, doctorCount: 0, hasValidShares: false },
           aliasCount: 0,
           packCount: 0,
           serviceGroupDisplay: charge.chargeType || "Not specified",
@@ -299,7 +329,20 @@ const ScheduleOfChargesPage: React.FC = () => {
     const total = enhancedCharges.length;
     const active = enhancedCharges.filter((c) => c.rActiveYN === "Y").length;
     const inactive = enhancedCharges.filter((c) => c.rActiveYN === "N").length;
-    const withDoctorShare = enhancedCharges.filter((c) => c.doctorShareYN === "Y").length;
+
+    // Enhanced doctor share detection using the new structure with fallback
+    const withDoctorShare = enhancedCharges.filter((c) => {
+      const shareInfo = c.doctorShareInfo || { isEnabled: false, doctorCount: 0, hasValidShares: false };
+
+      // Also check direct fields as fallback
+      const directDoctorCount = c.DoctorShares?.length || 0;
+      const directlyEnabled = String(c.doctorShareYN) === "Y" || String(c.doctorShareYN) === "1";
+
+      const hasSharing = shareInfo.isEnabled || shareInfo.doctorCount > 0 || shareInfo.hasValidShares || directlyEnabled || directDoctorCount > 0;
+
+      return hasSharing;
+    }).length;
+
     const serviceCharges = enhancedCharges.filter((c) => c.chargeType === "SVC").length;
     const procedureCharges = enhancedCharges.filter((c) => c.chargeType === "PROC").length;
 
@@ -459,20 +502,52 @@ const ScheduleOfChargesPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 120,
-      render: (charge) => (
-        <Box>
-          {charge.doctorShareYN === "Y" ? (
-            <>
-              <Chip icon={<DoctorIcon />} label={`${Math.round(charge.totalDoctorShares || 0)}%`} size="small" color="success" variant="filled" />
+      render: (charge) => {
+        const shareInfo = charge.doctorShareInfo || { isEnabled: false, doctorCount: 0, hasValidShares: false };
+
+        // Temporary: Also try to detect directly from the raw charge data as fallback
+        const directDoctorCount = charge.DoctorShares?.length || charge.doctorShares?.length || 0;
+        const directlyEnabled = String(charge.doctorShareYN) === "Y" || String(charge.doctorShareYN) === "1";
+
+        // Use either the processed shareInfo or direct detection
+        const isEnabled = shareInfo.isEnabled || directlyEnabled;
+        const doctorCount = shareInfo.doctorCount || directDoctorCount;
+        const hasValidShares = shareInfo.hasValidShares || directDoctorCount > 0;
+
+        console.log(`Rendering doctor share for ${charge.chargeCode}:`, {
+          shareInfo,
+          directDoctorCount,
+          directlyEnabled,
+          finalValues: { isEnabled, doctorCount, hasValidShares },
+        });
+
+        // Show doctor sharing information based on what we can reliably determine
+        if (isEnabled || doctorCount > 0 || hasValidShares) {
+          return (
+            <Box>
+              <Chip
+                icon={<DoctorIcon />}
+                label={doctorCount > 0 ? `${doctorCount} Doctors` : "Enabled"}
+                size="small"
+                color={hasValidShares ? "success" : "warning"}
+                variant="filled"
+              />
               <Typography variant="caption" color="text.secondary" display="block">
-                {charge.DoctorShares && Array.isArray(charge.DoctorShares) ? charge.DoctorShares.length : 0} doctors
+                {hasValidShares ? "Configured" : "Setup Required"}
               </Typography>
-            </>
-          ) : (
-            <Chip label="No Share" size="small" color="default" variant="outlined" />
-          )}
-        </Box>
-      ),
+            </Box>
+          );
+        } else {
+          return (
+            <Box>
+              <Chip label="No Share" size="small" color="default" variant="outlined" />
+              <Typography variant="caption" color="text.secondary" display="block">
+                Not enabled
+              </Typography>
+            </Box>
+          );
+        }
+      },
     },
     {
       key: "configuration",
