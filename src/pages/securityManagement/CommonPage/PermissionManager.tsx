@@ -8,8 +8,7 @@ import { useAlert } from "@/providers/AlertProvider";
 import { profileService } from "@/services/SecurityManagementServices/ProfileListServices";
 import { profileDetailService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
-import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
-import { Grid, Typography } from "@mui/material";
+import { Grid, Skeleton, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -57,36 +56,10 @@ interface PermissionsListProps {
   handlePermissionChange: (id: number) => void;
   handleAllPermissionChange: (value: string) => void;
   disabled?: boolean;
-  isSelectAll: boolean;
   control: any;
 }
 
-const getIconForPermission = (accessName: string) => {
-  const iconMap = [
-    { keywords: ["edit", "update", "modify"], icon: Edit },
-    { keywords: ["save", "create", "add"], icon: Save },
-    { keywords: ["print", "printing"], icon: Print },
-    { keywords: ["delete", "remove", "trash"], icon: Delete },
-    { keywords: ["view", "read", "display"], icon: Book },
-    { keywords: ["new", "create"], icon: Add },
-    { keywords: ["cancel", "remove"], icon: Cancel },
-    { keywords: ["upload", "import"], icon: FileUpload },
-  ];
-
-  const matchedIcon = iconMap.find((item) => item.keywords.some((keyword) => accessName.toLowerCase().includes(keyword)));
-
-  return matchedIcon ? matchedIcon.icon : Lock;
-};
-
-const PermissionsList: React.FC<PermissionsListProps> = ({
-  permissions,
-  selectedPermissions,
-  handlePermissionChange,
-  handleAllPermissionChange,
-  disabled = false,
-  isSelectAll,
-  control,
-}) => {
+const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selectedPermissions, handlePermissionChange, handleAllPermissionChange, disabled = false, control }) => {
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: 12 }}>
@@ -104,8 +77,6 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
         )}
       </Grid>
       {permissions.map((permission: ProfileDetailDto | UserListPermissionDto) => {
-        const PermissionIcon = getIconForPermission(permission.accessName);
-
         return (
           <Grid
             size={{ xs: 12 }}
@@ -167,8 +138,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     mode: "onChange",
   });
 
-  const watchedValues = watch();
-
   useEffect(() => {
     setMainModules(dropdownValues.mainModules || []);
   }, [dropdownValues.mainModules]);
@@ -220,6 +189,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   }
 
   const handlePermissionChange = async (id: number) => {
+    setIsLoading(true);
     try {
       const updatedItems = selectedItems.includes(id) ? selectedItems.filter((item) => item !== id) : [...selectedItems, id];
 
@@ -265,9 +235,8 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         };
         response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
       }
-
       if (response.success) {
-        showSuccessAlert("Success", "Permission applied!");
+        showSuccessAlert("Success", clickedPermission[0].rActiveYN === "Y" ? "Permission applied!" : "Permission denied!");
       } else {
         showErrorAlert("Error", "Permission not applied!");
       }
@@ -279,6 +248,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         fetchPermissions(mainId, subId);
       }
     }
+    setIsLoading(false);
   };
 
   const handleAllPermissionChange = async (value: string) => {
@@ -317,7 +287,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
     }
     if (response.success) {
-      showSuccessAlert("Success", "Permission applied!");
+      showSuccessAlert("Success", selectAllChecked ? "Permission applied!" : "Permission denied!");
     } else {
       setIsSelectAll(!selectAllChecked);
       setValue("selectAll", !selectAllChecked ? "Y" : "N");
@@ -405,15 +375,18 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         </Grid>
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <PermissionsList
-          permissions={permissions}
-          selectedPermissions={selectedItems}
-          handlePermissionChange={handlePermissionChange}
-          handleAllPermissionChange={handleAllPermissionChange}
-          isSelectAll={isSelectAll}
-          disabled={isLoading}
-          control={control}
-        />
+        {isLoading ? (
+          <Skeleton variant="rectangular" width={300} height={300} />
+        ) : (
+          <PermissionsList
+            permissions={permissions}
+            selectedPermissions={selectedItems}
+            handlePermissionChange={handlePermissionChange}
+            handleAllPermissionChange={handleAllPermissionChange}
+            disabled={isLoading}
+            control={control}
+          />
+        )}
       </Grid>
     </Grid>
   );
