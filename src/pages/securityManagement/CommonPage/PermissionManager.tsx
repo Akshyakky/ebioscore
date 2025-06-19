@@ -265,9 +265,8 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         };
         response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
       }
-
       if (response.success) {
-        showSuccessAlert("Success", "Permission applied!");
+        showSuccessAlert("Success", clickedPermission[0].rActiveYN === "Y" ? "Permission applied!" : "Permission denied!");
       } else {
         showErrorAlert("Error", "Permission not applied!");
       }
@@ -317,7 +316,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
     }
     if (response.success) {
-      showSuccessAlert("Success", "Permission applied!");
+      showSuccessAlert("Success", selectAllChecked ? "Permission applied!" : "Permission denied!");
     } else {
       setIsSelectAll(!selectAllChecked);
       setValue("selectAll", !selectAllChecked ? "Y" : "N");
