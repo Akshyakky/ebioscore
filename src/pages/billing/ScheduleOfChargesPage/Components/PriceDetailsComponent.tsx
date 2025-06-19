@@ -5,7 +5,7 @@ import {
   CheckCircle as CheckCircle2Icon,
   Check as CheckIcon,
   ExpandMore as ExpandMoreIcon,
-  AttachMoney as MoneyIcon,
+  CurrencyRupee as MoneyIcon,
   PercentOutlined as PercentIcon,
   Refresh as RefreshIcon,
   Remove as RemoveIcon,
@@ -760,15 +760,8 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
         mt: 2,
       }}
     >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        sx={{
-          backgroundColor: "grey.50",
-          borderBottom: expanded ? "1px solid" : "none",
-          borderColor: "divider",
-        }}
-      >
-        <Box display="flex" alignItems="center" gap={2} width="100%">
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box display="flex" alignItems="center" width="100%">
           <MoneyIcon sx={{ fontSize: 22, color: "primary.main" }} />
           <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: "1.1rem", letterSpacing: "0.02em" }}>
             PRICING CONFIGURATION

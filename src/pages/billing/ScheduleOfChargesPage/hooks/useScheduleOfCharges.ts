@@ -208,6 +208,7 @@ export const useChargeSearch = () => {
         setError(null);
         const result = await bChargeService.getAllChargesWithDetails();
         if (result.success && result.data) {
+          debugger;
           setLoading(false);
           if (!searchTerm.trim()) {
             return result.data;
