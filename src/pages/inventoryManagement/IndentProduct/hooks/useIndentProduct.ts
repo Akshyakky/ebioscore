@@ -16,9 +16,6 @@ export const useIndentProduct = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Fetch all indents with optional filtering
-   */
   const fetchIndentList = useCallback(
     async (filterDto?: FilterDto) => {
       try {
@@ -33,11 +30,8 @@ export const useIndentProduct = () => {
           endDate: null,
           statusFilter: null,
         };
-
         const filter = filterDto || defaultFilter;
-
         const response = await indentService.getAllIndents(filter);
-
         if (response.success && response.data) {
           setIndentList(response.data.items || []);
           return response.data.items || [];
@@ -56,15 +50,11 @@ export const useIndentProduct = () => {
     [showAlert]
   );
 
-  /**
-   * Fetch indents by department with filtering
-   */
   const getIndentsByDepartment = useCallback(
     async (deptId: number, filterDto?: Partial<FilterDto>) => {
       try {
         setIsLoading(true);
         setError(null);
-
         const defaultFilter: FilterDto = {
           dateFilter: DateFilterType.ThisMonth,
           pageIndex: 1,
@@ -76,11 +66,8 @@ export const useIndentProduct = () => {
         };
 
         const response = await indentService.getAllIndents(defaultFilter);
-
         if (response.success && response.data) {
-          // Filter by department on the client side
           const departmentIndents = (response.data.items || []).filter((indent) => indent.fromDeptID === deptId || indent.toDeptID === deptId);
-
           setIndentList(departmentIndents);
           return departmentIndents;
         } else {
@@ -98,16 +85,11 @@ export const useIndentProduct = () => {
     [showAlert]
   );
 
-  /**
-   * Get indent by ID with full details
-   */
   const getIndentById = useCallback(
     async (indentId: number): Promise<IndentSaveRequestDto | null> => {
       try {
         setLoading(true);
-
         const response = await indentService.getIndentById(indentId);
-
         if (response.success && response.data) {
           return response.data;
         } else {
@@ -125,18 +107,12 @@ export const useIndentProduct = () => {
     [showAlert]
   );
 
-  /**
-   * Save indent (create or update)
-   */
   const saveIndent = useCallback(
     async (indentData: IndentSaveRequestDto): Promise<OperationResult<IndentSaveRequestDto>> => {
       try {
         setLoading(true);
-
         const response = await indentService.saveIndent(indentData);
-
         if (response.success) {
-          // Refresh the indent list after successful save
           await fetchIndentList();
           return response;
         } else {
@@ -157,18 +133,12 @@ export const useIndentProduct = () => {
     [showAlert, fetchIndentList]
   );
 
-  /**
-   * Delete indent
-   */
   const deleteIndent = useCallback(
     async (indentId: number): Promise<boolean> => {
       try {
         setLoading(true);
-
         const response = await indentMastService.delete(indentId);
-
         if (response.success) {
-          // Remove from local state
           setIndentList((prev) => prev.filter((indent) => indent.indentID !== indentId));
           showAlert("Success", "Indent deleted successfully", "success");
           return true;
@@ -186,33 +156,23 @@ export const useIndentProduct = () => {
     [showAlert]
   );
 
-  /**
-   * Update indent status
-   */
   const updateIndentStatus = useCallback(
     async (indentId: number, status: string): Promise<boolean> => {
       try {
         setLoading(true);
-
-        // Get current indent data
+        setError(null);
         const currentIndent = indentList.find((indent) => indent.indentID === indentId);
         if (!currentIndent) {
           throw new Error("Indent not found");
         }
-
-        // Update the status
         const updatedIndent: IndentMastDto = {
           ...currentIndent,
           indStatusCode: status,
-          indStatus: status.toLowerCase().replace(/^\w/, (c) => c.toUpperCase()),
+          indStatus: getStatusDisplayName(status),
         };
-
         const response = await indentMastService.save(updatedIndent);
-
         if (response.success) {
-          // Update local state
-          setIndentList((prev) => prev.map((indent) => (indent.indentID === indentId ? { ...indent, indStatusCode: status } : indent)));
-
+          setIndentList((prev) => prev.map((indent) => (indent.indentID === indentId ? { ...indent, indStatusCode: status, indStatus: getStatusDisplayName(status) } : indent)));
           showAlert("Success", "Indent status updated successfully", "success");
           return true;
         } else {
@@ -220,28 +180,24 @@ export const useIndentProduct = () => {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Failed to update indent status";
+        setError(errorMessage);
         showAlert("Error", errorMessage, "error");
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [showAlert, indentList]
+    [showAlert, indentList, setLoading]
   );
 
-  /**
-   * Approve indent
-   */
   const approveIndent = useCallback(
     async (indentId: number): Promise<boolean> => {
       try {
         setLoading(true);
-
         const currentIndent = indentList.find((indent) => indent.indentID === indentId);
         if (!currentIndent) {
           throw new Error("Indent not found");
         }
-
         const updatedIndent: IndentMastDto = {
           ...currentIndent,
           indentApprovedYN: "Y",
@@ -249,9 +205,7 @@ export const useIndentProduct = () => {
           indStatusCode: "APPROVED",
           indStatus: "Approved",
         };
-
         const response = await indentMastService.save(updatedIndent);
-
         if (response.success) {
           setIndentList((prev) =>
             prev.map((indent) =>
@@ -266,7 +220,6 @@ export const useIndentProduct = () => {
                 : indent
             )
           );
-
           showAlert("Success", "Indent approved successfully", "success");
           return true;
         } else {
@@ -283,19 +236,14 @@ export const useIndentProduct = () => {
     [showAlert, indentList]
   );
 
-  /**
-   * Reject indent
-   */
   const rejectIndent = useCallback(
     async (indentId: number, reason?: string): Promise<boolean> => {
       try {
         setLoading(true);
-
         const currentIndent = indentList.find((indent) => indent.indentID === indentId);
         if (!currentIndent) {
           throw new Error("Indent not found");
         }
-
         const updatedIndent: IndentMastDto = {
           ...currentIndent,
           indentApprovedYN: "N",
@@ -303,9 +251,7 @@ export const useIndentProduct = () => {
           indStatusCode: "REJECTED",
           indStatus: "Rejected",
         };
-
         const response = await indentMastService.save(updatedIndent);
-
         if (response.success) {
           setIndentList((prev) =>
             prev.map((indent) =>
@@ -320,7 +266,6 @@ export const useIndentProduct = () => {
                 : indent
             )
           );
-
           showAlert("Success", "Indent rejected successfully", "success");
           return true;
         } else {
@@ -337,16 +282,11 @@ export const useIndentProduct = () => {
     [showAlert, indentList]
   );
 
-  /**
-   * Get next indent code
-   */
   const getNextIndentCode = useCallback(
     async (prefix: string = "IND", padLength: number = 5): Promise<string | null> => {
       try {
         setLoading(true);
-
         const response = await indentMastService.getNextCode(prefix, padLength);
-
         if (response.success && response.data) {
           return response.data;
         } else {
@@ -362,17 +302,11 @@ export const useIndentProduct = () => {
     },
     [showAlert]
   );
-
-  /**
-   * Get indent details by indent ID
-   */
   const getIndentDetails = useCallback(
     async (indentId: number): Promise<IndentDetailDto[]> => {
       try {
         setLoading(true);
-
         const response = await indentDetailService.getAll();
-
         if (response.success && response.data) {
           const details = response.data.filter((detail) => detail.indentID === indentId);
           setIndentDetails(details);
@@ -392,18 +326,16 @@ export const useIndentProduct = () => {
     [showAlert]
   );
 
-  /**
-   * Get indent statistics for dashboard
-   */
   const getIndentStatistics = useCallback(
-    async (deptId?: number) => {
+    (deptId?: number) => {
       try {
         const currentList = deptId ? indentList.filter((indent) => indent.fromDeptID === deptId || indent.toDeptID === deptId) : indentList;
 
         const totalIndents = currentList.length;
-        const pendingIndents = currentList.filter((indent) => indent.indStatusCode === "PENDING").length;
+        const pendingIndents = currentList.filter((indent) => indent.indStatusCode === "PND").length;
         const approvedIndents = currentList.filter((indent) => indent.indentApprovedYN === "Y").length;
-        const completedIndents = currentList.filter((indent) => indent.indStatusCode === "COMPLETED").length;
+        const completedIndents = currentList.filter((indent) => indent.indStatusCode === "CMP").length;
+        const partiallyCompletedIndents = currentList.filter((indent) => indent.indStatusCode === "DIPCD").length;
         const rejectedIndents = currentList.filter((indent) => indent.indStatusCode === "REJECTED").length;
         const autoIndents = currentList.filter((indent) => indent.autoIndentYN === "Y").length;
 
@@ -412,18 +344,19 @@ export const useIndentProduct = () => {
           pendingIndents,
           approvedIndents,
           completedIndents,
+          partiallyCompletedIndents,
           rejectedIndents,
           autoIndents,
           approvalRate: totalIndents > 0 ? Math.round((approvedIndents / totalIndents) * 100) : 0,
           completionRate: totalIndents > 0 ? Math.round((completedIndents / totalIndents) * 100) : 0,
         };
       } catch (error) {
-        console.error("Failed to calculate indent statistics:", error);
         return {
           totalIndents: 0,
           pendingIndents: 0,
           approvedIndents: 0,
           completedIndents: 0,
+          partiallyCompletedIndents: 0,
           rejectedIndents: 0,
           autoIndents: 0,
           approvalRate: 0,
@@ -434,55 +367,81 @@ export const useIndentProduct = () => {
     [indentList]
   );
 
-  /**
-   * Check if indent can be edited
-   */
+  const getStatusDisplayName = useCallback((statusCode: string): string => {
+    switch (statusCode) {
+      case "PND":
+        return "Pending";
+      case "CMP":
+        return "Completed";
+      case "DIPCD":
+        return "Partially Completed";
+      case "DICMP":
+        return "DI Completed";
+      case "REJECTED":
+        return "Rejected";
+      default:
+        return statusCode || "Unknown";
+    }
+  }, []);
+
   const canEditIndent = useCallback((indent: IndentMastDto): boolean => {
-    return indent.indentApprovedYN !== "Y" && indent.indStatusCode !== "COMPLETED" && indent.indStatusCode !== "REJECTED";
+    return indent.indStatusCode !== "CMP" && indent.indStatusCode !== "DICMP";
   }, []);
 
-  /**
-   * Check if indent can be deleted
-   */
   const canDeleteIndent = useCallback((indent: IndentMastDto): boolean => {
-    return indent.indentApprovedYN !== "Y" && indent.indStatusCode !== "COMPLETED";
+    return indent.indStatusCode !== "CMP" && indent.indStatusCode !== "DICMP";
   }, []);
 
-  /**
-   * Get indent status color for UI
-   */
-  const getIndentStatusColor = useCallback((indent: IndentMastDto): string => {
-    if (indent.indStatusCode === "COMPLETED") return "success";
-    if (indent.indentApprovedYN === "Y") return "info";
-    if (indent.indStatusCode === "REJECTED") return "error";
-    return "warning";
+  const getIndentStatusColor = useCallback((indent: IndentMastDto): "success" | "info" | "warning" | "error" | "default" => {
+    switch (indent.indStatusCode) {
+      case "CMP":
+        return "success";
+      case "DIPCD":
+        return "info";
+      case "DICMP":
+        return "info";
+      case "PND":
+        return "warning";
+      case "REJECTED":
+        return "error";
+      default:
+        return "default";
+    }
   }, []);
+
+  const refreshIndentList = useCallback(
+    async (deptId?: number, filterDto?: Partial<FilterDto>) => {
+      if (deptId) {
+        return await getIndentsByDepartment(deptId, filterDto);
+      } else {
+        return await fetchIndentList(filterDto as FilterDto);
+      }
+    },
+    [getIndentsByDepartment, fetchIndentList]
+  );
 
   return {
-    // State
     indentList,
     indentDetails,
     isLoading,
     error,
 
-    // Core CRUD operations
     fetchIndentList,
     getIndentsByDepartment,
     getIndentById,
     saveIndent,
     deleteIndent,
 
-    // Status management
     updateIndentStatus,
     approveIndent,
     rejectIndent,
 
-    // Utility functions
     getNextIndentCode,
     getIndentDetails,
     getIndentStatistics,
+    getStatusDisplayName,
+    refreshIndentList,
 
-    // Helper functions
     canEditIndent,
     canDeleteIndent,
     getIndentStatusColor,

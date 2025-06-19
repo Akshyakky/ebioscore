@@ -4,6 +4,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { DateFilterType } from "@/interfaces/Common/FilterDto";
 import { IndentMastDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import { useAlert } from "@/providers/AlertProvider";
@@ -18,7 +19,6 @@ import {
   Assignment as IndentIcon,
   Pending as PendingIcon,
   Refresh as RefreshIcon,
-  Cancel as RejectedIcon,
   Schedule as ScheduledIcon,
   Search as SearchIcon,
   TrendingUp as TotalIcon,
@@ -30,14 +30,6 @@ import { useForm } from "react-hook-form";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import IndentProductForm from "../Form/IndentProductForm";
 import { useIndentProduct } from "../hooks/useIndentProduct";
-
-const statusOptions = [
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-  { value: "partial", label: "Partial" },
-  { value: "completed", label: "Completed" },
-];
 
 const dateFilterOptions = [
   { value: DateFilterType.Today, label: "Today" },
@@ -65,10 +57,9 @@ const IndentProductPage: React.FC = () => {
   const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.ThisMonth);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const { indentStatus = [], isLoading: isLoadingDropdowns } = useDropdownValues(["indentStatus"]);
   const { indentList, isLoading, error, deleteIndent, getIndentsByDepartment } = useIndentProduct();
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
-
-  // Form setup for date range selection
   const { control, watch, setValue } = useForm<DateRangeForm>({
     defaultValues: {
       startDate: null,
@@ -76,11 +67,9 @@ const IndentProductPage: React.FC = () => {
     },
   });
 
-  // Watch form values to sync with state
   const watchedStartDate = watch("startDate");
   const watchedEndDate = watch("endDate");
 
-  // Sync form values with state
   useEffect(() => {
     setStartDate(watchedStartDate);
     setEndDate(watchedEndDate);
@@ -115,13 +104,13 @@ const IndentProductPage: React.FC = () => {
           endDate,
           pageIndex: 1,
           pageSize: 100,
-          statusFilter: filters.status || undefined,
+          statusFilter: filters.status || null,
         });
       } catch (error) {
         showAlert("Error", "Failed to fetch indents", "error");
       }
     }
-  }, [isDepartmentSelected, deptId, dateFilter, startDate, endDate, filters.status, getIndentsByDepartment]);
+  }, [isDepartmentSelected, deptId, dateFilter, startDate, endDate, filters.status, getIndentsByDepartment, showAlert]);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
@@ -223,8 +212,6 @@ const IndentProductPage: React.FC = () => {
     (event: any) => {
       const newFilter = Number(event.target.value) as DateFilterType;
       setDateFilter(newFilter);
-
-      // Reset custom date range when switching away from custom range
       if (newFilter !== DateFilterType.DateRange) {
         setStartDate(null);
         setEndDate(null);
@@ -242,21 +229,21 @@ const IndentProductPage: React.FC = () => {
         pendingIndents: 0,
         approvedIndents: 0,
         completedIndents: 0,
-        rejectedIndents: 0,
+        partiallyCompletedIndents: 0,
       };
     }
 
-    const pendingCount = indentList.filter((i) => i.indStatusCode === "PENDING").length;
+    const pendingCount = indentList.filter((i) => i.indStatusCode === "PND").length;
     const approvedCount = indentList.filter((i) => i.indentApprovedYN === "Y").length;
-    const completedCount = indentList.filter((i) => i.indStatusCode === "COMPLETED").length;
-    const rejectedCount = indentList.filter((i) => i.indStatusCode === "REJECTED").length;
+    const completedCount = indentList.filter((i) => i.indStatusCode === "CMP").length;
+    const partiallyCompletedCount = indentList.filter((i) => i.indStatusCode === "DIPCD").length;
 
     return {
       totalIndents: indentList.length,
       pendingIndents: pendingCount,
       approvedIndents: approvedCount,
       completedIndents: completedCount,
-      rejectedIndents: rejectedCount,
+      partiallyCompletedIndents: partiallyCompletedCount,
     };
   }, [indentList]);
 
@@ -269,12 +256,7 @@ const IndentProductPage: React.FC = () => {
         indent.toDeptName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         indent.pChartCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         indent.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-      const matchesStatus =
-        filters.status === "" ||
-        (filters.status === "pending" && indent.indStatusCode === "PENDING") ||
-        (filters.status === "approved" && indent.indentApprovedYN === "Y") ||
-        (filters.status === "rejected" && indent.indStatusCode === "REJECTED") ||
-        (filters.status === "completed" && indent.indStatusCode === "COMPLETED");
+      const matchesStatus = filters.status === "" || indent.indStatusCode === filters.status;
 
       const matchesType = filters.indentType === "" || indent.indentTypeValue?.toLowerCase() === filters.indentType.toLowerCase();
       return matchesSearch && matchesStatus && matchesType;
@@ -364,18 +346,18 @@ const IndentProductPage: React.FC = () => {
       </Grid>
 
       <Grid size={{ xs: 12, sm: 2.4 }}>
-        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
-              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
-                <RejectedIcon fontSize="small" />
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <ScheduledIcon fontSize="small" />
               </Avatar>
               <Box>
-                <Typography variant="h5" color="#f44336" fontWeight="bold">
-                  {stats.rejectedIndents}
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {stats.partiallyCompletedIndents}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Rejected
+                  Partially Completed
                 </Typography>
               </Box>
             </Stack>
@@ -386,16 +368,18 @@ const IndentProductPage: React.FC = () => {
   );
 
   const getStatusChip = (indent: IndentMastDto) => {
-    if (indent.indStatusCode === "COMPLETED") {
-      return <Chip size="small" color="success" label="Completed" />;
+    switch (indent.indStatusCode) {
+      case "CMP":
+        return <Chip size="small" color="success" label="Completed" />;
+      case "DIPCD":
+        return <Chip size="small" color="info" label="Partially Completed" />;
+      case "DICMP":
+        return <Chip size="small" color="primary" label="DI Completed" />;
+      case "PND":
+        return <Chip size="small" color="warning" label="Pending" />;
+      default:
+        return <Chip size="small" color="default" label={indent.indStatusCode || "Unknown"} />;
     }
-    if (indent.indentApprovedYN === "Y") {
-      return <Chip size="small" color="info" label="Approved" />;
-    }
-    if (indent.indStatusCode === "REJECTED") {
-      return <Chip size="small" color="error" label="Rejected" />;
-    }
-    return <Chip size="small" color="warning" label="Pending" />;
   };
 
   const columns: Column<IndentMastDto>[] = [
@@ -492,7 +476,7 @@ const IndentProductPage: React.FC = () => {
               size="small"
               color="info"
               onClick={() => handleEdit(item)}
-              disabled={item.indentApprovedYN === "Y" || item.indStatusCode === "COMPLETED"}
+              disabled={item.indStatusCode === "CMP" || item.indStatusCode === "DICMP"}
               sx={{
                 bgcolor: "rgba(25, 118, 210, 0.08)",
                 "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
@@ -506,7 +490,7 @@ const IndentProductPage: React.FC = () => {
               size="small"
               color="error"
               onClick={() => handleDeleteClick(item)}
-              disabled={item.indentApprovedYN === "Y" || item.indStatusCode === "COMPLETED"}
+              disabled={item.indStatusCode === "CMP" || item.indStatusCode === "DICMP"}
               sx={{
                 bgcolor: "rgba(244, 67, 54, 0.08)",
                 "&:hover": { bgcolor: "rgba(244, 67, 54, 0.15)" },
@@ -598,7 +582,6 @@ const IndentProductPage: React.FC = () => {
                       helperText="Select start date for custom range"
                       onChange={(value) => {
                         setStartDate(value);
-                        // Clear end date if it's before start date
                         if (endDate && value && new Date(value) > new Date(endDate)) {
                           setValue("endDate", null);
                           setEndDate(null);
@@ -659,10 +642,11 @@ const IndentProductPage: React.FC = () => {
                     label="Status"
                     name="status"
                     value={filters.status}
-                    options={statusOptions}
+                    options={indentStatus}
                     onChange={(e) => handleFilterChange("status", e.target.value)}
                     size="small"
                     defaultText="All Status"
+                    disabled={isLoadingDropdowns("indentStatus")}
                   />
                   {Object.values(filters).some(Boolean) && (
                     <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />

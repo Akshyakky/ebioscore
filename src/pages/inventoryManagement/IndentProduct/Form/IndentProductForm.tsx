@@ -124,7 +124,7 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
   const watchedFromDeptID = useWatch({ control, name: "fromDeptID" });
 
   const handleIndentApprovedToggle = (event: any) => {
-    const newValue = event.target.checked ? "N" : "Y";
+    const newValue = event.target.checked ? "Y" : "N";
     setValue("indentApprovedYN", newValue);
   };
 
@@ -780,6 +780,14 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
       setLoading(true);
       const isUpdate = initialData && initialData.indentID > 0;
       const indentID = isUpdate ? initialData.indentID : 0;
+      let indStatusCode = "PND";
+      let indStatus = "Pending";
+
+      if (data.indentApprovedYN === "Y") {
+        indStatusCode = "CMP";
+        indStatus = "Completed";
+      }
+
       const indentMaster: IndentMastDto = {
         indentID: indentID,
         indentCode: data.indentCode,
@@ -793,10 +801,10 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
         pChartID: data.pChartID || 0,
         pChartCode: data.pChartCode || "",
         autoIndentYN: data.autoIndentYN,
-        indentApprovedYN: data.indentApprovedYN || "N", // Updated to use form value instead of hardcoded "N"
+        indentApprovedYN: data.indentApprovedYN || "N",
         indentAcknowledgement: data.indentAcknowledgement || "",
-        indStatusCode: "PENDING",
-        indStatus: "Pending",
+        indStatusCode: indStatusCode,
+        indStatus: indStatus,
         rActiveYN: data.rActiveYN,
         transferYN: data.transferYN,
         rNotes: data.rNotes || "",
@@ -1309,7 +1317,6 @@ const IndentProductForm: React.FC<IndentProductFormProps> = ({ open, onClose, in
                           },
                         }}
                         onProcessRowUpdateError={(error) => {
-                          console.error("Row update error:", error);
                           showAlert("Error", "Failed to update field", "error");
                         }}
                         sx={{
