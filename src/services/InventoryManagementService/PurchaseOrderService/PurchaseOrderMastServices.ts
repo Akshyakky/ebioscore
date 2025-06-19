@@ -15,7 +15,7 @@ class PurchaseOrderMastServices extends GenericEntityService<PurchaseOrderMastDt
   async getPOCode(departmentId: number): Promise<OperationResult<string>> {
     return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GeneratePurchaseOrderCode?departmentId=${departmentId}`, this.getToken());
   }
-  async getPOProductDetails(productCode: string, deptId: number, barcode: boolean = false): Promise<OperationResult<PurchaseOrderDetailDto>> {
+  async getPOProductDetails(productCode: string, _deptId: number, _barcode: boolean = false): Promise<OperationResult<PurchaseOrderDetailDto>> {
     return this.apiService.get<OperationResult<PurchaseOrderDetailDto>>(`${this.baseEndpoint}/GetPOProductDetailsByProductCode?productCode=${productCode}`, this.getToken());
   }
   async getPurchaseOrderDetailsByPOID(pOId: number): Promise<OperationResult<purchaseOrderSaveDto>> {

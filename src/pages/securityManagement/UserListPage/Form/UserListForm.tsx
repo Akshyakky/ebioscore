@@ -88,7 +88,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     reset,
     setValue,
     watch,
-    formState: { isDirty, isValid, errors },
+    formState: { isDirty, isValid },
   } = useForm<UserListFormData>({
     defaultValues,
     resolver: zodResolver(schema),
@@ -310,7 +310,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     <Box sx={{ display: "flex", flexDirection: "row", gap: 2, mb: 2 }}>
       <Tabs
         value={activeTab}
-        onChange={(event, newValue) => {
+        onChange={(_event, newValue) => {
           if (newValue) {
             setActiveTab(newValue);
           }
@@ -492,7 +492,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                   }}
                 />
               </Grid>
-              {watchedData.profileID && watchedData.profileID > 0 && (
+              {watchedData.profileID && watchedData.profileID > 0 ? (
                 <Grid size={{ sm: 12, md: 6 }}>
                   <Box display="flex" gap={2}>
                     <Tooltip title="View Profile Permissions">
@@ -503,7 +503,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                     </Tooltip>
                   </Box>
                 </Grid>
-              )}
+              ) : null}
             </Grid>
           </CardContent>
         </Card>
@@ -620,7 +620,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
         disableEscapeKeyDown={!viewOnly && (isDirty || isSaving)}
         actions={dialogActions}
       >
-        <Box component="form" noValidate sx={{ p: 1 }}>
+        <Box component="form" noValidate sx={{ p: 1, minHeight: "700px" }}>
           {formError && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
               {formError}
