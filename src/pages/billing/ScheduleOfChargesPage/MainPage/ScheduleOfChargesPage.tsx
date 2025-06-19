@@ -47,110 +47,53 @@ const ScheduleOfChargesPage: React.FC = () => {
   const { showAlert } = useAlert();
   const { charges, loading, refreshCharges, saveCharge, generateChargeCode, deleteCharge, getChargeById } = useScheduleOfCharges();
 
-  // Load dropdown values
   const { serviceType = [], serviceGroup = [], pic = [] } = useDropdownValues(["serviceType", "serviceGroup", "pic"]);
 
   useEffect(() => {
     refreshCharges();
   }, [refreshCharges]);
 
-  // Enhanced debug logging
-  useEffect(() => {
-    console.log("=== SCHEDULE OF CHARGES DEBUG ===");
-    console.log("Raw charges from hook:", charges);
-    console.log("Charges length:", charges?.length || 0);
-    console.log("Loading state:", loading);
-    console.log("ServiceType dropdown:", serviceType);
-    console.log("ServiceGroup dropdown:", serviceGroup);
-
-    // Debug the first few charges to see structure
-    if (charges && charges.length > 0) {
-      console.log("=== SAMPLE CHARGE STRUCTURES ===");
-      charges.slice(0, 3).forEach((charge, index) => {
-        console.log(`Sample charge ${index + 1}:`, {
-          chargeCode: charge.chargeCode,
-          chargeType: charge.chargeType,
-          doctorShareYN: charge.doctorShareYN,
-          DoctorShares: charge.DoctorShares,
-          doctorShares: charge.doctorShares,
-          ChargeDetails: charge.ChargeDetails,
-          chargeDetails: charge.chargeDetails,
-          serviceGroupID: charge.serviceGroupID,
-          // Show all keys to identify field names
-          allKeys: Object.keys(charge),
-        });
-      });
-    }
-
-    console.log("=== END DEBUG ===");
-  }, [charges, loading, serviceType, serviceGroup]);
-
   const enhancedCharges = useMemo(() => {
-    console.log("Processing charges in enhancedCharges memo...");
-
     if (!charges) {
-      console.log("No charges data available");
       return [];
     }
 
     if (!Array.isArray(charges)) {
-      console.log("Charges is not an array:", typeof charges, charges);
       return [];
     }
 
     if (charges.length === 0) {
-      console.log("Charges array is empty");
       return [];
     }
 
-    console.log("Processing", charges.length, "charges");
-
     return charges.map((charge, index) => {
       try {
-        console.log(`Processing charge ${index + 1}:`, charge.chargeCode, charge);
-
-        // Enhanced Price Range calculation with INR formatting
         let prices: number[] = [];
-
-        // Try to get prices from ChargeDetails
         if (charge.ChargeDetails && Array.isArray(charge.ChargeDetails)) {
-          console.log(`Charge ${charge.chargeCode} has ${charge.ChargeDetails.length} charge details`);
-
           charge.ChargeDetails.forEach((detail, detailIndex) => {
             if (detail && typeof detail === "object") {
-              console.log(`  Detail ${detailIndex}:`, detail);
-
-              // Try different possible field names
               const chValue = detail.chValue || detail.chargeValue || detail.totalAmount || 0;
               if (chValue && chValue > 0) {
                 prices.push(Number(chValue));
-                console.log(`  Found price from chValue: ${chValue}`);
               } else {
-                // If no direct charge value, try to calculate from components
                 const dcValue = Number(detail.DcValue) || 0;
                 const hcValue = Number(detail.hcValue) || 0;
                 const total = dcValue + hcValue;
                 if (total > 0) {
                   prices.push(total);
-                  console.log(`  Calculated price from components: ${dcValue} + ${hcValue} = ${total}`);
                 }
               }
             }
           });
         }
 
-        // Fallback to charge cost if no prices found
         if (prices.length === 0 && charge.chargeCost && charge.chargeCost > 0) {
           prices.push(Number(charge.chargeCost));
-          console.log(`  Using fallback chargeCost: ${charge.chargeCost}`);
         }
-
-        console.log(`  Final prices array for ${charge.chargeCode}:`, prices);
 
         const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
         const highestPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
-        // Use INR formatting for currency
         const priceRange =
           prices.length > 0
             ? lowestPrice === highestPrice
@@ -158,9 +101,6 @@ const ScheduleOfChargesPage: React.FC = () => {
               : `${formatCurrency(lowestPrice, "INR", "en-IN")} - ${formatCurrency(highestPrice, "INR", "en-IN")}`
             : "No pricing";
 
-        console.log(`  Price range for ${charge.chargeCode}: ${priceRange}`);
-
-        // Enhanced Doctor Share calculation
         let totalDoctorShares = 0;
         let doctorShareInfo = { isEnabled: false, doctorCount: 0, hasValidShares: false };
         if (charge.DoctorShares && Array.isArray(charge.DoctorShares)) {
@@ -176,19 +116,14 @@ const ScheduleOfChargesPage: React.FC = () => {
             doctorCount: charge.DoctorShares.length,
             hasValidShares: charge.DoctorShares.length > 0 && totalDoctorShares > 0,
           };
-          console.log(`  Total doctor shares for ${charge.chargeCode}: ${totalDoctorShares}%`);
         }
 
         const aliasCount = charge.ChargeAliases && Array.isArray(charge.ChargeAliases) ? charge.ChargeAliases.length : 0;
         const packCount = charge.ChargePacks && Array.isArray(charge.ChargePacks) ? charge.ChargePacks.length : 0;
 
-        // Enhanced Service Group Display
         let serviceGroupDisplay = "Not specified";
 
         if (charge.serviceGroupID) {
-          console.log(`  Looking up serviceGroupID ${charge.serviceGroupID} for ${charge.chargeCode}`);
-
-          // First try serviceGroup dropdown
           const serviceGroupItem = serviceGroup.find((s) => {
             const matchesValue = Number(s.value) === Number(charge.serviceGroupID);
             const matchesLabel = s.label?.toLowerCase().includes(charge.chargeType?.toLowerCase() || "");
@@ -197,9 +132,7 @@ const ScheduleOfChargesPage: React.FC = () => {
 
           if (serviceGroupItem) {
             serviceGroupDisplay = serviceGroupItem.label;
-            console.log(`    Found in serviceGroup: ${serviceGroupDisplay}`);
           } else {
-            // Fallback to serviceType dropdown
             const serviceTypeItem = serviceType.find((s) => {
               const matchesValue = Number(s.value) === Number(charge.serviceGroupID);
               const matchesLabel = s.label?.toLowerCase().includes(charge.chargeType?.toLowerCase() || "");
@@ -208,24 +141,18 @@ const ScheduleOfChargesPage: React.FC = () => {
 
             if (serviceTypeItem) {
               serviceGroupDisplay = serviceTypeItem.label;
-              console.log(`    Found in serviceType: ${serviceGroupDisplay}`);
             } else {
-              // Try to match by chargeType
               const typeBasedItem = [...serviceGroup, ...serviceType].find((s) => s.label?.toLowerCase() === charge.chargeType?.toLowerCase());
 
               if (typeBasedItem) {
                 serviceGroupDisplay = typeBasedItem.label;
-                console.log(`    Found by chargeType match: ${serviceGroupDisplay}`);
               } else {
-                console.log(`    No match found for serviceGroupID ${charge.serviceGroupID}`);
                 serviceGroupDisplay = charge.chargeType || "Not specified";
               }
             }
           }
         } else {
-          // If no serviceGroupID, try to use chargeType
           serviceGroupDisplay = charge.chargeType || "Not specified";
-          console.log(`  No serviceGroupID, using chargeType: ${serviceGroupDisplay}`);
         }
 
         const enhancedCharge = {
@@ -233,22 +160,14 @@ const ScheduleOfChargesPage: React.FC = () => {
           lowestPrice,
           highestPrice,
           priceRange,
-          doctorShareInfo, // Use the new structure instead of totalDoctorShares
+          doctorShareInfo,
           aliasCount,
           packCount,
           serviceGroupDisplay,
         };
 
-        console.log(`  Enhanced charge ${charge.chargeCode}:`, {
-          priceRange: enhancedCharge.priceRange,
-          serviceGroupDisplay: enhancedCharge.serviceGroupDisplay,
-          doctorShareInfo: enhancedCharge.doctorShareInfo,
-        });
-
         return enhancedCharge;
       } catch (error) {
-        console.error(`Error processing charge ${charge.chargeID}:`, error);
-        // Return charge with default values if processing fails
         return {
           ...charge,
           lowestPrice: 0,
@@ -264,15 +183,11 @@ const ScheduleOfChargesPage: React.FC = () => {
   }, [charges, serviceType, serviceGroup]);
 
   const filteredCharges = useMemo(() => {
-    console.log("Filtering charges...");
-
     if (!enhancedCharges || enhancedCharges.length === 0) {
-      console.log("No enhanced charges to filter");
       return [];
     }
 
     let filtered = [...enhancedCharges];
-    console.log("Starting with", filtered.length, "charges");
 
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
@@ -286,16 +201,13 @@ const ScheduleOfChargesPage: React.FC = () => {
             (charge.serviceGroupDisplay && charge.serviceGroupDisplay.toLowerCase().includes(searchLower));
           return matches;
         } catch (error) {
-          console.error("Error filtering charge:", charge.chargeID, error);
           return false;
         }
       });
-      console.log("After search filter:", filtered.length, "charges");
     }
 
     if (filterType !== "all") {
       filtered = filtered.filter((charge) => charge.chargeType === filterType);
-      console.log("After type filter:", filtered.length, "charges");
     }
 
     if (filterStatus !== "all") {
@@ -307,10 +219,8 @@ const ScheduleOfChargesPage: React.FC = () => {
         }
         return true;
       });
-      console.log("After status filter:", filtered.length, "charges");
     }
 
-    console.log("Final filtered charges:", filtered.length);
     return filtered;
   }, [enhancedCharges, searchTerm, filterType, filterStatus]);
 
@@ -330,11 +240,9 @@ const ScheduleOfChargesPage: React.FC = () => {
     const active = enhancedCharges.filter((c) => c.rActiveYN === "Y").length;
     const inactive = enhancedCharges.filter((c) => c.rActiveYN === "N").length;
 
-    // Enhanced doctor share detection using the new structure with fallback
     const withDoctorShare = enhancedCharges.filter((c) => {
       const shareInfo = c.doctorShareInfo || { isEnabled: false, doctorCount: 0, hasValidShares: false };
 
-      // Also check direct fields as fallback
       const directDoctorCount = c.DoctorShares?.length || 0;
       const directlyEnabled = String(c.doctorShareYN) === "Y" || String(c.doctorShareYN) === "1";
 
@@ -364,15 +272,8 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleEditCharge = useCallback(
     async (charge: ChargeWithAllDetailsDto) => {
       try {
-        console.log("=== HANDLING EDIT CHARGE ===");
-        console.log("Charge to edit:", charge);
-
         const fullChargeDetails = await getChargeById(charge.chargeID);
         if (fullChargeDetails) {
-          console.log("Full charge details fetched:", fullChargeDetails);
-
-          // *** FIX: Comprehensive data normalization ***
-          // Normalize data structure similar to copy function but preserve all data
           if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
             fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
           }
@@ -389,34 +290,17 @@ const ScheduleOfChargesPage: React.FC = () => {
             fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
           }
 
-          // *** FIX: Ensure serviceGroupID is properly mapped ***
-          // The API might return sGrpID but the form expects serviceGroupID
           if (fullChargeDetails.sGrpID !== undefined && fullChargeDetails.serviceGroupID === undefined) {
             fullChargeDetails.serviceGroupID = fullChargeDetails.sGrpID;
           }
 
-          // *** FIX: Ensure scheduleDate is properly formatted ***
-          // Make sure the date is in the correct format for the form
           if (fullChargeDetails.scheduleDate && typeof fullChargeDetails.scheduleDate === "string") {
             try {
               fullChargeDetails.scheduleDate = new Date(fullChargeDetails.scheduleDate);
             } catch (error) {
-              console.warn("Could not parse schedule date:", fullChargeDetails.scheduleDate);
               fullChargeDetails.scheduleDate = null;
             }
           }
-
-          console.log("Normalized charge details for edit:", {
-            chargeID: fullChargeDetails.chargeID,
-            serviceGroupID: fullChargeDetails.serviceGroupID,
-            sGrpID: fullChargeDetails.sGrpID,
-            scheduleDate: fullChargeDetails.scheduleDate,
-            ChargeDetails: fullChargeDetails.ChargeDetails?.length || 0,
-            DoctorShares: fullChargeDetails.DoctorShares?.length || 0,
-            ChargeAliases: fullChargeDetails.ChargeAliases?.length || 0,
-            ChargeFaculties: fullChargeDetails.ChargeFaculties?.length || 0,
-            ChargePacks: fullChargeDetails.ChargePacks?.length || 0,
-          });
 
           setSelectedCharge(fullChargeDetails);
           setIsChargeFormOpen(true);
@@ -424,22 +308,17 @@ const ScheduleOfChargesPage: React.FC = () => {
           showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
         }
       } catch (error) {
-        console.error("Error in handleEditCharge:", error);
         showAlert("Error", "An error occurred while fetching charge details.", "error");
       }
     },
     [getChargeById, showAlert]
   );
 
-  // Update this function in your ScheduleOfChargesPage.tsx
-
   const handleViewDetails = useCallback(
     async (charge: EnhancedChargeDto) => {
       try {
-        // Fetch complete charge details with all relationships
         const fullChargeDetails = await getChargeById(charge.chargeID);
         if (fullChargeDetails) {
-          // Normalize data structure similar to edit function
           if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
             fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
           }
@@ -456,14 +335,12 @@ const ScheduleOfChargesPage: React.FC = () => {
             fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
           }
 
-          console.log("Full charge details loaded for view:", fullChargeDetails);
           setSelectedCharge(fullChargeDetails);
           setIsDetailsDialogOpen(true);
         } else {
           showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
         }
       } catch (error) {
-        console.error("Error fetching charge details:", error);
         showAlert("Error", "An error occurred while fetching charge details.", "error");
       }
     },
@@ -473,14 +350,12 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleCopyCharge = useCallback(
     async (charge: EnhancedChargeDto) => {
       try {
-        // First fetch the complete charge details like in handleEditCharge
         const fullChargeDetails = await getChargeById(charge.chargeID);
         if (!fullChargeDetails) {
           showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
           return;
         }
 
-        // Normalize data structure similar to edit function
         if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
           fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
         }
@@ -497,39 +372,31 @@ const ScheduleOfChargesPage: React.FC = () => {
           fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
         }
 
-        // Get serviceGroupID - use sGrpID as fallback and allow 0 as valid value since it's optional
         const serviceGroupId = fullChargeDetails.serviceGroupID ?? fullChargeDetails.sGrpID ?? 0;
 
-        // Validate that we have the required fields for code generation
         if (!fullChargeDetails.chargeType || !fullChargeDetails.chargeTo) {
           showAlert("Error", "Charge type or charge to is missing from the charge details", "error");
           return;
         }
 
-        // Generate new charge code (ServiceGroupId is optional, so 0 is valid)
         const codeGenData: ChargeCodeGenerationDto = {
           ChargeType: fullChargeDetails.chargeType,
           ChargeTo: fullChargeDetails.chargeTo,
         };
 
-        // Only include ServiceGroupId if it's a valid positive number
         if (serviceGroupId && serviceGroupId > 0) {
           codeGenData.ServiceGroupId = serviceGroupId;
         }
 
-        console.log("Generating charge code with data:", codeGenData);
         const newCode = await generateChargeCode(codeGenData);
 
-        // Create copied charge with all details
         const copiedCharge: ChargeWithAllDetailsDto = {
           ...fullChargeDetails,
           chargeID: 0,
           chargeCode: newCode,
           chargeDesc: `${fullChargeDetails.chargeDesc} (Copy)`,
-          // Ensure serviceGroupID is properly set (keep original value even if 0)
           serviceGroupID: serviceGroupId,
 
-          // Reset IDs for all related entities
           ChargeDetails:
             fullChargeDetails.ChargeDetails?.map((detail) => ({
               ...detail,
@@ -574,16 +441,15 @@ const ScheduleOfChargesPage: React.FC = () => {
             })) || [],
         };
 
-        console.log("Copied charge with full details:", copiedCharge);
         setSelectedCharge(copiedCharge);
         setIsChargeFormOpen(true);
       } catch (error) {
-        console.error("Error copying charge:", error);
         showAlert("Error", "Failed to copy charge", "error");
       }
     },
     [getChargeById, generateChargeCode, showAlert]
   );
+
   const handleChargeSubmit = useCallback(
     async (chargeData: ChargeWithAllDetailsDto) => {
       try {
@@ -670,23 +536,13 @@ const ScheduleOfChargesPage: React.FC = () => {
       render: (charge) => {
         const shareInfo = charge.doctorShareInfo || { isEnabled: false, doctorCount: 0, hasValidShares: false };
 
-        // Temporary: Also try to detect directly from the raw charge data as fallback
         const directDoctorCount = charge.DoctorShares?.length || charge.doctorShares?.length || 0;
         const directlyEnabled = String(charge.doctorShareYN) === "Y" || String(charge.doctorShareYN) === "1";
 
-        // Use either the processed shareInfo or direct detection
         const isEnabled = shareInfo.isEnabled || directlyEnabled;
         const doctorCount = shareInfo.doctorCount || directDoctorCount;
         const hasValidShares = shareInfo.hasValidShares || directDoctorCount > 0;
 
-        console.log(`Rendering doctor share for ${charge.chargeCode}:`, {
-          shareInfo,
-          directDoctorCount,
-          directlyEnabled,
-          finalValues: { isEnabled, doctorCount, hasValidShares },
-        });
-
-        // Show doctor sharing information based on what we can reliably determine
         if (isEnabled || doctorCount > 0 || hasValidShares) {
           return (
             <Box>
