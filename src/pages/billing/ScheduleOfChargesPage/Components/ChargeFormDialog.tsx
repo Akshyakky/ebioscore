@@ -7,6 +7,7 @@ import { BChargeFacultyDto, ChargeCodeGenerationDto, ChargeWithAllDetailsDto } f
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Clear as ClearIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Box, Divider, Grid, Paper, Typography } from "@mui/material";
+import dayjs from "dayjs";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -32,10 +33,27 @@ const chargeSchema = z.object({
   regDefaultServiceYN: z.enum(["Y", "N"]).optional().default("N"),
   isBedServiceYN: z.enum(["Y", "N"]).optional().default("N"),
   doctorShareYN: z.enum(["Y", "N"]).default("N"),
+  rActiveYN: z.enum(["Y", "N"]).default("Y"),
   cNhsCode: z.string().optional().nullable(),
   cNhsEnglishName: z.string().optional().nullable(),
   chargeCost: z.number().optional().nullable(),
   serviceGroupID: z.number().optional().nullable(),
+  scheduleDate: z
+    .union([z.date(), z.any()])
+    .refine(
+      (date) => {
+        if (!date) return true; // Allow null/undefined
+        const dateObj = dayjs.isDayjs(date) ? date.toDate() : date;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return dateObj >= today;
+      },
+      {
+        message: "Schedule date cannot be in the past",
+      }
+    )
+    .optional()
+    .nullable(),
   selectedFaculties: z.array(z.number()).optional().default([]),
   ChargeDetails: z.array(z.any()).optional().default([]),
   DoctorShares: z.array(z.any()).optional().default([]),
@@ -130,10 +148,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       regDefaultServiceYN: "N",
       isBedServiceYN: "N",
       doctorShareYN: "N",
+      rActiveYN: "Y",
       cNhsCode: "",
       cNhsEnglishName: "",
       chargeCost: 0,
       serviceGroupID: null,
+      scheduleDate: null,
       selectedFaculties: [],
       ChargeDetails: [],
       DoctorShares: [],
@@ -154,6 +174,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   const watchedServiceGroupID = watch("serviceGroupID");
   const watchedDoctorShareYN = watch("doctorShareYN");
   const watchedChargeAliases = watch("ChargeAliases") || [];
+  const watchedChargeType = watch("chargeType");
 
   const extractSelectedFaculties = useCallback((chargeFaculties: BChargeFacultyDto[]): number[] => {
     if (!chargeFaculties || chargeFaculties.length === 0) return [];
@@ -289,10 +310,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           regDefaultServiceYN: charge.regDefaultServiceYN || "N",
           isBedServiceYN: charge.isBedServiceYN || "N",
           doctorShareYN: charge.doctorShareYN || "N",
+          rActiveYN: charge.rActiveYN || "Y",
           cNhsCode: charge.cNhsCode || "",
           cNhsEnglishName: charge.cNhsEnglishName || "",
           chargeCost: charge.chargeCost || 0,
           serviceGroupID: charge.serviceGroupID || charge.sGrpID || null,
+          scheduleDate: charge.scheduleDate ? dayjs(charge.scheduleDate) : null,
           selectedFaculties: selectedFacultiesIds,
           ChargeDetails: normalizedChargeDetails,
           DoctorShares: normalizedDoctorShares,
@@ -329,10 +352,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           regDefaultServiceYN: "N" as "Y" | "N",
           isBedServiceYN: "N" as "Y" | "N",
           doctorShareYN: "N" as "Y" | "N",
+          rActiveYN: "Y" as "Y" | "N",
           cNhsCode: "",
           cNhsEnglishName: "",
           chargeCost: 0,
           serviceGroupID: null,
+          scheduleDate: null,
           selectedFaculties: [],
           ChargeDetails: [],
           DoctorShares: [],
@@ -434,49 +459,59 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   }, [updateChargeDetailsFromGrid]);
 
   const handleGenerateCode = useCallback(async () => {
-    if (!watchedBChID || !watchedChargeTo) {
+    if (!watchedChargeType || !watchedChargeTo) {
       return;
     }
     try {
       setIsGeneratingCode(true);
-      const selectedOption = serviceType.find((option) => Number(option.value) === Number(watchedBChID));
-      const chargeTypeLabel = selectedOption?.label || "";
       const codeData: ChargeCodeGenerationDto = {
-        ChargeType: chargeTypeLabel,
+        ChargeType: watchedChargeType,
         ChargeTo: watchedChargeTo,
       };
       const newCode = await generateChargeCode(codeData);
       setValue("chargeCode", newCode, { shouldValidate: true, shouldDirty: true });
-      if (selectedOption) {
-        setValue("chargeType", selectedOption.label, { shouldValidate: true, shouldDirty: true });
-      }
       trigger();
     } catch (error) {
     } finally {
       setIsGeneratingCode(false);
     }
-  }, [watchedBChID, watchedChargeTo, watchedServiceGroupID, generateChargeCode, setValue, serviceType, trigger]);
+  }, [watchedChargeType, watchedChargeTo, generateChargeCode, setValue, trigger]);
 
   useEffect(() => {
-    if (!isEditMode && watchedBChID && watchedChargeTo) {
+    if (!isEditMode && watchedChargeType && watchedChargeTo) {
       handleGenerateCode();
     }
-  }, [watchedBChID, watchedChargeTo, isEditMode, handleGenerateCode]);
+  }, [watchedChargeType, watchedChargeTo, isEditMode, handleGenerateCode]);
 
-  const handleBChIDChange = useCallback(
+  const handleChargeTypeChange = useCallback(
     (value: any) => {
-      const selectedOption = serviceType.find((option) => Number(option.value) === Number(value));
+      const selectedOption = serviceType.find((option) => option.label === value);
       if (selectedOption) {
-        setValue("bChID", Number(value), { shouldValidate: true, shouldDirty: true });
         setValue("chargeType", selectedOption.label, { shouldValidate: true, shouldDirty: true });
+        setValue("bChID", Number(selectedOption.value), { shouldValidate: true, shouldDirty: true });
         trigger();
+
+        // Auto-generate code if not in edit mode and chargeTo is selected
+        if (!isEditMode && watchedChargeTo) {
+          setTimeout(() => {
+            handleGenerateCode();
+          }, 100);
+        }
       }
     },
-    [serviceType, setValue, trigger]
+    [serviceType, setValue, trigger, isEditMode, watchedChargeTo, handleGenerateCode]
   );
+
+  const chargeTypeOptions = useMemo(() => {
+    return serviceType.map((option) => ({
+      value: option.label,
+      label: option.label,
+    }));
+  }, [serviceType]);
 
   const onFormSubmit = async (data: ChargeFormData) => {
     try {
+      debugger;
       updateAllComponentsData();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const latestFormData = getValues();
@@ -497,12 +532,13 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         regDefaultServiceYN: latestFormData.regDefaultServiceYN || "N",
         isBedServiceYN: latestFormData.isBedServiceYN || "N",
         doctorShareYN: latestFormData.doctorShareYN || "N",
-        rActiveYN: "Y",
+        rActiveYN: latestFormData.rActiveYN || "Y",
         rTransferYN: "N",
         cNhsCode: latestFormData.cNhsCode || "",
         cNhsEnglishName: latestFormData.cNhsEnglishName || "",
         chargeCost: latestFormData.chargeCost || 0,
         serviceGroupID: latestFormData.serviceGroupID || 0,
+        scheduleDate: latestFormData.scheduleDate ? (dayjs.isDayjs(latestFormData.scheduleDate) ? latestFormData.scheduleDate.toDate() : latestFormData.scheduleDate) : null,
 
         ChargeDetails:
           latestFormData.ChargeDetails?.map((detail) => ({
@@ -612,10 +648,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         regDefaultServiceYN: charge.regDefaultServiceYN || "N",
         isBedServiceYN: charge.isBedServiceYN || "N",
         doctorShareYN: charge.doctorShareYN || "N",
+        rActiveYN: charge.rActiveYN || "Y",
         cNhsCode: charge.cNhsCode || "",
         cNhsEnglishName: charge.cNhsEnglishName || "",
         chargeCost: charge.chargeCost || 0,
         serviceGroupID: charge.serviceGroupID || null,
+        scheduleDate: charge.scheduleDate ? dayjs(charge.scheduleDate) : null,
         selectedFaculties: selectedFacultiesIds,
         ChargeDetails: charge.ChargeDetails || [],
         DoctorShares: charge.DoctorShares || [],
@@ -641,10 +679,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         regDefaultServiceYN: "N",
         isBedServiceYN: "N",
         doctorShareYN: "N",
+        rActiveYN: "Y",
         cNhsCode: "",
         cNhsEnglishName: "",
         chargeCost: 0,
         serviceGroupID: null,
+        scheduleDate: null,
         selectedFaculties: [],
         ChargeDetails: [],
         DoctorShares: [],
@@ -705,14 +745,29 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
                   helperText={isEditMode ? "Code cannot be changed" : isGeneratingCode ? "Generating..." : "Auto-generated based on type"}
                   adornment={
                     !isEditMode && (
-                      <CustomButton size="small" variant="outlined" text="Generate" onClick={handleGenerateCode} disabled={!watchedBChID || !watchedChargeTo || isGeneratingCode} />
+                      <CustomButton
+                        size="small"
+                        variant="outlined"
+                        text="Generate"
+                        onClick={handleGenerateCode}
+                        disabled={!watchedChargeType || !watchedChargeTo || isGeneratingCode}
+                      />
                     )
                   }
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="bChID" control={control} type="select" onChange={handleBChIDChange} label="Charge Type" required size="small" options={serviceType} />
+                <EnhancedFormField
+                  name="chargeType"
+                  control={control}
+                  type="select"
+                  onChange={handleChargeTypeChange}
+                  label="Charge Type"
+                  required
+                  size="small"
+                  options={chargeTypeOptions}
+                />
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
@@ -723,6 +778,14 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
                   label="Charge To"
                   required
                   size="small"
+                  onChange={(value) => {
+                    // Auto-generate code if not in edit mode and chargeType is selected
+                    if (!isEditMode && watchedChargeType && value) {
+                      setTimeout(() => {
+                        handleGenerateCode();
+                      }, 100);
+                    }
+                  }}
                   options={[
                     { value: "PAT", label: "Patient" },
                     { value: "INS", label: "Insurance" },
@@ -757,7 +820,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="scheduleDate" control={control} type="datepicker" label="Schedule Date" size="small" />
+                <EnhancedFormField name="scheduleDate" control={control} type="datepicker" label="Schedule Date" size="small" minDate={dayjs()} />
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
@@ -784,6 +847,10 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
                   </Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
                     <EnhancedFormField name="chargeStatus" control={control} type="switch" label="Charge Status" size="small" />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <EnhancedFormField name="rActiveYN" control={control} type="switch" label=" Status" size="small" />
                   </Grid>
                 </Grid>
               </Grid>

@@ -27,7 +27,11 @@ interface EnhancedChargeDto extends ChargeWithAllDetailsDto {
   lowestPrice?: number;
   highestPrice?: number;
   priceRange?: string;
-  totalDoctorShares?: number;
+  doctorShareInfo?: {
+    isEnabled: boolean;
+    doctorCount: number;
+    hasValidShares: boolean;
+  };
   aliasCount?: number;
   packCount?: number;
   serviceGroupDisplay?: string;
@@ -35,74 +39,310 @@ interface EnhancedChargeDto extends ChargeWithAllDetailsDto {
 
 const ScheduleOfChargesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCharge, setSelectedCharge] = useState<ChargeWithAllDetailsDto | null>(null); // Use base DTO
+  const [selectedCharge, setSelectedCharge] = useState<ChargeWithAllDetailsDto | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isChargeFormOpen, setIsChargeFormOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const { showAlert } = useAlert();
   const { charges, loading, refreshCharges, saveCharge, generateChargeCode, deleteCharge, getChargeById } = useScheduleOfCharges();
-  const { serviceType = [] } = useDropdownValues(["serviceType", "serviceGroup", "pic"]);
+
+  // Load dropdown values
+  const { serviceType = [], serviceGroup = [], pic = [] } = useDropdownValues(["serviceType", "serviceGroup", "pic"]);
 
   useEffect(() => {
     refreshCharges();
   }, [refreshCharges]);
 
+  // Enhanced debug logging
+  useEffect(() => {
+    console.log("=== SCHEDULE OF CHARGES DEBUG ===");
+    console.log("Raw charges from hook:", charges);
+    console.log("Charges length:", charges?.length || 0);
+    console.log("Loading state:", loading);
+    console.log("ServiceType dropdown:", serviceType);
+    console.log("ServiceGroup dropdown:", serviceGroup);
+
+    // Debug the first few charges to see structure
+    if (charges && charges.length > 0) {
+      console.log("=== SAMPLE CHARGE STRUCTURES ===");
+      charges.slice(0, 3).forEach((charge, index) => {
+        console.log(`Sample charge ${index + 1}:`, {
+          chargeCode: charge.chargeCode,
+          chargeType: charge.chargeType,
+          doctorShareYN: charge.doctorShareYN,
+          DoctorShares: charge.DoctorShares,
+          doctorShares: charge.doctorShares,
+          ChargeDetails: charge.ChargeDetails,
+          chargeDetails: charge.chargeDetails,
+          serviceGroupID: charge.serviceGroupID,
+          // Show all keys to identify field names
+          allKeys: Object.keys(charge),
+        });
+      });
+    }
+
+    console.log("=== END DEBUG ===");
+  }, [charges, loading, serviceType, serviceGroup]);
+
   const enhancedCharges = useMemo(() => {
-    return charges.map((charge) => {
-      const prices = charge.ChargeDetails?.map((detail) => detail.chValue) || [];
-      const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
-      const highestPrice = prices.length > 0 ? Math.max(...prices) : 0;
-      const priceRange =
-        prices.length > 0 ? (lowestPrice === highestPrice ? formatCurrency(lowestPrice) : `${formatCurrency(lowestPrice)} - ${formatCurrency(highestPrice)}`) : "No pricing";
-      const totalDoctorShares = charge.DoctorShares?.reduce((sum, share) => sum + share.doctorShare, 0) || 0;
-      const aliasCount = charge.ChargeAliases?.length || 0;
-      const packCount = charge.ChargePacks?.length || 0;
-      const serviceGroupDisplay = serviceType.find((s) => Number(s.value) === charge.serviceGroupID)?.label || "Not specified";
-      return {
-        ...charge,
-        lowestPrice,
-        highestPrice,
-        priceRange,
-        totalDoctorShares,
-        aliasCount,
-        packCount,
-        serviceGroupDisplay,
-      };
+    console.log("Processing charges in enhancedCharges memo...");
+
+    if (!charges) {
+      console.log("No charges data available");
+      return [];
+    }
+
+    if (!Array.isArray(charges)) {
+      console.log("Charges is not an array:", typeof charges, charges);
+      return [];
+    }
+
+    if (charges.length === 0) {
+      console.log("Charges array is empty");
+      return [];
+    }
+
+    console.log("Processing", charges.length, "charges");
+
+    return charges.map((charge, index) => {
+      try {
+        console.log(`Processing charge ${index + 1}:`, charge.chargeCode, charge);
+
+        // Enhanced Price Range calculation with INR formatting
+        let prices: number[] = [];
+
+        // Try to get prices from ChargeDetails
+        if (charge.ChargeDetails && Array.isArray(charge.ChargeDetails)) {
+          console.log(`Charge ${charge.chargeCode} has ${charge.ChargeDetails.length} charge details`);
+
+          charge.ChargeDetails.forEach((detail, detailIndex) => {
+            if (detail && typeof detail === "object") {
+              console.log(`  Detail ${detailIndex}:`, detail);
+
+              // Try different possible field names
+              const chValue = detail.chValue || detail.chargeValue || detail.totalAmount || 0;
+              if (chValue && chValue > 0) {
+                prices.push(Number(chValue));
+                console.log(`  Found price from chValue: ${chValue}`);
+              } else {
+                // If no direct charge value, try to calculate from components
+                const dcValue = Number(detail.DcValue) || 0;
+                const hcValue = Number(detail.hcValue) || 0;
+                const total = dcValue + hcValue;
+                if (total > 0) {
+                  prices.push(total);
+                  console.log(`  Calculated price from components: ${dcValue} + ${hcValue} = ${total}`);
+                }
+              }
+            }
+          });
+        }
+
+        // Fallback to charge cost if no prices found
+        if (prices.length === 0 && charge.chargeCost && charge.chargeCost > 0) {
+          prices.push(Number(charge.chargeCost));
+          console.log(`  Using fallback chargeCost: ${charge.chargeCost}`);
+        }
+
+        console.log(`  Final prices array for ${charge.chargeCode}:`, prices);
+
+        const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        const highestPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
+        // Use INR formatting for currency
+        const priceRange =
+          prices.length > 0
+            ? lowestPrice === highestPrice
+              ? formatCurrency(lowestPrice, "INR", "en-IN")
+              : `${formatCurrency(lowestPrice, "INR", "en-IN")} - ${formatCurrency(highestPrice, "INR", "en-IN")}`
+            : "No pricing";
+
+        console.log(`  Price range for ${charge.chargeCode}: ${priceRange}`);
+
+        // Enhanced Doctor Share calculation
+        let totalDoctorShares = 0;
+        let doctorShareInfo = { isEnabled: false, doctorCount: 0, hasValidShares: false };
+        if (charge.DoctorShares && Array.isArray(charge.DoctorShares)) {
+          totalDoctorShares = charge.DoctorShares.reduce((sum, share) => {
+            if (share && typeof share === "object") {
+              const doctorShare = Number(share.doctorShare) || 0;
+              return sum + doctorShare;
+            }
+            return sum;
+          }, 0);
+          doctorShareInfo = {
+            isEnabled: String(charge.doctorShareYN) === "Y" || String(charge.doctorShareYN) === "1",
+            doctorCount: charge.DoctorShares.length,
+            hasValidShares: charge.DoctorShares.length > 0 && totalDoctorShares > 0,
+          };
+          console.log(`  Total doctor shares for ${charge.chargeCode}: ${totalDoctorShares}%`);
+        }
+
+        const aliasCount = charge.ChargeAliases && Array.isArray(charge.ChargeAliases) ? charge.ChargeAliases.length : 0;
+        const packCount = charge.ChargePacks && Array.isArray(charge.ChargePacks) ? charge.ChargePacks.length : 0;
+
+        // Enhanced Service Group Display
+        let serviceGroupDisplay = "Not specified";
+
+        if (charge.serviceGroupID) {
+          console.log(`  Looking up serviceGroupID ${charge.serviceGroupID} for ${charge.chargeCode}`);
+
+          // First try serviceGroup dropdown
+          const serviceGroupItem = serviceGroup.find((s) => {
+            const matchesValue = Number(s.value) === Number(charge.serviceGroupID);
+            const matchesLabel = s.label?.toLowerCase().includes(charge.chargeType?.toLowerCase() || "");
+            return matchesValue || matchesLabel;
+          });
+
+          if (serviceGroupItem) {
+            serviceGroupDisplay = serviceGroupItem.label;
+            console.log(`    Found in serviceGroup: ${serviceGroupDisplay}`);
+          } else {
+            // Fallback to serviceType dropdown
+            const serviceTypeItem = serviceType.find((s) => {
+              const matchesValue = Number(s.value) === Number(charge.serviceGroupID);
+              const matchesLabel = s.label?.toLowerCase().includes(charge.chargeType?.toLowerCase() || "");
+              return matchesValue || matchesLabel;
+            });
+
+            if (serviceTypeItem) {
+              serviceGroupDisplay = serviceTypeItem.label;
+              console.log(`    Found in serviceType: ${serviceGroupDisplay}`);
+            } else {
+              // Try to match by chargeType
+              const typeBasedItem = [...serviceGroup, ...serviceType].find((s) => s.label?.toLowerCase() === charge.chargeType?.toLowerCase());
+
+              if (typeBasedItem) {
+                serviceGroupDisplay = typeBasedItem.label;
+                console.log(`    Found by chargeType match: ${serviceGroupDisplay}`);
+              } else {
+                console.log(`    No match found for serviceGroupID ${charge.serviceGroupID}`);
+                serviceGroupDisplay = charge.chargeType || "Not specified";
+              }
+            }
+          }
+        } else {
+          // If no serviceGroupID, try to use chargeType
+          serviceGroupDisplay = charge.chargeType || "Not specified";
+          console.log(`  No serviceGroupID, using chargeType: ${serviceGroupDisplay}`);
+        }
+
+        const enhancedCharge = {
+          ...charge,
+          lowestPrice,
+          highestPrice,
+          priceRange,
+          doctorShareInfo, // Use the new structure instead of totalDoctorShares
+          aliasCount,
+          packCount,
+          serviceGroupDisplay,
+        };
+
+        console.log(`  Enhanced charge ${charge.chargeCode}:`, {
+          priceRange: enhancedCharge.priceRange,
+          serviceGroupDisplay: enhancedCharge.serviceGroupDisplay,
+          doctorShareInfo: enhancedCharge.doctorShareInfo,
+        });
+
+        return enhancedCharge;
+      } catch (error) {
+        console.error(`Error processing charge ${charge.chargeID}:`, error);
+        // Return charge with default values if processing fails
+        return {
+          ...charge,
+          lowestPrice: 0,
+          highestPrice: 0,
+          priceRange: "No pricing",
+          doctorShareInfo: { isEnabled: false, doctorCount: 0, hasValidShares: false },
+          aliasCount: 0,
+          packCount: 0,
+          serviceGroupDisplay: charge.chargeType || "Not specified",
+        };
+      }
     });
-  }, [charges, serviceType]);
+  }, [charges, serviceType, serviceGroup]);
 
   const filteredCharges = useMemo(() => {
-    let filtered = enhancedCharges;
+    console.log("Filtering charges...");
+
+    if (!enhancedCharges || enhancedCharges.length === 0) {
+      console.log("No enhanced charges to filter");
+      return [];
+    }
+
+    let filtered = [...enhancedCharges];
+    console.log("Starting with", filtered.length, "charges");
+
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter((charge) => {
-        return (
-          charge.chargeCode.toLowerCase().includes(searchLower) ||
-          charge.chargeDesc.toLowerCase().includes(searchLower) ||
-          charge.chargesHDesc?.toLowerCase().includes(searchLower) ||
-          charge.cShortName?.toLowerCase().includes(searchLower) ||
-          charge.serviceGroupDisplay?.toLowerCase().includes(searchLower)
-        );
+        try {
+          const matches =
+            (charge.chargeCode && charge.chargeCode.toLowerCase().includes(searchLower)) ||
+            (charge.chargeDesc && charge.chargeDesc.toLowerCase().includes(searchLower)) ||
+            (charge.chargesHDesc && charge.chargesHDesc.toLowerCase().includes(searchLower)) ||
+            (charge.cShortName && charge.cShortName.toLowerCase().includes(searchLower)) ||
+            (charge.serviceGroupDisplay && charge.serviceGroupDisplay.toLowerCase().includes(searchLower));
+          return matches;
+        } catch (error) {
+          console.error("Error filtering charge:", charge.chargeID, error);
+          return false;
+        }
       });
+      console.log("After search filter:", filtered.length, "charges");
     }
 
     if (filterType !== "all") {
       filtered = filtered.filter((charge) => charge.chargeType === filterType);
+      console.log("After type filter:", filtered.length, "charges");
     }
 
     if (filterStatus !== "all") {
-      filtered = filtered.filter((charge) => charge.chargeStatus === filterStatus);
+      filtered = filtered.filter((charge) => {
+        if (filterStatus === "AC") {
+          return charge.chargeStatus === "AC" || charge.rActiveYN === "Y";
+        } else if (filterStatus === "IN") {
+          return charge.chargeStatus === "IN" || charge.rActiveYN === "N";
+        }
+        return true;
+      });
+      console.log("After status filter:", filtered.length, "charges");
     }
 
+    console.log("Final filtered charges:", filtered.length);
     return filtered;
   }, [enhancedCharges, searchTerm, filterType, filterStatus]);
 
   const statistics = useMemo(() => {
+    if (!enhancedCharges || enhancedCharges.length === 0) {
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        withDoctorShare: 0,
+        serviceCharges: 0,
+        procedureCharges: 0,
+      };
+    }
+
     const total = enhancedCharges.length;
     const active = enhancedCharges.filter((c) => c.rActiveYN === "Y").length;
     const inactive = enhancedCharges.filter((c) => c.rActiveYN === "N").length;
-    const withDoctorShare = enhancedCharges.filter((c) => c.doctorShareYN === "Y").length;
+
+    // Enhanced doctor share detection using the new structure with fallback
+    const withDoctorShare = enhancedCharges.filter((c) => {
+      const shareInfo = c.doctorShareInfo || { isEnabled: false, doctorCount: 0, hasValidShares: false };
+
+      // Also check direct fields as fallback
+      const directDoctorCount = c.DoctorShares?.length || 0;
+      const directlyEnabled = String(c.doctorShareYN) === "Y" || String(c.doctorShareYN) === "1";
+
+      const hasSharing = shareInfo.isEnabled || shareInfo.doctorCount > 0 || shareInfo.hasValidShares || directlyEnabled || directDoctorCount > 0;
+
+      return hasSharing;
+    }).length;
+
     const serviceCharges = enhancedCharges.filter((c) => c.chargeType === "SVC").length;
     const procedureCharges = enhancedCharges.filter((c) => c.chargeType === "PROC").length;
 
@@ -163,11 +403,11 @@ const ScheduleOfChargesPage: React.FC = () => {
           chargeID: 0,
           chargeCode: newCode,
           chargeDesc: `${charge.chargeDesc} (Copy)`,
-          ChargeDetails: charge.ChargeDetails.map((detail) => ({ ...detail, chDetID: 0, chargeID: 0 })),
-          DoctorShares: charge.DoctorShares.map((share) => ({ ...share, docShareID: 0, chargeID: 0 })),
-          ChargeAliases: charge.ChargeAliases.map((alias) => ({ ...alias, chAliasID: 0, chargeID: 0 })),
-          ChargeFaculties: charge.ChargeFaculties.map((faculty) => ({ ...faculty, chFacID: 0, chargeID: 0 })),
-          ChargePacks: charge.ChargePacks.map((pack) => ({ ...pack, chPackID: 0, chargeID: 0 })),
+          ChargeDetails: charge.ChargeDetails?.map((detail) => ({ ...detail, chDetID: 0, chargeID: 0 })) || [],
+          DoctorShares: charge.DoctorShares?.map((share) => ({ ...share, docShareID: 0, chargeID: 0 })) || [],
+          ChargeAliases: charge.ChargeAliases?.map((alias) => ({ ...alias, chAliasID: 0, chargeID: 0 })) || [],
+          ChargeFaculties: charge.ChargeFaculties?.map((faculty) => ({ ...faculty, chFacID: 0, chargeID: 0 })) || [],
+          ChargePacks: charge.ChargePacks?.map((pack) => ({ ...pack, chPackID: 0, chargeID: 0 })) || [],
         };
 
         setSelectedCharge(copiedCharge);
@@ -211,10 +451,10 @@ const ScheduleOfChargesPage: React.FC = () => {
       render: (charge) => (
         <Box>
           <Typography variant="body2" fontWeight="medium">
-            {charge.chargeCode}
+            {charge.chargeCode || "N/A"}
           </Typography>
           <Typography variant="body2" color="primary" sx={{ mt: 0.5 }}>
-            {charge.chargeDesc}
+            {charge.chargeDesc || "N/A"}
           </Typography>
           {charge.cShortName && (
             <Typography variant="caption" color="text.secondary">
@@ -232,9 +472,9 @@ const ScheduleOfChargesPage: React.FC = () => {
       width: 150,
       render: (charge) => (
         <Box>
-          <Chip label={charge.chargeType} size="small" color="primary" variant="outlined" />
+          <Chip label={charge.chargeType || "N/A"} size="small" color="primary" variant="outlined" />
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-            {charge.serviceGroupDisplay}
+            {charge.serviceGroupDisplay || "Not specified"}
           </Typography>
         </Box>
       ),
@@ -248,10 +488,10 @@ const ScheduleOfChargesPage: React.FC = () => {
       render: (charge) => (
         <Box>
           <Typography variant="body2" fontWeight="medium">
-            {charge.priceRange}
+            {charge.priceRange || "No pricing"}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {charge.ChargeDetails?.length || 0} price levels
+            {charge.ChargeDetails && Array.isArray(charge.ChargeDetails) ? charge.ChargeDetails.length : 0} price levels
           </Typography>
         </Box>
       ),
@@ -262,20 +502,52 @@ const ScheduleOfChargesPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 120,
-      render: (charge) => (
-        <Box>
-          {charge.doctorShareYN === "Y" ? (
-            <>
-              <Chip icon={<DoctorIcon />} label={`${charge.totalDoctorShares}%`} size="small" color="success" variant="filled" />
+      render: (charge) => {
+        const shareInfo = charge.doctorShareInfo || { isEnabled: false, doctorCount: 0, hasValidShares: false };
+
+        // Temporary: Also try to detect directly from the raw charge data as fallback
+        const directDoctorCount = charge.DoctorShares?.length || charge.doctorShares?.length || 0;
+        const directlyEnabled = String(charge.doctorShareYN) === "Y" || String(charge.doctorShareYN) === "1";
+
+        // Use either the processed shareInfo or direct detection
+        const isEnabled = shareInfo.isEnabled || directlyEnabled;
+        const doctorCount = shareInfo.doctorCount || directDoctorCount;
+        const hasValidShares = shareInfo.hasValidShares || directDoctorCount > 0;
+
+        console.log(`Rendering doctor share for ${charge.chargeCode}:`, {
+          shareInfo,
+          directDoctorCount,
+          directlyEnabled,
+          finalValues: { isEnabled, doctorCount, hasValidShares },
+        });
+
+        // Show doctor sharing information based on what we can reliably determine
+        if (isEnabled || doctorCount > 0 || hasValidShares) {
+          return (
+            <Box>
+              <Chip
+                icon={<DoctorIcon />}
+                label={doctorCount > 0 ? `${doctorCount} Doctors` : "Enabled"}
+                size="small"
+                color={hasValidShares ? "success" : "warning"}
+                variant="filled"
+              />
               <Typography variant="caption" color="text.secondary" display="block">
-                {charge.DoctorShares?.length || 0} doctors
+                {hasValidShares ? "Configured" : "Setup Required"}
               </Typography>
-            </>
-          ) : (
-            <Chip label="No Share" size="small" color="default" variant="outlined" />
-          )}
-        </Box>
-      ),
+            </Box>
+          );
+        } else {
+          return (
+            <Box>
+              <Chip label="No Share" size="small" color="default" variant="outlined" />
+              <Typography variant="caption" color="text.secondary" display="block">
+                Not enabled
+              </Typography>
+            </Box>
+          );
+        }
+      },
     },
     {
       key: "configuration",
@@ -286,7 +558,7 @@ const ScheduleOfChargesPage: React.FC = () => {
       render: (charge) => (
         <Stack spacing={0.5}>
           {(charge.aliasCount ?? 0) > 0 && <Chip label={`${charge.aliasCount} Aliases`} size="small" color="info" variant="outlined" />}
-          {(charge.packCount ?? 0) > 0 && <Chip label={`${charge.packCount ?? 0} Packs`} size="small" color="secondary" variant="outlined" />}
+          {(charge.packCount ?? 0) > 0 && <Chip label={`${charge.packCount} Packs`} size="small" color="secondary" variant="outlined" />}
           {charge.regServiceYN === "Y" && <Chip label="Registration" size="small" color="warning" variant="outlined" />}
         </Stack>
       ),
@@ -356,6 +628,7 @@ const ScheduleOfChargesPage: React.FC = () => {
           <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={refreshCharges} asynchronous />
         </Stack>
       </Box>
+
       <Grid container spacing={2} mb={3}>
         <Grid size={{ xs: 12, md: 2 }}>
           <Card sx={{ borderLeft: "4px solid #1976d2" }}>
@@ -460,7 +733,7 @@ const ScheduleOfChargesPage: React.FC = () => {
             <TextField fullWidth size="small" select label="Charge Type" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <MenuItem value="all">All Types</MenuItem>
               {serviceType.map((type) => (
-                <MenuItem key={type.value} value={type.value}>
+                <MenuItem key={type.value} value={type.label}>
                   {type.label}
                 </MenuItem>
               ))}
