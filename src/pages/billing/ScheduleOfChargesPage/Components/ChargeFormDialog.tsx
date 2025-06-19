@@ -234,8 +234,14 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
   useEffect(() => {
     if (open) {
-      debugger;
+      console.log("=== FORM DIALOG OPENING ===");
+      console.log("Charge data received:", charge);
+
       if (charge) {
+        // *** FIXED: Comprehensive field mapping for edit mode ***
+        console.log("Edit mode - mapping charge data");
+
+        // Normalize ChargeAliases
         const normalizedChargeAliases = [];
         const rawAliases = charge.chargeAliases || charge.ChargeAliases || [];
         if (Array.isArray(rawAliases) && rawAliases.length > 0) {
@@ -253,7 +259,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           }
         }
 
-        // Normalize ChargeDetails with proper field mapping
+        // Normalize ChargeDetails
         const normalizedChargeDetails = [];
         const rawChargeDetails = charge.ChargeDetails || charge.chargeDetails || [];
         if (Array.isArray(rawChargeDetails) && rawChargeDetails.length > 0) {
@@ -294,6 +300,47 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         }
 
         const selectedFacultiesIds = extractSelectedFaculties(charge.ChargeFaculties || charge.chargeFaculties || []);
+
+        // *** FIXED: Proper serviceGroupID mapping ***
+        let serviceGroupID = null;
+        if (charge.serviceGroupID !== undefined && charge.serviceGroupID !== null) {
+          serviceGroupID = charge.serviceGroupID;
+        } else if (charge.sGrpID !== undefined && charge.sGrpID !== null) {
+          serviceGroupID = charge.sGrpID;
+        }
+
+        // *** FIXED: Proper date handling ***
+        let scheduleDate = null;
+        if (charge.scheduleDate) {
+          try {
+            if (typeof charge.scheduleDate === "string") {
+              scheduleDate = dayjs(charge.scheduleDate);
+            } else if (charge.scheduleDate instanceof Date) {
+              scheduleDate = dayjs(charge.scheduleDate);
+            } else {
+              scheduleDate = dayjs(charge.scheduleDate);
+            }
+
+            // Validate the date
+            if (!scheduleDate.isValid()) {
+              console.warn("Invalid schedule date:", charge.scheduleDate);
+              scheduleDate = null;
+            }
+          } catch (error) {
+            console.warn("Could not parse schedule date:", charge.scheduleDate, error);
+            scheduleDate = null;
+          }
+        }
+
+        console.log("Mapped fields:", {
+          chargeID: charge.chargeID,
+          serviceGroupID: serviceGroupID,
+          originalServiceGroupID: charge.serviceGroupID,
+          originalSGrpID: charge.sGrpID,
+          scheduleDate: scheduleDate,
+          originalScheduleDate: charge.scheduleDate,
+        });
+
         const formData = {
           chargeID: charge.chargeID || 0,
           chargeCode: charge.chargeCode || "",
@@ -314,8 +361,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           cNhsCode: charge.cNhsCode || "",
           cNhsEnglishName: charge.cNhsEnglishName || "",
           chargeCost: charge.chargeCost || 0,
-          serviceGroupID: charge.serviceGroupID || charge.sGrpID || null,
-          scheduleDate: charge.scheduleDate ? dayjs(charge.scheduleDate) : null,
+          serviceGroupID: serviceGroupID, // *** FIXED: Use properly mapped value ***
+          scheduleDate: scheduleDate, // *** FIXED: Use properly parsed date ***
           selectedFaculties: selectedFacultiesIds,
           ChargeDetails: normalizedChargeDetails,
           DoctorShares: normalizedDoctorShares,
@@ -324,6 +371,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           ChargePacks: charge.ChargePacks || charge.chargePacks || [],
         };
 
+        console.log("Final form data being set:", formData);
         reset(formData);
 
         // Initialize grid data with normalized charge details
@@ -336,6 +384,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         setFacultiesExpanded((charge.ChargeFaculties?.length || charge.chargeFaculties?.length || 0) > 0);
         setPacksExpanded((charge.ChargePacks?.length || charge.chargePacks?.length || 0) > 0);
       } else {
+        // New charge mode
+        console.log("New charge mode");
         const newChargeData = {
           chargeID: 0,
           chargeCode: "",
@@ -511,13 +561,22 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
   const onFormSubmit = async (data: ChargeFormData) => {
     try {
-      debugger;
+      console.log("=== FORM SUBMIT ===");
+      console.log("Form data before processing:", data);
+      console.log("Is edit mode:", isEditMode);
+
       updateAllComponentsData();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const latestFormData = getValues();
 
+      console.log("Latest form data after component updates:", latestFormData);
+
+      // *** FIXED: Ensure chargeID is preserved for updates ***
+      const chargeID = isEditMode && charge ? charge.chargeID : 0;
+      console.log("Using chargeID:", chargeID);
+
       const formattedData: ChargeWithAllDetailsDto = {
-        chargeID: latestFormData.chargeID || 0,
+        chargeID: chargeID, // *** FIXED: Use the original charge ID for updates ***
         chargeCode: latestFormData.chargeCode,
         chargeDesc: latestFormData.chargeDesc,
         chargesHDesc: latestFormData.chargesHDesc || "",
@@ -537,13 +596,13 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         cNhsCode: latestFormData.cNhsCode || "",
         cNhsEnglishName: latestFormData.cNhsEnglishName || "",
         chargeCost: latestFormData.chargeCost || 0,
-        serviceGroupID: latestFormData.serviceGroupID || 0,
+        serviceGroupID: latestFormData.serviceGroupID || 0, // *** FIXED: Include serviceGroupID ***
         scheduleDate: latestFormData.scheduleDate ? (dayjs.isDayjs(latestFormData.scheduleDate) ? latestFormData.scheduleDate.toDate() : latestFormData.scheduleDate) : null,
 
         ChargeDetails:
           latestFormData.ChargeDetails?.map((detail) => ({
             chDetID: detail.chDetID || 0,
-            chargeID: latestFormData.chargeID || 0,
+            chargeID: chargeID, // *** FIXED: Use the correct charge ID ***
             pTypeID: detail.pTypeID,
             wCatID: detail.wCatID,
             DcValue: detail.DcValue || 0,
@@ -554,7 +613,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             rTransferYN: "N",
             ChargePacks: (detail.ChargePacks || []).map((pack: any) => ({
               chPackID: pack.chPackID || 0,
-              chargeID: pack.chargeID || latestFormData.chargeID || 0,
+              chargeID: pack.chargeID || chargeID,
               chDetID: pack.chDetID || detail.chDetID || 0,
               chargeRevise: pack.chargeRevise || "",
               chargeStatus: pack.chargeStatus || "AC",
@@ -574,7 +633,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             let docShareID = share.docShareID || 0;
             return {
               docShareID: docShareID,
-              chargeID: latestFormData.chargeID || 0,
+              chargeID: chargeID, // *** FIXED: Use the correct charge ID ***
               conID: conID,
               doctorShare: Number(share.doctorShare) || 0,
               hospShare: Number(share.hospShare) || 0,
@@ -587,7 +646,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         ChargeAliases:
           latestFormData.ChargeAliases?.map((alias) => ({
             chAliasID: alias.chAliasID || 0,
-            chargeID: latestFormData.chargeID || 0,
+            chargeID: chargeID, // *** FIXED: Use the correct charge ID ***
             pTypeID: alias.pTypeID,
             chargeDesc: alias.chargeDesc,
             chargeDescLang: alias.chargeDescLang,
@@ -599,7 +658,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         ChargeFaculties:
           latestFormData.ChargeFaculties?.map((faculty: BChargeFacultyDto) => ({
             chFacID: faculty.chFacID || 0,
-            chargeID: latestFormData.chargeID || 0,
+            chargeID: chargeID, // *** FIXED: Use the correct charge ID ***
             aSubID: faculty.aSubID,
             rActiveYN: "Y",
             rTransferYN: "N",
@@ -609,7 +668,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         ChargePacks:
           latestFormData.ChargePacks?.map((pack) => ({
             chPackID: pack.chPackID || 0,
-            chargeID: latestFormData.chargeID || 0,
+            chargeID: chargeID, // *** FIXED: Use the correct charge ID ***
             chDetID: pack.chDetID,
             chargeRevise: pack.chargeRevise,
             chargeStatus: pack.chargeStatus || "AC",
@@ -622,6 +681,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             rTransferYN: "N",
           })) || [],
       };
+
+      console.log("Final formatted data being submitted:", formattedData);
       await onSubmit(formattedData);
     } catch (error) {
       throw error;
@@ -631,6 +692,26 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   const handleClear = () => {
     if (isEditMode && charge) {
       const selectedFacultiesIds = extractSelectedFaculties(charge.ChargeFaculties || []);
+
+      // *** FIXED: Use proper field mapping for reset ***
+      let serviceGroupID = null;
+      if (charge.serviceGroupID !== undefined && charge.serviceGroupID !== null) {
+        serviceGroupID = charge.serviceGroupID;
+      } else if (charge.sGrpID !== undefined && charge.sGrpID !== null) {
+        serviceGroupID = charge.sGrpID;
+      }
+
+      let scheduleDate = null;
+      if (charge.scheduleDate) {
+        try {
+          scheduleDate = dayjs(charge.scheduleDate);
+          if (!scheduleDate.isValid()) {
+            scheduleDate = null;
+          }
+        } catch (error) {
+          scheduleDate = null;
+        }
+      }
 
       reset({
         chargeID: charge.chargeID || 0,
@@ -652,8 +733,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         cNhsCode: charge.cNhsCode || "",
         cNhsEnglishName: charge.cNhsEnglishName || "",
         chargeCost: charge.chargeCost || 0,
-        serviceGroupID: charge.serviceGroupID || null,
-        scheduleDate: charge.scheduleDate ? dayjs(charge.scheduleDate) : null,
+        serviceGroupID: serviceGroupID, // *** FIXED: Use properly mapped value ***
+        scheduleDate: scheduleDate, // *** FIXED: Use properly parsed date ***
         selectedFaculties: selectedFacultiesIds,
         ChargeDetails: charge.ChargeDetails || [],
         DoctorShares: charge.DoctorShares || [],

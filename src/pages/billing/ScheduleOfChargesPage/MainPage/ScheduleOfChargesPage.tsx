@@ -2,7 +2,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
+import { ChargeCodeGenerationDto, ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { formatCurrency } from "@/utils/Common/formatUtils";
 import {
@@ -364,61 +364,226 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleEditCharge = useCallback(
     async (charge: ChargeWithAllDetailsDto) => {
       try {
+        console.log("=== HANDLING EDIT CHARGE ===");
+        console.log("Charge to edit:", charge);
+
         const fullChargeDetails = await getChargeById(charge.chargeID);
         if (fullChargeDetails) {
+          console.log("Full charge details fetched:", fullChargeDetails);
+
+          // *** FIX: Comprehensive data normalization ***
+          // Normalize data structure similar to copy function but preserve all data
           if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
             fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
           }
+          if (fullChargeDetails.chargeDetails && !fullChargeDetails.ChargeDetails) {
+            fullChargeDetails.ChargeDetails = fullChargeDetails.chargeDetails;
+          }
+          if (fullChargeDetails.doctorShares && !fullChargeDetails.DoctorShares) {
+            fullChargeDetails.DoctorShares = fullChargeDetails.doctorShares;
+          }
+          if (fullChargeDetails.chargeFaculties && !fullChargeDetails.ChargeFaculties) {
+            fullChargeDetails.ChargeFaculties = fullChargeDetails.chargeFaculties;
+          }
+          if (fullChargeDetails.chargePacks && !fullChargeDetails.ChargePacks) {
+            fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
+          }
+
+          // *** FIX: Ensure serviceGroupID is properly mapped ***
+          // The API might return sGrpID but the form expects serviceGroupID
+          if (fullChargeDetails.sGrpID !== undefined && fullChargeDetails.serviceGroupID === undefined) {
+            fullChargeDetails.serviceGroupID = fullChargeDetails.sGrpID;
+          }
+
+          // *** FIX: Ensure scheduleDate is properly formatted ***
+          // Make sure the date is in the correct format for the form
+          if (fullChargeDetails.scheduleDate && typeof fullChargeDetails.scheduleDate === "string") {
+            try {
+              fullChargeDetails.scheduleDate = new Date(fullChargeDetails.scheduleDate);
+            } catch (error) {
+              console.warn("Could not parse schedule date:", fullChargeDetails.scheduleDate);
+              fullChargeDetails.scheduleDate = null;
+            }
+          }
+
+          console.log("Normalized charge details for edit:", {
+            chargeID: fullChargeDetails.chargeID,
+            serviceGroupID: fullChargeDetails.serviceGroupID,
+            sGrpID: fullChargeDetails.sGrpID,
+            scheduleDate: fullChargeDetails.scheduleDate,
+            ChargeDetails: fullChargeDetails.ChargeDetails?.length || 0,
+            DoctorShares: fullChargeDetails.DoctorShares?.length || 0,
+            ChargeAliases: fullChargeDetails.ChargeAliases?.length || 0,
+            ChargeFaculties: fullChargeDetails.ChargeFaculties?.length || 0,
+            ChargePacks: fullChargeDetails.ChargePacks?.length || 0,
+          });
+
           setSelectedCharge(fullChargeDetails);
           setIsChargeFormOpen(true);
         } else {
           showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
         }
       } catch (error) {
+        console.error("Error in handleEditCharge:", error);
         showAlert("Error", "An error occurred while fetching charge details.", "error");
       }
     },
     [getChargeById, showAlert]
   );
 
-  const handleViewDetails = useCallback((charge: EnhancedChargeDto) => {
-    setSelectedCharge(charge);
-    setIsDetailsDialogOpen(true);
-  }, []);
+  // Update this function in your ScheduleOfChargesPage.tsx
+
+  const handleViewDetails = useCallback(
+    async (charge: EnhancedChargeDto) => {
+      try {
+        // Fetch complete charge details with all relationships
+        const fullChargeDetails = await getChargeById(charge.chargeID);
+        if (fullChargeDetails) {
+          // Normalize data structure similar to edit function
+          if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
+            fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
+          }
+          if (fullChargeDetails.chargeDetails && !fullChargeDetails.ChargeDetails) {
+            fullChargeDetails.ChargeDetails = fullChargeDetails.chargeDetails;
+          }
+          if (fullChargeDetails.doctorShares && !fullChargeDetails.DoctorShares) {
+            fullChargeDetails.DoctorShares = fullChargeDetails.doctorShares;
+          }
+          if (fullChargeDetails.chargeFaculties && !fullChargeDetails.ChargeFaculties) {
+            fullChargeDetails.ChargeFaculties = fullChargeDetails.chargeFaculties;
+          }
+          if (fullChargeDetails.chargePacks && !fullChargeDetails.ChargePacks) {
+            fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
+          }
+
+          console.log("Full charge details loaded for view:", fullChargeDetails);
+          setSelectedCharge(fullChargeDetails);
+          setIsDetailsDialogOpen(true);
+        } else {
+          showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
+        }
+      } catch (error) {
+        console.error("Error fetching charge details:", error);
+        showAlert("Error", "An error occurred while fetching charge details.", "error");
+      }
+    },
+    [getChargeById, showAlert]
+  );
 
   const handleCopyCharge = useCallback(
     async (charge: EnhancedChargeDto) => {
       try {
-        if (typeof charge.serviceGroupID !== "number") {
-          showAlert("Error", "Service Group ID is missing or invalid", "error");
+        // First fetch the complete charge details like in handleEditCharge
+        const fullChargeDetails = await getChargeById(charge.chargeID);
+        if (!fullChargeDetails) {
+          showAlert("Error", "Could not fetch complete charge details. Please try again.", "error");
           return;
         }
-        const newCode = await generateChargeCode({
-          ChargeType: charge.chargeType,
-          ChargeTo: charge.chargeTo,
-          ServiceGroupId: charge.serviceGroupID,
-        });
-        const copiedCharge: ChargeWithAllDetailsDto = {
-          ...charge,
-          chargeID: 0,
-          chargeCode: newCode,
-          chargeDesc: `${charge.chargeDesc} (Copy)`,
-          ChargeDetails: charge.ChargeDetails?.map((detail) => ({ ...detail, chDetID: 0, chargeID: 0 })) || [],
-          DoctorShares: charge.DoctorShares?.map((share) => ({ ...share, docShareID: 0, chargeID: 0 })) || [],
-          ChargeAliases: charge.ChargeAliases?.map((alias) => ({ ...alias, chAliasID: 0, chargeID: 0 })) || [],
-          ChargeFaculties: charge.ChargeFaculties?.map((faculty) => ({ ...faculty, chFacID: 0, chargeID: 0 })) || [],
-          ChargePacks: charge.ChargePacks?.map((pack) => ({ ...pack, chPackID: 0, chargeID: 0 })) || [],
+
+        // Normalize data structure similar to edit function
+        if (fullChargeDetails.chargeAliases && !fullChargeDetails.ChargeAliases) {
+          fullChargeDetails.ChargeAliases = fullChargeDetails.chargeAliases;
+        }
+        if (fullChargeDetails.chargeDetails && !fullChargeDetails.ChargeDetails) {
+          fullChargeDetails.ChargeDetails = fullChargeDetails.chargeDetails;
+        }
+        if (fullChargeDetails.doctorShares && !fullChargeDetails.DoctorShares) {
+          fullChargeDetails.DoctorShares = fullChargeDetails.doctorShares;
+        }
+        if (fullChargeDetails.chargeFaculties && !fullChargeDetails.ChargeFaculties) {
+          fullChargeDetails.ChargeFaculties = fullChargeDetails.chargeFaculties;
+        }
+        if (fullChargeDetails.chargePacks && !fullChargeDetails.ChargePacks) {
+          fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
+        }
+
+        // Get serviceGroupID - use sGrpID as fallback and allow 0 as valid value since it's optional
+        const serviceGroupId = fullChargeDetails.serviceGroupID ?? fullChargeDetails.sGrpID ?? 0;
+
+        // Validate that we have the required fields for code generation
+        if (!fullChargeDetails.chargeType || !fullChargeDetails.chargeTo) {
+          showAlert("Error", "Charge type or charge to is missing from the charge details", "error");
+          return;
+        }
+
+        // Generate new charge code (ServiceGroupId is optional, so 0 is valid)
+        const codeGenData: ChargeCodeGenerationDto = {
+          ChargeType: fullChargeDetails.chargeType,
+          ChargeTo: fullChargeDetails.chargeTo,
         };
 
+        // Only include ServiceGroupId if it's a valid positive number
+        if (serviceGroupId && serviceGroupId > 0) {
+          codeGenData.ServiceGroupId = serviceGroupId;
+        }
+
+        console.log("Generating charge code with data:", codeGenData);
+        const newCode = await generateChargeCode(codeGenData);
+
+        // Create copied charge with all details
+        const copiedCharge: ChargeWithAllDetailsDto = {
+          ...fullChargeDetails,
+          chargeID: 0,
+          chargeCode: newCode,
+          chargeDesc: `${fullChargeDetails.chargeDesc} (Copy)`,
+          // Ensure serviceGroupID is properly set (keep original value even if 0)
+          serviceGroupID: serviceGroupId,
+
+          // Reset IDs for all related entities
+          ChargeDetails:
+            fullChargeDetails.ChargeDetails?.map((detail) => ({
+              ...detail,
+              chDetID: 0,
+              chargeID: 0,
+              ChargePacks:
+                detail.ChargePacks?.map((pack) => ({
+                  ...pack,
+                  chPackID: 0,
+                  chargeID: 0,
+                  chDetID: 0,
+                })) || [],
+            })) || [],
+
+          DoctorShares:
+            fullChargeDetails.DoctorShares?.map((share) => ({
+              ...share,
+              docShareID: 0,
+              chargeID: 0,
+            })) || [],
+
+          ChargeAliases:
+            fullChargeDetails.ChargeAliases?.map((alias) => ({
+              ...alias,
+              chAliasID: 0,
+              chargeID: 0,
+            })) || [],
+
+          ChargeFaculties:
+            fullChargeDetails.ChargeFaculties?.map((faculty) => ({
+              ...faculty,
+              chFacID: 0,
+              chargeID: 0,
+            })) || [],
+
+          ChargePacks:
+            fullChargeDetails.ChargePacks?.map((pack) => ({
+              ...pack,
+              chPackID: 0,
+              chargeID: 0,
+              chDetID: 0,
+            })) || [],
+        };
+
+        console.log("Copied charge with full details:", copiedCharge);
         setSelectedCharge(copiedCharge);
         setIsChargeFormOpen(true);
       } catch (error) {
+        console.error("Error copying charge:", error);
         showAlert("Error", "Failed to copy charge", "error");
       }
     },
-    [generateChargeCode, showAlert]
+    [getChargeById, generateChargeCode, showAlert]
   );
-
   const handleChargeSubmit = useCallback(
     async (chargeData: ChargeWithAllDetailsDto) => {
       try {
