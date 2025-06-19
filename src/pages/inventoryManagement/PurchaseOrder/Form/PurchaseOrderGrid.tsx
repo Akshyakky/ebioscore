@@ -1,6 +1,5 @@
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import { PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { Delete as DeleteIcon, Inventory as InventoryIcon, LocalFireDepartment, ShoppingCart as PurchaseIcon } from "@mui/icons-material";
@@ -14,7 +13,7 @@ interface PurchaseOrderGridProps {
   control: Control<any>;
   purchaseOrderDetails: PurchaseOrderDetailDto[];
   onDetailsUpdate: (details: PurchaseOrderDetailDto[]) => void;
-  selectedProduct: ProductSearchResult | null;
+  selectedProduct: PurchaseOrderDetailDto | null;
   approvedDisable: boolean;
   setValue: UseFormSetValue<any>;
   pOID: number;
@@ -36,7 +35,6 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
   }>({ open: false, index: null });
 
   const departmentId = control._formValues.fromDeptID;
-  console.log("_formValues", control._formValues);
   // Convert purchase order details to rows with proper IDs
   const gridRows: PurchaseOrderDetailRow[] = useMemo(() => {
     return purchaseOrderDetails
@@ -49,7 +47,6 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
         transferYN: "N",
       }));
   }, [purchaseOrderDetails]);
-  console.log("gridRows", gridRows);
 
   // Handle product selection
   useEffect(() => {
@@ -163,58 +160,56 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
         return;
       }
 
-      if (field === "discAmt") {
-        const totalPackPrice = (currentRow.unitPrice || 0) * (currentRow.receivedQty || 0);
-        if (value > totalPackPrice) {
-          showAlert("Warning", "Discount amount cannot exceed pack price", "warning");
-          return;
-        }
-      }
-
-      // Update field
+      // Update field first
       (currentRow as any)[field] = value;
 
-      // Recalculate amounts
-      const receivedQty = currentRow.receivedQty || 0;
+      // Get base values
+      const requiredPack = currentRow.requiredPack || 0;
       const unitPack = currentRow.unitPack || 1;
       const unitPrice = currentRow.unitPrice || 0;
-      const totAmt = currentRow.totAmt || 0;
+      const gstPercentage = currentRow.gstPerValue || 0;
 
-      currentRow.requiredUnitQty = receivedQty * unitPack;
-      const totalPrice = unitPrice * receivedQty;
+      // Calculate required unit quantity
+      currentRow.requiredUnitQty = parseFloat((requiredPack * unitPack).toFixed(2));
+
+      // Calculate base amount (before discount and GST)
+      const baseAmount = unitPrice * requiredPack;
+
+      // Validation for discount amount
+      if (field === "discAmt" && value > baseAmount) {
+        showAlert("Warning", "Discount amount cannot exceed total pack price", "warning");
+        return;
+      }
+
+      // Handle GST percentage split
+      if (field === "gstPerValue") {
+        currentRow.cgstPerValue = parseFloat((value / 2).toFixed(2));
+        currentRow.sgstPerValue = parseFloat((value / 2).toFixed(2));
+      }
 
       // Handle discount calculations
+      let discPercentage = currentRow.discPercentageAmt || 0;
+      let discAmount = currentRow.discAmt || 0;
+
       if (field === "discPercentageAmt") {
-        currentRow.discAmt = (totalPrice * value) / 100;
+        // Calculate discount amount from percentage
+        discAmount = parseFloat(((baseAmount * value) / 100).toFixed(2));
+        currentRow.discAmt = discAmount;
       } else if (field === "discAmt") {
-        currentRow.discPercentageAmt = totalPrice > 0 ? (value / totalPrice) * 100 : 0;
+        // Calculate discount percentage from amount
+        discPercentage = parseFloat((baseAmount > 0 ? (value / baseAmount) * 100 : 0).toFixed(2));
+        currentRow.discPercentageAmt = discPercentage;
+        discAmount = value;
       }
 
-      // Handle GST calculations
-      if (field === "gstPerValue") {
-        currentRow.cgstPerValue = value / 2;
-        currentRow.sgstPerValue = value / 2;
-      }
+      // Calculate GST on original base amount (before discount)
+      const gstAmount = parseFloat(((baseAmount * gstPercentage) / 100).toFixed(2));
+      currentRow.gstTaxAmt = gstAmount;
+      // Calculate final item total: (Base Amount + GST) - Discount
+      const itemTotal = parseFloat((baseAmount + gstAmount - discAmount).toFixed(2));
 
-      const discAmt = currentRow.discAmt || 0;
-
-      // Calculate tax amounts
-      currentRow.cgstTaxAmt = (totalPrice * (currentRow.cgstPerValue || 0)) / 100 || 0;
-      currentRow.sgstTaxAmt = (totalPrice * (currentRow.sgstPerValue || 0)) / 100 || 0;
-      currentRow.gstPerValue = (currentRow.cgstPerValue || 0) + (currentRow.sgstPerValue || 0);
-      const gstTaxAmt = (totalPrice * (currentRow.gstPerValue || 0)) / 100;
-      currentRow.taxAmt = currentRow.cgstTaxAmt + currentRow.sgstTaxAmt;
-
-      // Calculate net amount
-      currentRow.netAmount = totalPrice + gstTaxAmt - discAmt;
-      currentRow.totAmt = currentRow.netAmount;
-
-      // Additional calculations
-      // currentRow.mrpAbdated = (Number(((totAmt * 100) / (currentRow.gstPerValue + 100)).toFixed(2)));
-      currentRow.mrpAbdated = 10;
-      currentRow.taxAmtOnMrp = (totAmt * receivedQty * gstTaxAmt) / 100;
-      currentRow.taxAfterDiscOnMrp = "N";
-      currentRow.taxAfterDiscYN = "N";
+      // Set the final net amount
+      currentRow.netAmount = itemTotal;
 
       onDetailsUpdate(updatedDetails);
     },
@@ -223,13 +218,12 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
 
   const handleDropdownChange = useCallback(
     (value: number, id: string | number) => {
-      const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.value) === Number(value));
+      const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(value));
       const selectedRate = Number(selectedTax?.label || 0);
       handleCellValueChange(id, "gstPerValue", selectedRate);
     },
     [dropdownValues.taxType, handleCellValueChange]
   );
-
   // Render functions for different cell types
   const renderNumberField = useCallback(
     (params: GridRenderCellParams, field: keyof PurchaseOrderDetailDto) => (
@@ -243,6 +237,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
         }}
         sx={{ width: "100%" }}
         inputProps={{ style: { textAlign: "right" } }}
+        fullWidth={true}
         disabled={approvedDisable}
       />
     ),
@@ -283,7 +278,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
       {
         field: "productName",
         headerName: "Product",
-        width: 200,
+        width: 250,
         sortable: false,
       },
       {
@@ -291,28 +286,29 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
         headerName: "Manufacturer",
         width: 150,
         sortable: false,
+        renderCell: (params) => params.row.manufacturerName || "",
       },
       {
-        field: "stock",
+        field: "qoh",
         headerName: "QOH[Units]",
-        width: 110,
+        width: 130,
         sortable: false,
         type: "number",
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => params.row.stock || 0,
+        renderCell: (params) => params.row.qoh || 0,
       },
       {
-        field: "receivedQty",
+        field: "requiredPack",
         headerName: "Required Pack",
-        width: 130,
+        width: 160,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "receivedQty"),
+        renderCell: (params) => renderNumberField(params, "requiredPack"),
       },
       {
         field: "requiredUnitQty",
         headerName: "Required Unit Qty",
-        width: 140,
+        width: 170,
         sortable: false,
         type: "number",
         align: "right",
@@ -336,7 +332,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, purchase
       {
         field: "totAmt",
         headerName: "Selling Price",
-        width: 120,
+        width: 130,
         sortable: false,
         renderCell: (params) => renderNumberField(params, "totAmt"),
       },

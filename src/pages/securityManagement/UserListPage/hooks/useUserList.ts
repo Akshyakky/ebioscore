@@ -105,7 +105,7 @@ export const useUserList = () => {
     async (id: number) => {
       try {
         setLoading(true);
-        const result = await userListServices.delete(id);
+        const result = await appUserService.delete(id);
         if (result.success) {
           await fetchUsersList();
           return true;
@@ -128,7 +128,7 @@ export const useUserList = () => {
     async (id: number, active: boolean) => {
       try {
         setLoading(true);
-        const result = await userListServices.updateActiveStatus(id, active);
+        const result = await appUserService.updateActiveStatus(id, active);
         if (result.success) {
           await fetchUsersList();
           return true;

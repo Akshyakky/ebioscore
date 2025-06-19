@@ -1,6 +1,6 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
-import { ProductListDto } from "./ProductListDto";
 import { ProductSearchResult } from "./Product/ProductSearch.interface";
+import { ProductListDto } from "./ProductListDto";
 
 export interface PurchaseOrderMastDto extends BaseDto {
   pOID: number;
@@ -52,6 +52,7 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   pPkgID?: number;
   unitPack?: number;
   requiredUnitQty?: number;
+  requiredPack?: number;
   pOYN: string;
   grnDetID?: number;
   receivedQty?: number;
@@ -71,7 +72,7 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   taxAfterDiscYN: string;
   taxAmtOnMrp?: number;
   taxAmt?: number;
-  taxModeCode: string;
+  taxModeCode?: string;
   taxModeDescription: string;
   taxModeID?: number;
   taxOnFreeItemYN: string;
@@ -84,15 +85,16 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   pPkgName?: string;
   productName?: string;
   pSGrpName?: string;
-  hsnCode: string;
+  hsnCode?: string;
   cgstPerValue?: number;
   cgstTaxAmt?: number;
   sgstPerValue?: number;
   sgstTaxAmt?: number;
-  taxableAmt?: number;
   transferYN: string;
   rNotes?: string;
   gstPerValue?: number;
+  gstTaxAmt?: number;
+  taxableAmt?: number;
   unitPrice?: number;
 }
 

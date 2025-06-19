@@ -218,7 +218,7 @@ const UserListPage: React.FC = () => {
     },
     {
       key: "appUserName",
-      header: "User Name",
+      header: "Name",
       visible: true,
       sortable: true,
       filterable: true,

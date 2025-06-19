@@ -127,29 +127,23 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
   const recalculateFooterAmounts = useCallback(() => {
     const activeDetails = purchaseOrderDetails.filter((d) => d.rActiveYN === "Y");
 
-    const itemsTotal = activeDetails.reduce((sum, item) => sum + (item.unitPrice || 0) * (item.receivedQty || 0), 0);
-
+    const itemsTotal = activeDetails.reduce((sum, item) => sum + (item.netAmount || 0), 0);
     const totalDiscAmt = activeDetails.reduce((sum, item) => sum + (item.discAmt || 0), 0);
-
+    const totalGSTTaxAmt = activeDetails.reduce((sum, item) => sum + (item.gstTaxAmt || 0), 0);
     const totalCGSTTaxAmt = activeDetails.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
-
     const totalSGSTTaxAmt = activeDetails.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
 
-    const totalTaxAmt = totalCGSTTaxAmt + totalSGSTTaxAmt;
-    const netAmount = itemsTotal + (coinAdjAmt || 0) - totalDiscAmt + totalTaxAmt;
-
-    setValue("totalAmt", itemsTotal);
+    setValue("totalAmt", itemsTotal - totalGSTTaxAmt + totalDiscAmt);
     setValue("discAmt", totalDiscAmt);
-    setValue("taxAmt", totalTaxAmt);
+    setValue("taxAmt", totalGSTTaxAmt);
     setValue("netCGSTTaxAmt", totalCGSTTaxAmt);
     setValue("netSGSTTaxAmt", totalSGSTTaxAmt);
-    setValue("totalTaxableAmt", itemsTotal - totalDiscAmt);
-    setValue("netAmt", netAmount);
-  }, [purchaseOrderDetails, coinAdjAmt, setValue]);
+    setValue("netAmt", itemsTotal);
+  }, [purchaseOrderDetails, setValue]);
 
   useEffect(() => {
     recalculateFooterAmounts();
-  }, [purchaseOrderDetails, coinAdjAmt, recalculateFooterAmounts]);
+  }, [purchaseOrderDetails, recalculateFooterAmounts]);
 
   const handleImportPO = useCallback(
     (importedDetails: PurchaseOrderDetailDto[]) => {
@@ -251,34 +245,18 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
       </Grid>
 
       <Grid container spacing={2} marginTop={2}>
-        <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
-          {infoItem("Items Total", totalAmt)}
-          {infoItem("Tax Amount", taxAmt)}
-          {infoItem("Disc Amt", discAmt)}
-          {infoItem("Coin Adjustment", coinAdjAmt)}
-          {infoItem("Net Amt", netAmt)}
-        </Stack>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormField control={control} type="textarea" label="Remarks" name="rNotes" rows={1} disabled={approvedDisable} />
+        <Grid size={{ xs: 12 }}>
+          <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
+            {infoItem("Items Total", totalAmt)}
+            {infoItem("Tax Amount", taxAmt)}
+            {infoItem("Disc Amt", discAmt)}
+            {infoItem("Coin Adjustment", coinAdjAmt)}
+            {infoItem("Net Amt", netAmt)}
+          </Stack>
         </Grid>
-        {!approvedDisable && (
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormField
-              control={control}
-              type="number"
-              label="Coin Adjustment"
-              name="coinAdjAmt"
-              disabled={approvedDisable}
-              onChange={(value) => {
-                const numValue = Number(value) || 0;
-                setValue("coinAdjAmt", numValue);
-                recalculateFooterAmounts();
-                return numValue;
-              }}
-            />
-          </Grid>
-        )}
+        <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+          <FormField control={control} type="textarea" label="Remarks" name="rNotes" rows={2} disabled={approvedDisable} />
+        </Grid>
       </Grid>
 
       <PurchaseOrderImportDialog open={importPODialogOpen} onClose={() => setImportPODialogOpen(false)} fromDeptID={fromDeptID} supplierID={supplierID} onImport={handleImportPO} />

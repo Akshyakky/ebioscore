@@ -76,7 +76,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [purchaseOrderDetails, setPurchaseOrderDetails] = useState<PurchaseOrderDetailDto[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<PurchaseOrderDetailDto | null>(null);
   const [disableApprovedFields, setDisableApprovedFields] = useState(false);
 
   const isAddMode = !initialData;
@@ -125,7 +125,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
     reset,
     setValue,
     watch,
-    formState: { isDirty, isValid, errors },
+    formState: { isDirty, isValid },
   } = useForm<PurchaseOrderFormData>({
     defaultValues,
     resolver: zodResolver(purchaseOrderFormSchema),
@@ -230,55 +230,54 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
             pGrpID: detail.pGrpID || 0,
             pSGrpID: detail.pSGrpID || 0,
             pUnitID: detail.pUnitID || 0,
-            pUnitName: detail.pUnitName || "Box",
-            pPkgID: detail.pPkgID || 10,
-            unitPack: detail.unitPack || 12,
-            requiredUnitQty: detail.requiredUnitQty || 100,
-            grnDetID: detail.grnDetID || 1501,
-            receivedQty: detail.receivedQty || 95,
-            manufacturerID: detail.manufacturerID || 301,
-            manufacturerCode: detail.manufacturerCode || "MFR-003",
-            manufacturerName: detail.manufacturerName || "MediCorp Ltd.",
-            discAmt: detail.discAmt || 500,
-            discPercentageAmt: detail.discPercentageAmt || 5,
-            freeQty: detail.freeQty || 2,
+            pUnitName: detail.pUnitName || "",
+            pPkgID: detail.pPkgID || 0,
+            unitPack: detail.unitPack || 0,
+            requiredUnitQty: detail.requiredUnitQty || 0,
+            grnDetID: detail.grnDetID || 0,
+            receivedQty: detail.receivedQty || 0,
+            manufacturerID: detail.manufacturerID || 0,
+            manufacturerCode: detail.manufacturerCode || "",
+            manufacturerName: detail.manufacturerName || "",
+            discAmt: detail.discAmt || 0,
+            discPercentageAmt: detail.discPercentageAmt || 0,
+            freeQty: detail.freeQty || 0,
             isFreeItemYN: detail.isFreeItemYN || "N",
-            mfID: detail.mfID || 301,
-            profitOnMrp: detail.profitOnMrp || 12,
-            taxAmtOnMrp: detail.taxAmtOnMrp || 450,
-            taxAmt: detail.taxAmt || 480,
-            taxModeID: detail.taxModeID || 2,
-            mfName: detail.mfName || "MediCorp Ltd.",
-            pGrpName: detail.pGrpName || "Tablets",
-            pPkgName: detail.pPkgName || "Strip",
-            productName: detail.productName || "Paracetamol 500mg",
-            pSGrpName: detail.pSGrpName || "Pain Relief",
-            cgstPerValue: detail.cgstPerValue || 6,
-            cgstTaxAmt: detail.cgstTaxAmt || 240,
-            sgstPerValue: detail.sgstPerValue || 6,
-            sgstTaxAmt: detail.sgstTaxAmt || 240,
-            taxableAmt: detail.taxableAmt || 9600,
-            gstPerValue: detail.gstPerValue || 12,
-            unitPrice: detail.unitPrice || 96,
-            catDesc: "MEDICAL",
-            catValue: "MEDI",
-            taxModeCode: detail.taxModeCode || "EXCL",
-            taxModeDescription: detail.taxModeDescription || "Exclusive Tax",
+            mfID: detail.mfID || 0,
+            profitOnMrp: detail.profitOnMrp || 0,
+            taxAmtOnMrp: detail.taxAmtOnMrp || 0,
+            taxAmt: detail.taxAmt || 0,
+            taxModeID: detail.taxModeID || 0,
+            mfName: detail.mfName || "",
+            pGrpName: detail.pGrpName || "",
+            pPkgName: detail.pPkgName || "",
+            productName: detail.productName || "",
+            pSGrpName: detail.pSGrpName || "",
+            cgstPerValue: detail.cgstPerValue || 0,
+            cgstTaxAmt: detail.cgstTaxAmt || 0,
+            sgstPerValue: detail.sgstPerValue || 0,
+            sgstTaxAmt: detail.sgstTaxAmt || 0,
+            taxableAmt: detail.taxableAmt || 0,
+            gstPerValue: detail.gstPerValue || 0,
+            unitPrice: detail.unitPrice || 0,
+            catDesc: detail.catDesc || "",
+            catValue: detail.catValue || "",
+            taxModeCode: detail.taxModeCode || "",
+            taxModeDescription: detail.taxModeDescription || "",
             taxOnFreeItemYN: detail.taxOnFreeItemYN || "N",
             taxOnMrpYN: detail.taxOnMrpYN || "Y",
-            totAmt: detail.totAmt || 9980,
-            hsnCode: detail.hsnCode || "30045010",
-            taxOnUnitPrice: detail.taxOnUnitPrice || "Y",
+            totAmt: detail.totAmt || 0,
+            hsnCode: detail.hsnCode || "",
+            taxOnUnitPrice: detail.taxOnUnitPrice || "N",
             taxAfterDiscYN: detail.taxAfterDiscYN || "N",
             taxAfterDiscOnMrp: detail.taxAfterDiscOnMrp || "N",
-            mrpAbdated: detail.mrpAbdated || 5,
-            netAmount: detail.netAmount || 5,
-            rNotes: detail.rNotes || "Urgent requirement for IP Ward",
+            mrpAbdated: detail.mrpAbdated || 0,
+            netAmount: detail.netAmount || 0,
+            rNotes: detail.rNotes || "",
             transferYN: "N",
             rActiveYN: detail.rActiveYN || "Y",
           })),
       };
-
       const response = await savePurchaseOrder(purchaseOrderData);
 
       if (response.success) {
@@ -298,8 +297,9 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
   };
 
   // Handle product selection
-  const handleProductSelect = useCallback((product: ProductSearchResult | null) => {
-    setSelectedProduct(product);
+  const handleProductSelect = useCallback(async (product: ProductSearchResult | null) => {
+    const fetchedProductDetails = await getProductDetailsForPO(product.productCode);
+    setSelectedProduct(fetchedProductDetails);
   }, []);
 
   // Handle product details update
@@ -401,6 +401,7 @@ const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({ open, onClose, in
         title={dialogTitle}
         maxWidth="xl"
         fullWidth
+        fullScreen
         showCloseButton
         disableBackdropClick={!viewOnly && (isDirty || isSaving)}
         disableEscapeKeyDown={!viewOnly && (isDirty || isSaving)}
