@@ -53,14 +53,10 @@ const ScheduleOfChargesPage: React.FC = () => {
     refreshCharges();
   }, [refreshCharges]);
 
-  // Add new refresh handler that clears search and filters
   const handleRefresh = useCallback(async () => {
-    // Clear search term and filters
     setSearchTerm("");
     setFilterType("all");
     setFilterStatus("all");
-
-    // Refresh the charges data
     await refreshCharges();
   }, [refreshCharges]);
 
@@ -134,9 +130,9 @@ const ScheduleOfChargesPage: React.FC = () => {
 
         let serviceGroupDisplay = "Not specified";
 
-        if (charge.serviceGroupID) {
+        if (charge.sGrpID) {
           const serviceGroupItem = serviceGroup.find((s) => {
-            const matchesValue = Number(s.value) === Number(charge.serviceGroupID);
+            const matchesValue = Number(s.value) === Number(charge.sGrpID);
             const matchesLabel = s.label?.toLowerCase().includes(charge.chargeType?.toLowerCase() || "");
             return matchesValue || matchesLabel;
           });
@@ -145,7 +141,7 @@ const ScheduleOfChargesPage: React.FC = () => {
             serviceGroupDisplay = serviceGroupItem.label;
           } else {
             const serviceTypeItem = serviceType.find((s) => {
-              const matchesValue = Number(s.value) === Number(charge.serviceGroupID);
+              const matchesValue = Number(s.value) === Number(charge.sGrpID);
               const matchesLabel = s.label?.toLowerCase().includes(charge.chargeType?.toLowerCase() || "");
               return matchesValue || matchesLabel;
             });
@@ -301,8 +297,8 @@ const ScheduleOfChargesPage: React.FC = () => {
             fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
           }
 
-          if (fullChargeDetails.sGrpID !== undefined && fullChargeDetails.serviceGroupID === undefined) {
-            fullChargeDetails.serviceGroupID = fullChargeDetails.sGrpID;
+          if (fullChargeDetails.serviceGroupID !== undefined && fullChargeDetails.sGrpID === undefined) {
+            fullChargeDetails.sGrpID = fullChargeDetails.serviceGroupID;
           }
 
           if (fullChargeDetails.scheduleDate && typeof fullChargeDetails.scheduleDate === "string") {
@@ -383,7 +379,7 @@ const ScheduleOfChargesPage: React.FC = () => {
           fullChargeDetails.ChargePacks = fullChargeDetails.chargePacks;
         }
 
-        const serviceGroupId = fullChargeDetails.serviceGroupID ?? fullChargeDetails.sGrpID ?? 0;
+        const sGrpID = fullChargeDetails.sGrpID ?? fullChargeDetails.serviceGroupID ?? 0;
 
         if (!fullChargeDetails.chargeType || !fullChargeDetails.chargeTo) {
           showAlert("Error", "Charge type or charge to is missing from the charge details", "error");
@@ -395,8 +391,8 @@ const ScheduleOfChargesPage: React.FC = () => {
           ChargeTo: fullChargeDetails.chargeTo,
         };
 
-        if (serviceGroupId && serviceGroupId > 0) {
-          codeGenData.ServiceGroupId = serviceGroupId;
+        if (sGrpID && sGrpID > 0) {
+          codeGenData.ServiceGroupId = sGrpID;
         }
 
         const newCode = await generateChargeCode(codeGenData);
@@ -406,7 +402,7 @@ const ScheduleOfChargesPage: React.FC = () => {
           chargeID: 0,
           chargeCode: newCode,
           chargeDesc: `${fullChargeDetails.chargeDesc} (Copy)`,
-          serviceGroupID: serviceGroupId,
+          sGrpID: sGrpID,
 
           ChargeDetails:
             fullChargeDetails.ChargeDetails?.map((detail) => ({

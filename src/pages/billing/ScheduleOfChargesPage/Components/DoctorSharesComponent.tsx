@@ -1,4 +1,3 @@
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import {
   Balance as BalanceIcon,
   CheckCircle as CheckCircleIcon,
@@ -28,17 +27,20 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { DataGrid, GridColDef, GridRenderCellParams, GridRowModel, GridRowModesModel } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Control, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 interface DoctorShareOption {
+  id: string;
   docShareID: number;
   chargeID: number;
   conID: number;
   doctorShare?: number;
   hospShare?: number | null;
+  rActiveYN?: "Y" | "N";
   doctorName: string;
-  index: number;
+  originalIndex: number;
   originalCompositeId: string;
   isValid?: boolean;
   validationMessage?: string;
@@ -73,11 +75,13 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
     hasErrors: boolean;
     doctorCount: number;
   }>({ totalShare: 0, isBalanced: true, hasErrors: false, doctorCount: 0 });
+  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const [gridRefreshKey, setGridRefreshKey] = useState(0);
 
   const doctorNamesRef = useRef<Map<string, string>>(new Map());
   const fieldRefsRef = useRef<Map<string, any>>(new Map());
 
-  const { append, remove } = useFieldArray({
+  const { append, update } = useFieldArray({
     control,
     name: "DoctorShares",
   });
@@ -87,6 +91,10 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
     name: "DoctorShares",
     defaultValue: [],
   });
+
+  const activeDoctorShares = useMemo(() => {
+    return doctorShares?.filter((share: any) => share.rActiveYN !== "N") || [];
+  }, [doctorShares]);
 
   const extractDoctorName = useCallback((label: string): string => {
     if (!label) return "Doctor NaN";
@@ -111,22 +119,36 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
   }, []);
 
   const validateShares = useCallback((shares: any[]) => {
+    const activeShares = shares.filter((share) => share.rActiveYN !== "N");
     let totalDoctorShare = 0;
     let totalHospitalShare = 0;
     let hasErrors = false;
-    const validationResults = shares.map((share, index) => {
+
+    const validationResults = shares.map((share, currentIndex) => {
+      if (share.rActiveYN === "N") {
+        return {
+          ...share,
+          isValid: true,
+          validationMessage: "",
+          index: currentIndex,
+          originalIndex: currentIndex,
+        };
+      }
+
       const doctorShare = Number(share.doctorShare) || 0;
       const hospShare = Number(share.hospShare) || 0;
       const shareTotal = doctorShare + hospShare;
       totalDoctorShare += doctorShare;
       totalHospitalShare += hospShare;
+
       let isValid = true;
       let validationMessage = "";
+
       if (doctorShare < 0 || hospShare < 0) {
         isValid = false;
         validationMessage = "Shares cannot be negative";
         hasErrors = true;
-      } else if (shareTotal !== 100) {
+      } else if (shareTotal !== 100 && shareTotal !== 0) {
         isValid = false;
         validationMessage = `Total must be 100% (currently ${shareTotal}%)`;
         hasErrors = true;
@@ -136,22 +158,28 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
         hasErrors = true;
       }
 
-      return { ...share, isValid, validationMessage, index };
+      return {
+        ...share,
+        isValid,
+        validationMessage,
+        index: currentIndex,
+        originalIndex: currentIndex,
+      };
     });
 
-    const isBalanced = Math.abs(totalDoctorShare + totalHospitalShare - shares.length * 100) < 0.01;
+    const isBalanced = Math.abs(totalDoctorShare + totalHospitalShare - activeShares.length * 100) < 0.01 || (totalDoctorShare === 0 && totalHospitalShare === 0);
     setValidationSummary({
       totalShare: totalDoctorShare + totalHospitalShare,
       isBalanced,
       hasErrors,
-      doctorCount: shares.length,
+      doctorCount: activeShares.length,
     });
 
     return validationResults;
   }, []);
 
   const shareStatistics = useMemo(() => {
-    if (!doctorShares || doctorShares.length === 0) {
+    if (!activeDoctorShares || activeDoctorShares.length === 0) {
       return {
         totalDoctors: 0,
         avgDoctorShare: 0,
@@ -163,9 +191,9 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
       };
     }
 
-    const totalDoctorShare = doctorShares.reduce((sum: number, share: any) => sum + (Number(share.doctorShare) || 0), 0);
-    const totalHospitalShare = doctorShares.reduce((sum: number, share: any) => sum + (Number(share.hospShare) || 0), 0);
-    const doctorCount = doctorShares.length;
+    const totalDoctorShare = activeDoctorShares.reduce((sum: number, share: any) => sum + (Number(share.doctorShare) || 0), 0);
+    const totalHospitalShare = activeDoctorShares.reduce((sum: number, share: any) => sum + (Number(share.hospShare) || 0), 0);
+    const doctorCount = activeDoctorShares.length;
     const avgDoctorShare = doctorCount > 0 ? totalDoctorShare / doctorCount : 0;
     const avgHospitalShare = doctorCount > 0 ? totalHospitalShare / doctorCount : 0;
     const utilizationRate = maxDoctors > 0 ? (doctorCount / maxDoctors) * 100 : 0;
@@ -180,7 +208,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
       utilizationRate,
       isOptimal,
     };
-  }, [doctorShares, maxDoctors, validationSummary]);
+  }, [activeDoctorShares, maxDoctors, validationSummary]);
 
   useEffect(() => {
     attendingPhy.forEach((doctor) => {
@@ -192,7 +220,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
 
   useEffect(() => {
     if (!isInitialized && doctorShares && doctorShares.length > 0) {
-      doctorShares.forEach((share: any) => {
+      doctorShares.forEach((share: any, index: number) => {
         if (!share.originalCompositeId) {
           const matchingDoctor = attendingPhy.find((doc) => {
             const parsed = parseCompositeId(doc.value);
@@ -202,6 +230,15 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
           if (matchingDoctor) {
             share.originalCompositeId = matchingDoctor.value;
             doctorNamesRef.current.set(matchingDoctor.value, extractDoctorName(matchingDoctor.label));
+          } else {
+            const fallbackKey = `fallback_${share.conID}`;
+            doctorNamesRef.current.set(fallbackKey, `Doctor ${share.conID}`);
+            share.originalCompositeId = fallbackKey;
+          }
+        } else {
+          const doctor = attendingPhy.find((doc) => doc.value === share.originalCompositeId);
+          if (doctor && !doctorNamesRef.current.has(share.originalCompositeId)) {
+            doctorNamesRef.current.set(share.originalCompositeId, extractDoctorName(doctor.label));
           }
         }
       });
@@ -210,7 +247,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
   }, [doctorShares, attendingPhy, isInitialized, parseCompositeId, extractDoctorName]);
 
   useEffect(() => {
-    if (doctorShares && doctorShares.length > 0) {
+    if (doctorShares) {
       validateShares(doctorShares);
     }
   }, [doctorShares, validateShares]);
@@ -220,34 +257,54 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
       if (originalCompositeId && doctorNamesRef.current.has(originalCompositeId)) {
         return doctorNamesRef.current.get(originalCompositeId) || "Doctor undefined";
       }
-      const doctor = attendingPhy.find((doc) => {
-        const parsed = parseCompositeId(doc.value);
-        return parsed.conID === conID;
-      });
+      const doctor = attendingPhy.find((doc) => parseCompositeId(doc.value).conID === conID);
       if (doctor) {
         const name = extractDoctorName(doctor.label);
         doctorNamesRef.current.set(doctor.value, name);
         return name;
       }
-      return "Doctor undefined";
+      const doctorByDirectMatch = attendingPhy.find((doc) => doc.value.includes(conID.toString()));
+      if (doctorByDirectMatch) {
+        const name = extractDoctorName(doctorByDirectMatch.label);
+        doctorNamesRef.current.set(doctorByDirectMatch.value, name);
+        return name;
+      }
+      return `Doctor ${conID}`;
     },
     [attendingPhy, parseCompositeId, extractDoctorName]
   );
 
-  const gridData = useMemo(() => {
+  const gridData = useMemo((): DoctorShareOption[] => {
     if (!doctorShares) return [];
-    return validateShares(doctorShares).map((share: any) => ({
-      ...share,
-      doctorName: getDoctorName(share.conID, share.originalCompositeId),
-    }));
-  }, [doctorShares, getDoctorName, validateShares]);
+
+    const allValidatedShares = validateShares(doctorShares);
+
+    const activeShares = allValidatedShares
+      .map((share: any, originalIndex: number) => ({
+        id: `doctor-share-${originalIndex}`,
+        docShareID: share.docShareID || 0,
+        chargeID: share.chargeID || 0,
+        conID: share.conID,
+        doctorShare: share.doctorShare || 0,
+        hospShare: share.hospShare || 0,
+        rActiveYN: share.rActiveYN || "Y",
+        doctorName: getDoctorName(share.conID, share.originalCompositeId),
+        originalIndex,
+        originalCompositeId: share.originalCompositeId || "",
+        isValid: share.isValid,
+        validationMessage: share.validationMessage || "",
+      }))
+      .filter((share) => share.rActiveYN !== "N");
+
+    return activeShares;
+  }, [doctorShares, getDoctorName, validateShares, gridRefreshKey]);
 
   const isDoctorAdded = useCallback(
     (doctorCompositeId: string) => {
       const parsed = parseCompositeId(doctorCompositeId);
-      return doctorShares?.some((share: any) => Number(share.conID) === parsed.conID);
+      return activeDoctorShares?.some((share: any) => Number(share.conID) === parsed.conID);
     },
-    [doctorShares, parseCompositeId]
+    [activeDoctorShares, parseCompositeId]
   );
 
   const handleDoctorSelect = useCallback(
@@ -258,229 +315,397 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
         if (doctor) {
           const parsed = parseCompositeId(doctorCompositeId);
           doctorNamesRef.current.set(doctorCompositeId, extractDoctorName(doctor.label));
-          const remainingDoctors = maxDoctors - doctorShares.length;
-          const suggestedDoctorShare = remainingDoctors > 1 ? 50 : 60;
-          const suggestedHospitalShare = 100 - suggestedDoctorShare;
+
           const newShare = {
             docShareID: 0,
             chargeID: 0,
             conID: parsed.conID,
-            doctorShare: suggestedDoctorShare,
-            hospShare: suggestedHospitalShare,
-            rActiveYN: "Y",
-            rTransferYN: "N",
+            doctorShare: 0,
+            hospShare: 0,
+            rActiveYN: "Y" as const,
+            rTransferYN: "N" as const,
             rNotes: "",
             originalCompositeId: doctorCompositeId,
           };
-
           append(newShare);
           setSelectedDoctor("");
-
-          if (!expanded) {
-            onToggleExpand();
-          }
+          if (!expanded) onToggleExpand();
         }
       }
     },
-    [isDoctorAdded, attendingPhy, parseCompositeId, extractDoctorName, append, expanded, onToggleExpand, maxDoctors, doctorShares.length]
+    [isDoctorAdded, attendingPhy, parseCompositeId, extractDoctorName, append, expanded, onToggleExpand]
   );
 
   const handleRemoveDoctor = useCallback(
-    (index: number) => {
-      remove(index);
+    (originalIndex: number) => {
+      const shareToRemove = doctorShares[originalIndex];
+
+      if (shareToRemove) {
+        const updatedShare = {
+          ...shareToRemove,
+          rActiveYN: "N" as const,
+        };
+
+        update(originalIndex, updatedShare);
+
+        const rActiveYNFieldRef = fieldRefsRef.current.get(`rActiveYN_${originalIndex}`);
+        if (rActiveYNFieldRef && rActiveYNFieldRef.onChange) {
+          setTimeout(() => {
+            rActiveYNFieldRef.onChange("N");
+          }, 0);
+        }
+      }
+
+      fieldRefsRef.current.delete(`doctorShare_${originalIndex}`);
+      fieldRefsRef.current.delete(`hospShare_${originalIndex}`);
+      fieldRefsRef.current.delete(`rActiveYN_${originalIndex}`);
     },
-    [remove]
+    [doctorShares, update]
   );
 
-  const handleDoctorShareChange = useCallback((index: number, value: any) => {
+  const handleDoctorShareChange = useCallback((originalIndex: number, value: any) => {
     const numValue = Number(value) || 0;
     if (numValue >= 0 && numValue <= 100) {
       const hospitalShare = 100 - numValue;
-      const hospFieldRef = fieldRefsRef.current.get(`hospShare_${index}`);
-
+      const hospFieldRef = fieldRefsRef.current.get(`hospShare_${originalIndex}`);
       if (hospFieldRef && hospFieldRef.onChange) {
         setTimeout(() => {
           hospFieldRef.onChange(hospitalShare);
+          setGridRefreshKey((prev) => prev + 1);
         }, 0);
       }
     }
   }, []);
 
-  const handleHospitalShareChange = useCallback((index: number, value: any) => {
+  const handleHospitalShareChange = useCallback((originalIndex: number, value: any) => {
     const numValue = Number(value) || 0;
     if (numValue >= 0 && numValue <= 100) {
       const doctorShare = 100 - numValue;
-      const doctorFieldRef = fieldRefsRef.current.get(`doctorShare_${index}`);
-
+      const doctorFieldRef = fieldRefsRef.current.get(`doctorShare_${originalIndex}`);
       if (doctorFieldRef && doctorFieldRef.onChange) {
         setTimeout(() => {
           doctorFieldRef.onChange(doctorShare);
+          setGridRefreshKey((prev) => prev + 1);
         }, 0);
       }
     }
   }, []);
 
   const autoBalanceShares = useCallback(() => {
-    if (doctorShares.length === 0) return;
+    if (activeDoctorShares.length === 0) return;
 
-    const equalDoctorShare = Math.floor((60 / doctorShares.length) * 10) / 10; // Round to 1 decimal
+    const equalDoctorShare = Math.floor(100 / activeDoctorShares.length);
     const equalHospitalShare = 100 - equalDoctorShare;
 
-    doctorShares.forEach((_: any, index: number) => {
-      const doctorFieldRef = fieldRefsRef.current.get(`doctorShare_${index}`);
-      const hospFieldRef = fieldRefsRef.current.get(`hospShare_${index}`);
+    activeDoctorShares.forEach((activeShare: any) => {
+      const originalIndex = doctorShares.findIndex(
+        (share: any) => share.conID === activeShare.conID && share.originalCompositeId === activeShare.originalCompositeId && share.rActiveYN !== "N"
+      );
 
-      if (doctorFieldRef && hospFieldRef) {
-        doctorFieldRef.onChange(equalDoctorShare);
-        hospFieldRef.onChange(equalHospitalShare);
+      if (originalIndex !== -1) {
+        const doctorFieldRef = fieldRefsRef.current.get(`doctorShare_${originalIndex}`);
+        const hospFieldRef = fieldRefsRef.current.get(`hospShare_${originalIndex}`);
+
+        if (doctorFieldRef && hospFieldRef) {
+          doctorFieldRef.onChange(equalDoctorShare);
+          hospFieldRef.onChange(equalHospitalShare);
+        }
       }
     });
-  }, [doctorShares]);
+
+    setGridRefreshKey((prev) => prev + 1);
+  }, [activeDoctorShares, doctorShares]);
 
   const calculateTotal = useCallback((doctorShare?: number, hospShare?: number | null): string => {
-    const doctor = Number(doctorShare) || 0;
-    const hospital = Number(hospShare) || 0;
-    const total = doctor + hospital;
+    const total = (Number(doctorShare) || 0) + (Number(hospShare) || 0);
     return `${total}%`;
   }, []);
 
-  const columns: Column<DoctorShareOption>[] = [
-    {
-      key: "doctorName",
-      header: "Doctor",
-      visible: true,
-      width: 200,
-      render: (item) => (
-        <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="body2" fontWeight="medium">
-            {item.doctorName}
-          </Typography>
-          {item.isValid === false && (
-            <Tooltip title={item.validationMessage} arrow>
-              <WarningIcon color="error" sx={{ fontSize: 16 }} />
-            </Tooltip>
-          )}
-          {item.isValid === true && <CheckCircleIcon color="success" sx={{ fontSize: 16 }} />}
-        </Box>
-      ),
-    },
-    {
-      key: "doctorShare",
-      header: "Doctor Share (%)",
-      visible: true,
-      width: 180,
-      render: (item) => (
-        <Controller
-          name={`DoctorShares.${item.index}.doctorShare`}
-          control={control}
-          render={({ field }) => {
-            fieldRefsRef.current.set(`doctorShare_${item.index}`, field);
+  const processRowUpdate = useCallback((newRow: GridRowModel, oldRow: GridRowModel) => {
+    const originalIndex = newRow.originalIndex as number;
+    let doctorShare = Math.max(0, Math.min(100, Number(newRow.doctorShare) || 0));
+    let hospShare = Math.max(0, Math.min(100, Number(newRow.hospShare) || 0));
 
-            return (
-              <TextField
-                {...field}
-                type="number"
-                size="small"
-                fullWidth
-                inputProps={{ min: 0, max: 100, step: 0.1 }}
-                value={field.value || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const numValue = Number(value);
-                  field.onChange(numValue);
-                  handleDoctorShareChange(item.index, value);
-                }}
-                disabled={disabled}
-                error={item.isValid === false}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    "&.Mui-error": {
-                      "& fieldset": {
-                        borderColor: "error.main",
-                      },
-                    },
-                  },
+    const doctorChanged = newRow.doctorShare !== oldRow.doctorShare;
+    const hospChanged = newRow.hospShare !== oldRow.hospShare;
+
+    if (doctorChanged && !hospChanged) {
+      hospShare = 100 - doctorShare;
+    } else if (hospChanged && !doctorChanged) {
+      doctorShare = 100 - hospShare;
+    }
+
+    const doctorFieldRef = fieldRefsRef.current.get(`doctorShare_${originalIndex}`);
+    const hospFieldRef = fieldRefsRef.current.get(`hospShare_${originalIndex}`);
+
+    if (doctorFieldRef) {
+      doctorFieldRef.onChange(doctorShare);
+    }
+    if (hospFieldRef) {
+      hospFieldRef.onChange(hospShare);
+    }
+
+    return {
+      ...newRow,
+      doctorShare,
+      hospShare,
+    };
+  }, []);
+
+  const handleProcessRowUpdateError = useCallback((error: Error) => {}, []);
+
+  const gridColumns = useMemo((): GridColDef[] => {
+    return [
+      {
+        field: "doctorName",
+        headerName: "DOCTOR",
+        flex: 1.2,
+        editable: false,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => {
+          const item = params.row as DoctorShareOption;
+          return (
+            <Box display="flex" alignItems="center" gap={1} sx={{ height: "100%", py: 1 }}>
+              <Typography variant="body2" fontWeight="medium" noWrap>
+                {item.doctorName}
+              </Typography>
+              {item.isValid === false && (
+                <Tooltip title={item.validationMessage} arrow>
+                  <WarningIcon color="error" sx={{ fontSize: 16 }} />
+                </Tooltip>
+              )}
+              {item.isValid === true && <CheckCircleIcon color="success" sx={{ fontSize: 16 }} />}
+
+              <Controller
+                name={`DoctorShares.${item.originalIndex}.rActiveYN`}
+                control={control}
+                render={({ field }) => {
+                  fieldRefsRef.current.set(`rActiveYN_${item.originalIndex}`, field);
+                  return <input type="hidden" {...field} value={field.value || "Y"} />;
                 }}
               />
-            );
-          }}
-        />
-      ),
-    },
-    {
-      key: "hospShare",
-      header: "Hospital Share (%)",
-      visible: true,
-      width: 180,
-      render: (item) => (
-        <Controller
-          name={`DoctorShares.${item.index}.hospShare`}
-          control={control}
-          render={({ field }) => {
-            fieldRefsRef.current.set(`hospShare_${item.index}`, field);
-
-            return (
-              <TextField
-                {...field}
-                type="number"
-                size="small"
-                fullWidth
-                inputProps={{ min: 0, max: 100, step: 0.1 }}
-                value={field.value || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const numValue = Number(value);
-                  field.onChange(numValue);
-                  handleHospitalShareChange(item.index, value);
-                }}
-                disabled={disabled}
-                error={item.isValid === false}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    "&.Mui-error": {
-                      "& fieldset": {
-                        borderColor: "error.main",
-                      },
-                    },
-                  },
-                }}
+              <Controller
+                name={`DoctorShares.${item.originalIndex}.rTransferYN`}
+                control={control}
+                render={({ field }) => <input type="hidden" {...field} value={field.value || "N"} />}
               />
-            );
-          }}
-        />
-      ),
-    },
-    {
-      key: "total",
-      header: "Total",
-      visible: true,
-      width: 120,
-      render: (item) => {
-        const total = calculateTotal(item.doctorShare, item.hospShare);
-        const isValid = total === "100%";
-
-        return (
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="body2" fontWeight="bold" color={isValid ? "success.main" : "error.main"}>
-              {total}
-            </Typography>
-            {!isValid && <WarningIcon color="error" sx={{ fontSize: 16 }} />}
-          </Box>
-        );
+              <Controller
+                name={`DoctorShares.${item.originalIndex}.docShareID`}
+                control={control}
+                render={({ field }) => <input type="hidden" {...field} value={field.value || 0} />}
+              />
+              <Controller
+                name={`DoctorShares.${item.originalIndex}.chargeID`}
+                control={control}
+                render={({ field }) => <input type="hidden" {...field} value={field.value || 0} />}
+              />
+              <Controller
+                name={`DoctorShares.${item.originalIndex}.conID`}
+                control={control}
+                render={({ field }) => <input type="hidden" {...field} value={field.value || item.conID} />}
+              />
+              <Controller
+                name={`DoctorShares.${item.originalIndex}.rNotes`}
+                control={control}
+                render={({ field }) => <input type="hidden" {...field} value={field.value || ""} />}
+              />
+              <Controller
+                name={`DoctorShares.${item.originalIndex}.originalCompositeId`}
+                control={control}
+                render={({ field }) => <input type="hidden" {...field} value={field.value || item.originalCompositeId} />}
+              />
+            </Box>
+          );
+        },
       },
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      visible: true,
-      width: 100,
-      render: (item) => (
-        <IconButton size="small" color="error" onClick={() => handleRemoveDoctor(item.index)} disabled={disabled}>
-          <DeleteIcon />
-        </IconButton>
-      ),
-    },
-  ];
+      {
+        field: "doctorShare",
+        headerName: "DOCTOR SHARE (%)",
+        flex: 0.8,
+        type: "number",
+        editable: !disabled,
+        sortable: false,
+        headerAlign: "center",
+        align: "center",
+        renderCell: (params: GridRenderCellParams) => {
+          const item = params.row as DoctorShareOption;
+          return (
+            <Controller
+              name={`DoctorShares.${item.originalIndex}.doctorShare`}
+              control={control}
+              render={({ field }) => {
+                fieldRefsRef.current.set(`doctorShare_${item.originalIndex}`, field);
+                return (
+                  <TextField
+                    {...field}
+                    type="number"
+                    size="small"
+                    fullWidth
+                    inputProps={{ min: 0, max: 100, step: 0.1 }}
+                    value={field.value || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const numValue = Number(value) || 0;
+                      field.onChange(numValue);
+
+                      if (numValue >= 0 && numValue <= 100) {
+                        const hospitalShare = 100 - numValue;
+                        const hospFieldRef = fieldRefsRef.current.get(`hospShare_${item.originalIndex}`);
+                        if (hospFieldRef && hospFieldRef.onChange) {
+                          setTimeout(() => {
+                            hospFieldRef.onChange(hospitalShare);
+                            setGridRefreshKey((prev) => prev + 1);
+                          }, 0);
+                        }
+                      }
+                    }}
+                    disabled={disabled}
+                    error={item.isValid === false}
+                    variant="outlined"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        fontSize: "0.875rem",
+                        "&.Mui-error": {
+                          "& fieldset": {
+                            borderColor: "error.main",
+                          },
+                        },
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        textAlign: "center",
+                        padding: "8px 12px",
+                      },
+                    }}
+                  />
+                );
+              }}
+            />
+          );
+        },
+      },
+      {
+        field: "hospShare",
+        headerName: "HOSPITAL SHARE (%)",
+        flex: 0.8,
+        type: "number",
+        editable: !disabled,
+        sortable: false,
+        headerAlign: "center",
+        align: "center",
+        renderCell: (params: GridRenderCellParams) => {
+          const item = params.row as DoctorShareOption;
+          return (
+            <Controller
+              name={`DoctorShares.${item.originalIndex}.hospShare`}
+              control={control}
+              render={({ field }) => {
+                fieldRefsRef.current.set(`hospShare_${item.originalIndex}`, field);
+                return (
+                  <TextField
+                    {...field}
+                    type="number"
+                    size="small"
+                    fullWidth
+                    inputProps={{ min: 0, max: 100, step: 0.1 }}
+                    value={field.value || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const numValue = Number(value) || 0;
+                      field.onChange(numValue);
+
+                      if (numValue >= 0 && numValue <= 100) {
+                        const doctorShare = 100 - numValue;
+                        const doctorFieldRef = fieldRefsRef.current.get(`doctorShare_${item.originalIndex}`);
+                        if (doctorFieldRef && doctorFieldRef.onChange) {
+                          setTimeout(() => {
+                            doctorFieldRef.onChange(doctorShare);
+                            setGridRefreshKey((prev) => prev + 1);
+                          }, 0);
+                        }
+                      }
+                    }}
+                    disabled={disabled}
+                    error={item.isValid === false}
+                    variant="outlined"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        fontSize: "0.875rem",
+                        "&.Mui-error": {
+                          "& fieldset": {
+                            borderColor: "error.main",
+                          },
+                        },
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        textAlign: "center",
+                        padding: "8px 12px",
+                      },
+                    }}
+                  />
+                );
+              }}
+            />
+          );
+        },
+      },
+      {
+        field: "total",
+        headerName: "TOTAL",
+        editable: false,
+        sortable: false,
+        headerAlign: "center",
+        align: "center",
+        renderCell: (params: GridRenderCellParams) => {
+          const item = params.row as DoctorShareOption;
+          const total = calculateTotal(item.doctorShare, item.hospShare);
+          const isValid = total === "100%" || total === "0%";
+
+          return (
+            <Box display="flex" alignItems="center" justifyContent="center" gap={1} sx={{ height: "100%" }}>
+              <Chip label={total} size="small" variant={isValid ? "filled" : "outlined"} color={isValid ? (total === "0%" ? "default" : "success") : "error"} />
+              {!isValid && (
+                <Tooltip title="Total must equal 100%" arrow>
+                  <WarningIcon color="error" sx={{ fontSize: 16 }} />
+                </Tooltip>
+              )}
+            </Box>
+          );
+        },
+      },
+      {
+        field: "actions",
+        headerName: "ACTIONS",
+        editable: false,
+        sortable: false,
+        filterable: false,
+        headerAlign: "center",
+        align: "center",
+        renderCell: (params: GridRenderCellParams) => {
+          const item = params.row as DoctorShareOption;
+          return (
+            <Box display="flex" justifyContent="center" alignItems="center">
+              <Tooltip title="Remove doctor from revenue sharing" arrow>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => handleRemoveDoctor(item.originalIndex)}
+                  disabled={disabled}
+                  sx={{
+                    "&:hover": {
+                      backgroundColor: "error.light",
+                      color: "white",
+                    },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          );
+        },
+      },
+    ];
+  }, [control, disabled, calculateTotal, handleRemoveDoctor]);
 
   useEffect(() => {
     if (onUpdateFunction) {
@@ -488,9 +713,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
     }
   }, [onUpdateFunction]);
 
-  if (!doctorShareEnabled) {
-    return null;
-  }
+  if (!doctorShareEnabled) return null;
 
   return (
     <Accordion expanded={expanded} onChange={onToggleExpand} sx={{ mt: 2 }}>
@@ -538,9 +761,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
                     onChange={handleDoctorSelect}
                     disabled={disabled || shareStatistics.totalDoctors >= maxDoctors}
                     renderValue={(selected) => {
-                      if (!selected) {
-                        return <em>Select a doctor to add to revenue sharing...</em>;
-                      }
+                      if (!selected) return <em>Select a doctor to add to revenue sharing...</em>;
                       const doctor = attendingPhy.find((doc) => doc.value === selected);
                       return doctor?.label || selected;
                     }}
@@ -559,7 +780,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Stack direction="row" spacing={1}>
                   {shareStatistics.totalDoctors > 1 && (
@@ -578,15 +798,48 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
             )}
           </Paper>
 
-          <CustomGrid
-            columns={columns}
-            data={gridData}
-            maxHeight="400px"
-            density="small"
-            emptyStateMessage="No doctor revenue sharing configured. Select a doctor above to add revenue sharing."
-            showDensityControls={false}
-            pagination={false}
-          />
+          <Paper elevation={0}>
+            <DataGrid
+              key={gridRefreshKey}
+              rows={gridData}
+              columns={gridColumns}
+              rowModesModel={rowModesModel}
+              onRowModesModelChange={setRowModesModel}
+              processRowUpdate={processRowUpdate}
+              onProcessRowUpdateError={handleProcessRowUpdateError}
+              density="compact"
+              disableRowSelectionOnClick
+              hideFooterSelectedRowCount
+              pageSizeOptions={[10, 25, 50]}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 10 },
+                },
+              }}
+              slots={{
+                noRowsOverlay: () => (
+                  <Box
+                    sx={{
+                      p: 4,
+                      textAlign: "center",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <TrendingUpIcon sx={{ fontSize: 48, color: "grey.400", mb: 2 }} />
+                    <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600, mb: 1 }}>
+                      No Doctor Revenue Sharing Configured
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: "400px" }}>
+                      Select a doctor above to add revenue sharing configuration.
+                    </Typography>
+                  </Box>
+                ),
+              }}
+            />
+          </Paper>
         </Stack>
       </AccordionDetails>
     </Accordion>

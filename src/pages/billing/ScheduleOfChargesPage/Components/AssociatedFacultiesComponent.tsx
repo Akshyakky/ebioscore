@@ -67,6 +67,7 @@ const AssociatedFacultiesComponent: React.FC<AssociatedFacultiesComponentProps> 
   useEffect(() => {
     updateFacultiesArray();
   }, [updateFacultiesArray]);
+
   const getInitialSelectedValues = useCallback(() => {
     const fields = facultiesArray.fields || [];
     return fields.map((field: any) => field.aSubID).filter((id) => id != null);

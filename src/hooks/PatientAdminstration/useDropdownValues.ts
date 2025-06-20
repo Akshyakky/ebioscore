@@ -108,7 +108,8 @@ export type DropdownType =
   | "alertCategory"
   | "productBaseUnit"
   | "componentUnit"
-  | "indentStatus";
+  | "indentStatus"
+  | "faculties";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -239,6 +240,11 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
 
       indentStatus: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INDENTSTATUS");
+        return response;
+      },
+
+      faculties: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "FACULTIES");
         return response;
       },
 
@@ -480,6 +486,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           ...item,
         }));
       },
+
       serviceGroup: async () => {
         const response = await serviceGroupService.getAll();
         return (response.data || []).map((item: any) => ({
@@ -487,6 +494,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           label: item.sGrpName || "",
         }));
       },
+
       departmentIndent: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTINDENT");
         return response;

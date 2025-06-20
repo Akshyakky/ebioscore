@@ -169,6 +169,7 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({
       onUpdateFunction(updateChargeAliasesFromGrid);
     }
   }, [updateChargeAliasesFromGrid, onUpdateFunction]);
+
   const columns: Column<AliasGridRow>[] = useMemo(
     () => [
       {
@@ -246,7 +247,6 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({
     [handleFieldChange, disabled, maxAliasLength]
   );
 
-  // Enhanced header display with progress indicator
   const getStatusColor = () => {
     if (aliasStatistics.hasErrors) return "error";
     if (aliasStatistics.active === 0) return "default";

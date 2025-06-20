@@ -20,7 +20,8 @@ export interface BChargeDto extends BaseDto {
   cNhsCode?: string;
   cNhsEnglishName?: string;
   chargeCost?: number;
-  serviceGroupID?: number;
+  sGrpID?: number; // Changed from serviceGroupID to sGrpID
+  scheduleDate?: Date | null; // Backend expects DateTime? - send as Date object or null
   rActiveYN?: "Y" | "N";
   rTransferYN?: "Y" | "N";
   rNotes?: string;
@@ -29,6 +30,17 @@ export interface BChargeDto extends BaseDto {
   ChargeAliases: BChargeAliasDto[];
   ChargeFaculties: BChargeFacultyDto[];
   ChargePacks: BChargePackDto[];
+}
+
+export interface BDoctorSharePercShareDto extends BaseDto {
+  docShareID: number;
+  chargeID: number;
+  conID: number;
+  doctorShare: number;
+  hospShare: number;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 }
 
 export interface BChargeDetailDto extends BaseDto {
@@ -44,17 +56,6 @@ export interface BChargeDetailDto extends BaseDto {
   rTransferYN?: "Y" | "N";
   rNotes?: string;
   ChargePacks: BChargePackDto[];
-}
-
-export interface BDoctorSharePercShareDto extends BaseDto {
-  docShareID: number;
-  chargeID: number;
-  conID: number;
-  doctorShare: number;
-  hospShare: number;
-  rActiveYN?: "Y" | "N";
-  rTransferYN?: "Y" | "N";
-  rNotes?: string;
 }
 
 export interface BChargePackDto extends BaseDto {
@@ -98,5 +99,10 @@ export interface ChargeWithAllDetailsDto extends BChargeDto {}
 export interface ChargeCodeGenerationDto {
   ChargeType: string;
   ChargeTo: string;
-  ServiceGroupId?: number;
+  ServiceGroupId?: number; // This remains the same for the API call
 }
+
+// Date Handling Notes:
+// - scheduleDate should be sent as a native Date object or null to the backend
+// - Backend expects DateTime? which maps to Date | null in TypeScript
+// - Use dayjs for form handling but convert to Date before sending to API
