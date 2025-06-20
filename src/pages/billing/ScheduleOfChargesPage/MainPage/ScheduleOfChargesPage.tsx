@@ -53,6 +53,17 @@ const ScheduleOfChargesPage: React.FC = () => {
     refreshCharges();
   }, [refreshCharges]);
 
+  // Add new refresh handler that clears search and filters
+  const handleRefresh = useCallback(async () => {
+    // Clear search term and filters
+    setSearchTerm("");
+    setFilterType("all");
+    setFilterStatus("all");
+
+    // Refresh the charges data
+    await refreshCharges();
+  }, [refreshCharges]);
+
   const enhancedCharges = useMemo(() => {
     if (!charges) {
       return [];
@@ -646,7 +657,7 @@ const ScheduleOfChargesPage: React.FC = () => {
         </Typography>
         <Stack direction="row" spacing={2}>
           <CustomButton variant="contained" icon={AddIcon} text="New Charge" onClick={handleNewCharge} color="primary" />
-          <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={refreshCharges} asynchronous />
+          <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous />
         </Stack>
       </Box>
 

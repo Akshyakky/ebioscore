@@ -330,10 +330,15 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
   const isApplyReady = useMemo(() => {
     const numericAmount = parseFloat(amountValue);
     const hasValidAmount = !isNaN(numericAmount) && numericAmount > 0;
+
+    // Add percentage validation - should not exceed 100
+    const hasValidPercentage = !isPercentage || (isPercentage && numericAmount <= 100);
+
     const hasValidOperation = priceChangeType === "Increase" || priceChangeType === "Decrease";
     const hasValidTargets = displayedPricingData.length > 0;
-    return hasValidAmount && hasValidOperation && hasValidTargets;
-  }, [amountValue, priceChangeType, displayedPricingData.length]);
+
+    return hasValidAmount && hasValidPercentage && hasValidOperation && hasValidTargets;
+  }, [amountValue, isPercentage, priceChangeType, displayedPricingData.length]);
 
   const validatePricingData = useCallback(() => {
     const errors: string[] = [];
@@ -360,7 +365,15 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
 
   const applyChanges = useCallback(() => {
     if (!isApplyReady) return;
+
     const numericAmount = parseFloat(amountValue);
+
+    // Additional validation check before applying
+    if (isPercentage && numericAmount > 100) {
+      console.warn("Cannot apply percentage values greater than 100%");
+      return;
+    }
+
     const updatedGridData = [...gridData];
     const rowsToUpdate = selectedRows.length > 0 ? selectedRows : updatedGridData.map((row) => row.id);
     let changesMade = false;
@@ -421,18 +434,23 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
   }, [
     isApplyReady,
     amountValue,
+    isPercentage,
     gridData,
     selectedRows,
     getFilteredWardCategories,
     displayAmountType,
-    isPercentage,
     priceChangeType,
     updateChargeDetailsFromGrid,
     validatePricingData,
   ]);
 
   const getApplyButtonText = useMemo(() => {
-    if (!isApplyReady) return "Apply";
+    if (!isApplyReady) {
+      if (isPercentage && parseFloat(amountValue) > 100) {
+        return "Invalid %";
+      }
+      return "Apply";
+    }
     const actionSymbol = priceChangeType === "Increase" ? "+" : "-";
     const valueDisplay = isPercentage ? `${amountValue}%` : `₹${amountValue}`;
     return `${actionSymbol}${valueDisplay}`;
@@ -748,9 +766,17 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     }
   }, []);
 
-  const handleAmountValueChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setAmountValue(event.target.value);
-  }, []);
+  const handleAmountValueChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      if (isPercentage && parseFloat(value) > 100) {
+        setAmountValue("100");
+        return;
+      }
+      setAmountValue(value);
+    },
+    [isPercentage]
+  );
 
   return (
     <Accordion
@@ -810,12 +836,18 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
             </Alert>
           )}
 
-          <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+          <Paper elevation={1} sx={{ p: 3 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="subtitle2" gutterBottom color="primary" fontWeight={600}>
                 Configuration Controls
               </Typography>
-              <Button size="medium" onClick={() => setShowAdvancedControls(!showAdvancedControls)} color="primary" startIcon={<CalculateIcon />}>
+              <Button
+                size="medium"
+                onClick={() => setShowAdvancedControls(!showAdvancedControls)}
+                color="primary"
+                startIcon={<CalculateIcon />}
+                variant={showAdvancedControls ? "contained" : "outlined"}
+              >
                 Bulk Price Operations
               </Button>
             </Box>
@@ -850,156 +882,164 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
                   disabled={disabled}
                 />
               </Grid>
-
-              <Fade in={showAdvancedControls}>
-                <Grid container spacing={2} sx={{ width: "100%", mt: 1 }}>
-                  <Grid size={{ xs: 12 }}>
-                    <Divider sx={{ my: 2 }}>
-                      <Chip label="Bulk Price Operations" size="small" />
-                    </Divider>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <Box sx={{ mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Adjustment Type
-                      </Typography>
-                      <ToggleButtonGroup exclusive value={isPercentage} onChange={handleAmountTypeChange} aria-label="amount type" size="small" fullWidth disabled={disabled}>
-                        <ToggleButton value={false} aria-label="amount">
-                          <MoneyIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          Amount
-                        </ToggleButton>
-                        <ToggleButton value={true} aria-label="percentage">
-                          <PercentIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          Percentage
-                        </ToggleButton>
-                      </ToggleButtonGroup>
-                    </Box>
-
-                    <TextField
-                      type="number"
-                      label={isPercentage ? "Percentage Value" : "Amount Value"}
-                      value={amountValue}
-                      onChange={handleAmountValueChange}
-                      size="small"
-                      fullWidth
-                      placeholder={`Enter ${isPercentage ? "percentage" : "amount"}`}
-                      disabled={disabled}
-                      InputProps={{
-                        endAdornment: <InputAdornment position="end">{isPercentage ? "%" : "₹"}</InputAdornment>,
-                      }}
-                      inputProps={{
-                        min: 0,
-                        step: "0.01",
-                      }}
-                      variant="outlined"
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <Box sx={{ mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Operation Type
-                      </Typography>
-                      <ToggleButtonGroup
-                        exclusive
-                        value={priceChangeType}
-                        onChange={handlePriceChangeTypeChange}
-                        aria-label="price change type"
-                        size="small"
-                        fullWidth
-                        disabled={disabled}
-                      >
-                        <ToggleButton value="Increase" aria-label="increase">
-                          <AddIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          Increase
-                        </ToggleButton>
-                        <ToggleButton value="Decrease" aria-label="decrease">
-                          <RemoveIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          Decrease
-                        </ToggleButton>
-                      </ToggleButtonGroup>
-                    </Box>
-
-                    {isApplyReady && (
-                      <Box sx={{ mt: 1, p: 1, border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
-                        <Typography variant="body2" align="center">
-                          Preview: <strong>100</strong> →{" "}
-                          <strong>
-                            {priceChangeType === "Increase"
-                              ? isPercentage
-                                ? (100 * (1 + parseFloat(amountValue) / 100)).toFixed(2)
-                                : (100 + parseFloat(amountValue)).toFixed(2)
-                              : isPercentage
-                              ? (100 * (1 - parseFloat(amountValue) / 100)).toFixed(2)
-                              : Math.max(0, 100 - parseFloat(amountValue)).toFixed(2)}
-                          </strong>
-                        </Typography>
-                      </Box>
-                    )}
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <Box sx={{ mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Apply To
-                      </Typography>
-                      <ToggleButtonGroup
-                        exclusive
-                        value={displayAmountType}
-                        onChange={(e, newValue) => {
-                          if (newValue) {
-                            setDisplayAmountType(newValue);
-                          }
-                        }}
-                        aria-label="apply to amount type"
-                        size="small"
-                        fullWidth
-                        disabled={disabled}
-                      >
-                        <ToggleButton value="Dr Amt" aria-label="dr amount">
-                          Dr Amt
-                        </ToggleButton>
-                        <ToggleButton value="Hosp Amt" aria-label="hosp amount">
-                          Hosp Amt
-                        </ToggleButton>
-                        <ToggleButton value="Both" aria-label="both amounts">
-                          Both
-                        </ToggleButton>
-                      </ToggleButtonGroup>
-                    </Box>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <Box display="flex" justifyContent="flex-end" gap={1} alignItems="flex-end" height="100%">
-                      {!showGrid && pricingGridData.length === 0 && (
-                        <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick} disabled={disabled}>
-                          View
-                        </Button>
-                      )}
-
-                      <Tooltip
-                        title={
-                          !isApplyReady
-                            ? "Enter amount and select operation type"
-                            : `Apply ${getApplyButtonText} to ${displayAmountType === "Both" ? "all amounts" : displayAmountType}`
-                        }
-                      >
-                        <span>
-                          <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={applyChanges} disabled={!isApplyReady || disabled}>
-                            {getApplyButtonText}
-                          </Button>
-                        </span>
-                      </Tooltip>
-
-                      <Button variant="outlined" startIcon={<TrendingUpIcon />} size="small" onClick={generateOptimalPricing} disabled={disabled} color="secondary">
-                        Auto-Price
-                      </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Fade>
             </Grid>
+
+            {/* Only show bulk operations when showAdvancedControls is true */}
+            {showAdvancedControls && (
+              <Fade in={showAdvancedControls}>
+                <Box sx={{ mt: 3 }}>
+                  <Divider sx={{ mb: 3 }}>
+                    <Chip label="Bulk Price Operations" size="small" />
+                  </Divider>
+
+                  <Grid container spacing={2} alignItems="flex-end">
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Adjustment Type
+                        </Typography>
+                        <ToggleButtonGroup exclusive value={isPercentage} onChange={handleAmountTypeChange} aria-label="amount type" size="small" fullWidth disabled={disabled}>
+                          <ToggleButton value={false} aria-label="amount">
+                            <MoneyIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            Amount
+                          </ToggleButton>
+                          <ToggleButton value={true} aria-label="percentage">
+                            <PercentIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            Percentage
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      </Box>
+
+                      <TextField
+                        type="number"
+                        label={isPercentage ? "Percentage Value" : "Amount Value"}
+                        value={amountValue}
+                        onChange={handleAmountValueChange}
+                        size="small"
+                        fullWidth
+                        placeholder={`Enter ${isPercentage ? "percentage (0-100)" : "amount"}`}
+                        disabled={disabled}
+                        error={isPercentage && parseFloat(amountValue) > 100}
+                        helperText={isPercentage && parseFloat(amountValue) > 100 ? "Percentage cannot exceed 100%" : isPercentage ? "Maximum value: 100%" : ""}
+                        InputProps={{
+                          endAdornment: <InputAdornment position="end">{isPercentage ? "%" : "₹"}</InputAdornment>,
+                        }}
+                        inputProps={{
+                          min: 0,
+                          max: isPercentage ? 100 : undefined,
+                          step: "0.01",
+                        }}
+                        variant="outlined"
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Operation Type
+                        </Typography>
+                        <ToggleButtonGroup
+                          exclusive
+                          value={priceChangeType}
+                          onChange={handlePriceChangeTypeChange}
+                          aria-label="price change type"
+                          size="small"
+                          fullWidth
+                          disabled={disabled}
+                        >
+                          <ToggleButton value="Increase" aria-label="increase">
+                            <AddIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            Increase
+                          </ToggleButton>
+                          <ToggleButton value="Decrease" aria-label="decrease">
+                            <RemoveIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            Decrease
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      </Box>
+
+                      {isApplyReady && (
+                        <Box sx={{ mt: 1, p: 1, border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+                          <Typography variant="body2" align="center">
+                            Preview: <strong>100</strong> →{" "}
+                            <strong>
+                              {priceChangeType === "Increase"
+                                ? isPercentage
+                                  ? (100 * (1 + parseFloat(amountValue) / 100)).toFixed(2)
+                                  : (100 + parseFloat(amountValue)).toFixed(2)
+                                : isPercentage
+                                ? (100 * (1 - parseFloat(amountValue) / 100)).toFixed(2)
+                                : Math.max(0, 100 - parseFloat(amountValue)).toFixed(2)}
+                            </strong>
+                          </Typography>
+                        </Box>
+                      )}
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Apply To
+                        </Typography>
+                        <ToggleButtonGroup
+                          exclusive
+                          value={displayAmountType}
+                          onChange={(e, newValue) => {
+                            if (newValue) {
+                              setDisplayAmountType(newValue);
+                            }
+                          }}
+                          aria-label="apply to amount type"
+                          size="small"
+                          fullWidth
+                          disabled={disabled}
+                        >
+                          <ToggleButton value="Dr Amt" aria-label="dr amount">
+                            Dr Amt
+                          </ToggleButton>
+                          <ToggleButton value="Hosp Amt" aria-label="hosp amount">
+                            Hosp Amt
+                          </ToggleButton>
+                          <ToggleButton value="Both" aria-label="both amounts">
+                            Both
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      </Box>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <Box display="flex" justifyContent="flex-end" gap={1} alignItems="flex-end" height="100%">
+                        {!showGrid && pricingGridData.length === 0 && (
+                          <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick} disabled={disabled}>
+                            View
+                          </Button>
+                        )}
+
+                        <Tooltip
+                          title={
+                            !isApplyReady
+                              ? isPercentage && parseFloat(amountValue) > 100
+                                ? "Percentage cannot exceed 100%"
+                                : "Enter amount and select operation type"
+                              : `Apply ${getApplyButtonText} to ${displayAmountType === "Both" ? "all amounts" : displayAmountType}`
+                          }
+                        >
+                          <span>
+                            <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={applyChanges} disabled={!isApplyReady || disabled}>
+                              {getApplyButtonText}
+                            </Button>
+                          </span>
+                        </Tooltip>
+
+                        <Button variant="outlined" startIcon={<TrendingUpIcon />} size="small" onClick={generateOptimalPricing} disabled={disabled} color="secondary">
+                          Auto-Price
+                        </Button>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Fade>
+            )}
           </Paper>
 
           {(showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0 || pricingGridData.length > 0) && (
