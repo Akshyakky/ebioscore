@@ -61,11 +61,11 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
     const activeDetails = purchaseOrderDetails.filter((d) => d.rActiveYN === "Y");
     const totalDiscAmtOrPer = totDiscAmtPer || 0;
 
-    // Calculate the total value of all items
+    // Calculate the total value of all items (base amount before GST and discount)
     const totalItemsValue = activeDetails.reduce((sum, item) => {
       const unitPrice = item.unitPrice || 0;
-      const receivedQty = item.receivedQty || 0;
-      return sum + unitPrice * receivedQty;
+      const requiredPack = item.requiredPack || 0;
+      return sum + unitPrice * requiredPack;
     }, 0);
 
     // Validation
@@ -85,17 +85,34 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
       // Apply percentage discount
       updatedDetails.forEach((item) => {
         if (item.rActiveYN === "Y") {
+          // Get base values (same as handleCellValueChange)
+          const requiredPack = item.requiredPack || 0;
+          const unitPack = item.unitPack || 1;
           const unitPrice = item.unitPrice || 0;
-          const receivedQty = item.receivedQty || 0;
-          const totalPrice = unitPrice * receivedQty;
+          const gstPercentage = item.gstPerValue || 0;
 
-          item.discAmt = (totalPrice * totalDiscAmtOrPer) / 100;
+          // Calculate required unit quantity
+          item.requiredUnitQty = parseFloat((requiredPack * unitPack).toFixed(2));
+
+          // Calculate base amount (before discount and GST)
+          const baseAmount = unitPrice * requiredPack;
+
+          // Apply discount percentage
           item.discPercentageAmt = totalDiscAmtOrPer;
+          item.discAmt = parseFloat(((baseAmount * totalDiscAmtOrPer) / 100).toFixed(2));
 
-          // Recalculate amounts
-          const taxAmt = (item.cgstTaxAmt || 0) + (item.sgstTaxAmt || 0);
-          item.netAmount = totalPrice + taxAmt - item.discAmt;
-          item.totAmt = item.netAmount;
+          // Calculate GST on original base amount (before discount)
+          const gstAmount = parseFloat(((baseAmount * gstPercentage) / 100).toFixed(2));
+          item.gstTaxAmt = gstAmount;
+
+          // Split GST into CGST and SGST
+          item.cgstPerValue = parseFloat((gstPercentage / 2).toFixed(2));
+          item.sgstPerValue = parseFloat((gstPercentage / 2).toFixed(2));
+          item.cgstTaxAmt = parseFloat((gstAmount / 2).toFixed(2));
+          item.sgstTaxAmt = parseFloat((gstAmount / 2).toFixed(2));
+
+          // Calculate final item total: (Base Amount + GST) - Discount
+          item.netAmount = parseFloat((baseAmount + gstAmount - item.discAmt).toFixed(2));
         }
       });
     } else {
@@ -103,18 +120,35 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
       if (totalItemsValue > 0) {
         updatedDetails.forEach((item) => {
           if (item.rActiveYN === "Y") {
+            // Get base values (same as handleCellValueChange)
+            const requiredPack = item.requiredPack || 0;
+            const unitPack = item.unitPack || 1;
             const unitPrice = item.unitPrice || 0;
-            const receivedQty = item.receivedQty || 0;
-            const totalPrice = unitPrice * receivedQty;
+            const gstPercentage = item.gstPerValue || 0;
 
-            const proportion = totalPrice / totalItemsValue;
-            item.discAmt = totalDiscAmtOrPer * proportion;
-            item.discPercentageAmt = totalPrice > 0 ? (item.discAmt / totalPrice) * 100 : 0;
+            // Calculate required unit quantity
+            item.requiredUnitQty = parseFloat((requiredPack * unitPack).toFixed(2));
 
-            // Recalculate amounts
-            const taxAmt = (item.cgstTaxAmt || 0) + (item.sgstTaxAmt || 0);
-            item.netAmount = totalPrice + taxAmt - item.discAmt;
-            item.totAmt = item.netAmount;
+            // Calculate base amount (before discount and GST)
+            const baseAmount = unitPrice * requiredPack;
+
+            // Calculate proportional discount
+            const proportion = baseAmount / totalItemsValue;
+            item.discAmt = parseFloat((totalDiscAmtOrPer * proportion).toFixed(2));
+            item.discPercentageAmt = parseFloat((baseAmount > 0 ? (item.discAmt / baseAmount) * 100 : 0).toFixed(2));
+
+            // Calculate GST on original base amount (before discount)
+            const gstAmount = parseFloat(((baseAmount * gstPercentage) / 100).toFixed(2));
+            item.gstTaxAmt = gstAmount;
+
+            // Split GST into CGST and SGST
+            item.cgstPerValue = parseFloat((gstPercentage / 2).toFixed(2));
+            item.sgstPerValue = parseFloat((gstPercentage / 2).toFixed(2));
+            item.cgstTaxAmt = parseFloat((gstAmount / 2).toFixed(2));
+            item.sgstTaxAmt = parseFloat((gstAmount / 2).toFixed(2));
+
+            // Calculate final item total: (Base Amount + GST) - Discount
+            item.netAmount = parseFloat((baseAmount + gstAmount - item.discAmt).toFixed(2));
           }
         });
       }
@@ -123,7 +157,6 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
     onDetailsUpdate(updatedDetails);
     showAlert("Success", "Discount applied successfully", "success");
   }, [purchaseOrderDetails, totDiscAmtPer, isDiscPercentage, onDetailsUpdate, showAlert]);
-
   const recalculateFooterAmounts = useCallback(() => {
     const activeDetails = purchaseOrderDetails.filter((d) => d.rActiveYN === "Y");
 
