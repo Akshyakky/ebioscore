@@ -20,6 +20,7 @@ import {
   Cancel as RejectedIcon,
   Search as SearchIcon,
   ShoppingCart as ShoppingCartIcon,
+  Sync,
   TrendingUp as TotalIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
@@ -507,7 +508,7 @@ const PurchaseOrderPage: React.FC = () => {
               {/* Department Selection */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <SmartButton text={`Change Dept: ${deptName}`} onClick={handleDepartmentChange} variant="outlined" size="small" color="warning" />
+                  <SmartButton text={`${deptName}`} onClick={handleDepartmentChange} variant="outlined" size="small" color="warning" icon={Sync} />
                 </Stack>
               </Grid>
 
