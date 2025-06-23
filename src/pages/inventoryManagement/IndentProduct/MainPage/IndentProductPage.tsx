@@ -54,7 +54,8 @@ const IndentProductPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(true);
-  const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.ThisMonth);
+  // Changed default from DateFilterType.ThisMonth to DateFilterType.Today
+  const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.Today);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const { indentStatus = [], isLoading: isLoadingDropdowns } = useDropdownValues(["indentStatus"]);
@@ -95,9 +96,15 @@ const IndentProductPage: React.FC = () => {
     }
   }, [isDepartmentSelected, deptId, dateFilter, startDate, endDate]);
 
+  // Modified handleRefresh to clear search when refresh is clicked
   const handleRefresh = useCallback(async () => {
     if (isDepartmentSelected && deptId) {
       try {
+        // Clear search terms when refreshing
+        setSearchTerm("");
+        setDebouncedSearchTerm("");
+        debouncedSearch.cancel();
+
         await getIndentsByDepartment(deptId, {
           dateFilter,
           startDate,
