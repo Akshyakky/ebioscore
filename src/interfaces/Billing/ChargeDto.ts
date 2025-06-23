@@ -75,7 +75,7 @@ export interface BChargePackDto extends BaseDto {
 }
 
 export interface BChargeFacultyDto extends BaseDto {
-  chFacID: number;
+  bchfID: number; // CHANGED: Use bchfID to match backend (was chFacID)
   chargeID: number;
   aSubID: number;
   rActiveYN?: "Y" | "N";

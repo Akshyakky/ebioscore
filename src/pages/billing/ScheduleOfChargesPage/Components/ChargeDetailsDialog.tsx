@@ -43,10 +43,10 @@ interface ChargeDetailsDialogProps {
   open: boolean;
   onClose: () => void;
   charge: ChargeWithAllDetailsDto | null;
+  mode?: "view" | "edit";
   onEdit: (charge: ChargeWithAllDetailsDto) => void;
   onDelete: (chargeId: number) => void;
 }
-
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -61,11 +61,10 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
   );
 };
 
-const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose, charge, onEdit, onDelete }) => {
+const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose, charge, mode = "view", onEdit, onDelete }) => {
   const [tabValue, setTabValue] = useState(0);
 
   const {
-    serviceType = [],
     serviceGroup = [],
     pic = [],
     bedCategory = [],
@@ -75,19 +74,16 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
 
   const chargeStatistics = useMemo(() => {
     if (!charge) return null;
-
     const chargeDetails = charge.ChargeDetails || charge.chargeDetails || [];
     const doctorShares = charge.DoctorShares || charge.doctorShares || [];
     const chargeAliases = charge.ChargeAliases || charge.chargeAliases || [];
     const chargeFaculties = charge.ChargeFaculties || charge.chargeFaculties || [];
     const chargePacks = charge.ChargePacks || charge.chargePacks || [];
-
     const priceConfigurations = chargeDetails.length || 0;
     const doctorSharesCount = doctorShares.length || 0;
     const aliasesCount = chargeAliases.length || 0;
     const facultiesCount = chargeFaculties.length || 0;
     const packsCount = chargePacks.length || 0;
-
     let minPrice = 0;
     let maxPrice = 0;
     if (chargeDetails.length > 0) {
@@ -202,7 +198,7 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
   const dialogActions = (
     <>
       <CustomButton variant="outlined" text="Close" onClick={onClose} />
-      {charge && (
+      {mode === "edit" && charge && (
         <>
           <CustomButton variant="outlined" text="Copy" icon={CopyIcon} onClick={() => onEdit(charge)} color="info" />
           <CustomButton variant="outlined" text="Edit" icon={EditIcon} onClick={() => onEdit(charge)} color="primary" />
@@ -358,7 +354,7 @@ const ChargeDetailsDialog: React.FC<ChargeDetailsDialogProps> = ({ open, onClose
                       Service Group
                     </Typography>
                     <Typography variant="body1" fontWeight="medium">
-                      {getServiceGroupName(charge.serviceGroupID || 0)}
+                      {getServiceGroupName(charge.sGrpID || charge.serviceGroupID || 0)}
                     </Typography>
                   </Grid>
                   {charge.chargeCost && charge.chargeCost > 0 && (
