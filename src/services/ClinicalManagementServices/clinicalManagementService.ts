@@ -14,6 +14,7 @@ import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
 import { OTProcedureListDto } from "@/interfaces/ClinicalManagement/ProcedureListDto";
+import { TemplateDetailDto, TemplateMastDto } from "@/interfaces/ClinicalManagement/TemplateDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
 export const medicationRouteService = createEntityService<MedicationRouteDto>("MedicationRoute", "clinicalManagementURL");
@@ -33,3 +34,5 @@ export const pmhService = createEntityService<OPIPHistPMHDto>("OPIPHistPMH", "cl
 export const rosService = createEntityService<OPIPHistROSDto>("OPIPHistROS", "clinicalManagementURL");
 export const pshService = createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL");
 export const icdDetailService = createEntityService<DiagnosisDetailDto>("IcdDetail", "clinicalManagementURL");
+export const templateMastService = createEntityService<TemplateMastDto>("TemplateMast", "clinicalManagementURL");
+export const templateDetailService = createEntityService<TemplateDetailDto>("TemplateDetail", "clinicalManagementURL");
