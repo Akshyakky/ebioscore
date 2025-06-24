@@ -8,23 +8,63 @@ import {
   Add as AddIcon,
   CheckCircle as ApproveIcon,
   ContentCopy as CopyIcon,
+  Dashboard as DashboardIcon,
+  Delete as DeleteIcon,
   Group as DeptIcon,
+  Download as DownloadIcon,
   Edit as EditIcon,
+  GetApp as ExportIcon,
+  FilterList as FilterIcon,
   Receipt as GrnIcon,
-  Inventory as InventoryIcon,
-  Warning as PendingIcon,
+  VisibilityOff as HideIcon,
+  Assignment as QualityIcon,
   Refresh as RefreshIcon,
   Assessment as ReportIcon,
+  Schedule as ScheduleIcon,
   Search as SearchIcon,
+  CheckBox as SelectAllIcon,
   LocalShipping as SupplierIcon,
+  TrendingUp as TrendingIcon,
+  CheckBoxOutlineBlank as UnselectAllIcon,
+  FileUpload as UploadIcon,
   Visibility as ViewIcon,
+  Warning as WarningIcon,
 } from "@mui/icons-material";
-import { Box, Card, CardContent, Chip, Grid, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Drawer,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import GrnDetailsDialog from "../Form/GrnDetailsDialog";
-import GrnFormDialog from "../Form/GrnFormDailogue";
-import useGRN from "../hooks/useGrnhooks";
+import ComprehensiveGrnFormDialog from "../Form/GrnFormDailogue";
+import useEnhancedGRN from "../hooks/useGrnhooks";
 
 interface EnhancedGRNDto extends GRNWithAllDetailsDto {
   totalItems?: number;
@@ -34,147 +74,233 @@ interface EnhancedGRNDto extends GRNWithAllDetailsDto {
   departmentDisplay?: string;
   statusColor?: "success" | "warning" | "error" | "info" | "default";
   daysOld?: number;
+  isOverdue?: boolean;
+  formattedGrnDate?: string;
+  formattedInvDate?: string;
+  qualityStatus?: string;
 }
 
-const GRNManagementPage: React.FC = () => {
+interface FilterState {
+  dateFilterType: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  supplierID: string;
+  departmentID: string;
+  invoiceNo: string;
+  grnCode: string;
+  grnStatus: string;
+  approvedStatus: string;
+  grnType: string;
+  hideStatus: string;
+  qualityStatus: string;
+  amountFrom: string;
+  amountTo: string;
+}
+
+const ComprehensiveGRNManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGrn, setSelectedGrn] = useState<GRNWithAllDetailsDto | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterDepartment, setFilterDepartment] = useState<string>("all");
-  const [filterSupplier, setFilterSupplier] = useState<string>("all");
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [viewMode, setViewMode] = useState<"grid" | "cards" | "detailed">("grid");
   const [isGrnFormOpen, setIsGrnFormOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<"view" | "edit">("view");
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
+  const [, setIsExportDialogOpen] = useState(false);
+  const [, setIsReportsDialogOpen] = useState(false);
+  const { deptId, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
+  const { department } = useDropdownValues(["department"]);
+
+  const [filters, setFilters] = useState<FilterState>({
+    dateFilterType: "all",
+    startDate: null,
+    endDate: null,
+    supplierID: "all",
+    departmentID: "all",
+    invoiceNo: "",
+    grnCode: "",
+    grnStatus: "all",
+    approvedStatus: "all",
+    grnType: "all",
+    hideStatus: "show",
+    qualityStatus: "all",
+    amountFrom: "",
+    amountTo: "",
+  });
 
   const { showAlert } = useAlert();
-  const { grns, loading, refreshGrns, saveGrn, deleteGrn, approveGrn, getGrnById } = useGRN();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const suppliers = [
+    { value: "1", label: "ABC Medical Supplies" },
+    { value: "2", label: "XYZ Pharmaceuticals" },
+    { value: "3", label: "Healthcare Solutions" },
+  ];
+
+  const products = [
+    { value: "1", label: "Paracetamol 500mg" },
+    { value: "2", label: "Surgical Gloves" },
+    { value: "3", label: "Syringes 5ml" },
+  ];
+
+  const {
+    grns,
+    loading,
+    statistics,
+    refreshGrns,
+    saveGrn,
+    deleteGrn,
+    approveGrn,
+    bulkApproveGrns,
+    bulkDeleteGrns,
+    bulkHideGrns,
+    hideGrn,
+    unhideGrn,
+    getGrnById,
+    exportGrnToExcel,
+    exportMultipleGrnsToExcel,
+    downloadExcelTemplate,
+  } = useEnhancedGRN();
 
   useEffect(() => {
     refreshGrns();
   }, [refreshGrns]);
 
-  const handleRefresh = useCallback(async () => {
-    setSearchTerm("");
-    setFilterStatus("all");
-    setFilterDepartment("all");
-    setFilterSupplier("all");
-    await refreshGrns();
-  }, [refreshGrns]);
+  useEffect(() => {
+    if (!isDepartmentSelected && !isDialogOpen) {
+      openDialog();
+    }
+  }, [isDepartmentSelected, isDialogOpen, openDialog]);
 
-  // Enhanced GRNs with computed properties
+  useEffect(() => {
+    if (!isDepartmentSelected && !isDialogOpen) {
+      openDialog();
+    }
+  }, [isDepartmentSelected, isDialogOpen, openDialog]);
+
+  useEffect(() => {
+    if (isDepartmentSelected && deptId) {
+      handleRefresh();
+    }
+  }, [isDepartmentSelected, deptId]);
+
   const enhancedGrns = useMemo((): EnhancedGRNDto[] => {
     if (!grns || !Array.isArray(grns) || grns.length === 0) {
       return [];
     }
-
     return grns.map((grn) => {
       const totalItems = grn.grnDetails?.length || 0;
       const totalValue = grn.netTot || grn.tot || 0;
       const pendingApproval = grn.grnApprovedYN !== "Y";
-
-      // Calculate days old
       const grnDate = dayjs(grn.grnDate);
       const daysOld = dayjs().diff(grnDate, "days");
+      const isOverdue = daysOld > 7 && pendingApproval;
       let statusColor: "success" | "warning" | "error" | "info" | "default" = "default";
       if (grn.grnApprovedYN === "Y") {
         statusColor = "success";
-      } else if (daysOld > 7) {
+      } else if (isOverdue) {
         statusColor = "error";
       } else if (daysOld > 3) {
         statusColor = "warning";
       } else {
         statusColor = "info";
       }
-
-      // Find department and supplier names
-
+      let qualityStatus = "pending";
+      if (grn.qualityCheckYN === "Y") {
+        qualityStatus = "completed";
+      }
       return {
         ...grn,
         totalItems,
         totalValue: formatCurrency(totalValue, "INR", "en-IN"),
         pendingApproval,
-
+        supplierDisplay: grn.supplrName || `Supplier ${grn.supplrID}`,
+        departmentDisplay: grn.deptName || `Department ${grn.deptID}`,
         statusColor,
         daysOld,
+        isOverdue,
+        formattedGrnDate: dayjs(grn.grnDate).format("DD/MM/YYYY"),
+        formattedInvDate: dayjs(grn.invDate).format("DD/MM/YYYY"),
+        qualityStatus,
       };
     });
   }, [grns]);
 
-  // Filtered GRNs based on search and filters
   const filteredGrns = useMemo(() => {
-    if (!enhancedGrns || enhancedGrns.length === 0) {
-      return [];
-    }
-
     let filtered = [...enhancedGrns];
-
-    // Apply search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((grn) => {
-        return (
+      filtered = filtered.filter(
+        (grn) =>
           (grn.grnCode && grn.grnCode.toLowerCase().includes(searchLower)) ||
           (grn.invoiceNo && grn.invoiceNo.toLowerCase().includes(searchLower)) ||
           (grn.supplrName && grn.supplrName.toLowerCase().includes(searchLower)) ||
           (grn.deptName && grn.deptName.toLowerCase().includes(searchLower)) ||
-          (grn.grnStatus && grn.grnStatus.toLowerCase().includes(searchLower))
-        );
-      });
+          (grn.dcNo && grn.dcNo.toLowerCase().includes(searchLower)) ||
+          (grn.poNo && grn.poNo.toLowerCase().includes(searchLower))
+      );
     }
 
-    // Apply status filter
-    if (filterStatus !== "all") {
-      if (filterStatus === "approved") {
+    if (filters.grnStatus !== "all") {
+      if (filters.grnStatus === "approved") {
         filtered = filtered.filter((grn) => grn.grnApprovedYN === "Y");
-      } else if (filterStatus === "pending") {
+      } else if (filters.grnStatus === "pending") {
         filtered = filtered.filter((grn) => grn.grnApprovedYN !== "Y");
-      } else if (filterStatus === "completed") {
-        filtered = filtered.filter((grn) => grn.grnStatus === "Completed" || grn.grnStatusCode === "COMP");
+      } else if (filters.grnStatus === "overdue") {
+        filtered = filtered.filter((grn) => grn.isOverdue);
       }
     }
-
-    // Apply department filter
-    if (filterDepartment !== "all") {
-      filtered = filtered.filter((grn) => grn.deptID.toString() === filterDepartment);
+    if (filters.departmentID !== "all") {
+      filtered = filtered.filter((grn) => grn.deptID.toString() === filters.departmentID);
     }
-
-    // Apply supplier filter
-    if (filterSupplier !== "all") {
-      filtered = filtered.filter((grn) => grn.supplrID.toString() === filterSupplier);
+    if (filters.supplierID !== "all") {
+      filtered = filtered.filter((grn) => grn.supplrID.toString() === filters.supplierID);
+    }
+    if (filters.grnType !== "all") {
+      filtered = filtered.filter((grn) => grn.grnType === filters.grnType);
+    }
+    if (filters.hideStatus === "hidden") {
+      filtered = filtered.filter((grn) => grn.hideYN === "Y");
+    } else if (filters.hideStatus === "show") {
+      filtered = filtered.filter((grn) => grn.hideYN !== "Y");
+    }
+    if (filters.startDate && filters.endDate) {
+      filtered = filtered.filter((grn) => {
+        const grnDate = dayjs(grn.grnDate);
+        return grnDate.isAfter(dayjs(filters.startDate).subtract(1, "day")) && grnDate.isBefore(dayjs(filters.endDate).add(1, "day"));
+      });
+    }
+    if (filters.amountFrom) {
+      filtered = filtered.filter((grn) => (grn.netTot || grn.tot || 0) >= Number(filters.amountFrom));
+    }
+    if (filters.amountTo) {
+      filtered = filtered.filter((grn) => (grn.netTot || grn.tot || 0) <= Number(filters.amountTo));
     }
 
     return filtered;
-  }, [enhancedGrns, searchTerm, filterStatus, filterDepartment, filterSupplier]);
+  }, [enhancedGrns, searchTerm, filters]);
 
-  // Statistics
-  const statistics = useMemo(() => {
-    if (!enhancedGrns || enhancedGrns.length === 0) {
-      return {
-        total: 0,
-        approved: 0,
-        pending: 0,
-        completed: 0,
-        overdue: 0,
-        totalValue: 0,
-      };
-    }
-
-    const total = enhancedGrns.length;
-    const approved = enhancedGrns.filter((g) => g.grnApprovedYN === "Y").length;
-    const pending = enhancedGrns.filter((g) => g.grnApprovedYN !== "Y").length;
-    const completed = enhancedGrns.filter((g) => g.grnStatus === "Completed").length;
-    const overdue = enhancedGrns.filter((g) => g.daysOld && g.daysOld > 7 && g.grnApprovedYN !== "Y").length;
-    const totalValue = enhancedGrns.reduce((sum, grn) => sum + (grn.netTot || grn.tot || 0), 0);
-
-    return {
-      total,
-      approved,
-      pending,
-      completed,
-      overdue,
-      totalValue,
-    };
-  }, [enhancedGrns]);
+  const handleRefresh = useCallback(async () => {
+    setSearchTerm("");
+    setFilters({
+      dateFilterType: "all",
+      startDate: null,
+      endDate: null,
+      supplierID: "all",
+      departmentID: "all",
+      invoiceNo: "",
+      grnCode: "",
+      grnStatus: "all",
+      approvedStatus: "all",
+      grnType: "all",
+      hideStatus: "show",
+      qualityStatus: "all",
+      amountFrom: "",
+      amountTo: "",
+    });
+    setSelectedRows([]);
+    await refreshGrns();
+  }, [refreshGrns]);
 
   const handleNewGrn = useCallback(() => {
     setSelectedGrn(null);
@@ -204,7 +330,6 @@ const GRNManagementPage: React.FC = () => {
         const fullGrnDetails = await getGrnById(grn.grnID);
         if (fullGrnDetails) {
           setSelectedGrn(fullGrnDetails);
-          setDialogMode("view");
           setIsDetailsDialogOpen(true);
         } else {
           showAlert("Error", "Could not fetch complete GRN details. Please try again.", "error");
@@ -228,7 +353,7 @@ const GRNManagementPage: React.FC = () => {
         const copiedGrn: GRNWithAllDetailsDto = {
           ...fullGrnDetails,
           grnID: 0,
-          grnCode: "", // Will be generated
+          grnCode: "",
           invoiceNo: `${fullGrnDetails.invoiceNo} (Copy)`,
           grnDate: new Date().toISOString(),
           grnApprovedYN: "N",
@@ -236,6 +361,7 @@ const GRNManagementPage: React.FC = () => {
           grnApprovedID: 0,
           grnStatus: "Pending",
           grnStatusCode: "PEND",
+          hideYN: "N",
           grnDetails:
             fullGrnDetails.grnDetails?.map((detail) => ({
               ...detail,
@@ -253,18 +379,6 @@ const GRNManagementPage: React.FC = () => {
     [getGrnById, showAlert]
   );
 
-  const handleApproveGrn = useCallback(
-    async (grnId: number) => {
-      try {
-        await approveGrn(grnId);
-        showAlert("Success", "GRN approved and stock updated successfully", "success");
-      } catch (error) {
-        // Error handling is done in the hook
-      }
-    },
-    [approveGrn, showAlert]
-  );
-
   const handleGrnSubmit = useCallback(
     async (grnData: GRNWithAllDetailsDto) => {
       try {
@@ -272,9 +386,7 @@ const GRNManagementPage: React.FC = () => {
         setIsGrnFormOpen(false);
         setSelectedGrn(null);
         await refreshGrns();
-      } catch (error) {
-        // Error handling is done in the hook
-      }
+      } catch (error) {}
     },
     [saveGrn, refreshGrns]
   );
@@ -284,14 +396,131 @@ const GRNManagementPage: React.FC = () => {
       try {
         await deleteGrn(grnId);
         await refreshGrns();
-      } catch (error) {
-        // Error handling is done in the hook
-      }
+      } catch (error) {}
     },
     [deleteGrn, refreshGrns]
   );
 
+  const handleApproveGrn = useCallback(
+    async (grnId: number) => {
+      try {
+        await approveGrn(grnId);
+        showAlert("Success", "GRN approved and stock updated successfully", "success");
+      } catch (error) {}
+    },
+    [approveGrn, showAlert]
+  );
+
+  const handleHideGrn = useCallback(
+    async (grnId: number) => {
+      try {
+        await hideGrn(grnId);
+      } catch (error) {}
+    },
+    [hideGrn]
+  );
+
+  const handleUnhideGrn = useCallback(
+    async (grnId: number) => {
+      try {
+        await unhideGrn(grnId);
+      } catch (error) {}
+    },
+    [unhideGrn]
+  );
+
+  // Bulk Operations
+  const handleBulkApprove = useCallback(async () => {
+    if (selectedRows.length === 0) {
+      showAlert("Warning", "Please select GRNs to approve", "warning");
+      return;
+    }
+    try {
+      await bulkApproveGrns(selectedRows);
+      setSelectedRows([]);
+      setIsBulkActionsOpen(false);
+    } catch (error) {}
+  }, [selectedRows, bulkApproveGrns, showAlert]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedRows.length === 0) {
+      showAlert("Warning", "Please select GRNs to delete", "warning");
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ${selectedRows.length} GRNs?`)) {
+      try {
+        await bulkDeleteGrns(selectedRows);
+        setSelectedRows([]);
+        setIsBulkActionsOpen(false);
+      } catch (error) {}
+    }
+  }, [selectedRows, bulkDeleteGrns, showAlert]);
+
+  const handleBulkHide = useCallback(async () => {
+    if (selectedRows.length === 0) {
+      showAlert("Warning", "Please select GRNs to hide", "warning");
+      return;
+    }
+    try {
+      await bulkHideGrns(selectedRows);
+      setSelectedRows([]);
+      setIsBulkActionsOpen(false);
+    } catch (error) {}
+  }, [selectedRows, bulkHideGrns, showAlert]);
+
+  const handleBulkExport = useCallback(async () => {
+    if (selectedRows.length === 0) {
+      showAlert("Warning", "Please select GRNs to export", "warning");
+      return;
+    }
+    try {
+      await exportMultipleGrnsToExcel(selectedRows);
+      setSelectedRows([]);
+      setIsExportDialogOpen(false);
+    } catch (error) {}
+  }, [selectedRows, exportMultipleGrnsToExcel, showAlert]);
+
+  const handleExcelUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      showAlert("Info", "Excel upload functionality will process the file and create GRNs", "info");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },
+    [showAlert]
+  );
+
+  const handleDownloadTemplate = useCallback(async () => {
+    try {
+      await downloadExcelTemplate();
+    } catch (error) {}
+  }, [downloadExcelTemplate]);
+
+  // Grid Columns Definition
   const columns: Column<EnhancedGRNDto>[] = [
+    {
+      key: "select",
+      header: "",
+      visible: true,
+      sortable: false,
+      width: 50,
+      render: (grn) => (
+        <input
+          type="checkbox"
+          checked={selectedRows.includes(grn.grnID)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedRows((prev) => [...prev, grn.grnID]);
+            } else {
+              setSelectedRows((prev) => prev.filter((id) => id !== grn.grnID));
+            }
+          }}
+        />
+      ),
+    },
     {
       key: "grnInfo",
       header: "GRN Information",
@@ -300,21 +529,43 @@ const GRNManagementPage: React.FC = () => {
       width: 220,
       render: (grn) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium">
+          <Typography variant="body2" fontWeight="medium" color="primary">
             {grn.grnCode || "Pending"}
           </Typography>
-          <Typography variant="body2" color="primary" sx={{ mt: 0.5 }}>
-            Invoice: {grn.invoiceNo}
+          <Typography variant="body2" sx={{ mt: 0.5 }}>
+            Type: {grn.grnType} | {grn.formattedGrnDate}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {dayjs(grn.grnDate).format("DD/MM/YYYY")}
+            Created: {grn.rCreatedBy} | {dayjs(grn.rCreatedDate).format("DD/MM/YY")}
           </Typography>
         </Box>
       ),
     },
     {
+      key: "invoice",
+      header: "Invoice Details",
+      visible: true,
+      sortable: true,
+      width: 180,
+      render: (grn) => (
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {grn.invoiceNo}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Date: {grn.formattedInvDate}
+          </Typography>
+          {grn.dcNo && (
+            <Typography variant="caption" color="text.secondary" display="block">
+              DC: {grn.dcNo}
+            </Typography>
+          )}
+        </Box>
+      ),
+    },
+    {
       key: "supplier",
-      header: "Supplier & Department",
+      header: "Supplier",
       visible: true,
       sortable: true,
       width: 200,
@@ -325,24 +576,62 @@ const GRNManagementPage: React.FC = () => {
             {grn.supplierDisplay}
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
-            <DeptIcon sx={{ fontSize: 14, mr: 0.5, verticalAlign: "middle" }} />
+            ID: {grn.supplrID}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      key: "department",
+      header: "Department",
+      visible: true,
+      sortable: true,
+      width: 180,
+      render: (grn) => (
+        <Box>
+          <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>
+            <DeptIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
             {grn.departmentDisplay}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            ID: {grn.deptID}
           </Typography>
         </Box>
       ),
     },
     {
       key: "items",
-      header: "Items & Value",
+      header: "Items & Qty",
+      visible: true,
+      sortable: true,
+      width: 120,
+      render: (grn) => (
+        <Box textAlign="center">
+          <Typography variant="body2" fontWeight="bold" color="primary">
+            {grn.totalItems}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            items
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      key: "financial",
+      header: "Financial",
       visible: true,
       sortable: true,
       width: 150,
       render: (grn) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>
+          <Typography variant="body2" fontWeight="medium" color="success.main">
             {grn.totalValue}
           </Typography>
-          <Chip label={`${grn.totalItems} items`} size="small" color="info" variant="outlined" />
+          {grn.disc && grn.disc > 0 && (
+            <Typography variant="caption" color="warning.main">
+              Disc: {formatCurrency(grn.disc, "INR", "en-IN")}
+            </Typography>
+          )}
         </Box>
       ),
     },
@@ -351,7 +640,7 @@ const GRNManagementPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      width: 120,
+      width: 140,
       render: (grn) => (
         <Stack spacing={0.5}>
           <Chip
@@ -359,36 +648,51 @@ const GRNManagementPage: React.FC = () => {
             size="small"
             color={grn.statusColor}
             variant="filled"
-            icon={grn.grnApprovedYN === "Y" ? <ApproveIcon /> : <PendingIcon />}
+            icon={grn.grnApprovedYN === "Y" ? <ApproveIcon /> : <WarningIcon />}
           />
-          {grn.daysOld !== undefined && grn.daysOld > 0 && (
-            <Typography variant="caption" color="text.secondary">
-              {grn.daysOld} days old
-            </Typography>
-          )}
+          {grn.isOverdue && <Chip label="Overdue" size="small" color="error" variant="outlined" />}
+          {grn.hideYN === "Y" && <Chip label="Hidden" size="small" color="default" variant="outlined" />}
         </Stack>
       ),
     },
     {
-      key: "approval",
-      header: "Approval Info",
+      key: "quality",
+      header: "Quality",
+      visible: true,
+      sortable: false,
+      width: 100,
+      render: (grn) => (
+        <Chip
+          label={grn.qualityCheckYN === "Y" ? "Done" : "Pending"}
+          size="small"
+          color={grn.qualityCheckYN === "Y" ? "success" : "warning"}
+          variant="outlined"
+          icon={<QualityIcon />}
+        />
+      ),
+    },
+    {
+      key: "po",
+      header: "PO Details",
       visible: true,
       sortable: false,
       width: 150,
       render: (grn) => (
         <Box>
-          {grn.grnApprovedYN === "Y" ? (
+          {grn.poNo ? (
             <>
-              <Typography variant="caption" color="success.main" fontWeight="medium">
-                Approved by: {grn.grnApprovedBy || "System"}
+              <Typography variant="body2" fontWeight="medium">
+                {grn.poNo}
               </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Stock Updated
-              </Typography>
+              {grn.poDate && (
+                <Typography variant="caption" color="text.secondary">
+                  {dayjs(grn.poDate).format("DD/MM/YYYY")}
+                </Typography>
+              )}
             </>
           ) : (
-            <Typography variant="caption" color="warning.main">
-              Awaiting Approval
+            <Typography variant="caption" color="text.secondary">
+              No PO
             </Typography>
           )}
         </Box>
@@ -399,7 +703,7 @@ const GRNManagementPage: React.FC = () => {
       header: "Actions",
       visible: true,
       sortable: false,
-      width: 180,
+      width: 200,
       render: (grn) => (
         <Stack direction="row" spacing={0.5}>
           <Tooltip title="View Details">
@@ -457,6 +761,36 @@ const GRNManagementPage: React.FC = () => {
               </IconButton>
             </Tooltip>
           )}
+
+          <Tooltip title={grn.hideYN === "Y" ? "Unhide" : "Hide"}>
+            <IconButton
+              size="small"
+              color="warning"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (grn.hideYN === "Y") {
+                  handleUnhideGrn(grn.grnID);
+                } else {
+                  handleHideGrn(grn.grnID);
+                }
+              }}
+            >
+              {grn.hideYN === "Y" ? <ViewIcon fontSize="small" /> : <HideIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Export to Excel">
+            <IconButton
+              size="small"
+              color="default"
+              onClick={(event) => {
+                event.stopPropagation();
+                exportGrnToExcel(grn.grnID);
+              }}
+            >
+              <ExportIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },
@@ -464,169 +798,372 @@ const GRNManagementPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
-          Goods Received Notes (GRN)
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <CustomButton variant="contained" icon={AddIcon} text="New GRN" onClick={handleNewGrn} color="primary" />
-          <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous />
-        </Stack>
-      </Box>
+      {isDepartmentSelected && (
+        <>
+          {/* Header with Statistics */}
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+            <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
+              <GrnIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+              Goods Received Notes Management
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <CustomButton variant="contained" icon={AddIcon} text="New GRN" onClick={handleNewGrn} color="primary" />
+              <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous />
+            </Stack>
+          </Box>
 
-      {/* Statistics Cards */}
-      <Grid container spacing={2} mb={3}>
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Card sx={{ borderLeft: "4px solid #1976d2" }}>
-            <CardContent sx={{ textAlign: "center", p: 2 }}>
-              <GrnIcon sx={{ fontSize: 32, color: "#1976d2", mb: 1 }} />
-              <Typography variant="h5" color="#1976d2" fontWeight="bold">
-                {statistics.total}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Total GRNs
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+          {/* Statistics Dashboard */}
+          <Grid container spacing={2} mb={3}>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Card sx={{ borderLeft: "4px solid #1976d2", height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", p: 2 }}>
+                  <DashboardIcon sx={{ fontSize: 32, color: "#1976d2", mb: 1 }} />
+                  <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                    {statistics.total}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Total GRNs
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Card sx={{ borderLeft: "4px solid #4caf50" }}>
-            <CardContent sx={{ textAlign: "center", p: 2 }}>
-              <ApproveIcon sx={{ fontSize: 32, color: "#4caf50", mb: 1 }} />
-              <Typography variant="h5" color="#4caf50" fontWeight="bold">
-                {statistics.approved}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Approved
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Card sx={{ borderLeft: "4px solid #4caf50", height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", p: 2 }}>
+                  <ApproveIcon sx={{ fontSize: 32, color: "#4caf50", mb: 1 }} />
+                  <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                    {statistics.approved}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Approved
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Card sx={{ borderLeft: "4px solid #ff9800" }}>
-            <CardContent sx={{ textAlign: "center", p: 2 }}>
-              <PendingIcon sx={{ fontSize: 32, color: "#ff9800", mb: 1 }} />
-              <Typography variant="h5" color="#ff9800" fontWeight="bold">
-                {statistics.pending}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Pending Approval
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Card sx={{ borderLeft: "4px solid #ff9800", height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", p: 2 }}>
+                  <ScheduleIcon sx={{ fontSize: 32, color: "#ff9800", mb: 1 }} />
+                  <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                    {statistics.pending}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Pending
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Card sx={{ borderLeft: "4px solid #f44336" }}>
-            <CardContent sx={{ textAlign: "center", p: 2 }}>
-              <ReportIcon sx={{ fontSize: 32, color: "#f44336", mb: 1 }} />
-              <Typography variant="h5" color="#f44336" fontWeight="bold">
-                {statistics.overdue}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Overdue
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Card sx={{ borderLeft: "4px solid #f44336", height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", p: 2 }}>
+                  <WarningIcon sx={{ fontSize: 32, color: "#f44336", mb: 1 }} />
+                  <Typography variant="h5" color="#f44336" fontWeight="bold">
+                    {statistics.overdue}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Overdue
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ borderLeft: "4px solid #9c27b0" }}>
-            <CardContent sx={{ textAlign: "center", p: 2 }}>
-              <InventoryIcon sx={{ fontSize: 32, color: "#9c27b0", mb: 1 }} />
-              <Typography variant="h5" color="#9c27b0" fontWeight="bold">
-                {formatCurrency(statistics.totalValue, "INR", "en-IN")}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Total Value
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Card sx={{ borderLeft: "4px solid #9e9e9e", height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", p: 2 }}>
+                  <HideIcon sx={{ fontSize: 32, color: "#9e9e9e", mb: 1 }} />
+                  <Typography variant="h5" color="#9e9e9e" fontWeight="bold">
+                    {statistics.hidden}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Hidden
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-      {/* Filters */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Search GRNs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
-              }}
-            />
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Card sx={{ borderLeft: "4px solid #9c27b0", height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", p: 2 }}>
+                  <TrendingIcon sx={{ fontSize: 32, color: "#9c27b0", mb: 1 }} />
+                  <Typography variant="h4" color="#9c27b0" fontWeight="bold" fontSize="1.5rem">
+                    {formatCurrency(statistics.totalValue, "INR", "en-IN")}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Total Value
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 2 }}>
-            <TextField fullWidth size="small" select label="Status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="approved">Approved</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-            </TextField>
-          </Grid>
+          {/* Advanced Toolbar */}
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Grid container spacing={2} alignItems="center">
+              {/* Search */}
+              <Grid size={{ xs: 12, md: 3 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search GRNs (Code, Invoice, Supplier, Department)..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                  }}
+                />
+              </Grid>
 
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" select label="Department" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)}>
-              <MenuItem value="all">All Departments</MenuItem>
-              {/* {departments.map((dept) => (
-                <MenuItem key={dept.value} value={dept.value}>
-                  {dept.label}
-                </MenuItem>
-              ))} */}
-            </TextField>
-          </Grid>
+              {/* View Mode Toggle */}
+              <Grid size={{ xs: 12, md: 3 }}>
+                <ToggleButtonGroup value={viewMode} exclusive onChange={(_, newMode) => newMode && setViewMode(newMode)} size="small">
+                  <ToggleButton value="grid">Grid</ToggleButton>
+                  <ToggleButton value="cards">Cards</ToggleButton>
+                  <ToggleButton value="detailed">Detailed</ToggleButton>
+                </ToggleButtonGroup>
+              </Grid>
 
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" select label="Supplier" value={filterSupplier} onChange={(e) => setFilterSupplier(e.target.value)}>
-              <MenuItem value="all">All Suppliers</MenuItem>
-              {/* {suppliers.map((supplier) => (
-                <MenuItem key={supplier.value} value={supplier.value}>
-                  {supplier.label}
-                </MenuItem>
-              ))} */}
-            </TextField>
-          </Grid>
+              {/* Quick Filters */}
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Stack direction="row" spacing={1}>
+                  <CustomButton variant="outlined" icon={FilterIcon} text="Advanced Filter" onClick={() => setIsFilterDrawerOpen(true)} size="small" />
+                  <CustomButton
+                    variant="outlined"
+                    icon={selectedRows.length > 0 ? SelectAllIcon : UnselectAllIcon}
+                    text={`Bulk (${selectedRows.length})`}
+                    onClick={() => setIsBulkActionsOpen(true)}
+                    size="small"
+                    disabled={selectedRows.length === 0}
+                  />
+                </Stack>
+              </Grid>
 
-          <Grid size={{ xs: 12, md: 1 }}>
+              {/* Action Buttons */}
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Stack direction="row" spacing={1}>
+                  <CustomButton variant="outlined" icon={UploadIcon} text="Upload" onClick={() => fileInputRef.current?.click()} size="small" />
+                  <CustomButton variant="outlined" icon={DownloadIcon} text="Template" onClick={handleDownloadTemplate} size="small" />
+                  <CustomButton variant="outlined" icon={ExportIcon} text="Export" onClick={() => setIsExportDialogOpen(true)} size="small" />
+                  <CustomButton variant="outlined" icon={ReportIcon} text="Reports" onClick={() => setIsReportsDialogOpen(true)} size="small" />
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* Active Filters Display */}
+            {(filters.grnStatus !== "all" || filters.departmentID !== "all" || filters.supplierID !== "all") && (
+              <Box mt={2}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Active Filters:
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {filters.grnStatus !== "all" && (
+                    <Chip label={`Status: ${filters.grnStatus}`} size="small" onDelete={() => setFilters((prev) => ({ ...prev, grnStatus: "all" }))} />
+                  )}
+                  {filters.departmentID !== "all" && (
+                    <Chip
+                      label={`Dept: ${department.find((d) => d.value === filters.departmentID)?.label}`}
+                      size="small"
+                      onDelete={() => setFilters((prev) => ({ ...prev, departmentID: "all" }))}
+                    />
+                  )}
+                  {filters.supplierID !== "all" && (
+                    <Chip
+                      label={`Supplier: ${suppliers.find((s) => s.value === filters.supplierID)?.label}`}
+                      size="small"
+                      onDelete={() => setFilters((prev) => ({ ...prev, supplierID: "all" }))}
+                    />
+                  )}
+                </Stack>
+              </Box>
+            )}
+          </Paper>
+
+          {/* Results Summary */}
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="body2" color="text.secondary">
               Showing {filteredGrns.length} of {statistics.total} GRNs
+              {selectedRows.length > 0 && ` (${selectedRows.length} selected)`}
             </Typography>
-          </Grid>
-        </Grid>
-      </Paper>
 
-      {/* GRN List */}
-      <Paper sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <GrnIcon />
-            GRN List
-          </Typography>
-        </Box>
+            {selectedRows.length > 0 && (
+              <Stack direction="row" spacing={1}>
+                <CustomButton variant="text" text="Select All" onClick={() => setSelectedRows(filteredGrns.map((g) => g.grnID))} size="small" />
+                <CustomButton variant="text" text="Clear Selection" onClick={() => setSelectedRows([])} size="small" />
+              </Stack>
+            )}
+          </Box>
 
-        <CustomGrid
-          columns={columns}
-          data={filteredGrns}
-          loading={loading}
-          maxHeight="600px"
-          emptyStateMessage="No GRNs found"
-          rowKeyField="grnID"
-          density="medium"
-          showDensityControls
-          onRowClick={handleViewDetails}
-        />
-      </Paper>
+          {/* GRN List/Grid */}
+          <Paper sx={{ p: 2 }}>
+            <CustomGrid
+              columns={columns}
+              data={filteredGrns}
+              loading={loading}
+              maxHeight="600px"
+              emptyStateMessage="No GRNs found matching your criteria"
+              rowKeyField="grnID"
+              density="medium"
+              showDensityControls
+              onRowClick={handleViewDetails}
+            />
+          </Paper>
 
-      {/* Dialogs */}
-      <GrnFormDialog
+          {/* Hidden File Input */}
+          <input type="file" ref={fileInputRef} onChange={handleExcelUpload} accept=".xlsx,.xls" style={{ display: "none" }} />
+
+          {/* Filter Drawer */}
+          <Drawer anchor="right" open={isFilterDrawerOpen} onClose={() => setIsFilterDrawerOpen(false)} sx={{ "& .MuiDrawer-paper": { width: 400, p: 3 } }}>
+            <Typography variant="h6" gutterBottom>
+              Advanced Filters
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+
+            <Stack spacing={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Status</InputLabel>
+                <Select value={filters.grnStatus} onChange={(e) => setFilters((prev) => ({ ...prev, grnStatus: e.target.value }))}>
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="approved">Approved</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="overdue">Overdue</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel>Department</InputLabel>
+                <Select value={filters.departmentID} onChange={(e) => setFilters((prev) => ({ ...prev, departmentID: e.target.value }))}>
+                  <MenuItem value="all">All Departments</MenuItem>
+                  {department.map((dept) => (
+                    <MenuItem key={dept.value} value={dept.value}>
+                      {dept.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel>Supplier</InputLabel>
+                <Select value={filters.supplierID} onChange={(e) => setFilters((prev) => ({ ...prev, supplierID: e.target.value }))}>
+                  <MenuItem value="all">All Suppliers</MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.value} value={supplier.value}>
+                      {supplier.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small">
+                <InputLabel>GRN Type</InputLabel>
+                <Select value={filters.grnType} onChange={(e) => setFilters((prev) => ({ ...prev, grnType: e.target.value }))}>
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="Invoice">Invoice</MenuItem>
+                  <MenuItem value="DC">Delivery Challan</MenuItem>
+                  <MenuItem value="PO">Purchase Order</MenuItem>
+                  <MenuItem value="Return">Return</MenuItem>
+                </Select>
+              </FormControl>
+
+              <DatePicker
+                label="Start Date"
+                value={filters.startDate}
+                onChange={(date) => setFilters((prev) => ({ ...prev, startDate: date }))}
+                slotProps={{ textField: { size: "small", fullWidth: true } }}
+              />
+
+              <DatePicker
+                label="End Date"
+                value={filters.endDate}
+                onChange={(date) => setFilters((prev) => ({ ...prev, endDate: date }))}
+                slotProps={{ textField: { size: "small", fullWidth: true } }}
+              />
+
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 6 }}>
+                  <TextField
+                    label="Amount From"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={filters.amountFrom}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, amountFrom: e.target.value }))}
+                  />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <TextField
+                    label="Amount To"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={filters.amountTo}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, amountTo: e.target.value }))}
+                  />
+                </Grid>
+              </Grid>
+
+              <FormControl fullWidth size="small">
+                <InputLabel>Visibility</InputLabel>
+                <Select value={filters.hideStatus} onChange={(e) => setFilters((prev) => ({ ...prev, hideStatus: e.target.value }))}>
+                  <MenuItem value="show">Show Visible</MenuItem>
+                  <MenuItem value="hidden">Show Hidden</MenuItem>
+                  <MenuItem value="all">Show All</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Box>
+                <CustomButton variant="contained" text="Apply Filters" onClick={() => setIsFilterDrawerOpen(false)} />
+                <CustomButton
+                  variant="outlined"
+                  text="Clear All Filters"
+                  onClick={() => {
+                    setFilters({
+                      dateFilterType: "all",
+                      startDate: null,
+                      endDate: null,
+                      supplierID: "all",
+                      departmentID: "all",
+                      invoiceNo: "",
+                      grnCode: "",
+                      grnStatus: "all",
+                      approvedStatus: "all",
+                      grnType: "all",
+                      hideStatus: "show",
+                      qualityStatus: "all",
+                      amountFrom: "",
+                      amountTo: "",
+                    });
+                    setIsFilterDrawerOpen(false);
+                  }}
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            </Stack>
+          </Drawer>
+
+          {/* Bulk Actions Dialog */}
+          <Dialog open={isBulkActionsOpen} onClose={() => setIsBulkActionsOpen(false)} maxWidth="sm" fullWidth>
+            <DialogTitle>Bulk Actions ({selectedRows.length} items selected)</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2}>
+                <CustomButton variant="outlined" icon={ApproveIcon} text="Approve Selected GRNs" onClick={handleBulkApprove} color="success" />
+                <CustomButton variant="outlined" icon={HideIcon} text="Hide Selected GRNs" onClick={handleBulkHide} color="warning" />
+                <CustomButton variant="outlined" icon={ExportIcon} text="Export Selected GRNs" onClick={handleBulkExport} color="info" />
+                <CustomButton variant="outlined" icon={DeleteIcon} text="Delete Selected GRNs" onClick={handleBulkDelete} color="error" />
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <CustomButton variant="outlined" text="Close" onClick={() => setIsBulkActionsOpen(false)} />
+            </DialogActions>
+          </Dialog>
+        </>
+      )}
+
+      <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} initialDeptId={deptId} requireSelection={true} />
+
+      {/* Main Dialogs */}
+      <ComprehensiveGrnFormDialog
         open={isGrnFormOpen}
         onClose={() => {
           setIsGrnFormOpen(false);
@@ -634,6 +1171,9 @@ const GRNManagementPage: React.FC = () => {
         }}
         onSubmit={handleGrnSubmit}
         grn={selectedGrn}
+        departments={department}
+        suppliers={suppliers}
+        products={products}
       />
 
       <GrnDetailsDialog
@@ -643,7 +1183,7 @@ const GRNManagementPage: React.FC = () => {
           setSelectedGrn(null);
         }}
         grn={selectedGrn}
-        mode={dialogMode}
+        mode="edit"
         onEdit={handleEditGrn}
         onDelete={handleDeleteGrn}
         onApprove={handleApproveGrn}
@@ -652,4 +1192,4 @@ const GRNManagementPage: React.FC = () => {
   );
 };
 
-export default GRNManagementPage;
+export default ComprehensiveGRNManagementPage;
