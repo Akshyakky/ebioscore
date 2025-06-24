@@ -73,7 +73,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
   } = useForm<TemplateFormData>({
     defaultValues,
     resolver: zodResolver(schema),
@@ -103,7 +103,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
   useEffect(() => {
     if (initialData) {
       reset(initialData as TemplateFormData);
-      // Load template details if displayAllUsers is 'C'
+
       if (initialData.displayAllUsers === "C") {
         loadTemplateDetails(initialData.templateID);
       }
@@ -114,7 +114,6 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
   }, [initialData, reset]);
 
   useEffect(() => {
-    // Fetch users when displayAllUsers is 'C'
     if (displayAllUsers === "C") {
       fetchUsersList();
     }
@@ -156,9 +155,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
       if (response.success) {
         const savedTemplateId = response.data?.templateID || data.templateID;
 
-        // Handle template details if displayAllUsers is 'C'
         if (data.displayAllUsers === "C" && selectedUsers.length > 0) {
-          // Delete existing template details
           if (!isAddMode) {
             const existingDetails = templateDetailList.filter((detail: TemplateDetailDto) => detail.templateID === savedTemplateId);
             for (const detail of existingDetails) {
@@ -166,7 +163,6 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
             }
           }
 
-          // Add new template details
           for (const userId of selectedUsers) {
             const templateDetail: TemplateDetailDto = {
               templateDetailID: 0,
