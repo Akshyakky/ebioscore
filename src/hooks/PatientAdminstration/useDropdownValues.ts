@@ -109,7 +109,8 @@ export type DropdownType =
   | "productBaseUnit"
   | "componentUnit"
   | "indentStatus"
-  | "faculties";
+  | "faculties"
+  | "cmTemplateType";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -572,6 +573,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       componentUnit: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPOUNIT");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      cmTemplateType: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CMTEMPLATETYPE");
         return (response || []).map((item: any) => ({
           value: item.code || "",
           label: item.value || "",

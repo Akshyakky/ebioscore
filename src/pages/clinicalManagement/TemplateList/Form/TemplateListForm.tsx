@@ -5,6 +5,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { RichTextEditor } from "@/components/RichTextEditor/RichTextEditor";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { TemplateDetailDto, TemplateMastDto } from "@/interfaces/ClinicalManagement/TemplateDto";
 import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
 import { useAlert } from "@/providers/AlertProvider";
@@ -54,6 +55,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
   const { showAlert } = useAlert();
   const isAddMode = !initialData;
 
+  const { cmTemplateType } = useDropdownValues(["cmTemplateType"]);
   const defaultValues: TemplateFormData = {
     templateID: 0,
     templateCode: "",
@@ -390,8 +392,9 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
                         name="templateType"
                         control={control}
                         label="Template Type"
-                        type="text"
+                        type="select"
                         required
+                        options={cmTemplateType || []}
                         disabled={viewOnly}
                         size="small"
                         fullWidth
