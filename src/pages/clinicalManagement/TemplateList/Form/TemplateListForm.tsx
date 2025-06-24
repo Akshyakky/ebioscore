@@ -3,15 +3,17 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { RichTextEditor } from "@/components/RichTextEditor/RichTextEditor";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { TemplateDetailDto, TemplateMastDto } from "@/interfaces/ClinicalManagement/TemplateDto";
 import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel, Refresh, Save } from "@mui/icons-material";
-import { Alert, Box, Card, CardContent, Chip, CircularProgress, Divider, FormControlLabel, Grid, InputAdornment, Radio, RadioGroup, Typography } from "@mui/material";
+import { Alert, Box, Card, CardContent, CircularProgress, Divider, FormControlLabel, Grid, InputAdornment, Radio, RadioGroup, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import { useTemplateDetail, useTemplateMast } from "../hooks/useTemplateList";
 
@@ -53,6 +55,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
   const { showAlert } = useAlert();
   const isAddMode = !initialData;
 
+  const { cmTemplateType } = useDropdownValues(["cmTemplateType"]);
   const defaultValues: TemplateFormData = {
     templateID: 0,
     templateCode: "",
@@ -70,7 +73,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
   } = useForm<TemplateFormData>({
     defaultValues,
     resolver: zodResolver(schema),
@@ -100,7 +103,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
   useEffect(() => {
     if (initialData) {
       reset(initialData as TemplateFormData);
-      // Load template details if displayAllUsers is 'C'
+
       if (initialData.displayAllUsers === "C") {
         loadTemplateDetails(initialData.templateID);
       }
@@ -111,7 +114,6 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
   }, [initialData, reset]);
 
   useEffect(() => {
-    // Fetch users when displayAllUsers is 'C'
     if (displayAllUsers === "C") {
       fetchUsersList();
     }
@@ -153,9 +155,7 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
       if (response.success) {
         const savedTemplateId = response.data?.templateID || data.templateID;
 
-        // Handle template details if displayAllUsers is 'C'
         if (data.displayAllUsers === "C" && selectedUsers.length > 0) {
-          // Delete existing template details
           if (!isAddMode) {
             const existingDetails = templateDetailList.filter((detail: TemplateDetailDto) => detail.templateID === savedTemplateId);
             for (const detail of existingDetails) {
@@ -163,7 +163,6 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
             }
           }
 
-          // Add new template details
           for (const userId of selectedUsers) {
             const templateDetail: TemplateDetailDto = {
               templateDetailID: 0,
@@ -298,16 +297,8 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
       render: (user) => <input type="checkbox" checked={selectedUsers.includes(user.appID)} onChange={() => handleUserSelection(user.appID)} disabled={viewOnly} />,
     },
     {
-      key: "appCode",
-      header: "User Code",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 120,
-    },
-    {
       key: "appUserName",
-      header: "User Name",
+      header: "User",
       visible: true,
       sortable: true,
       filterable: true,
@@ -320,15 +311,6 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
       sortable: true,
       filterable: true,
       width: 120,
-    },
-    {
-      key: "rActiveYN",
-      header: "Status",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
     },
   ];
 
@@ -406,8 +388,9 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
                         name="templateType"
                         control={control}
                         label="Template Type"
-                        type="text"
+                        type="select"
                         required
+                        options={cmTemplateType || []}
                         disabled={viewOnly}
                         size="small"
                         fullWidth
@@ -416,17 +399,12 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
                     </Grid>
 
                     <Grid size={{ sm: 12 }}>
-                      <FormField
+                      <Controller
                         name="templateDescription"
                         control={control}
-                        label="Template Description"
-                        type="textarea"
-                        required
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                        rows={3}
-                        placeholder="Enter a detailed description of the template"
+                        render={({ field, fieldState }) => (
+                          <RichTextEditor value={field.value} onChange={field.onChange} disabled={viewOnly} error={!!fieldState.error} helperText={fieldState.error?.message} />
+                        )}
                       />
                     </Grid>
                   </Grid>
@@ -461,7 +439,13 @@ const TemplateListForm: React.FC<TemplateListFormProps> = ({ open, onClose, init
                           Select users who can access this template ({selectedUsers.length} selected):
                         </Typography>
                         <Box sx={{ height: 300, mt: 1 }}>
-                          <CustomGrid columns={userColumns} data={userList || []} maxHeight="280px" emptyStateMessage="No users found" loading={false} />
+                          <CustomGrid
+                            columns={userColumns}
+                            data={userList.filter((user) => user.rActiveYN === "Y") || []}
+                            maxHeight="280px"
+                            emptyStateMessage="No users found"
+                            loading={false}
+                          />
                         </Box>
                       </Grid>
                     )}

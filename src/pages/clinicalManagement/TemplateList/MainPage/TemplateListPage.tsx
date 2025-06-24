@@ -2,6 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { TemplateMastDto } from "@/interfaces/ClinicalManagement/TemplateDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
@@ -14,7 +15,7 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Chip, CircularProgress, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import TemplateListForm from "../Form/TemplateListForm";
 import { useTemplateMast } from "../hooks/useTemplateList";
@@ -46,18 +47,21 @@ const TemplateListPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-
-  const { templateList, isLoading, error, fetchTemplateList, deleteTemplate } = useTemplateMast();
-
-  const [filters, setFilters] = useState<{
-    status: string;
-    display: string;
-    type: string;
-  }>({
+  const { cmTemplateType } = useDropdownValues(["cmTemplateType"]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [filters, setFilters] = useState({
     status: "",
     display: "",
     type: "",
   });
+
+  useEffect(() => {
+    if (cmTemplateType.length > 0) {
+      setIsInitialLoading(false);
+    }
+  }, [cmTemplateType]);
+
+  const { templateList, isLoading, error, fetchTemplateList, deleteTemplate } = useTemplateMast();
 
   const handleRefresh = useCallback(() => {
     fetchTemplateList();
@@ -126,7 +130,7 @@ const TemplateListPage: React.FC = () => {
     } finally {
       setIsDeleteConfirmOpen(false);
     }
-  }, [selectedTemplate, deleteTemplate]);
+  }, [selectedTemplate, deleteTemplate, showAlert]);
 
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
@@ -153,7 +157,12 @@ const TemplateListPage: React.FC = () => {
     });
   }, []);
 
-  // Calculate stats for the dashboard
+  useEffect(() => {
+    if (!isInitialLoading && cmTemplateType.length > 0) {
+      fetchTemplateList();
+    }
+  }, [isInitialLoading, cmTemplateType, fetchTemplateList]);
+
   const stats = useMemo(() => {
     if (!templateList.length) {
       return {
@@ -181,7 +190,6 @@ const TemplateListPage: React.FC = () => {
     };
   }, [templateList]);
 
-  // Apply filters to the list
   const filteredTemplates = useMemo(() => {
     if (!templateList.length) return [];
 
@@ -275,6 +283,14 @@ const TemplateListPage: React.FC = () => {
     }
   };
 
+  const getTemplateTypeLabel = (value: string) => {
+    if (!cmTemplateType || cmTemplateType.length === 0) {
+      return "Loading...";
+    }
+    const type = cmTemplateType.find((t) => t.value === value);
+    return type ? type.label : "-";
+  };
+
   const columns: Column<TemplateMastDto>[] = [
     {
       key: "templateCode",
@@ -300,15 +316,7 @@ const TemplateListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 150,
-    },
-    {
-      key: "templateDescription",
-      header: "Description",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 300,
-      formatter: (value: any) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
+      formatter: (value: string) => getTemplateTypeLabel(value),
     },
     {
       key: "displayAllUsers",
@@ -383,6 +391,14 @@ const TemplateListPage: React.FC = () => {
       ),
     },
   ];
+
+  if (isInitialLoading) {
+    return (
+      <Box sx={{ p: 2, display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (error) {
     return (
