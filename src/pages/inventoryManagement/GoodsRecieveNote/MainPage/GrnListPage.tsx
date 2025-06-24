@@ -59,6 +59,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import useContactMastByCategory from "@/hooks/hospitalAdministration/useContactMastByCategory";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
@@ -110,6 +111,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
   const [, setIsReportsDialogOpen] = useState(false);
   const { deptId, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
   const { department } = useDropdownValues(["department"]);
+  const { contacts: suppliers } = useContactMastByCategory({ consValue: "SUP" });
 
   const [filters, setFilters] = useState<FilterState>({
     dateFilterType: "all",
@@ -130,12 +132,6 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
 
   const { showAlert } = useAlert();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const suppliers = [
-    { value: "1", label: "ABC Medical Supplies" },
-    { value: "2", label: "XYZ Pharmaceuticals" },
-    { value: "3", label: "Healthcare Solutions" },
-  ];
 
   const products = [
     { value: "1", label: "Paracetamol 500mg" },

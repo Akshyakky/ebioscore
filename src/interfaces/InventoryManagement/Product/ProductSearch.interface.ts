@@ -1,5 +1,3 @@
-// src/interfaces/InventoryManagement/Product/ProductSearch.interface.ts
-
 export interface ProductOption {
   productID: number;
   productCode?: string;

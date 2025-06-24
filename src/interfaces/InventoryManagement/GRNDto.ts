@@ -89,8 +89,6 @@ export interface GRNDetailDto extends BaseDto {
   packPrice?: number;
   tax?: number;
   sellUnitPrice?: number;
-
-  // Quantity fields
   requiredPack?: number;
   requiredQty?: number;
   recvdPack?: number;
@@ -98,16 +96,12 @@ export interface GRNDetailDto extends BaseDto {
   acceptQty?: number;
   freeItems?: number;
   rejectedQty?: number;
-
-  // Financial fields
   productValue?: number;
   discAmt?: number;
   discPercentage?: number;
   taxAfterDiscYN?: string;
   taxAfterDiscOnMrpYN?: string;
   includeTaxYN?: string;
-
-  // Tax fields
   gstPercentage?: number;
   cgstPerValue?: number;
   cgstTaxAmt?: number;

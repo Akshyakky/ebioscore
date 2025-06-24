@@ -57,7 +57,6 @@ export const ProductSearch = forwardRef<ProductSearchRef, ProductSearchProps>(
     }, [initialSelection]);
 
     const handleProductSelect = (product: ProductOption | null) => {
-      debugger;
       setSelectedProduct?.(product);
 
       if (product) {
