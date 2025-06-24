@@ -1,9 +1,8 @@
 import { GRNDetailDto, GRNHelpers } from "@/interfaces/InventoryManagement/GRNDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { useAlert } from "@/providers/AlertProvider";
-import { formatCurrency } from "@/utils/Common/formatUtils";
-
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { formatCurrency } from "@/utils/Common/formatUtils";
 import {
   Abc as AbcIcon,
   AttachMoney as AttachMoneyIcon,
@@ -33,7 +32,6 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
-
 interface EnhancedGrnDetailsComponentProps {
   grnDetails: GRNDetailDto[];
   onGrnDetailsChange: (details: GRNDetailDto[]) => void;
@@ -128,7 +126,6 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
         onGrnDetailsChange([...grnDetails, newDetail]);
         showAlert("Success", `Product "${productData.data.productName}" added.`, "success");
       } catch (error) {
-        console.error("Error adding product:", error);
         showAlert("Error", "Failed to add product. Please check if the product exists.", "error");
       } finally {
         setIsAddingProduct(false);
@@ -137,9 +134,6 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
     },
     [grnDetails, onGrnDetailsChange, showAlert]
   );
-
-  // ... NO OTHER CHANGES are needed in the rest of the file.
-  // The processRowUpdate, removeProducts, columns, and JSX remain the same.
 
   const processRowUpdate = useCallback(
     (newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
@@ -212,9 +206,6 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
                 <Typography variant="body2" fontWeight={500}>
                   {params.value}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Code: {params.row.productCode}
-                </Typography>
               </Box>
             </Tooltip>
           </Stack>
@@ -271,8 +262,6 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
         renderHeader: () => <StyledHeader icon={<AttachMoneyIcon fontSize="small" />} text="Total Value" />,
         valueFormatter: currencyFormatter,
       },
-
-      // --- DETAILED INFO COLUMNS (Hidden by Default) ---
       { field: "pUnitName", renderHeader: () => <StyledHeader icon={<StraightenIcon fontSize="small" />} text="UOM" />, minWidth: 90, editable: false },
       { field: "pUnitsPerPack", headerName: "Units/Pack", minWidth: 110, ...commonNumberProps },
       { field: "packPrice", headerName: "Pack Price", minWidth: 130, ...commonNumberProps, valueFormatter: currencyFormatter, editable: false },
@@ -286,15 +275,11 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
       },
       { field: "pGrpName", headerName: "Product Group", minWidth: 150, editable: false },
       { field: "psGrpName", headerName: "Sub Group", minWidth: 150, editable: false },
-
-      // --- TAX COLUMNS (Hidden by Default) ---
       { field: "hsnCode", headerName: "HSN Code", minWidth: 120, editable: false },
       { field: "gstPercentage", headerName: "GST [%]", width: 90, ...commonNumberProps, editable: false },
       { field: "taxName", headerName: "Tax Profile", minWidth: 150, editable: false },
       { field: "taxableAmt", headerName: "Taxable Amt", minWidth: 130, ...commonNumberProps, valueFormatter: currencyFormatter, editable: false },
       { field: "totalTaxAmt", headerName: "Total Tax", minWidth: 130, ...commonNumberProps, valueFormatter: currencyFormatter, editable: false },
-
-      // --- INVENTORY CODES (Hidden by Default) ---
       { field: "vedCode", renderHeader: () => <StyledHeader icon={<PinIcon fontSize="small" />} text="VED Code" />, minWidth: 100, editable: false },
       { field: "abcCode", renderHeader: () => <StyledHeader icon={<AbcIcon fontSize="small" />} text="ABC Code" />, minWidth: 100, editable: false },
       {
@@ -311,15 +296,12 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
         type: "number",
         editable: false,
       },
-
-      // --- PRODUCT FLAGS (Hidden by Default) ---
       {
         field: "prescription",
         renderHeader: () => <StyledHeader icon={<MedicationIcon fontSize="small" />} text="Prescription" />,
         minWidth: 120,
         renderCell: (params) => <Chip label={params.value === "Y" ? "Required" : "Not Required"} color={params.value === "Y" ? "warning" : "default"} size="small" />,
       },
-
       {
         field: "actions",
         type: "actions",
