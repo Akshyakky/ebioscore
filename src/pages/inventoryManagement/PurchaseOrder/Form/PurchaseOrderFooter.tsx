@@ -181,6 +181,7 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
   const handleImportPO = useCallback(
     (importedDetails: PurchaseOrderDetailDto[]) => {
       onDetailsUpdate(importedDetails);
+      showAlert("Success", "Previous Purchase Order imported successfully", "success");
       setImportPODialogOpen(false);
     },
     [onDetailsUpdate]
