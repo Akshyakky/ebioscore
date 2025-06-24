@@ -77,10 +77,8 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
   }>({ totalShare: 0, isBalanced: true, hasErrors: false, doctorCount: 0 });
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
   const [gridRefreshKey, setGridRefreshKey] = useState(0);
-
   const doctorNamesRef = useRef<Map<string, string>>(new Map());
   const fieldRefsRef = useRef<Map<string, any>>(new Map());
-
   const { append, update } = useFieldArray({
     control,
     name: "DoctorShares",
@@ -140,7 +138,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
       const shareTotal = doctorShare + hospShare;
       totalDoctorShare += doctorShare;
       totalHospitalShare += hospShare;
-
       let isValid = true;
       let validationMessage = "";
 
@@ -197,7 +194,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
     const avgDoctorShare = doctorCount > 0 ? totalDoctorShare / doctorCount : 0;
     const avgHospitalShare = doctorCount > 0 ? totalHospitalShare / doctorCount : 0;
     const utilizationRate = maxDoctors > 0 ? (doctorCount / maxDoctors) * 100 : 0;
-
     const isOptimal = validationSummary.isBalanced && avgDoctorShare >= 20 && avgDoctorShare <= 80 && !validationSummary.hasErrors;
     return {
       totalDoctors: doctorCount,
@@ -363,34 +359,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
     [doctorShares, update]
   );
 
-  const handleDoctorShareChange = useCallback((originalIndex: number, value: any) => {
-    const numValue = Number(value) || 0;
-    if (numValue >= 0 && numValue <= 100) {
-      const hospitalShare = 100 - numValue;
-      const hospFieldRef = fieldRefsRef.current.get(`hospShare_${originalIndex}`);
-      if (hospFieldRef && hospFieldRef.onChange) {
-        setTimeout(() => {
-          hospFieldRef.onChange(hospitalShare);
-          setGridRefreshKey((prev) => prev + 1);
-        }, 0);
-      }
-    }
-  }, []);
-
-  const handleHospitalShareChange = useCallback((originalIndex: number, value: any) => {
-    const numValue = Number(value) || 0;
-    if (numValue >= 0 && numValue <= 100) {
-      const doctorShare = 100 - numValue;
-      const doctorFieldRef = fieldRefsRef.current.get(`doctorShare_${originalIndex}`);
-      if (doctorFieldRef && doctorFieldRef.onChange) {
-        setTimeout(() => {
-          doctorFieldRef.onChange(doctorShare);
-          setGridRefreshKey((prev) => prev + 1);
-        }, 0);
-      }
-    }
-  }, []);
-
   const autoBalanceShares = useCallback(() => {
     if (activeDoctorShares.length === 0) return;
 
@@ -452,7 +420,7 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({
     };
   }, []);
 
-  const handleProcessRowUpdateError = useCallback((error: Error) => {}, []);
+  const handleProcessRowUpdateError = useCallback(() => {}, []);
 
   const gridColumns = useMemo((): GridColDef[] => {
     return [

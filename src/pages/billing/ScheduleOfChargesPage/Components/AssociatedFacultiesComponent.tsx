@@ -1,8 +1,20 @@
+// ===== FRONTEND FIX 1: Updated AssociatedFacultiesComponent.tsx =====
+
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { ExpandMore as ExpandMoreIcon, Info as InfoIcon, School as SchoolIcon } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { Control, useFieldArray, useWatch } from "react-hook-form";
+
+interface FacultyField {
+  id: string;
+  bchfID: number;
+  chargeID: number;
+  aSubID: number;
+  rActiveYN: "Y" | "N";
+  rTransferYN: "Y" | "N";
+  rNotes: string;
+}
 
 interface AssociatedFacultiesComponentProps {
   control: Control<any>;
@@ -49,40 +61,44 @@ const AssociatedFacultiesComponent: React.FC<AssociatedFacultiesComponentProps> 
   }, [selectedFaculties, showValidation]);
 
   const updateFacultiesArray = useCallback(() => {
+    const currentFaculties = facultiesArray.fields as ((typeof facultiesArray.fields)[0] & FacultyField)[];
     if (selectedFaculties && selectedFaculties.length > 0) {
-      const newFaculties = selectedFaculties.map((facultyId: number) => ({
-        chFacID: 0,
-        chargeID: 0,
-        aSubID: facultyId,
-        rActiveYN: "Y",
-        rTransferYN: "N",
-        rNotes: "",
-      }));
+      const uniqueSelectedFaculties = [...new Set(selectedFaculties)];
+      const newFaculties = uniqueSelectedFaculties.map((facultyId: number) => {
+        const existingFaculty = currentFaculties.find((f) => f.aSubID === facultyId);
+        return {
+          bchfID: existingFaculty?.bchfID || 0,
+          chargeID: existingFaculty?.chargeID || 0,
+          aSubID: facultyId,
+          rActiveYN: "Y" as const,
+          rTransferYN: "N" as const,
+          rNotes: existingFaculty?.rNotes || "",
+        };
+      });
       facultiesArray.replace(newFaculties);
     } else {
       facultiesArray.replace([]);
     }
   }, [selectedFaculties, facultiesArray]);
 
+  const getInitialSelectedValues = useCallback(() => {
+    const fields = facultiesArray.fields as ((typeof facultiesArray.fields)[0] & FacultyField)[];
+    const values = fields.map((field) => field.aSubID).filter((id) => id != null);
+    return values;
+  }, [facultiesArray.fields]);
+
   useEffect(() => {
     updateFacultiesArray();
   }, [updateFacultiesArray]);
 
-  const getInitialSelectedValues = useCallback(() => {
-    const fields = facultiesArray.fields || [];
-    return fields.map((field: any) => field.aSubID).filter((id) => id != null);
-  }, [facultiesArray.fields]);
-
   const getFacultyCountDisplay = useMemo(() => {
     const count = facultiesArray.fields.length;
     let color: "default" | "primary" | "secondary" | "success" | "warning" = "default";
-
     if (count === 0) color = "default";
     else if (count <= 3) color = "success";
     else if (count <= 6) color = "primary";
     else if (count <= 10) color = "secondary";
     else color = "warning";
-
     return { count, color };
   }, [facultiesArray.fields.length]);
 
@@ -143,7 +159,7 @@ const AssociatedFacultiesComponent: React.FC<AssociatedFacultiesComponentProps> 
                 Selected Faculties:
               </Typography>
               <Box display="flex" flexWrap="wrap" gap={1}>
-                {selectedFaculties.map((facultyId: number) => {
+                {[...new Set(selectedFaculties)].map((facultyId: number) => {
                   const faculty = subModules.find((s) => Number(s.value) === facultyId);
                   return faculty ? <Chip key={facultyId} label={faculty.label} size="small" variant="filled" color="primary" sx={{ fontSize: "0.75rem" }} /> : null;
                 })}

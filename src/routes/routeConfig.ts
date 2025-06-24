@@ -49,7 +49,7 @@ const DeptUnitAllocationPage = lazy(() => import("@/pages/hospitalAdministration
 const MedicationRoutePage = lazy(() => import("@/pages/clinicalManagement/MedicationRoute/MainPage/MedicationRoutePage"));
 const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
 const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
-
+const GRNManagementPage = lazy(() => import("@/pages/inventoryManagement/GoodsRecieveNote/MainPage/GrnListPage"));
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
   return (props: any) => React.createElement(Suspense, { fallback: React.createElement("div", null, "Loading...") }, React.createElement(Component, props));
@@ -528,6 +528,16 @@ const routeConfig: RouteConfig[] = [
     metadata: {
       title: "Department Unit Allocation",
       category: "admin",
+    },
+  },
+  {
+    path: "/GRNManagementPage",
+    component: wrapWithSuspense(GRNManagementPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Goodsb Recieve Note",
+      category: "inventory",
     },
   },
   // 404 Not Found route - must be placed last to catch all unmatched routes

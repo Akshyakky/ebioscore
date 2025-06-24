@@ -1,4 +1,5 @@
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import { useAlert } from "@/providers/AlertProvider";
 import {
   Add as AddIcon,
   Calculate as CalculateIcon,
@@ -114,6 +115,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showAdvancedControls, setShowAdvancedControls] = useState<boolean>(false);
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const { showAlert } = useAlert();
 
   const chargeDetailsArray = useFieldArray({
     control,
@@ -365,36 +367,31 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
 
   const applyChanges = useCallback(() => {
     if (!isApplyReady) return;
-
     const numericAmount = parseFloat(amountValue);
-
-    // Additional validation check before applying
     if (isPercentage && numericAmount > 100) {
-      console.warn("Cannot apply percentage values greater than 100%");
+      showAlert("Invalid Input", "Percentage cannot exceed 100%", "warning");
       return;
     }
-
     const updatedGridData = [...gridData];
     const rowsToUpdate = selectedRows.length > 0 ? selectedRows : updatedGridData.map((row) => row.id);
-    let changesMade = false;
-
+    let actualChangesCount = 0;
     updatedGridData.forEach((row) => {
-      if (selectedRows.length > 0 && !rowsToUpdate.includes(row.id)) {
-        return;
-      }
-
+      if (selectedRows.length > 0 && !rowsToUpdate.includes(row.id)) return;
       getFilteredWardCategories.forEach((category) => {
         const catName = category.name;
         if (!row.wardCategories[catName]) {
           row.wardCategories[catName] = { DcValue: 0, hcValue: 0, chValue: 0 };
         }
-
         const values = row.wardCategories[catName];
         const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
         const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
 
         if (updateDr) {
           const currentValue = values.DcValue || 0;
+          if (priceChangeType === "Decrease" && currentValue === 0) {
+            showAlert("Invalid Operation", "Cannot decrease values that are already zero", "warning");
+            return;
+          }
           let newValue;
           if (isPercentage) {
             const factor = priceChangeType === "Increase" ? 1 + numericAmount / 100 : 1 - numericAmount / 100;
@@ -402,12 +399,22 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
           } else {
             newValue = priceChangeType === "Increase" ? currentValue + numericAmount : currentValue - numericAmount;
           }
-          values.DcValue = Math.max(0, newValue);
-          changesMade = true;
+
+          const finalValue = Math.max(0, newValue);
+          if (Math.abs(currentValue - finalValue) > 0.01) {
+            actualChangesCount++;
+          }
+          values.DcValue = finalValue;
         }
 
         if (updateHosp) {
           const currentValue = values.hcValue || 0;
+
+          if (priceChangeType === "Decrease" && currentValue === 0) {
+            showAlert("Invalid Operation", "Cannot decrease values that are already zero", "warning");
+            return;
+          }
+
           let newValue;
           if (isPercentage) {
             const factor = priceChangeType === "Increase" ? 1 + numericAmount / 100 : 1 - numericAmount / 100;
@@ -415,21 +422,23 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
           } else {
             newValue = priceChangeType === "Increase" ? currentValue + numericAmount : currentValue - numericAmount;
           }
-          values.hcValue = Math.max(0, newValue);
-          changesMade = true;
+
+          const finalValue = Math.max(0, newValue);
+          if (Math.abs(currentValue - finalValue) > 0.01) {
+            actualChangesCount++;
+          }
+          values.hcValue = finalValue;
         }
 
         values.chValue = values.DcValue + values.hcValue;
       });
     });
 
-    if (changesMade) {
-      setGridData([...updatedGridData]);
-      updateChargeDetailsFromGrid();
+    setGridData([...updatedGridData]);
+    updateChargeDetailsFromGrid();
 
-      if (validatePricingData()) {
-        setApplySuccess(true);
-      }
+    if (validatePricingData()) {
+      setApplySuccess(true);
     }
   }, [
     isApplyReady,
@@ -442,6 +451,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     priceChangeType,
     updateChargeDetailsFromGrid,
     validatePricingData,
+    showAlert,
   ]);
 
   const getApplyButtonText = useMemo(() => {
