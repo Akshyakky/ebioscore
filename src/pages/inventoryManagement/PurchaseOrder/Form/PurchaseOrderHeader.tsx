@@ -18,9 +18,7 @@ interface PurchaseOrderHeaderProps {
 const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ control, setValue, onProductSelect, approvedDisable }) => {
   const { showAlert } = useAlert();
   const { contacts: suppliers } = useContactMastByCategory({ consValue: "PHY" });
-
   const departmentId = control._formValues.fromDeptID;
-
   const handleProductSelectLocal = (product: ProductSearchResult | null) => {
     if (departmentId === 0) {
       showAlert("Warning", "Please select a department first", "warning");

@@ -1,6 +1,8 @@
+// src/interfaces/InventoryManagement/GRNDto.ts - Enhanced Version
+
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
-// Updated GRN Master DTO to match backend exactly
+// Updated GRN Master DTO to match backend exactly with additional fields
 export interface GRNMastDto extends BaseDto {
   grnID: number;
   deptID: number;
@@ -40,80 +42,139 @@ export interface GRNMastDto extends BaseDto {
   totalTaxableAmt?: number;
   netCGSTTaxAmt?: number;
   netSGSTTaxAmt?: number;
+
+  // Additional fields for enhanced functionality
+  hideYN?: string;
+  issueDeptID?: number;
+  issueDeptName?: string;
+  totalItems?: number;
+  totalQty?: number;
+  discountType?: "AMOUNT" | "PERCENTAGE";
+  taxAfterDiscountYN?: string;
+  roundingAdjustment?: number;
+  approvalDate?: string;
+  expectedDeliveryDate?: string;
+  actualDeliveryDate?: string;
+  qualityCheckYN?: string;
+  qualityCheckBy?: string;
+  qualityCheckDate?: string;
+
   grnDetails?: GRNDetailDto[];
 }
 
-// Updated GRN Detail DTO to match backend exactly
+// Enhanced GRN Detail DTO with all required fields
 export interface GRNDetailDto extends BaseDto {
   grnDetID: number;
   grnID: number;
+  serialNo: number;
   pGrpID?: number;
   pGrpName?: string;
   productID: number;
   productCode?: string;
+  productName?: string;
   catValue: string;
+  catDesc?: string;
   mfID?: number;
+  mfName?: string;
   pUnitID?: number;
   pUnitName?: string;
   pUnitsPerPack?: number;
   pkgID?: number;
+  pkgName?: string;
   batchNo?: string;
+  referenceNo?: string;
   expiryDate?: string;
   unitPrice?: number;
+  sellingPrice?: number;
+  packPrice?: number;
   tax?: number;
   sellUnitPrice?: number;
+
+  // Quantity fields
+  requiredPack?: number;
+  requiredQty?: number;
+  recvdPack?: number;
   recvdQty?: number;
   acceptQty?: number;
   freeItems?: number;
+  rejectedQty?: number;
+
+  // Financial fields
   productValue?: number;
-  productNotes?: string;
-  psGrpID?: number;
-  chargeablePercent?: number;
   discAmt?: number;
   discPercentage?: number;
-  expiryYN?: string;
-  isFreeItemYN?: string;
-  itemMrpValue?: number;
-  itemTotalProfit?: number;
-  itemTotalVat?: number;
-  manufacturerCode?: string;
-  manufacturerID?: number;
-  manufacturerName?: string;
-  mrpAbated?: number;
-  mrp?: number;
-  poDetID?: number;
-  requiredUnitQty?: number;
-  taxAfterDiscOnMrpYN?: string;
   taxAfterDiscYN?: string;
-  taxCode?: string;
-  taxID?: number;
-  taxModeCode?: string;
-  taxModeDescription?: string;
-  taxModeID?: string;
-  taxName?: string;
-  taxOnFreeItemsYN?: string;
-  taxOnMrpYN?: string;
-  taxOnUnitPriceYN?: string;
-  catDesc?: string;
-  mfName?: string;
-  pkgName?: string;
-  productName?: string;
-  psGrpName?: string;
-  refNo?: string;
-  hsnCode?: string;
+  taxAfterDiscOnMrpYN?: string;
+  includeTaxYN?: string;
+
+  // Tax fields
+  gstPercentage?: number;
   cgstPerValue?: number;
   cgstTaxAmt?: number;
   sgstPerValue?: number;
   sgstTaxAmt?: number;
+  igstPerValue?: number;
+  igstTaxAmt?: number;
   taxableAmt?: number;
+  totalTaxAmt?: number;
+
+  // Additional product fields
+  manufacturerID?: number;
+  manufacturerCode?: string;
+  manufacturerName?: string;
+  mrp?: number;
+  mrpAbated?: number;
+  itemMrpValue?: number;
+  itemTotalProfit?: number;
+  itemTotalVat?: number;
   defaultPrice: number;
 
-  // Additional fields for frontend calculations
+  // PO related fields
+  poDetID?: number;
+  poQty?: number;
+  poRate?: number;
+  poValue?: number;
+
+  // Quality and compliance fields
+  expiryYN?: string;
+  isFreeItemYN?: string;
+  prescriptionYN?: string;
+  qualityCheckYN?: string;
+  qualityStatus?: string;
+  qualityRemarks?: string;
+
+  // Tax configuration fields
+  taxID?: number;
+  taxCode?: string;
+  taxName?: string;
+  taxModeCode?: string;
+  taxModeDescription?: string;
+  taxModeID?: string;
+  taxOnFreeItemsYN?: string;
+  taxOnMrpYN?: string;
+  taxOnUnitPriceYN?: string;
+
+  // HSN and compliance
+  hsnCode?: string;
+  psGrpID?: number;
+  psGrpName?: string;
+  chargeablePercent?: number;
+
+  // Additional tracking fields
+  lotNo?: string;
+  vendorBatchNo?: string;
+  shelfLife?: number;
+  storageCondition?: string;
+  productNotes?: string;
+
+  // Frontend calculation fields
   _recievedQty: number;
   _serialNo: number;
   _pastReceivedPack: number;
   _unitPrice: number;
   _sellingUnitPrice: number;
+  _calculatedValue: number;
+  _totalWithTax: number;
 }
 
 // Combined DTO for API operations
@@ -122,21 +183,31 @@ export interface GRNDto {
   gRNDetailsDto: GRNDetailDto[];
 }
 
-// Search request interface matching backend
+// Enhanced search request with more filter options
 export interface GRNSearchRequest {
   dateFilterType?: string;
   startDate?: string;
   endDate?: string;
   supplierID?: number;
   departmentID?: number;
+  issueDepartmentID?: number;
   invoiceNo?: string;
   grnCode?: string;
+  grnType?: string;
   grnStatus?: string;
   approvedStatus?: string;
+  qualityStatus?: string;
+  productID?: number;
+  batchNo?: string;
+  expiryDateFrom?: string;
+  expiryDateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
   pageIndex?: number;
   pageSize?: number;
   sortBy?: string;
   sortAscending?: boolean;
+  includeDetails?: boolean;
 }
 
 // Combined interface with all details for frontend operations
@@ -151,10 +222,58 @@ export interface GRNValidationResult {
   warnings?: string[];
 }
 
-// Helper functions for GRN operations
+// Excel upload interface
+export interface GRNExcelUploadResult {
+  success: boolean;
+  totalRows: number;
+  validRows: number;
+  errors: string[];
+  data: GRNDetailDto[];
+}
+
+// History tracking interface
+export interface GRNHistoryDto {
+  historyID: number;
+  grnID: number;
+  action: string;
+  actionBy: string;
+  actionDate: string;
+  oldValues?: string;
+  newValues?: string;
+  remarks?: string;
+}
+
+// Department transfer interface
+export interface GRNDepartmentTransfer {
+  grnID: number;
+  fromDeptID: number;
+  fromDeptName: string;
+  toDeptID: number;
+  toDeptName: string;
+  transferDate: string;
+  transferBy: string;
+  transferReason: string;
+  transferredItems: number[];
+}
+
+// Quality check interface
+export interface GRNQualityCheck {
+  grnID: number;
+  checkDate: string;
+  checkBy: string;
+  status: "PASS" | "FAIL" | "CONDITIONAL";
+  remarks: string;
+  checkedItems: {
+    grnDetID: number;
+    status: "PASS" | "FAIL" | "CONDITIONAL";
+    remarks: string;
+  }[];
+}
+
+// Enhanced helper functions for GRN operations
 export const GRNHelpers = {
   /**
-   * Calculate product value for a GRN detail
+   * Calculate product value for a GRN detail with all considerations
    */
   calculateProductValue: (detail: Partial<GRNDetailDto>): number => {
     const qty = detail.acceptQty || detail.recvdQty || 0;
@@ -171,55 +290,70 @@ export const GRNHelpers = {
       productValue -= (productValue * discountPercentage) / 100;
     }
 
-    return Math.max(0, productValue);
+    return Math.max(0, Math.round(productValue * 100) / 100);
   },
 
   /**
-   * Calculate tax amounts for a GRN detail
+   * Calculate comprehensive tax amounts
    */
   calculateTaxAmounts: (
     detail: Partial<GRNDetailDto>
   ): {
     cgstAmount: number;
     sgstAmount: number;
+    igstAmount: number;
     taxableAmount: number;
     totalTax: number;
+    totalWithTax: number;
   } => {
     const productValue = GRNHelpers.calculateProductValue(detail);
     const cgstRate = detail.cgstPerValue || 0;
     const sgstRate = detail.sgstPerValue || 0;
+    const igstRate = detail.igstPerValue || 0;
 
     const taxableAmount = productValue;
     const cgstAmount = (taxableAmount * cgstRate) / 100;
     const sgstAmount = (taxableAmount * sgstRate) / 100;
-    const totalTax = cgstAmount + sgstAmount;
+    const igstAmount = (taxableAmount * igstRate) / 100;
+    const totalTax = cgstAmount + sgstAmount + igstAmount;
 
     return {
       cgstAmount: Math.round(cgstAmount * 100) / 100,
       sgstAmount: Math.round(sgstAmount * 100) / 100,
+      igstAmount: Math.round(igstAmount * 100) / 100,
       taxableAmount: Math.round(taxableAmount * 100) / 100,
       totalTax: Math.round(totalTax * 100) / 100,
+      totalWithTax: Math.round((taxableAmount + totalTax) * 100) / 100,
     };
   },
 
   /**
-   * Calculate totals for entire GRN
+   * Calculate comprehensive GRN totals
    */
   calculateGRNTotals: (
     details: GRNDetailDto[],
-    discount: number = 0
+    discount: number = 0,
+    otherCharges: number = 0,
+    coinAdjustment: number = 0
   ): {
     total: number;
     netTotal: number;
     totalTaxable: number;
     totalCGST: number;
     totalSGST: number;
+    totalIGST: number;
     totalTax: number;
+    grandTotal: number;
+    totalItems: number;
+    totalQty: number;
   } => {
     let total = 0;
     let totalTaxable = 0;
     let totalCGST = 0;
     let totalSGST = 0;
+    let totalIGST = 0;
+    let totalItems = details.length;
+    let totalQty = 0;
 
     details.forEach((detail) => {
       const productValue = GRNHelpers.calculateProductValue(detail);
@@ -229,10 +363,13 @@ export const GRNHelpers = {
       totalTaxable += taxAmounts.taxableAmount;
       totalCGST += taxAmounts.cgstAmount;
       totalSGST += taxAmounts.sgstAmount;
+      totalIGST += taxAmounts.igstAmount;
+      totalQty += detail.acceptQty || detail.recvdQty || 0;
     });
 
     const netTotal = total - discount;
-    const totalTax = totalCGST + totalSGST;
+    const totalTax = totalCGST + totalSGST + totalIGST;
+    const grandTotal = netTotal + totalTax + otherCharges + coinAdjustment;
 
     return {
       total: Math.round(total * 100) / 100,
@@ -240,12 +377,16 @@ export const GRNHelpers = {
       totalTaxable: Math.round(totalTaxable * 100) / 100,
       totalCGST: Math.round(totalCGST * 100) / 100,
       totalSGST: Math.round(totalSGST * 100) / 100,
+      totalIGST: Math.round(totalIGST * 100) / 100,
       totalTax: Math.round(totalTax * 100) / 100,
+      grandTotal: Math.round(grandTotal * 100) / 100,
+      totalItems,
+      totalQty,
     };
   },
 
   /**
-   * Validate GRN master data
+   * Validate GRN master data with enhanced checks
    */
   validateGRNMaster: (grn: Partial<GRNMastDto>): GRNValidationResult => {
     const errors: string[] = [];
@@ -300,6 +441,11 @@ export const GRNHelpers = {
       errors.push("Discount cannot be greater than total amount");
     }
 
+    // PO validations
+    if (grn.poID && grn.poID > 0 && (!grn.poNo || grn.poNo.trim() === "")) {
+      warnings.push("PO number is recommended when PO ID is specified");
+    }
+
     return {
       isValid: errors.length === 0,
       errors,
@@ -308,7 +454,7 @@ export const GRNHelpers = {
   },
 
   /**
-   * Validate GRN detail data
+   * Validate GRN detail data with comprehensive checks
    */
   validateGRNDetail: (detail: Partial<GRNDetailDto>, index: number): GRNValidationResult => {
     const errors: string[] = [];
@@ -359,6 +505,26 @@ export const GRNHelpers = {
       if (expiryDate <= today) {
         warnings.push(`Product ${index + 1} has expired or expires soon`);
       }
+
+      // Check if expiry is within 6 months
+      const sixMonthsFromNow = new Date();
+      sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+      if (expiryDate <= sixMonthsFromNow) {
+        warnings.push(`Product ${index + 1} expires within 6 months`);
+      }
+    }
+
+    // Tax validation
+    if (detail.cgstPerValue && detail.sgstPerValue) {
+      const totalTax = (detail.cgstPerValue || 0) + (detail.sgstPerValue || 0);
+      if (totalTax > 50) {
+        warnings.push(`Tax rate seems high (${totalTax}%) for item ${index + 1}`);
+      }
+    }
+
+    // Price validation
+    if (detail.unitPrice && detail.mrp && detail.unitPrice > detail.mrp) {
+      warnings.push(`Unit price is higher than MRP for item ${index + 1}`);
     }
 
     return {
@@ -369,7 +535,7 @@ export const GRNHelpers = {
   },
 
   /**
-   * Validate complete GRN data
+   * Validate complete GRN data with all checks
    */
   validateCompleteGRN: (grn: Partial<GRNWithAllDetailsDto>): GRNValidationResult => {
     const masterValidation = GRNHelpers.validateGRNMaster(grn);
@@ -385,12 +551,41 @@ export const GRNHelpers = {
         allErrors.push(...detailValidation.errors);
         allWarnings.push(...(detailValidation.warnings || []));
       });
+
+      // Check for duplicate products
+      const productIds = grn.grnDetails.map((d) => d.productID);
+      const duplicates = productIds.filter((id, index) => productIds.indexOf(id) !== index);
+      if (duplicates.length > 0) {
+        allWarnings.push("Duplicate products detected in the GRN");
+      }
     }
 
     return {
       isValid: allErrors.length === 0,
       errors: allErrors,
       warnings: allWarnings,
+    };
+  },
+
+  /**
+   * Generate GRN summary for reporting
+   */
+  generateGRNSummary: (grn: GRNWithAllDetailsDto) => {
+    const totals = GRNHelpers.calculateGRNTotals(grn.grnDetails || [], grn.disc || 0, grn.otherAmt || 0, grn.coinAdj || 0);
+
+    return {
+      grnCode: grn.grnCode,
+      grnDate: grn.grnDate,
+      supplierName: grn.supplrName,
+      departmentName: grn.deptName,
+      invoiceNo: grn.invoiceNo,
+      invoiceDate: grn.invDate,
+      status: grn.grnApprovedYN === "Y" ? "Approved" : "Pending",
+      ...totals,
+      createdBy: grn.rCreatedBy,
+      createdDate: grn.rCreatedDate,
+      approvedBy: grn.grnApprovedBy,
+      approvedDate: grn.approvalDate,
     };
   },
 };
