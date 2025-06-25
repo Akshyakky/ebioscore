@@ -4,7 +4,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import FamilyHistoryDialog from "@/pages/clinicalManagement/PatientHistory/Components/FamilyHistoryDialog";
+import PatientHistoryDialog from "@/pages/clinicalManagement/PatientHistory/Components/PatientHistoryDialog";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { useAlert } from "@/providers/AlertProvider";
@@ -506,7 +506,7 @@ const AdmissionPage: React.FC = () => {
       <AdmissionStatusDialog open={isStatusDialogOpen} onClose={() => setIsStatusDialogOpen(false)} patient={selectedPatient} admissionStatus={currentAdmissionStatus} />
 
       <AdmissionHistoryDialog open={isHistoryDialogOpen} onClose={() => setIsHistoryDialogOpen(false)} admission={selectedAdmission} />
-      <FamilyHistoryDialog
+      <PatientHistoryDialog
         open={isFamilyHistoryOpen}
         onClose={() => {
           setIsFamilyHistoryOpen(false);
