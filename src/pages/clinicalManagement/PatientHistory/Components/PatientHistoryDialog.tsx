@@ -110,26 +110,26 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
 
       switch (currentHistoryType) {
         case "family":
-          result = await deleteFamilyHistory(historyToDelete);
+          result = await deleteFamilyHistory(historyToDelete.opipFHID);
           break;
         case "social":
-          result = await deleteSocialHistory(historyToDelete);
+          result = await deleteSocialHistory(historyToDelete.opipSHID);
           break;
         case "pmh":
-          result = await deletePMHHistory(historyToDelete);
+          result = await deletePMHHistory(historyToDelete.opippmhId);
           break;
         case "psh":
-          result = await deletePSHHistory(historyToDelete);
+          result = await deletePSHHistory(historyToDelete.opipPshId);
           break;
         case "ros":
-          result = await deleteRosHistory(historyToDelete);
+          result = await deleteRosHistory(historyToDelete.opipRosID);
           break;
       }
 
-      if (result.success) {
+      if (result) {
         showAlert("Success", `${currentHistoryType} history deleted successfully`, "success");
       } else {
-        throw new Error(result.errorMessage || `Failed to delete ${currentHistoryType} history`);
+        throw new Error(`Failed to delete ${currentHistoryType} history`);
       }
     } catch (error) {
       showAlert("Error", `Failed to delete ${currentHistoryType} history`, "error");
@@ -163,16 +163,10 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
             break;
         }
         if (result.success) {
-          showAlert(
-            "Success",
-            data[currentHistoryType === "family" ? "opipFHID" : "opipSHID"]
-              ? `${currentHistoryType === "family" ? "Family" : "Social"} history updated successfully`
-              : `${currentHistoryType === "family" ? "Family" : "Social"} history added successfully`,
-            "success"
-          );
+          showAlert("Success", `History saved successfully`, "success");
           setIsFormOpen(false);
         } else {
-          throw new Error(result.errorMessage || `Failed to save ${currentHistoryType} history`);
+          throw new Error(`Failed to save ${currentHistoryType} history`);
         }
       } catch (error) {
         console.error(`Error saving ${currentHistoryType} history:`, error);

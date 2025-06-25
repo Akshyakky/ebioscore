@@ -2,6 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { RichTextEditor } from "@/components/RichTextEditor/RichTextEditor";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useTemplateMast } from "@/pages/clinicalManagement/TemplateList/hooks/useTemplateList";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -279,15 +280,12 @@ export const GenericHistoryForm = <T extends Record<string, any>>({
                     </Grid>
 
                     <Grid size={{ sm: 12 }}>
-                      <EnhancedFormField
-                        name={fields.descField as string}
+                      <Controller
+                        name={fields.descField as any}
                         control={control}
-                        type="textarea"
-                        label={`${title} Description`}
-                        required
-                        disabled={viewOnly}
-                        rows={6}
-                        placeholder={`Enter detailed ${title.toLowerCase()} information...`}
+                        render={({ field, fieldState }) => (
+                          <RichTextEditor value={field.value} onChange={field.onChange} disabled={viewOnly} error={!!fieldState.error} helperText={fieldState.error?.message} />
+                        )}
                       />
                     </Grid>
 
