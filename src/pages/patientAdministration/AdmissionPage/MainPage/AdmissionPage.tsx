@@ -281,7 +281,7 @@ const AdmissionPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 150,
-      formatter: (value, admission) => admission.departmentDisplay || "Unknown",
+      formatter: (_value, admission) => admission.departmentDisplay || "Unknown",
     },
     {
       key: "attendingPhysician",
@@ -289,7 +289,7 @@ const AdmissionPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 180,
-      formatter: (value, admission) => admission.ipAdmissionDto.attendingPhysicianName || "Not Assigned",
+      formatter: (_value, admission) => admission.ipAdmissionDto.attendingPhysicianName || "Not Assigned",
     },
     {
       key: "paymentInsurance",

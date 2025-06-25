@@ -32,16 +32,10 @@ export const GenericHistoryList = <T extends Record<string, any>>({
   error,
   fetchHistoryList,
   onAddNew,
-  onEdit,
-  onView,
-  onDelete,
   title,
-  icon,
   columns,
   idField,
   dateField,
-  descField,
-  notesField,
   activeField,
 }: GenericHistoryListProps<T>) => {
   const patientHistories = React.useMemo(() => {

@@ -48,7 +48,7 @@ export const GenericHistoryForm = <T extends Record<string, any>>({
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
   const serverDate = useServerDate();
-  const { templateList, fetchTemplateList, isLoading: templatesLoading } = useTemplateMast();
+  const { templateList, isLoading: templatesLoading } = useTemplateMast();
 
   const isEditMode = !!existingHistory;
 
@@ -57,7 +57,7 @@ export const GenericHistoryForm = <T extends Record<string, any>>({
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
   } = useForm<T>({
     resolver: zodResolver(formSchema),
     mode: "onChange",
