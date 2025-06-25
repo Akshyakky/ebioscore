@@ -9,8 +9,20 @@ import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { fhService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { formatDt } from "@/utils/Common/dateUtils";
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, FamilyRestroom as FamilyIcon, Refresh as RefreshIcon, Visibility as ViewIcon } from "@mui/icons-material";
-import { Alert, Avatar, Box, Chip, IconButton, Paper, Stack, Typography } from "@mui/material";
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  FamilyRestroom as FamilyIcon,
+  MedicalServices as MedicalIcon,
+  LocalHospital as PastMedicalIcon,
+  Refresh as RefreshIcon,
+  Psychology as ReviewIcon,
+  Assignment as SocialIcon,
+  Healing as SurgicalIcon,
+  Visibility as ViewIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Chip, IconButton, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import FamilyHistoryForm from "../Forms/FamilyHistoryForm";
 
@@ -19,6 +31,20 @@ interface FamilyHistoryDialogProps {
   onClose: () => void;
   admission: any;
 }
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
+  return (
+    <div role="tabpanel" hidden={value !== index} id={`patient-history-tabpanel-${index}`} aria-labelledby={`patient-history-tab-${index}`} {...other}>
+      {value === index && <Box sx={{ p: 1.5 }}>{children}</Box>}
+    </div>
+  );
+};
 
 const FamilyHistoryDialog: React.FC<FamilyHistoryDialogProps> = ({ open, onClose, admission }) => {
   const [familyHistoryList, setFamilyHistoryList] = useState<OPIPHistFHDto[]>([]);
@@ -29,6 +55,8 @@ const FamilyHistoryDialog: React.FC<FamilyHistoryDialogProps> = ({ open, onClose
   const [historyToDelete, setHistoryToDelete] = useState<OPIPHistFHDto | null>(null);
   const { isLoading, setLoading } = useLoading();
   const [error, setError] = useState<string | null>(null);
+  const [tabValue, setTabValue] = useState(0);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const { showAlert } = useAlert();
 
@@ -60,12 +88,22 @@ const FamilyHistoryDialog: React.FC<FamilyHistoryDialogProps> = ({ open, onClose
       .sort((a, b) => new Date(b.opipFHDate).getTime() - new Date(a.opipFHDate).getTime());
   }, [familyHistoryList, admission]);
 
-  // Load family history when dialog opens
+  // Load family history when dialog opens - Fixed to prevent continuous calls
   useEffect(() => {
-    if (open && admission) {
+    if (open && admission && !hasInitialized) {
       fetchFamilyHistoryList();
+      setHasInitialized(true);
+    } else if (!open) {
+      // Reset initialization flag when dialog closes
+      setHasInitialized(false);
+      setTabValue(0); // Reset to first tab
     }
-  }, [open, admission, fetchFamilyHistoryList]);
+  }, [open, admission, hasInitialized, fetchFamilyHistoryList]);
+
+  // Handle tab change
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   // Handle add new family history
   const handleAddNew = useCallback(() => {
@@ -232,22 +270,59 @@ const FamilyHistoryDialog: React.FC<FamilyHistoryDialogProps> = ({ open, onClose
     ? `${admission.ipAdmissionDto.pTitle} ${admission.ipAdmissionDto.pfName} ${admission.ipAdmissionDto.pmName || ""} ${admission.ipAdmissionDto.plName}`.trim()
     : "Patient";
 
+  // Render family history content
+  const renderFamilyHistoryContent = () => (
+    <>
+      {/* Action buttons specific to Family History */}
+      <Box display="flex" justifyContent="flex-end" gap={1} mb={2}>
+        <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={fetchFamilyHistoryList} asynchronous size="small" />
+        <CustomButton variant="contained" icon={AddIcon} text="Add Family History" onClick={handleAddNew} color="success" size="small" />
+      </Box>
+
+      {/* Family History List */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {patientFamilyHistories.length === 0 && !isLoading ? (
+        <Alert severity="info">No family history records found for this patient. Click "Add Family History" to create one.</Alert>
+      ) : (
+        <CustomGrid
+          columns={columns}
+          data={patientFamilyHistories}
+          loading={isLoading}
+          maxHeight="400px"
+          emptyStateMessage="No family history records found"
+          rowKeyField="opipFHID"
+          showDensityControls={false}
+        />
+      )}
+    </>
+  );
+
+  // Placeholder for other history tabs
+  const renderComingSoon = (historyType: string) => (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+      <Alert severity="info">
+        <Typography variant="body1">{historyType} will be available soon.</Typography>
+      </Alert>
+    </Box>
+  );
+
   return (
     <>
       <GenericDialog
         open={open}
         onClose={onClose}
-        title={`Family History - ${patientName}`}
+        title={`Patient History - ${patientName}`}
         maxWidth="lg"
         fullWidth
         showCloseButton
         actions={
-          <Box display="flex" justifyContent="space-between" width="100%" gap={1}>
+          <Box display="flex" justifyContent="flex-end" width="100%" gap={1}>
             <CustomButton variant="contained" text="Close" onClick={onClose} color="primary" size="small" />
-            <Box display="flex" gap={1}>
-              <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={fetchFamilyHistoryList} asynchronous size="small" />
-              <CustomButton variant="contained" icon={AddIcon} text="Add Family History" onClick={handleAddNew} color="success" size="small" />
-            </Box>
           </Box>
         }
       >
@@ -264,7 +339,7 @@ const FamilyHistoryDialog: React.FC<FamilyHistoryDialogProps> = ({ open, onClose
           >
             <Box display="flex" alignItems="center" gap={1.5}>
               <Avatar sx={{ bgcolor: "primary.main", width: 40, height: 40 }}>
-                <FamilyIcon />
+                <MedicalIcon />
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight="600">
@@ -277,26 +352,72 @@ const FamilyHistoryDialog: React.FC<FamilyHistoryDialogProps> = ({ open, onClose
             </Box>
           </Paper>
 
-          {/* Family History List */}
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {/* Tabs for different history types */}
+          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+            <Tabs value={tabValue} onChange={handleTabChange} aria-label="patient history tabs" variant="scrollable" scrollButtons="auto">
+              <Tab
+                label="Family History"
+                icon={<FamilyIcon fontSize="small" />}
+                iconPosition="start"
+                id="patient-history-tab-0"
+                aria-controls="patient-history-tabpanel-0"
+                sx={{ minHeight: 48, textTransform: "none" }}
+              />
+              <Tab
+                label="Social History"
+                icon={<SocialIcon fontSize="small" />}
+                iconPosition="start"
+                id="patient-history-tab-1"
+                aria-controls="patient-history-tabpanel-1"
+                sx={{ minHeight: 48, textTransform: "none" }}
+              />
+              <Tab
+                label="Past Medical History"
+                icon={<PastMedicalIcon fontSize="small" />}
+                iconPosition="start"
+                id="patient-history-tab-2"
+                aria-controls="patient-history-tabpanel-2"
+                sx={{ minHeight: 48, textTransform: "none" }}
+              />
+              <Tab
+                label="Past Surgical History"
+                icon={<SurgicalIcon fontSize="small" />}
+                iconPosition="start"
+                id="patient-history-tab-3"
+                aria-controls="patient-history-tabpanel-3"
+                sx={{ minHeight: 48, textTransform: "none" }}
+              />
+              <Tab
+                label="Review of Systems"
+                icon={<ReviewIcon fontSize="small" />}
+                iconPosition="start"
+                id="patient-history-tab-4"
+                aria-controls="patient-history-tabpanel-4"
+                sx={{ minHeight: 48, textTransform: "none" }}
+              />
+            </Tabs>
+          </Box>
 
-          {patientFamilyHistories.length === 0 && !isLoading ? (
-            <Alert severity="info">No family history records found for this patient. Click "Add Family History" to create one.</Alert>
-          ) : (
-            <CustomGrid
-              columns={columns}
-              data={patientFamilyHistories}
-              loading={isLoading}
-              maxHeight="400px"
-              emptyStateMessage="No family history records found"
-              rowKeyField="opipFHID"
-              showDensityControls={false}
-            />
-          )}
+          {/* Tab Panels */}
+          <TabPanel value={tabValue} index={0}>
+            {renderFamilyHistoryContent()}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={1}>
+            {renderComingSoon("Social History")}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
+            {renderComingSoon("Past Medical History")}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={3}>
+            {renderComingSoon("Past Surgical History")}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={4}>
+            {renderComingSoon("Review of Systems")}
+          </TabPanel>
         </Box>
       </GenericDialog>
 

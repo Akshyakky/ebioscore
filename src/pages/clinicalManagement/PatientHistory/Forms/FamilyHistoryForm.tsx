@@ -43,6 +43,7 @@ const familyHistorySchema = z.object({
 type FamilyHistoryFormData = z.infer<typeof familyHistorySchema>;
 
 const FamilyHistoryForm: React.FC<FamilyHistoryFormProps> = ({ open, onClose, onSubmit, admission, existingHistory, viewOnly = false }) => {
+  console.log(admission);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [templateSearchValue, setTemplateSearchValue] = useState("");
@@ -143,7 +144,22 @@ const FamilyHistoryForm: React.FC<FamilyHistoryFormProps> = ({ open, onClose, on
   const onFormSubmit = async (data: FamilyHistoryFormData) => {
     try {
       setIsSubmitting(true);
-      //   await onSubmit(data);
+      const formData: OPIPHistFHDto = {
+        opipFHID: data.opipFHID,
+        opipNo: data.opipNo,
+        opvID: data.opvID,
+        pChartID: data.pChartID,
+        opipCaseNo: admission.ipAdmissionDto.oPIPCaseNo,
+        patOpip: data.patOpip,
+        opipFHDate: data.opipFHDate,
+        opipFHDesc: data.opipFHDesc || "",
+        opipFHNotes: data.opipFHNotes || "",
+        oldPChartID: data.oldPChartID || 0,
+        rActiveYN: data.rActiveYN || "Y",
+        transferYN: data.transferYN || "N",
+        rNotes: data.rNotes || "",
+      };
+      await onSubmit(formData);
       onClose();
     } catch (error) {
       console.error("Error submitting family history:", error);
