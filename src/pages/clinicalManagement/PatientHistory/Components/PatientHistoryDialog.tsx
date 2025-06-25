@@ -13,11 +13,15 @@ import {
 } from "@mui/icons-material";
 import { Avatar, Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
+import { PastMedicalHistoryForm } from "../Forms/PastMedicalHistoryForm";
+import { PastSurgicalHistoryForm } from "../Forms/PastSurgicalHistoryForm";
 import { ReviewOfSystemForm } from "../Forms/ReviewOfSystemForm";
 import { SocialHistoryForm } from "../Forms/SocialHistoryForm";
-import { useFamilyHistory, useROSHistory, useSocialHistory } from "../hook/usePatientHistory";
+import { useFamilyHistory, usePMHHistory, usePSHHistory, useROSHistory, useSocialHistory } from "../hook/usePatientHistory";
 import { FamilyHistoryForm } from "./../Forms/FamilyHistoryForm";
 import { FamilyHistory } from "./FamilyHistory";
+import PastMedicalHistory from "./PastMedicalHistory";
+import PastSurgicalHistory from "./PastSurgicalHistory";
 import ReviewOfSystem from "./ReviewOfSystem";
 import { SocialHistory } from "./SocialHistory";
 interface PatientHistoryDialogProps {
@@ -42,16 +46,17 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
 
 const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClose, admission }) => {
   const { familyHistoryList, fetchFamilyHistoryList, saveFamilyHistory, deleteFamilyHistory } = useFamilyHistory();
-
   const { socialHistoryList, fetchSocialHistoryList, saveSocialHistory, deleteSocialHistory } = useSocialHistory();
   const { rosHistoryList, fetchRosHistoryList, saveRosHistory, deleteRosHistory } = useROSHistory();
+  const { pmhHistoryList, fetchPMHHistoryList, savePMHHistory, deletePMHHistory } = usePMHHistory();
+  const { pshHistoryList, fetchPSHHistoryList, savePSHHistory, deletePSHHistory } = usePSHHistory();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<any>(null);
   const [isViewMode, setIsViewMode] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [historyToDelete, setHistoryToDelete] = useState<any>(null);
-  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social" | "ros">("family");
+  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social" | "pmh" | "psh" | "ros">("family");
   const { setLoading } = useLoading();
   const [tabValue, setTabValue] = useState(0);
 
@@ -65,6 +70,10 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     } else if (tabValue === 1) {
       fetchSocialHistoryList();
     } else if (tabValue === 2) {
+      fetchPMHHistoryList();
+    } else if (tabValue === 3) {
+      fetchPSHHistoryList();
+    } else if (tabValue === 4) {
       fetchRosHistoryList();
     }
   }, [open, admission, tabValue]);
@@ -78,6 +87,12 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         break;
       case 1:
         setCurrentHistoryType("social");
+        break;
+      case 2:
+        setCurrentHistoryType("pmh");
+        break;
+      case 3:
+        setCurrentHistoryType("psh");
         break;
       case 4:
         setCurrentHistoryType("ros");
@@ -100,6 +115,12 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         case "social":
           result = await deleteSocialHistory(historyToDelete);
           break;
+        case "pmh":
+          result = await deletePMHHistory(historyToDelete);
+          break;
+        case "psh":
+          result = await deletePSHHistory(historyToDelete);
+          break;
         case "ros":
           result = await deleteRosHistory(historyToDelete);
           break;
@@ -116,7 +137,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       setIsDeleteConfirmOpen(false);
       setHistoryToDelete(null);
     }
-  }, [historyToDelete, currentHistoryType, deleteFamilyHistory, deleteSocialHistory, showAlert]);
+  }, [historyToDelete, currentHistoryType, deleteFamilyHistory, deleteSocialHistory, deletePMHHistory, deletePSHHistory, deleteRosHistory, showAlert]);
 
   const handleFormSubmit = useCallback(
     async (data: any) => {
@@ -130,6 +151,12 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
             break;
           case "social":
             result = await saveSocialHistory(data);
+            break;
+          case "pmh":
+            result = await savePMHHistory(data);
+            break;
+          case "psh":
+            result = await savePSHHistory(data);
             break;
           case "ros":
             result = await saveRosHistory(data);
@@ -154,7 +181,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         setLoading(false);
       }
     },
-    [currentHistoryType, saveFamilyHistory, saveSocialHistory, showAlert, setLoading]
+    [currentHistoryType, saveFamilyHistory, saveSocialHistory, savePMHHistory, savePSHHistory, saveRosHistory, showAlert, setLoading]
   );
 
   const handleFormClose = useCallback(() => {
@@ -190,7 +217,6 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     setIsDeleteConfirmOpen(true);
   }, []);
 
-  console.log(currentHistoryType, "currentHistoryType");
   return (
     <>
       <GenericDialog
@@ -301,6 +327,30 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
                 onDelete={handleDeleteClick}
               />
             </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+              <PastMedicalHistory
+                admission={admission}
+                historyList={pmhHistoryList}
+                fetchHistoryList={fetchPMHHistoryList}
+                onAddNew={handleAddNew}
+                onEdit={handleEdit}
+                onView={handleView}
+                onDelete={handleDeleteClick}
+              />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+              <PastSurgicalHistory
+                admission={admission}
+                historyList={pshHistoryList}
+                fetchHistoryList={fetchPSHHistoryList}
+                onAddNew={handleAddNew}
+                onEdit={handleEdit}
+                onView={handleView}
+                onDelete={handleDeleteClick}
+              />
+            </TabPanel>
             <TabPanel value={tabValue} index={4}>
               <ReviewOfSystem
                 admission={admission}
@@ -324,6 +374,28 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       {/* Social History Form */}
       {isFormOpen && currentHistoryType === "social" && (
         <SocialHistoryForm open={isFormOpen} onClose={handleFormClose} onSubmit={handleFormSubmit} admission={admission} existingHistory={selectedHistory} viewOnly={isViewMode} />
+      )}
+      {/* Past Medical History Form */}
+      {isFormOpen && currentHistoryType === "pmh" && (
+        <PastMedicalHistoryForm
+          open={isFormOpen}
+          onClose={handleFormClose}
+          onSubmit={handleFormSubmit}
+          admission={admission}
+          existingHistory={selectedHistory}
+          viewOnly={isViewMode}
+        />
+      )}
+      {/* Past Surgical History Form */}
+      {isFormOpen && currentHistoryType === "psh" && (
+        <PastSurgicalHistoryForm
+          open={isFormOpen}
+          onClose={handleFormClose}
+          onSubmit={handleFormSubmit}
+          admission={admission}
+          existingHistory={selectedHistory}
+          viewOnly={isViewMode}
+        />
       )}
       {/* Review of system History Form */}
       {isFormOpen && currentHistoryType === "ros" && (
