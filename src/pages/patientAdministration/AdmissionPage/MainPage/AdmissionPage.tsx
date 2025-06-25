@@ -16,9 +16,8 @@ import {
   ExpandLess as CollapseIcon,
   Edit as EditIcon,
   ExpandMore as ExpandIcon,
-  FamilyRestroom as FamilyIcon,
   History as HistoryIcon,
-  Person as PatientIcon,
+  ManageSearch as PatientIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Visibility as ViewIcon,
@@ -59,11 +58,11 @@ const AdmissionPage: React.FC = () => {
   const { showAlert } = useAlert();
   const { admissions, loading, currentAdmissionStatus, refreshAdmissions, refreshPatientStatus, admitPatient, checkPatientAdmissionStatus } = useAdmission();
 
-  const [isFamilyHistoryOpen, setIsFamilyHistoryOpen] = useState(false);
+  const [isPatientHistoryOpen, setIsPatientHistoryOpen] = useState(false);
   const [selectedAdmissionForHistory, setSelectedAdmissionForHistory] = useState<EnhancedAdmissionDto | null>(null);
-  const handleFamilyHistory = useCallback((admission: EnhancedAdmissionDto) => {
+  const handlePatientHistory = useCallback((admission: EnhancedAdmissionDto) => {
     setSelectedAdmissionForHistory(admission);
-    setIsFamilyHistoryOpen(true);
+    setIsPatientHistoryOpen(true);
   }, []);
   // Load data on component mount
   useEffect(() => {
@@ -360,11 +359,11 @@ const AdmissionPage: React.FC = () => {
             color="success"
             onClick={(event) => {
               event.stopPropagation();
-              handleFamilyHistory(admission);
+              handlePatientHistory(admission);
             }}
-            title="Family History"
+            title="Patient History"
           >
-            <FamilyIcon fontSize="small" />
+            <PatientIcon fontSize="small" />
           </IconButton>
         </Stack>
       ),
@@ -507,9 +506,9 @@ const AdmissionPage: React.FC = () => {
 
       <AdmissionHistoryDialog open={isHistoryDialogOpen} onClose={() => setIsHistoryDialogOpen(false)} admission={selectedAdmission} />
       <PatientHistoryDialog
-        open={isFamilyHistoryOpen}
+        open={isPatientHistoryOpen}
         onClose={() => {
-          setIsFamilyHistoryOpen(false);
+          setIsPatientHistoryOpen(false);
           setSelectedAdmissionForHistory(null);
         }}
         admission={selectedAdmissionForHistory}

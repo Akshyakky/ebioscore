@@ -1,4 +1,4 @@
-import { Psychology as ReviewIcon } from "@mui/icons-material";
+import { LocalHospital as PastMedicalIcon } from "@mui/icons-material";
 import * as z from "zod";
 import { GenericHistoryForm } from "./GenericHistoryForm";
 
@@ -24,7 +24,7 @@ export const PastMedicalHistoryForm = (props: any) => (
   <GenericHistoryForm<PastMedicalHistoryFormData>
     {...props}
     title="Past Medical History"
-    icon={<ReviewIcon color="primary" />}
+    icon={<PastMedicalIcon color="primary" />}
     templateType="OPIPHISTPMH"
     formSchema={pastMedicalHistorySchema}
     fields={{
