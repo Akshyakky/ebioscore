@@ -548,7 +548,7 @@ const routeConfig: RouteConfig[] = [
     protected: true,
     providers: [AlertProvider],
     metadata: {
-      title: "Goodsb Recieve Note",
+      title: "Goods Recieve Note",
       category: "inventory",
     },
   },

@@ -105,19 +105,6 @@ const GrnDetailsDialog: React.FC<GrnDetailsDialogProps> = ({ open, onClose, grn,
     };
   }, [grn]);
 
-  const getDropdownLabel = (options: Array<{ value: string; label: string }>, value: number | string | null | undefined, fallbackPrefix: string = ""): string => {
-    if (!value && value !== 0) return "Not specified";
-
-    const valueStr = value.toString();
-    const found = options.find((option) => option.value === valueStr || Number(option.value) === Number(value));
-
-    if (found) {
-      return found.label;
-    } else {
-      return fallbackPrefix ? `${fallbackPrefix} (ID: ${value})` : `ID: ${value}`;
-    }
-  };
-
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };

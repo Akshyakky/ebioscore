@@ -1,73 +1,91 @@
-import { GRNDetailDto, GRNHelpers } from "@/interfaces/InventoryManagement/GRNDto";
+// GrnDetailsComponent.tsx - Complete Updated Version
+
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { GRNDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { formatCurrency } from "@/utils/Common/formatUtils";
+import { Delete as DeleteIcon, ExpandMore as ExpandMoreIcon, Inventory as InventoryIcon, LocalFireDepartment, ShoppingCart as PurchaseIcon } from "@mui/icons-material";
 import {
-  Abc as AbcIcon,
-  AttachMoney as AttachMoneyIcon,
-  CalendarToday as CalendarTodayIcon,
-  Category as CategoryIcon,
-  ConfirmationNumber as ConfirmationNumberIcon,
-  Delete as DeleteIcon,
-  DeleteSweep as DeleteSweepIcon,
-  ExpandMore as ExpandMoreIcon,
-  Factory as FactoryIcon,
-  HourglassTop as HourglassTopIcon,
-  Info as InfoIcon,
-  Inventory2 as Inventory2Icon,
-  Medication as MedicationIcon,
-  Percent as PercentIcon,
-  Pin as PinIcon,
-  ShoppingCart as ProductIcon,
-  Straighten as StraightenIcon,
-  Warehouse as WarehouseIcon,
-} from "@mui/icons-material";
-
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Chip, CircularProgress, Grid, Paper, Stack, Tooltip, Typography, alpha, useTheme } from "@mui/material";
-import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams, GridRowModel, GridRowSelectionModel, GridToolbar, gridClasses } from "@mui/x-data-grid";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  alpha,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Chip,
+  CircularProgress,
+  Divider,
+  Grid,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
-interface EnhancedGrnDetailsComponentProps {
+
+interface UpdatedGrnDetailsComponentProps {
   grnDetails: GRNDetailDto[];
   onGrnDetailsChange: (details: GRNDetailDto[]) => void;
   disabled?: boolean;
   grnApproved?: boolean;
+  expanded: boolean;
+  onToggle: () => void;
 }
 
-const StyledHeader = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <Stack direction="row" spacing={1} alignItems="center">
-    {icon}
-    <Typography variant="body2" fontWeight="bold">
-      {text}
-    </Typography>
-  </Stack>
-);
+interface GRNDetailRow extends GRNDetailDto {
+  id: string | number;
+  _serialNo: number;
+  _pastReceivedPack: number;
+}
 
-const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDetails, onGrnDetailsChange, disabled = false, grnApproved = false }) => {
-  const [expanded, setExpanded] = useState(true);
-  const { showAlert } = useAlert();
+const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDetails, onGrnDetailsChange, disabled = false, grnApproved = false, expanded, onToggle }) => {
   const theme = useTheme();
+  const { showAlert } = useAlert();
+  const dropdownValues = useDropdownValues(["taxType"]);
   const productSearchRef = useRef<ProductSearchRef>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
-  const [selectedRowIds, setSelectedRowIds] = useState<GridRowSelectionModel>();
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    open: boolean;
+    index: number | null;
+  }>({ open: false, index: null });
+
+  // Convert GRN details to rows with proper IDs
+  const gridRows: GRNDetailRow[] = useMemo(() => {
+    return grnDetails.map((detail, index) => ({
+      ...detail,
+      id: detail.grnDetID || `temp-${index}`,
+      _serialNo: index + 1,
+      _pastReceivedPack: detail._pastReceivedPack || 0,
+    }));
+  }, [grnDetails]);
 
   const handleProductSelect = useCallback(
     async (product: ProductListDto | null) => {
       if (!product?.productID) return;
+
       if (grnDetails.find((d) => d.productID === product.productID)) {
         showAlert("Warning", `"${product.productName}" is already added.`, "warning");
         productSearchRef.current?.clearSelection();
         return;
       }
+
       setIsAddingProduct(true);
       try {
         const productData = await productListService.getById(product.productID);
         const nextSerialNo = grnDetails.length > 0 ? Math.max(...grnDetails.map((d) => d.serialNo)) + 1 : 1;
+
         const newDetail: GRNDetailDto = {
           grnDetID: 0,
           grnID: 0,
@@ -75,30 +93,22 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
           productID: productData.data.productID,
           productCode: productData.data.productCode,
           productName: productData.data.productName,
-          pGrpID: productData.data.pGrpID,
-          pGrpName: productData.data.productGroupName,
-          psGrpID: productData.data.psGrpID,
-          psGrpName: productData.data.psGroupName,
+          catValue: "",
+          catDesc: "",
           mfID: productData.data.manufacturerID,
           mfName: productData.data.manufacturerName,
           manufacturerID: productData.data.manufacturerID,
           manufacturerCode: productData.data.manufacturerCode,
           manufacturerName: productData.data.manufacturerName,
+          pGrpID: productData.data.pGrpID,
+          pGrpName: productData.data.productGroupName,
+          psGrpID: productData.data.psGrpID,
+          psGrpName: productData.data.psGroupName,
           pUnitID: productData.data.pUnitID,
           pUnitName: productData.data.pUnitName,
           pUnitsPerPack: productData.data.unitPack || 1,
-          defaultPrice: productData.data.defaultPrice || 0,
-          unitPrice: productData.data.defaultPrice || 0,
-          sellingPrice: productData.data.defaultPrice || 0,
-          packPrice: (productData.data.defaultPrice || 0) * (productData.data.unitPack || 1),
-          mrp: 0,
-          taxID: productData.data.taxID,
-          taxCode: productData.data.taxCode,
-          taxName: productData.data.taxName,
-          gstPercentage: (productData.data.cgstPerValue || 0) + (productData.data.sgstPerValue || 0),
-          cgstPerValue: productData.data.cgstPerValue || 0,
-          sgstPerValue: productData.data.sgstPerValue || 0,
-          igstPerValue: 0,
+          pkgID: productData.data.pkgID,
+          pkgName: productData.data.pkgName,
           hsnCode: productData.data.hsnCODE,
           requiredPack: 0,
           requiredQty: 0,
@@ -106,22 +116,63 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
           recvdQty: 0,
           acceptQty: 0,
           freeItems: 0,
-          productValue: 0,
+          rejectedQty: 0,
+          unitPrice: productData.data.defaultPrice || 0,
+          sellingPrice: productData.data.defaultPrice || 0,
+          packPrice: productData.data.defaultPrice || 0,
+          sellUnitPrice: 0,
+          defaultPrice: productData.data.defaultPrice || 0,
+          mrp: 0,
+          mrpAbated: 0,
           discAmt: 0,
           discPercentage: 0,
-          taxableAmt: 0,
+          gstPercentage: (productData.data.cgstPerValue || 0) + (productData.data.sgstPerValue || 0),
+          cgstPerValue: productData.data.cgstPerValue || 0,
           cgstTaxAmt: 0,
+          sgstPerValue: productData.data.sgstPerValue || 0,
           sgstTaxAmt: 0,
+          igstPerValue: 0,
           igstTaxAmt: 0,
+          taxableAmt: 0,
           totalTaxAmt: 0,
           taxAfterDiscYN: "N",
+          taxAfterDiscOnMrpYN: "N",
           includeTaxYN: "N",
-          expiryYN: productData.data.expiry === "Y" ? "Y" : "N",
+          taxOnFreeItemsYN: "N",
+          taxOnMrpYN: "N",
+          taxOnUnitPriceYN: "N",
           batchNo: "",
           referenceNo: "",
-          expiryDate: undefined,
+          expiryDate: "",
+          lotNo: "",
+          vendorBatchNo: "",
+          shelfLife: 0,
+          storageCondition: "",
+          productNotes: "",
+          expiryYN: productData.data.expiry === "Y" ? "Y" : "N",
+          isFreeItemYN: "N",
+          prescriptionYN: "N",
+          qualityCheckYN: "N",
+          qualityStatus: "",
+          qualityRemarks: "",
+          productValue: 0,
+          itemMrpValue: 0,
+          itemTotalProfit: 0,
+          itemTotalVat: 0,
+          _recievedQty: 0,
+          _serialNo: nextSerialNo,
           _pastReceivedPack: 0,
-        } as GRNDetailDto;
+          _unitPrice: productData.data.defaultPrice || 0,
+          _sellingUnitPrice: 0,
+          _calculatedValue: 0,
+          _totalWithTax: 0,
+          rActiveYN: "Y",
+          isDeleted: false,
+          createdBy: "",
+          createdAt: "",
+          updatedBy: "",
+          updatedAt: "",
+        };
 
         onGrnDetailsChange([...grnDetails, newDetail]);
         showAlert("Success", `Product "${productData.data.productName}" added.`, "success");
@@ -135,310 +186,676 @@ const GrnDetailsComponent: React.FC<EnhancedGrnDetailsComponentProps> = ({ grnDe
     [grnDetails, onGrnDetailsChange, showAlert]
   );
 
-  const processRowUpdate = useCallback(
-    (newRow: GridRowModel, oldRow: GridRowModel): GridRowModel => {
-      let updatedDetail = { ...newRow } as GRNDetailDto;
-      if (newRow.recvdPack !== oldRow.recvdPack) {
-        updatedDetail.recvdQty = (newRow.recvdPack || 0) * (updatedDetail.pUnitsPerPack || 1);
-        updatedDetail.acceptQty = updatedDetail.recvdQty;
+  const handleDeleteClick = useCallback(
+    (id: string | number) => {
+      const index = gridRows.findIndex((row) => row.id === id);
+      setDeleteConfirmation({ open: true, index });
+    },
+    [gridRows]
+  );
+
+  const handleDeleteRow = () => {
+    if (deleteConfirmation.index === null) return;
+
+    const updatedDetails = [...grnDetails];
+    const rowToDelete = gridRows[deleteConfirmation.index];
+    const originalIndex = grnDetails.findIndex((item) => item.productID === rowToDelete.productID);
+
+    if (originalIndex !== -1) {
+      updatedDetails.splice(originalIndex, 1);
+    }
+
+    // Re-sequence serial numbers
+    const resequencedDetails = updatedDetails.map((detail, index) => ({
+      ...detail,
+      serialNo: index + 1,
+    }));
+
+    onGrnDetailsChange(resequencedDetails);
+    setDeleteConfirmation({ open: false, index: null });
+    showAlert("Success", "Product removed successfully.", "success");
+  };
+
+  const handleCellValueChange = useCallback(
+    (id: string | number, field: keyof GRNDetailDto, value: any) => {
+      const updatedDetails = [...grnDetails];
+      const index = updatedDetails.findIndex((item) => (item.grnDetID || `temp-${grnDetails.indexOf(item)}`) === id);
+
+      if (index === -1) return;
+
+      const currentRow = updatedDetails[index];
+      (currentRow as any)[field] = value;
+
+      // Recalculate based on field changes
+      const recvdPack = currentRow.recvdPack || 0;
+      const unitsPerPack = currentRow.pUnitsPerPack || 1;
+      const unitPrice = currentRow.unitPrice || 0;
+      const discPercentage = currentRow.discPercentage || 0;
+
+      // Calculate received quantity
+      if (field === "recvdPack" || field === "pUnitsPerPack") {
+        currentRow.recvdQty = parseFloat((recvdPack * unitsPerPack).toFixed(2));
+        currentRow._recievedQty = currentRow.recvdQty;
+        currentRow.acceptQty = currentRow.recvdQty;
       }
-      if (newRow.unitPrice !== oldRow.unitPrice) {
-        updatedDetail.packPrice = (newRow.unitPrice || 0) * (updatedDetail.pUnitsPerPack || 1);
+
+      // Calculate pricing
+      const baseAmount = unitPrice * recvdPack;
+      const discountAmount = parseFloat(((baseAmount * discPercentage) / 100).toFixed(2));
+      const taxableAmount = baseAmount - discountAmount;
+
+      // Calculate GST amounts
+      const cgstAmount = parseFloat(((taxableAmount * (currentRow.cgstPerValue || 0)) / 100).toFixed(2));
+      const sgstAmount = parseFloat(((taxableAmount * (currentRow.sgstPerValue || 0)) / 100).toFixed(2));
+      const totalTaxAmount = cgstAmount + sgstAmount;
+
+      // Update calculated fields
+      currentRow.discAmt = discountAmount;
+      currentRow.taxableAmt = taxableAmount;
+      currentRow.cgstTaxAmt = cgstAmount;
+      currentRow.sgstTaxAmt = sgstAmount;
+      currentRow.totalTaxAmt = totalTaxAmount;
+      currentRow.productValue = taxableAmount + totalTaxAmount;
+      currentRow._calculatedValue = currentRow.productValue;
+      currentRow._totalWithTax = currentRow.productValue;
+
+      // Handle GST percentage split
+      if (field === "gstPercentage") {
+        currentRow.cgstPerValue = parseFloat((value / 2).toFixed(2));
+        currentRow.sgstPerValue = parseFloat((value / 2).toFixed(2));
       }
-      const calculatedTax = GRNHelpers.calculateTaxAmounts(updatedDetail);
-      const calculatedValue = GRNHelpers.calculateProductValue(updatedDetail);
-      const finalUpdatedDetail: GRNDetailDto = {
-        ...updatedDetail,
-        taxableAmt: calculatedTax.taxableAmount,
-        discAmt: calculatedTax.cgstAmount,
-        cgstTaxAmt: calculatedTax.cgstAmount,
-        sgstTaxAmt: calculatedTax.sgstAmount,
-        totalTaxAmt: calculatedTax.totalTax,
-        productValue: calculatedValue,
-      };
-      const updatedDetails = grnDetails.map((row) => (row.serialNo === newRow.serialNo ? finalUpdatedDetail : row));
+
+      // Update pack price when unit price changes
+      if (field === "unitPrice") {
+        currentRow.packPrice = parseFloat((unitPrice * unitsPerPack).toFixed(2));
+      }
+
       onGrnDetailsChange(updatedDetails);
-      return finalUpdatedDetail;
     },
     [grnDetails, onGrnDetailsChange]
   );
 
-  const removeProducts = useCallback(
-    (serialsToRemove: readonly (string | number)[]) => {
-      if (serialsToRemove.length === 0) return;
-      const updatedDetails = grnDetails.filter((detail) => !serialsToRemove.includes(detail.serialNo)).map((detail, index) => ({ ...detail, serialNo: index + 1 }));
-      onGrnDetailsChange(updatedDetails);
-      // setSelectedRowIds();
-      showAlert("Success", `${serialsToRemove.length} product(s) removed.`, "success");
+  const handleDropdownChange = useCallback(
+    (value: number, id: string | number) => {
+      const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(value));
+      const selectedRate = Number(selectedTax?.label || 0);
+      handleCellValueChange(id, "gstPercentage", selectedRate);
     },
-    [grnDetails, onGrnDetailsChange, showAlert]
+    [dropdownValues.taxType, handleCellValueChange]
   );
 
-  const removeSelectedProducts = useCallback(() => {
-    removeProducts(selectedRowIds as unknown as readonly (string | number)[]);
-  }, [selectedRowIds, removeProducts]);
-  const removeAllProducts = useCallback(() => removeProducts(grnDetails.map((d) => d.serialNo)), [grnDetails, removeProducts]);
+  // Render functions for different cell types
+  const renderNumberField = useCallback(
+    (params: GridRenderCellParams, field: keyof GRNDetailDto, precision: number = 2) => (
+      <TextField
+        size="small"
+        type="number"
+        value={params.row[field] || ""}
+        onChange={(e) => {
+          const value = parseFloat(e.target.value) || 0;
+          handleCellValueChange(params.id, field, precision > 0 ? parseFloat(value.toFixed(precision)) : value);
+        }}
+        sx={{ width: "100%" }}
+        inputProps={{
+          step: precision > 0 ? 0.01 : 1,
+          style: { textAlign: "right" },
+        }}
+        fullWidth
+        disabled={disabled || grnApproved}
+      />
+    ),
+    [handleCellValueChange, disabled, grnApproved]
+  );
 
-  const columns = useMemo((): GridColDef<GRNDetailDto>[] => {
-    const isEditable = !disabled && !grnApproved;
-    const currencyFormatter = (value: number) => (value ? formatCurrency(value) : "₹0.00");
-    const commonNumberProps: Partial<GridColDef<GRNDetailDto>> = {
-      align: "right",
-      headerAlign: "right",
-      editable: isEditable,
-      type: "number",
-      cellClassName: "font-mono",
-    };
+  const renderTextField = useCallback(
+    (params: GridRenderCellParams, field: keyof GRNDetailDto) => (
+      <TextField
+        size="small"
+        type="text"
+        value={params.row[field] || ""}
+        onChange={(e) => {
+          handleCellValueChange(params.id, field, e.target.value);
+        }}
+        sx={{ width: "100%" }}
+        fullWidth
+        disabled={disabled || grnApproved}
+      />
+    ),
+    [handleCellValueChange, disabled, grnApproved]
+  );
 
-    return [
-      { field: "serialNo", headerName: "Sl.", width: 60, editable: false },
+  const renderDateField = useCallback(
+    (params: GridRenderCellParams, field: keyof GRNDetailDto) => (
+      <TextField
+        size="small"
+        type="date"
+        value={params.row[field] ? dayjs(params.row[field]).format("YYYY-MM-DD") : ""}
+        onChange={(e) => {
+          handleCellValueChange(params.id, field, e.target.value);
+        }}
+        sx={{ width: "100%" }}
+        fullWidth
+        disabled={disabled || grnApproved}
+        InputLabelProps={{
+          shrink: true,
+        }}
+      />
+    ),
+    [handleCellValueChange, disabled, grnApproved]
+  );
+
+  const renderCheckbox = useCallback(
+    (params: GridRenderCellParams, field: keyof GRNDetailDto) => (
+      <Checkbox
+        checked={params.row[field] === "Y"}
+        onChange={(e) => {
+          handleCellValueChange(params.id, field, e.target.checked ? "Y" : "N");
+        }}
+        disabled={disabled || grnApproved}
+        size="small"
+      />
+    ),
+    [handleCellValueChange, disabled, grnApproved]
+  );
+
+  const renderGSTSelect = useCallback(
+    (params: GridRenderCellParams) => (
+      <Select
+        size="small"
+        value={params.row.gstPercentage || ""}
+        onChange={(e) => {
+          const value = Number(e.target.value);
+          handleDropdownChange(value, params.id);
+        }}
+        sx={{ width: "100%" }}
+        displayEmpty
+        disabled={disabled || grnApproved}
+        renderValue={(selected) => {
+          if (!selected) return "Select GST";
+          return `${selected}%`;
+        }}
+      >
+        {(dropdownValues.taxType || []).map((option) => (
+          <MenuItem key={option.value} value={Number(option.label)}>
+            {option.label}%
+          </MenuItem>
+        ))}
+      </Select>
+    ),
+    [dropdownValues.taxType, handleDropdownChange, disabled, grnApproved]
+  );
+
+  const handleRemoveAll = useCallback(() => {
+    onGrnDetailsChange([]);
+    showAlert("Success", "All products removed successfully.", "success");
+  }, [onGrnDetailsChange, showAlert]);
+
+  // Define columns for DataGrid - Same as PurchaseOrderSection
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: "_serialNo",
+        headerName: "Sl. No",
+        width: 80,
+        sortable: false,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => params.row._serialNo,
+      },
       {
         field: "productName",
-        minWidth: 320,
-        flex: 2,
-        editable: false,
-        renderHeader: () => <StyledHeader icon={<CategoryIcon fontSize="small" />} text="Product Name" />,
-        renderCell: (params: GridRenderCellParams) => (
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: "100%" }}>
-            <Inventory2Icon color="action" />
-            <Tooltip title={`${params.row.productName} (Code: ${params.row.productCode})`} placement="bottom-start">
-              <Box>
-                <Typography variant="body2" fontWeight={500}>
-                  {params.value}
-                </Typography>
-              </Box>
-            </Tooltip>
-          </Stack>
-        ),
+        headerName: "Product Name",
+        width: 200,
+        sortable: false,
       },
-      { field: "recvdPack", headerName: "Rcvd. Pack", minWidth: 120, ...commonNumberProps },
-      { field: "recvdQty", headerName: "Rcvd. Qty", minWidth: 120, ...commonNumberProps, editable: false },
-      { field: "freeItems", headerName: "Free", minWidth: 90, ...commonNumberProps },
+      {
+        field: "requiredPack",
+        headerName: "Required Pack",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "requiredPack", 0),
+      },
+      {
+        field: "recvdPack",
+        headerName: "Received Pack",
+        width: 130,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "recvdPack", 0),
+      },
+      {
+        field: "recvdQty",
+        headerName: "Received Qty",
+        width: 120,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => params.row.recvdQty || 0,
+      },
+      {
+        field: "freeItems",
+        headerName: "Free Items",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "freeItems", 0),
+      },
+      {
+        field: "pUnitName",
+        headerName: "UOM",
+        width: 80,
+        sortable: false,
+      },
+      {
+        field: "pUnitsPerPack",
+        headerName: "Units/Pack",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "pUnitsPerPack", 0),
+      },
+      {
+        field: "serialNo",
+        headerName: "Serial No.",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => renderTextField(params, "serialNo"),
+      },
       {
         field: "batchNo",
-        minWidth: 150,
-        editable: isEditable,
-        renderHeader: () => <StyledHeader icon={<ConfirmationNumberIcon fontSize="small" />} text="Batch No" />,
+        headerName: "Batch No",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => renderTextField(params, "batchNo"),
+      },
+      {
+        field: "referenceNo",
+        headerName: "Reference No",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => renderTextField(params, "referenceNo"),
       },
       {
         field: "expiryDate",
-        minWidth: 160,
-        type: "date",
-        editable: isEditable,
-        renderHeader: () => <StyledHeader icon={<CalendarTodayIcon fontSize="small" />} text="Expiry Date" />,
-        valueGetter: (value) => (value ? dayjs(value).toDate() : null),
-        renderCell: (params) => (params.value ? dayjs(params.value).format("MMM YYYY") : "N/A"),
-        renderEditCell: (params) => (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              {...params}
-              value={params.value ? dayjs(params.value) : null}
-              onChange={(newValue) => params.api.setEditCellValue({ id: params.id, field: params.field, value: newValue?.toDate() })}
-              format="DD/MM/YYYY"
-              slotProps={{ textField: { size: "small", fullWidth: true, autoFocus: true } }}
-            />
-          </LocalizationProvider>
-        ),
+        headerName: "Expiry Date",
+        width: 130,
+        sortable: false,
+        renderCell: (params) => renderDateField(params, "expiryDate"),
       },
-
       {
-        field: "unitPrice",
-        minWidth: 140,
-        ...commonNumberProps,
-        renderHeader: () => <StyledHeader icon={<AttachMoneyIcon fontSize="small" />} text="Unit Price" />,
-        valueFormatter: currencyFormatter,
+        field: "sellingPrice",
+        headerName: "Selling Price",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "sellingPrice"),
+      },
+      {
+        field: "packPrice",
+        headerName: "Pack Price",
+        width: 120,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (params.row.packPrice || 0).toFixed(2),
+      },
+      {
+        field: "gstPercentage",
+        headerName: "GST[%]",
+        width: 100,
+        sortable: false,
+        renderCell: renderGSTSelect,
       },
       {
         field: "discPercentage",
-        minWidth: 120,
-        ...commonNumberProps,
-        renderHeader: () => <StyledHeader icon={<PercentIcon fontSize="small" />} text="Disc %" />,
+        headerName: "Disc[%]",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "discPercentage"),
+      },
+      {
+        field: "taxAfterDiscYN",
+        headerName: "Tax after Disc[%]",
+        width: 130,
+        sortable: false,
+        renderCell: (params) => renderCheckbox(params, "taxAfterDiscYN"),
+      },
+      {
+        field: "includeTaxYN",
+        headerName: "Inc.Tax",
+        width: 80,
+        sortable: false,
+        renderCell: (params) => renderCheckbox(params, "includeTaxYN"),
+      },
+      {
+        field: "totalTaxAmt",
+        headerName: "GST Amt",
+        width: 100,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (params.row.totalTaxAmt || 0).toFixed(2),
+      },
+      {
+        field: "cgstPerValue",
+        headerName: "CGST%",
+        width: 80,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => `${params.row.cgstPerValue || 0}%`,
+      },
+      {
+        field: "cgstTaxAmt",
+        headerName: "CGST Tax Amt",
+        width: 120,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (params.row.cgstTaxAmt || 0).toFixed(2),
+      },
+      {
+        field: "sgstPerValue",
+        headerName: "SGST%",
+        width: 80,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => `${params.row.sgstPerValue || 0}%`,
+      },
+      {
+        field: "sgstTaxAmt",
+        headerName: "SGST Tax Amt",
+        width: 120,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (params.row.sgstTaxAmt || 0).toFixed(2),
       },
       {
         field: "productValue",
-        minWidth: 150,
-        ...commonNumberProps,
-        editable: false,
-        renderHeader: () => <StyledHeader icon={<AttachMoneyIcon fontSize="small" />} text="Total Value" />,
-        valueFormatter: currencyFormatter,
+        headerName: "Value",
+        width: 100,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (params.row.productValue || 0).toFixed(2),
       },
-      { field: "pUnitName", renderHeader: () => <StyledHeader icon={<StraightenIcon fontSize="small" />} text="UOM" />, minWidth: 90, editable: false },
-      { field: "pUnitsPerPack", headerName: "Units/Pack", minWidth: 110, ...commonNumberProps },
-      { field: "packPrice", headerName: "Pack Price", minWidth: 130, ...commonNumberProps, valueFormatter: currencyFormatter, editable: false },
-      { field: "sellingPrice", headerName: "Selling Price", minWidth: 130, ...commonNumberProps, valueFormatter: currencyFormatter },
       {
         field: "manufacturerName",
-        renderHeader: () => <StyledHeader icon={<FactoryIcon fontSize="small" />} text="Manufacturer" />,
-        minWidth: 200,
-        flex: 1,
-        editable: false,
-      },
-      { field: "pGrpName", headerName: "Product Group", minWidth: 150, editable: false },
-      { field: "psGrpName", headerName: "Sub Group", minWidth: 150, editable: false },
-      { field: "hsnCode", headerName: "HSN Code", minWidth: 120, editable: false },
-      { field: "gstPercentage", headerName: "GST [%]", width: 90, ...commonNumberProps, editable: false },
-      { field: "taxName", headerName: "Tax Profile", minWidth: 150, editable: false },
-      { field: "taxableAmt", headerName: "Taxable Amt", minWidth: 130, ...commonNumberProps, valueFormatter: currencyFormatter, editable: false },
-      { field: "totalTaxAmt", headerName: "Total Tax", minWidth: 130, ...commonNumberProps, valueFormatter: currencyFormatter, editable: false },
-      { field: "vedCode", renderHeader: () => <StyledHeader icon={<PinIcon fontSize="small" />} text="VED Code" />, minWidth: 100, editable: false },
-      { field: "abcCode", renderHeader: () => <StyledHeader icon={<AbcIcon fontSize="small" />} text="ABC Code" />, minWidth: 100, editable: false },
-      {
-        field: "rOL",
-        renderHeader: () => <StyledHeader icon={<WarehouseIcon fontSize="small" />} text="Re-Order Lvl" />,
-        minWidth: 120,
-        type: "number",
-        editable: false,
+        headerName: "Manufacturer",
+        width: 150,
+        sortable: false,
       },
       {
-        field: "leadTime",
-        renderHeader: () => <StyledHeader icon={<HourglassTopIcon fontSize="small" />} text="Lead Time (d)" />,
-        minWidth: 120,
-        type: "number",
-        editable: false,
+        field: "_pastReceivedPack",
+        headerName: "Past Received Pack",
+        width: 150,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => params.row._pastReceivedPack || 0,
       },
       {
-        field: "prescription",
-        renderHeader: () => <StyledHeader icon={<MedicationIcon fontSize="small" />} text="Prescription" />,
-        minWidth: 120,
-        renderCell: (params) => <Chip label={params.value === "Y" ? "Required" : "Not Required"} color={params.value === "Y" ? "warning" : "default"} size="small" />,
+        field: "discAmt",
+        headerName: "Disc",
+        width: 100,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (params.row.discAmt || 0).toFixed(2),
+      },
+      {
+        field: "unitPrice",
+        headerName: "Unit Price",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "unitPrice"),
+      },
+      {
+        field: "sellUnitPrice",
+        headerName: "Selling Unit Price",
+        width: 150,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "sellUnitPrice"),
       },
       {
         field: "actions",
         type: "actions",
-        headerName: "Action",
+        headerName: "Delete",
         width: 80,
         getActions: (params) => [
-          <Tooltip title="Delete this item">
-            <span>
-              <GridActionsCellItem icon={<DeleteIcon color="error" />} label="Delete" onClick={() => removeProducts([params.id])} disabled={!isEditable} />
-            </span>
-          </Tooltip>,
+          <GridActionsCellItem
+            key="delete"
+            icon={
+              <Tooltip title="Remove Product">
+                <DeleteIcon color="error" />
+              </Tooltip>
+            }
+            label="Remove"
+            onClick={() => handleDeleteClick(params.id)}
+            disabled={disabled || grnApproved}
+            showInMenu={false}
+          />,
         ],
       },
-    ];
-  }, [disabled, grnApproved, removeProducts]);
+    ],
+    [renderNumberField, renderTextField, renderDateField, renderCheckbox, renderGSTSelect, handleDeleteClick, disabled, grnApproved]
+  );
 
-  const statistics = useMemo(() => GRNHelpers.calculateGRNTotals(grnDetails), [grnDetails]);
   const isComponentDisabled = disabled || grnApproved;
 
   return (
-    <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)} sx={{ mt: 2, boxShadow: 3, "&.Mui-expanded": { mt: 2 } }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Box display="flex" alignItems="center" gap={1.5} width="100%" flexWrap="wrap">
-          <ProductIcon color="primary" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Product Details
-          </Typography>
-          <Chip label={`${statistics.totalItems} items`} size="small" color="primary" variant="outlined" />
-          <Chip label={`Grand Total: ${formatCurrency(statistics.grandTotal)}`} size="small" color="success" variant="outlined" />
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails sx={{ p: { xs: 1, md: 2 } }}>
-        <Stack spacing={2}>
-          <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <ProductSearch
-                    ref={productSearchRef}
-                    onProductSelect={handleProductSelect as any}
-                    label="Product Search"
-                    placeholder="Scan or type to add products..."
-                    disabled={isComponentDisabled || isAddingProduct}
-                    className="product-search-field"
-                  />
-                  {isAddingProduct && <CircularProgress size={24} />}
-                </Stack>
-              </Grid>
-              <Grid size={{ xs: 12, md: 5 }}>
-                <Stack direction="row" spacing={1} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    startIcon={<DeleteIcon />}
-                    onClick={removeSelectedProducts}
-                    disabled={isComponentDisabled || (Array.isArray(selectedRowIds) ? selectedRowIds.length === 0 : true)}
-                  >
-                    Remove Selected
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    startIcon={<DeleteSweepIcon />}
-                    onClick={removeAllProducts}
-                    disabled={isComponentDisabled || grnDetails.length === 0}
-                  >
-                    Remove All
-                  </Button>
-                </Stack>
-              </Grid>
-            </Grid>
-          </Paper>
-
-          <Box sx={{ height: 700, width: "100%" }}>
-            <DataGrid
-              rows={grnDetails}
-              columns={columns}
-              getRowId={(row) => row.serialNo}
-              processRowUpdate={processRowUpdate}
-              onProcessRowUpdateError={(error) => showAlert("Error", `Update failed: ${error.message}`, "error")}
-              editMode="row"
-              checkboxSelection
-              disableRowSelectionOnClick
-              onRowSelectionModelChange={setSelectedRowIds}
-              rowSelectionModel={selectedRowIds}
-              getRowHeight={() => "auto"}
-              getEstimatedRowHeight={() => 64}
-              slots={{
-                toolbar: GridToolbar,
-                noRowsOverlay: () => (
-                  <Stack height="100%" alignItems="center" justifyContent="center">
-                    <InfoIcon color="primary" sx={{ fontSize: 48, mb: 1 }} />
-                    <Typography variant="h6">The GRN is empty.</Typography>
-                    <Typography variant="body2">Use the search bar above to add products.</Typography>
-                  </Stack>
-                ),
-              }}
-              slotProps={{ toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 500 } } }}
-              sx={{
-                boxShadow: 2,
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: "8px",
-                [`& .${gridClasses.cell}`]: { py: 1.5 },
-                [`& .${gridClasses.row}`]: {
-                  "&.Mui-selected": {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.15),
-                    "&:hover": {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.25),
-                    },
-                  },
-                },
-                [`& .${gridClasses.columnHeaders}`]: {
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: theme.palette.primary.dark,
-                  borderBottom: `2px solid ${theme.palette.primary.main}`,
-                },
-                [`& .${gridClasses.cell}--editable`]: {
-                  bgcolor: alpha(theme.palette.info.light, 0.15),
-                  "&:focus-within": {
-                    bgcolor: alpha(theme.palette.info.light, 0.25),
-                  },
-                },
-                "& .font-mono": {
-                  fontFamily: "monospace",
-                  fontSize: "0.9rem",
-                },
-                [`& .${gridClasses.footerContainer}`]: {
-                  borderTop: `1px solid ${theme.palette.divider}`,
-                },
-              }}
-            />
+    <>
+      <Accordion expanded={expanded} onChange={onToggle} sx={{ mt: 2, boxShadow: 3, "&.Mui-expanded": { mt: 2 } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <PurchaseIcon color="primary" />
+            <Typography variant="h6" color="primary">
+              Manual Product Addition
+            </Typography>
+            <Chip label={`${gridRows.length} ${gridRows.length === 1 ? "Product" : "Products"}`} size="small" color="primary" variant="outlined" />
+            <Chip label="Independent from PO" size="small" color="info" variant="outlined" />
           </Box>
-        </Stack>
-      </AccordionDetails>
-    </Accordion>
+        </AccordionSummary>
+        <AccordionDetails sx={{ p: { xs: 1, md: 2 } }}>
+          <Stack spacing={2}>
+            {/* Product Search Section */}
+            <Paper variant="outlined" sx={{ p: 2, mb: 1 }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid size={{ xs: 12, md: 8 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <ProductSearch
+                      ref={productSearchRef}
+                      onProductSelect={handleProductSelect as any}
+                      label="Product Search"
+                      placeholder="Scan or type to add products manually..."
+                      disabled={isComponentDisabled || isAddingProduct}
+                      className="product-search-field"
+                    />
+                    {isAddingProduct && <CircularProgress size={24} />}
+                  </Stack>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Stack direction="row" spacing={1} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="small"
+                      startIcon={<DeleteIcon />}
+                      onClick={handleRemoveAll}
+                      disabled={isComponentDisabled || gridRows.length === 0}
+                    >
+                      Remove All
+                    </Button>
+                  </Stack>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            {/* DataGrid Section */}
+            <Card
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                overflow: "hidden",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                transition: "box-shadow 0.3s ease",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                },
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1.5}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 32,
+                      height: 32,
+                      borderRadius: "8px",
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    }}
+                  >
+                    <PurchaseIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+                  </Box>
+                  <Typography variant="h6" fontWeight="600" color="primary.main">
+                    Manual GRN Product Details
+                  </Typography>
+                  <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: alpha(theme.palette.primary.main, 0.2) }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Manually added products for GRN
+                  </Typography>
+                </Box>
+                {gridRows.length > 0 && (
+                  <Chip
+                    label={`${gridRows.length} ${gridRows.length === 1 ? "Product" : "Products"}`}
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    sx={{
+                      fontWeight: "600",
+                      borderWidth: 2,
+                    }}
+                  />
+                )}
+              </Box>
+
+              <CardContent sx={{ pt: 3 }}>
+                {isAddingProduct ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: 200,
+                    }}
+                  >
+                    <LocalFireDepartment sx={{ fontSize: 40, color: theme.palette.primary.main }} />
+                    <Typography variant="body1" sx={{ ml: 2 }} color="primary">
+                      Adding product...
+                    </Typography>
+                  </Box>
+                ) : gridRows.length > 0 ? (
+                  <Box sx={{ height: 600, width: "100%" }}>
+                    <DataGrid
+                      rows={gridRows}
+                      columns={columns}
+                      density="compact"
+                      disableRowSelectionOnClick
+                      hideFooterSelectedRowCount
+                      pageSizeOptions={[5, 10, 25, 50]}
+                      initialState={{
+                        pagination: {
+                          paginationModel: { pageSize: 10 },
+                        },
+                      }}
+                      onProcessRowUpdateError={(error) => {
+                        console.error("Row update error:", error);
+                        showAlert("Error", "Failed to update field", "error");
+                      }}
+                      sx={{
+                        "& .MuiDataGrid-cell:focus": {
+                          outline: "none",
+                        },
+                        "& .MuiDataGrid-row:hover": {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                        },
+                        "& .MuiDataGrid-columnHeaders": {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+                          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                          fontWeight: "600",
+                        },
+                        "& .MuiDataGrid-cell": {
+                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                        },
+                        "& .MuiDataGrid-columnHeader:focus": {
+                          outline: "none",
+                        },
+                        "& .MuiDataGrid-columnHeader:focus-within": {
+                          outline: "none",
+                        },
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  <Paper
+                    sx={{
+                      p: 4,
+                      textAlign: "center",
+                      bgcolor: alpha(theme.palette.grey[50], 0.8),
+                      borderRadius: 2,
+                      border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 64,
+                        height: 64,
+                        borderRadius: "50%",
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        mx: "auto",
+                        mb: 2,
+                      }}
+                    >
+                      <InventoryIcon sx={{ fontSize: 32, color: alpha(theme.palette.primary.main, 0.7) }} />
+                    </Box>
+                    <Typography variant="h6" fontWeight="600" color="text.primary" gutterBottom>
+                      No Manual Products Added
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: "auto" }}>
+                      Use the product search above to manually add products to this GRN
+                    </Typography>
+                  </Paper>
+                )}
+              </CardContent>
+            </Card>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+
+      <ConfirmationDialog
+        open={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, index: null })}
+        onConfirm={handleDeleteRow}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this item?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="warning"
+      />
+    </>
   );
 };
 
