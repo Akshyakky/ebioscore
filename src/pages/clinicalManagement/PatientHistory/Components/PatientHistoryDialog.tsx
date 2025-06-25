@@ -13,10 +13,12 @@ import {
 } from "@mui/icons-material";
 import { Avatar, Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
+import { ReviewOfSystemForm } from "../Forms/ReviewOfSystemForm";
 import { SocialHistoryForm } from "../Forms/SocialHistoryForm";
-import { useFamilyHistory, useSocialHistory } from "../hook/usePatientHistory";
+import { useFamilyHistory, useROSHistory, useSocialHistory } from "../hook/usePatientHistory";
 import { FamilyHistoryForm } from "./../Forms/FamilyHistoryForm";
 import { FamilyHistory } from "./FamilyHistory";
+import ReviewOfSystem from "./ReviewOfSystem";
 import { SocialHistory } from "./SocialHistory";
 interface PatientHistoryDialogProps {
   open: boolean;
@@ -42,13 +44,14 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   const { familyHistoryList, fetchFamilyHistoryList, saveFamilyHistory, deleteFamilyHistory } = useFamilyHistory();
 
   const { socialHistoryList, fetchSocialHistoryList, saveSocialHistory, deleteSocialHistory } = useSocialHistory();
+  const { rosHistoryList, fetchRosHistoryList, saveRosHistory, deleteRosHistory } = useROSHistory();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<any>(null);
   const [isViewMode, setIsViewMode] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [historyToDelete, setHistoryToDelete] = useState<any>(null);
-  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social">("family");
+  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social" | "ros">("family");
   const { setLoading } = useLoading();
   const [tabValue, setTabValue] = useState(0);
 
@@ -61,6 +64,8 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       fetchFamilyHistoryList();
     } else if (tabValue === 1) {
       fetchSocialHistoryList();
+    } else if (tabValue === 2) {
+      fetchRosHistoryList();
     }
   }, [open, admission, tabValue]);
 
@@ -74,6 +79,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       case 1:
         setCurrentHistoryType("social");
         break;
+      case 4:
+        setCurrentHistoryType("ros");
+        break;
       default:
         setCurrentHistoryType("family");
     }
@@ -83,10 +91,22 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     if (!historyToDelete) return;
 
     try {
-      const result: any = currentHistoryType === "family" ? await deleteFamilyHistory(historyToDelete) : await deleteSocialHistory(historyToDelete);
+      let result: any = null;
+
+      switch (currentHistoryType) {
+        case "family":
+          result = await deleteFamilyHistory(historyToDelete);
+          break;
+        case "social":
+          result = await deleteSocialHistory(historyToDelete);
+          break;
+        case "ros":
+          result = await deleteRosHistory(historyToDelete);
+          break;
+      }
 
       if (result.success) {
-        showAlert("Success", `${currentHistoryType === "family" ? "Family" : "Social"} history deleted successfully`, "success");
+        showAlert("Success", `${currentHistoryType} history deleted successfully`, "success");
       } else {
         throw new Error(result.errorMessage || `Failed to delete ${currentHistoryType} history`);
       }
@@ -102,8 +122,19 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     async (data: any) => {
       try {
         setLoading(true);
-        const result = currentHistoryType === "family" ? await saveFamilyHistory(data) : await saveSocialHistory(data);
+        let result: any = null;
 
+        switch (currentHistoryType) {
+          case "family":
+            result = await saveFamilyHistory(data);
+            break;
+          case "social":
+            result = await saveSocialHistory(data);
+            break;
+          case "ros":
+            result = await saveRosHistory(data);
+            break;
+        }
         if (result.success) {
           showAlert(
             "Success",
@@ -270,6 +301,17 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
                 onDelete={handleDeleteClick}
               />
             </TabPanel>
+            <TabPanel value={tabValue} index={4}>
+              <ReviewOfSystem
+                admission={admission}
+                historyList={rosHistoryList}
+                fetchHistoryList={fetchRosHistoryList}
+                onAddNew={handleAddNew}
+                onEdit={handleEdit}
+                onView={handleView}
+                onDelete={handleDeleteClick}
+              />
+            </TabPanel>
           </Box>
         </Box>
       </GenericDialog>
@@ -283,12 +325,16 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       {isFormOpen && currentHistoryType === "social" && (
         <SocialHistoryForm open={isFormOpen} onClose={handleFormClose} onSubmit={handleFormSubmit} admission={admission} existingHistory={selectedHistory} viewOnly={isViewMode} />
       )}
+      {/* Review of system History Form */}
+      {isFormOpen && currentHistoryType === "ros" && (
+        <ReviewOfSystemForm open={isFormOpen} onClose={handleFormClose} onSubmit={handleFormSubmit} admission={admission} existingHistory={selectedHistory} viewOnly={isViewMode} />
+      )}
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
-        title={`Delete ${currentHistoryType === "family" ? "Family" : "Social"} History`}
+        title={`Delete ${currentHistoryType} History`}
         message={`Are you sure you want to delete this ${currentHistoryType} history record? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"

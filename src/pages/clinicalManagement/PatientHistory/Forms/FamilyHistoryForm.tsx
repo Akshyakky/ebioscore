@@ -25,7 +25,7 @@ export const FamilyHistoryForm = (props: any) => (
     {...props}
     title="Family History"
     icon={<FamilyIcon color="primary" />}
-    templateType="FAMILY_HISTORY"
+    templateType="OPIPHISTFH"
     formSchema={familyHistorySchema}
     fields={{
       dateField: "opipFHDate",

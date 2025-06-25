@@ -25,7 +25,7 @@ export const SocialHistoryForm = (props: any) => (
     {...props}
     title="Social History"
     icon={<SocialIcon color="primary" />}
-    templateType="SOCIAL_HISTORY"
+    templateType="OPIPHISTSH"
     formSchema={socialHistorySchema}
     fields={{
       dateField: "opipSHDate",

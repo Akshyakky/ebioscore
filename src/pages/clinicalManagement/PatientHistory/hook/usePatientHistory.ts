@@ -1,7 +1,8 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
-import { fhService, shService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+import { fhService, rosService, shService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 const useGenericFamilyHistory = createEntityHook<OPIPHistFHDto>(fhService, "opipFHID");
 
@@ -33,5 +34,21 @@ export const useSocialHistory = () => {
     saveSocialHistory: hook.saveEntity,
     deleteSocialHistory: hook.deleteEntity,
     updateSocialHistoryStatus: hook.updateEntityStatus,
+  };
+};
+
+const useGenericROSHistory = createEntityHook<OPIPHistROSDto>(rosService, "opipRosID");
+export const useROSHistory = () => {
+  const hook = useGenericROSHistory();
+
+  return {
+    rosHistoryList: hook.entityList,
+    isLoading: hook.isLoading,
+    error: hook.error,
+    fetchRosHistoryList: hook.fetchEntityList,
+    getRosHistoryById: hook.getEntityById,
+    saveRosHistory: hook.saveEntity,
+    deleteRosHistory: hook.deleteEntity,
+    updateRosHistoryStatus: hook.updateEntityStatus,
   };
 };
