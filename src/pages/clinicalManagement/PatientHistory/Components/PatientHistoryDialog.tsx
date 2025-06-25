@@ -165,6 +165,24 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         if (result.success) {
           showAlert("Success", `History saved successfully`, "success");
           setIsFormOpen(false);
+
+          switch (currentHistoryType) {
+            case "family":
+              await fetchFamilyHistoryList();
+              break;
+            case "social":
+              await fetchSocialHistoryList();
+              break;
+            case "pmh":
+              await fetchPMHHistoryList();
+              break;
+            case "psh":
+              await fetchPSHHistoryList();
+              break;
+            case "ros":
+              await fetchRosHistoryList();
+              break;
+          }
         } else {
           throw new Error(`Failed to save ${currentHistoryType} history`);
         }

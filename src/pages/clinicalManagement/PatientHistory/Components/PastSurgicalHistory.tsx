@@ -2,6 +2,7 @@ import { Column } from "@/components/CustomGrid/CustomGrid";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
 import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { formatDt } from "@/utils/Common/dateUtils";
+import { stripHtml } from "@/utils/Common/formatText";
 import { Delete as DeleteIcon, Edit as EditIcon, Psychology as ReviewIcon, Visibility as ViewIcon } from "@mui/icons-material";
 import { Chip, IconButton, Stack, Typography } from "@mui/material";
 import { GenericHistoryList } from "./GenericHistoryList";
@@ -33,7 +34,7 @@ const PastSurgicalHistory = (props: any) => {
             textOverflow: "ellipsis",
           }}
         >
-          {history.opipPshDesc}
+          {stripHtml(history.opipPshDesc)}
         </Typography>
       ),
     },

@@ -1,6 +1,7 @@
 import { Column } from "@/components/CustomGrid/CustomGrid";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 import { formatDt } from "@/utils/Common/dateUtils";
+import { stripHtml } from "@/utils/Common/formatText";
 import { Delete as DeleteIcon, Edit as EditIcon, Psychology as ReviewIcon, Visibility as ViewIcon } from "@mui/icons-material";
 import { Chip, IconButton, Stack, Typography } from "@mui/material";
 import { GenericHistoryList } from "./GenericHistoryList";
@@ -32,7 +33,7 @@ const ReviewOfSystem = (props: any) => {
             textOverflow: "ellipsis",
           }}
         >
-          {history.opipRosDesc}
+          {stripHtml(history.opipRosDesc)}
         </Typography>
       ),
     },

@@ -1,9 +1,11 @@
 import { Column } from "@/components/CustomGrid/CustomGrid";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { formatDt } from "@/utils/Common/dateUtils";
+import { stripHtml } from "@/utils/Common/formatText";
 import { Delete as DeleteIcon, Edit as EditIcon, FamilyRestroom as FamilyIcon, Visibility as ViewIcon } from "@mui/icons-material";
 import { Chip, IconButton, Stack, Typography } from "@mui/material";
 import { GenericHistoryList } from "./GenericHistoryList";
+
 export const FamilyHistory = (props: any) => {
   const columns: Column<OPIPHistFHDto>[] = [
     {
@@ -31,7 +33,7 @@ export const FamilyHistory = (props: any) => {
             textOverflow: "ellipsis",
           }}
         >
-          {history.opipFHDesc}
+          {stripHtml(history.opipFHDesc)}
         </Typography>
       ),
     },

@@ -1,6 +1,7 @@
 import { Column } from "@/components/CustomGrid/CustomGrid";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
 import { formatDt } from "@/utils/Common/dateUtils";
+import { stripHtml } from "@/utils/Common/formatText";
 import { Delete as DeleteIcon, Edit as EditIcon, Assignment as SocialIcon, Visibility as ViewIcon } from "@mui/icons-material";
 import { Chip, IconButton, Stack, Typography } from "@mui/material";
 import { GenericHistoryList } from "./GenericHistoryList";
@@ -32,7 +33,7 @@ export const SocialHistory = (props: any) => {
             textOverflow: "ellipsis",
           }}
         >
-          {history.opipSHDesc}
+          {stripHtml(history.opipSHDesc)}
         </Typography>
       ),
     },
