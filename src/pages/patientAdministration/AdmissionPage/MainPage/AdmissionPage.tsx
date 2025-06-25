@@ -4,6 +4,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import FamilyHistoryDialog from "@/pages/clinicalManagement/PatientHistory/Components/FamilyHistoryDialog";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { useAlert } from "@/providers/AlertProvider";
@@ -15,6 +16,7 @@ import {
   ExpandLess as CollapseIcon,
   Edit as EditIcon,
   ExpandMore as ExpandIcon,
+  FamilyRestroom as FamilyIcon,
   History as HistoryIcon,
   Person as PatientIcon,
   Refresh as RefreshIcon,
@@ -57,6 +59,12 @@ const AdmissionPage: React.FC = () => {
   const { showAlert } = useAlert();
   const { admissions, loading, currentAdmissionStatus, refreshAdmissions, refreshPatientStatus, admitPatient, checkPatientAdmissionStatus } = useAdmission();
 
+  const [isFamilyHistoryOpen, setIsFamilyHistoryOpen] = useState(false);
+  const [selectedAdmissionForHistory, setSelectedAdmissionForHistory] = useState<EnhancedAdmissionDto | null>(null);
+  const handleFamilyHistory = useCallback((admission: EnhancedAdmissionDto) => {
+    setSelectedAdmissionForHistory(admission);
+    setIsFamilyHistoryOpen(true);
+  }, []);
   // Load data on component mount
   useEffect(() => {
     refreshAdmissions();
@@ -322,7 +330,7 @@ const AdmissionPage: React.FC = () => {
       header: "Actions",
       visible: true,
       sortable: false,
-      width: 120,
+      width: 180, // Increased width to accommodate the new button
       render: (admission) => (
         <Stack direction="row" spacing={0.5}>
           <IconButton
@@ -346,6 +354,17 @@ const AdmissionPage: React.FC = () => {
             title="Edit Admission"
           >
             <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="success"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleFamilyHistory(admission);
+            }}
+            title="Family History"
+          >
+            <FamilyIcon fontSize="small" />
           </IconButton>
         </Stack>
       ),
@@ -487,6 +506,14 @@ const AdmissionPage: React.FC = () => {
       <AdmissionStatusDialog open={isStatusDialogOpen} onClose={() => setIsStatusDialogOpen(false)} patient={selectedPatient} admissionStatus={currentAdmissionStatus} />
 
       <AdmissionHistoryDialog open={isHistoryDialogOpen} onClose={() => setIsHistoryDialogOpen(false)} admission={selectedAdmission} />
+      <FamilyHistoryDialog
+        open={isFamilyHistoryOpen}
+        onClose={() => {
+          setIsFamilyHistoryOpen(false);
+          setSelectedAdmissionForHistory(null);
+        }}
+        admission={selectedAdmissionForHistory}
+      />
     </Box>
   );
 };
