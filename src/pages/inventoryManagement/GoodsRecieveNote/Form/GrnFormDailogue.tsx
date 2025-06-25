@@ -277,12 +277,16 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
 
   const calculateTotals = useCallback(
     (allDetails: GRNDetailDto[]) => {
+      const itemsTotal = allDetails.reduce((sum, detail) => {
+        const receivedPack = detail.recvdPack || 0;
+        const packPrice = detail.packPrice || 0;
+        return sum + receivedPack * packPrice;
+      }, 0);
+      setValue("tot", parseFloat(itemsTotal.toFixed(2)), { shouldDirty: true });
       const discountValue = watchedDiscount || 0;
       const otherCharges = getValues("otherAmt") || 0;
       const coinAdjustment = getValues("coinAdj") || 0;
       const totals = GRNHelpers.calculateGRNTotals(allDetails, discountValue, otherCharges, coinAdjustment);
-
-      setValue("tot", totals.total);
       setValue("netTot", totals.netTotal);
       setValue("totalTaxableAmt", totals.totalTaxable);
       setValue("netCGSTTaxAmt", totals.totalCGST);
@@ -294,7 +298,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     [setValue, trigger, watchedDiscount, getValues]
   );
 
-  // Separate handlers for the two different detail arrays
   const handleManualGrnDetailsChange = useCallback(
     (details: GRNDetailDto[]) => {
       setGrnDetails(details);
@@ -319,8 +322,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         if (!watchedSupplierID && mast.supplierID) {
           handleSupplierChange(mast.supplierID);
         }
-
-        // This will be handled by the PurchaseOrderSection's onGRNDataFetched callback
       } else if (mast) {
         showAlert("Info", `PO ${mast.pOCode} selected, but it has no item details.`, "info");
         setPOGrnDetails([]);
@@ -332,7 +333,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     [showAlert, watchedSupplierID, handleSupplierChange]
   );
 
-  // Totals section handlers
   const handleDeleteAll = useCallback(() => {
     setGrnDetails([]);
     setPOGrnDetails([]);
