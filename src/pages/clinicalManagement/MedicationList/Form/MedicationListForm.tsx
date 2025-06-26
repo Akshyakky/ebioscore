@@ -24,7 +24,7 @@ interface MedicationListFormProps {
 const schema = z.object({
   mlID: z.number(),
   mlCode: z.string().nonempty("Medication code is required"),
-  mGrpID: z.number().min(1, "Medication group is required"),
+  mGrpID: z.number().default(1),
   mfID: z.number().min(1, "Manufacturer is required"),
   mfName: z.string().nonempty("Manufacturer name is required"),
   medText: z.string().nonempty("Medication name is required"),
@@ -33,8 +33,10 @@ const schema = z.object({
   mGenCode: z.string().nonempty("Generic code is required"),
   mGenName: z.string().nonempty("Generic name is required"),
   productID: z.number().nullable().optional(),
-  calcQtyYN: z.string(),
-  rActiveYN: z.string(),
+  calcQtyYN: z.string().default("N"),
+  rActiveYN: z.string().default("Y"),
+  transferYN: z.string().default("N"),
+  rNotes: z.string().default(""),
 });
 
 type MedicationListFormData = z.infer<typeof schema>;
@@ -48,13 +50,8 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-  // const { medicationGroupList, manufacturerList, medicationGeneric } = useDropdownValues(["medicationGroupList", "manufacturerList", "medicationGeneric"]);
-  const dropdownValues = useDropdownValues(["medicationForm", "medicationGeneric"]);
-  const medicationGroupList = [];
-  const manufacturerList = [];
-  const genericMedicationList = [];
   const isAddMode = !initialData;
-
+  const { manufacturer, medicationGeneric } = useDropdownValues(["manufacturer", "medicationGeneric"]);
   const defaultValues: MedicationListFormData = {
     mlID: 0,
     mlCode: "",
@@ -69,6 +66,8 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
     productID: null,
     calcQtyYN: "N",
     rActiveYN: "Y",
+    transferYN: "N",
+    rNotes: "",
   };
 
   const {
@@ -125,7 +124,7 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
       const medicationData: MedicationListDto = {
         mlID: data.mlID,
         mlCode: data.mlCode,
-        mGrpID: data.mGrpID,
+        mGrpID: data.mGrpID || 1,
         mfID: data.mfID,
         mfName: data.mfName,
         medText: data.medText,
@@ -136,6 +135,8 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
         productID: data.productID,
         calcQtyYN: data.calcQtyYN,
         rActiveYN: data.rActiveYN,
+        transferYN: data.transferYN,
+        rNotes: data.rNotes,
       };
 
       const response = await saveMedication(medicationData);
@@ -321,31 +322,17 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
-                        name="mGrpID"
-                        control={control}
-                        label="Medication Group"
-                        type="select"
-                        options={medicationGroupList}
-                        required
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
                         name="mfID"
                         control={control}
                         label="Manufacturer"
                         type="select"
-                        options={manufacturerList}
+                        options={manufacturer}
                         required
                         disabled={viewOnly}
                         size="small"
                         fullWidth
                         onChange={(value) => {
-                          const selectedManufacturer = manufacturerList?.find((manufacturer) => Number(manufacturer.value) === Number(value.value));
+                          const selectedManufacturer = manufacturer?.find((manufacturer) => Number(manufacturer.value) === Number(value.value));
                           if (selectedManufacturer) {
                             setValue("mfName", selectedManufacturer.label);
                           }
@@ -359,16 +346,16 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
                         control={control}
                         label="Generic Medication"
                         type="select"
-                        options={genericMedicationList}
+                        options={medicationGeneric}
                         required
                         disabled={viewOnly}
                         size="small"
                         fullWidth
                         onChange={(value) => {
-                          const selectedGeneric = genericMedicationList?.find((generic) => Number(generic.value) === Number(value.value));
+                          const selectedGeneric = medicationGeneric?.find((generic) => Number(generic.value) === Number(value.value));
                           if (selectedGeneric) {
                             setValue("mGenName", selectedGeneric.label);
-                            setValue("mGenCode", selectedGeneric.code || "");
+                            setValue("mGenCode", selectedGeneric.mGenCode || "");
                           }
                         }}
                       />
