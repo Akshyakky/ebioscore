@@ -241,14 +241,44 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
         throw new Error("Please add at least one medication");
       }
 
-      //   const submissionData: PastMedicationDto = {
-      //     ...data,
-      //     details: medicationDetails,
-      //   };
+      const submissionData: PastMedicationDto = {
+        opipPastMedID: data.opipPastMedID || 0,
+        opipDate: data.opipDate || serverDate,
+        opipNo: data.opipNo || 0,
+        opvID: data.opvID || 0,
+        pChartID: data.pChartID || 0,
+        opipCaseNo: data.opipCaseNo || 0,
+        patOpip: data.patOpip || "I",
+        oldPChartID: data.oldPChartID || 0,
+        rActiveYN: data.rActiveYN || "Y",
+        transferYN: data.transferYN || "N",
+        rNotes: data.rNotes || "",
+        details: medicationDetails.map((detail) => ({
+          opipPastMedDtlID: detail.opipPastMedDtlID || 0,
+          opipPastMedID: data.opipPastMedID || 0,
+          mfID: detail.mfID,
+          mfName: detail.mfName,
+          mlID: detail.mlID,
+          medText: detail.medText,
+          mGenID: detail.mGenID,
+          mGenCode: detail.mGenCode,
+          mGenName: detail.mGenName,
+          mdID: detail.mdID,
+          mdName: detail.mdName,
+          mFrqID: detail.mFrqID,
+          mFrqName: detail.mFrqName,
+          mInsID: detail.mInsID,
+          mInsName: detail.mInsName,
+          fromDate: detail.fromDate,
+          toDate: detail.toDate,
+          rActiveYN: detail.rActiveYN || "Y",
+          transferYN: detail.transferYN || "N",
+          rNotes: detail.rNotes || "",
+        })),
+      };
 
-      //   await onSubmit(submissionData);
+      await onSubmit(submissionData);
 
-      // Reset form after successful submission
       reset();
       setMedicationDetails([]);
       onClose();
@@ -435,12 +465,12 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                       <Grid size={{ xs: 12, md: 3 }}>
                         <Autocomplete
                           options={medicationInstructions}
-                          getOptionLabel={(option) => option.mInsName}
+                          getOptionLabel={(option) => option.minsName}
                           value={selectedInstruction}
                           onChange={(_, newValue) => setSelectedInstruction(newValue)}
                           size="small"
                           renderInput={(params) => <TextField {...params} label="Instruction" />}
-                          isOptionEqualToValue={(option, value) => option.mInsID === value.mInsID}
+                          isOptionEqualToValue={(option, value) => option.minsId === value.minsId}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 3 }}>

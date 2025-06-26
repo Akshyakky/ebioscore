@@ -352,7 +352,7 @@ const MedicationInstructionPage: React.FC = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
         <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-          Generic Medication List
+          Medication Instruction List
         </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
