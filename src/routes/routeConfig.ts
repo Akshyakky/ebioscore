@@ -37,6 +37,7 @@ const WardBedTransferPage = lazy(() => import("@/pages/patientAdministration/War
 const MedicationFormPage = lazy(() => import("@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage"));
 const MedicationFrequencyPage = lazy(() => import("@/pages/clinicalManagement/MedicationFrequency/MainPage/MedicationFrequencyPage"));
 const MedicationDosagePage = lazy(() => import("@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage"));
+const MedicationInstructionPage = lazy(() => import("@/pages/clinicalManagement/MedicationInstruction/MainPage/MedicationInstructionPage"));
 const ProcedureListPage = lazy(() => import("@/pages/clinicalManagement/ProcedureList/MainPage/ProcedureListPage"));
 const MedicationGenericPage = lazy(() => import("@/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/common/ForgotPasswordPage/ForgotPasswordPage"));
@@ -459,6 +460,16 @@ const routeConfig: RouteConfig[] = [
     providers: [AlertProvider],
     metadata: {
       title: "Generic Medications",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/MedicationInstructionPage",
+    component: wrapWithSuspense(MedicationInstructionPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Medication Instructions",
       category: "clinical",
     },
   },
