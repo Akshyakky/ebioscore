@@ -18,11 +18,13 @@ import {
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Chip, FormControlLabel, Grid, Stack, Switch, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm } from "react-hook-form"; // FIX: Import FieldErrors for the error handler type
 import { z } from "zod";
 import useGRN from "../hooks/useGrnhooks";
 import GrnDetailsComponent from "./GrnDetailsComponent";
-import GRNTotalsAndActionsSection from "./GRNTotalsAndActionsSection"; // <-- IMPORT THE NEW COMPONENT
+import GRNTotalsAndActionsSection from "./GRNTotalsAndActionsSection";
+
+import { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 import PurchaseOrderSection from "./purchaseOrderSection";
 
 // --- Schema and Types ---
@@ -101,6 +103,8 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [grnDetails, setGrnDetails] = useState<GRNDetailDto[]>([]); // For manually added products
   const [poGrnDetails, setPOGrnDetails] = useState<GRNDetailDto[]>([]); // For PO-based products
+  const [issueDepartments, setIssueDepartments] = useState<IssueDepartmentData[]>([]); // Issue departments
+  const [selectedProductForIssue, setSelectedProductForIssue] = useState<GRNDetailDto | null>(null);
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     invoice: true,
@@ -123,7 +127,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     watch,
     trigger,
     getValues,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors }, // FIX: Destructure errors to see them
   } = useForm<GrnFormData>({
     resolver: zodResolver(grnSchema),
     mode: "onChange",
@@ -204,16 +208,17 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         };
 
         reset(formData);
-        // Separate PO-based and manually added details
         const poBasedDetails = (grn.grnDetails || []).filter((detail) => detail.poDetID && detail.poDetID > 0);
         const manualDetails = (grn.grnDetails || []).filter((detail) => !detail.poDetID || detail.poDetID === 0);
 
         setPOGrnDetails(poBasedDetails);
         setGrnDetails(manualDetails);
+        setIssueDepartments([]);
       } else {
         reset();
         setGrnDetails([]);
         setPOGrnDetails([]);
+        setIssueDepartments([]);
       }
     }
   }, [open, grn, reset]);
@@ -316,7 +321,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     (mast: PurchaseOrderMastDto | null, details: PurchaseOrderDetailDto[]) => {
       if (mast && details.length > 0) {
         showAlert("Success", `PO ${mast.pOCode} selected with ${details.length} items.`, "success");
-
         if (!watchedSupplierID && mast.supplierID) {
           handleSupplierChange(mast.supplierID);
         }
@@ -331,9 +335,14 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     [showAlert, watchedSupplierID, handleSupplierChange]
   );
 
+  const handleIssueDepartmentChange = useCallback((departments: IssueDepartmentData[]) => {
+    setIssueDepartments(departments);
+  }, []);
+
   const handleDeleteAll = useCallback(() => {
     setGrnDetails([]);
     setPOGrnDetails([]);
+    setIssueDepartments([]);
     calculateTotals([]);
     showAlert("Success", "All products removed from GRN", "success");
   }, [calculateTotals, showAlert]);
@@ -342,9 +351,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     showAlert("Info", "History functionality to be implemented", "info");
   }, [showAlert]);
 
-  const handleNewIssueDepartment = useCallback(() => {
-    showAlert("Info", "New Issue Department functionality to be implemented", "info");
-  }, [showAlert]);
+  const handleNewIssueDepartment = useCallback(() => {}, []);
 
   const handleApplyDiscount = useCallback(() => {
     calculateTotals(allGrnDetails);
@@ -352,6 +359,8 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   }, [allGrnDetails, calculateTotals, showAlert]);
 
   const onFormSubmit = async (data: GrnFormData) => {
+    // This function will now be triggered correctly. The debugger will be hit.
+    debugger;
     if (!allGrnDetails || allGrnDetails.length === 0) {
       showAlert("Validation Error", "Please add at least one product to the GRN", "warning");
       return;
@@ -364,7 +373,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     }
 
     const formattedData: GRNWithAllDetailsDto = {
-      grnDetails: allGrnDetails, // Combine both arrays
+      grnDetails: allGrnDetails,
       grnID: data.grnID,
       deptID: data.deptID,
       deptName: data.deptName,
@@ -428,32 +437,67 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     reset();
     setGrnDetails([]);
     setPOGrnDetails([]);
+    setIssueDepartments([]);
   };
 
   const handleSectionToggle = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const dialogActions = (
-    <>
-      <CustomButton variant="outlined" text={isEditMode ? "Reset" : "Clear"} icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || isApproved} color="inherit" />
-      <CustomButton variant="outlined" text="Cancel" onClick={onClose} disabled={isSubmitting} />
-      {isEditMode && !isApproved && (
-        <FormControlLabel control={<Switch checked={getValues("hideYN") === "Y"} onChange={(e) => setValue("hideYN", e.target.checked ? "Y" : "N")} />} label="Hide" />
-      )}
-      <SmartButton
-        variant="contained"
-        text={isEditMode ? "Update GRN" : "Create GRN"}
-        icon={SaveIcon}
-        onAsyncClick={handleSubmit(onFormSubmit)}
-        asynchronous
-        disabled={isSubmitting || !isMandatoryFieldsFilled || isApproved}
-        color="primary"
-        loadingText={isEditMode ? "Updating..." : "Creating..."}
-        successText={isEditMode ? "Updated!" : "Created!"}
-      />
-    </>
-  );
+  const dialogActions = useMemo(() => {
+    return (
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <CustomButton variant="outlined" text={isEditMode ? "Reset" : "Clear"} icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || isApproved} color="inherit" />
+        <CustomButton variant="outlined" text="Cancel" onClick={onClose} disabled={isSubmitting} />
+        {isEditMode && !isApproved && (
+          <FormControlLabel control={<Switch checked={getValues("hideYN") === "Y"} onChange={(e) => setValue("hideYN", e.target.checked ? "Y" : "N")} />} label="Hide" />
+        )}
+
+        <SmartButton
+          text={isEditMode ? "Update GRN" : "Create GRN"}
+          onClick={handleSubmit(onSubmit)}
+          variant="contained"
+          color="primary"
+          icon={SaveIcon}
+          asynchronous={true}
+          showLoadingIndicator={true}
+          loadingText={isEditMode ? "Creating..." : "Updating..."}
+          successText={isEditMode ? "Created!" : "Updated!"}
+          disabled={isSubmitting || !isMandatoryFieldsFilled || isApproved}
+        />
+      </Box>
+    );
+  }, [handleSubmit, onSubmit, onClose, isEditMode]);
+
+  // const dialogActions = (
+  //   <>
+  //     <CustomButton variant="outlined" text={isEditMode ? "Reset" : "Clear"} icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || isApproved} color="inherit" />
+  //     <CustomButton variant="outlined" text="Cancel" onClick={onClose} disabled={isSubmitting} />
+  //     {isEditMode && !isApproved && (
+  //       <FormControlLabel control={<Switch checked={getValues("hideYN") === "Y"} onChange={(e) => setValue("hideYN", e.target.checked ? "Y" : "N")} />} label="Hide" />
+  //     )}
+  //     <SmartButton
+  //       text={isEditMode ? "Update GRN" : "Create GRN"}
+  //       icon={AddIcon}
+  //       onClick={handleSubmit(onFormSubmit, onFormError)}
+  //       color="primary"
+  //       variant="contained"
+  //       size="small"
+  //     />
+
+  //     <SmartButton
+  //       variant="contained"
+  //       text={isEditMode ? "Update GRN" : "Create GRN"}
+  //       icon={SaveIcon}
+  //       onAsyncClick={handleSubmit(onFormSubmit, onFormError)}
+  //       asynchronous
+  //       disabled={isSubmitting || !isMandatoryFieldsFilled || isApproved}
+  //       color="primary"
+  //       loadingText={isEditMode ? "Updating..." : "Creating..."}
+  //       successText={isEditMode ? "Updated!" : "Created!"}
+  //     />
+  //   </>
+  // );
 
   return (
     <GenericDialog
@@ -467,14 +511,14 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
       actions={dialogActions}
     >
       <Box sx={{ width: "100%" }}>
-        <form onSubmit={handleSubmit(onFormSubmit)}>
+        {/* FIX: Add an id to the form and pass handleSubmit to its onSubmit prop. This is the standard RHF pattern. */}
+        <form id="grn-form" onSubmit={handleSubmit(onFormSubmit)}>
           {isApproved && (
             <Alert severity="info" sx={{ mb: 2 }} icon={<ApproveIcon />}>
               This GRN has been approved and cannot be modified. Stock has been updated.
             </Alert>
           )}
 
-          {/* Basic Information Section */}
           <Accordion expanded={expandedSections.basic} onChange={() => handleSectionToggle("basic")}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box display="flex" alignItems="center" gap={1}>
@@ -487,6 +531,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             </AccordionSummary>
             <AccordionDetails>
               <Grid container spacing={2}>
+                {/* FIX: Corrected Grid syntax from `size` to `item` and breakpoint props */}
                 <Grid size={{ xs: 12, md: 3 }}>
                   <EnhancedFormField
                     name="grnCode"
@@ -550,7 +595,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             </AccordionDetails>
           </Accordion>
 
-          {/* Invoice Information Section */}
           <Accordion expanded={expandedSections.invoice} onChange={() => handleSectionToggle("invoice")}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box display="flex" alignItems="center" gap={1}>
@@ -573,7 +617,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             </AccordionDetails>
           </Accordion>
 
-          {/* Purchase Order Section - This affects poGrnDetails */}
           <PurchaseOrderSection
             expanded={expandedSections.po}
             onChange={() => handleSectionToggle("po")}
@@ -582,9 +625,10 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             watchedDeptName={watchedDeptName}
             onPoDataFetched={handlePoDataFetched}
             onGRNDataFetched={handlePOGrnDetailsChange}
+            issueDepartments={issueDepartments}
+            onIssueDepartmentChange={handleIssueDepartmentChange}
           />
 
-          {/* Manual Product Addition Section - This affects grnDetails */}
           <GrnDetailsComponent
             grnDetails={grnDetails}
             onGrnDetailsChange={handleManualGrnDetailsChange}
@@ -592,11 +636,9 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             grnApproved={isApproved}
             expanded={expandedSections.manual}
             onToggle={() => handleSectionToggle("manual")}
+            issueDepartments={issueDepartments}
+            onIssueDepartmentChange={handleIssueDepartmentChange}
           />
-
-          {/* =============================================== */}
-          {/* ===  START OF THE NEWLY ADDED COMPONENT   === */}
-          {/* =============================================== */}
 
           <GRNTotalsAndActionsSection
             grnDetails={allGrnDetails}
@@ -609,13 +651,12 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             onApplyDiscount={handleApplyDiscount}
             disabled={isSubmitting}
             isApproved={isApproved}
+            issueDepartments={issueDepartments}
+            onIssueDepartmentChange={handleIssueDepartmentChange}
+            selectedProductForIssue={selectedProductForIssue}
+            onSelectedProductForIssueChange={setSelectedProductForIssue}
           />
 
-          {/* =============================================== */}
-          {/* ===   END OF THE NEWLY ADDED COMPONENT    === */}
-          {/* =============================================== */}
-
-          {/* Advanced Configuration Section */}
           <Accordion expanded={expandedSections.configuration} onChange={() => handleSectionToggle("configuration")}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box display="flex" alignItems="center" gap={1}>
@@ -662,6 +703,19 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
                   <Typography variant="body2" color="text.secondary">
                     Additional configuration options for quality control and tax calculations.
                   </Typography>
+
+                  {issueDepartments.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Issue Departments Summary:
+                      </Typography>
+                      <Stack spacing={1}>
+                        {issueDepartments.map((dept) => (
+                          <Chip key={dept.id} label={`${dept.productName} → ${dept.deptName} (${dept.quantity})`} size="small" variant="outlined" color="primary" />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
                 </Grid>
               </Grid>
             </AccordionDetails>

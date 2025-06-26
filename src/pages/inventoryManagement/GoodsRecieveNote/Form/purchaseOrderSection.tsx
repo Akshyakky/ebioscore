@@ -8,8 +8,10 @@ import { usePurchaseOrder } from "@/pages/inventoryManagement/PurchaseOrder/hook
 import { useAlert } from "@/providers/AlertProvider";
 import {
   Delete as DeleteIcon,
+  Edit as EditIcon,
   ExpandMore as ExpandMoreIcon,
   Inventory as InventoryIcon,
+  AddBusiness as IssueIcon,
   LocalFireDepartment,
   Assignment as POIcon,
   ShoppingCart as PurchaseIcon,
@@ -27,6 +29,7 @@ import {
   Chip,
   Divider,
   Grid,
+  IconButton,
   InputAdornment,
   MenuItem,
   Paper,
@@ -40,6 +43,7 @@ import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from 
 import dayjs from "dayjs";
 import React, { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 import POSearchDialog from "./POSearchDailogue";
 
 interface PurchaseOrderSectionProps {
@@ -50,15 +54,29 @@ interface PurchaseOrderSectionProps {
   watchedDeptName: string;
   onPoDataFetched: (mast: PurchaseOrderMastDto | null, details: PurchaseOrderDetailDto[]) => void;
   onGRNDataFetched?: (grnDetails: GRNDetailDto[]) => void;
+  // New props for issue department management
+  issueDepartments?: IssueDepartmentData[];
+  onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
 }
 
 interface PurchaseOrderGRNDetailRow extends GRNDetailDto {
   id: string | number;
   _serialNo: number;
   _pastReceivedPack: number;
+  _issueDepartment?: IssueDepartmentData;
 }
 
-const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, onChange, isApproved, watchedDeptID, watchedDeptName, onPoDataFetched, onGRNDataFetched }) => {
+const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
+  expanded,
+  onChange,
+  isApproved,
+  watchedDeptID,
+  watchedDeptName,
+  onPoDataFetched,
+  onGRNDataFetched,
+  issueDepartments = [],
+  onIssueDepartmentChange,
+}) => {
   const { control, setValue, resetField } = useForm();
   const theme = useTheme();
   const { showAlert } = useAlert();
@@ -72,6 +90,11 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
     open: boolean;
     index: number | null;
   }>({ open: false, index: null });
+
+  // Issue Department Dialog state
+  const [isIssueDeptDialogOpen, setIsIssueDeptDialogOpen] = useState(false);
+  const [selectedProductForIssue, setSelectedProductForIssue] = useState<GRNDetailDto | null>(null);
+  const [editingIssueDepartment, setEditingIssueDepartment] = useState<IssueDepartmentData | null>(null);
 
   const { getPurchaseOrderById, isLoading: isPoDetailsLoading } = usePurchaseOrder();
 
@@ -130,12 +153,16 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
       .map((poDetail, index) => {
         const existingGRNDetail = grnDetails.find((grn) => grn.poDetID === poDetail.pODetID);
 
+        // Find associated issue department
+        const associatedIssueDept = issueDepartments.find((dept) => dept.productID === poDetail.productID);
+
         if (existingGRNDetail) {
           return {
             ...existingGRNDetail,
             id: existingGRNDetail.grnDetID || `temp-${index}`,
             _serialNo: index + 1,
             _pastReceivedPack: existingGRNDetail._pastReceivedPack || 0,
+            _issueDepartment: associatedIssueDept,
           };
         }
 
@@ -229,6 +256,7 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
           _sellingUnitPrice: 0,
           _calculatedValue: 0,
           _totalWithTax: 0,
+          _issueDepartment: associatedIssueDept,
 
           id: `temp-${index}`,
           rActiveYN: "Y",
@@ -241,7 +269,7 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
 
         return newGRNDetail;
       });
-  }, [poDetails, grnDetails]);
+  }, [poDetails, grnDetails, issueDepartments]);
 
   const handleDeleteClick = useCallback(
     (id: string | number) => {
@@ -376,6 +404,47 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
     [dropdownValues.taxType, handleCellValueChange]
   );
 
+  // Issue Department handlers
+  const handleIssueDepartmentClick = useCallback((row: PurchaseOrderGRNDetailRow) => {
+    setSelectedProductForIssue(row);
+    setEditingIssueDepartment(row._issueDepartment || null);
+    setIsIssueDeptDialogOpen(true);
+  }, []);
+
+  const handleIssueDepartmentSubmit = useCallback(
+    (data: IssueDepartmentData) => {
+      if (onIssueDepartmentChange) {
+        let updatedDepartments = [...issueDepartments];
+
+        if (editingIssueDepartment) {
+          // Update existing
+          const index = updatedDepartments.findIndex((dept) => dept.id === editingIssueDepartment.id);
+          if (index !== -1) {
+            updatedDepartments[index] = data;
+            showAlert("Success", "Issue department updated successfully.", "success");
+          }
+        } else {
+          // Add new
+          updatedDepartments.push(data);
+          showAlert("Success", "Issue department added successfully.", "success");
+        }
+
+        onIssueDepartmentChange(updatedDepartments);
+      }
+
+      setIsIssueDeptDialogOpen(false);
+      setEditingIssueDepartment(null);
+      setSelectedProductForIssue(null);
+    },
+    [editingIssueDepartment, issueDepartments, onIssueDepartmentChange, showAlert]
+  );
+
+  const handleIssueDepartmentDialogClose = useCallback(() => {
+    setIsIssueDeptDialogOpen(false);
+    setEditingIssueDepartment(null);
+    setSelectedProductForIssue(null);
+  }, []);
+
   const renderNumberField = useCallback(
     (params: GridRenderCellParams, field: keyof GRNDetailDto, precision: number = 2) => (
       <TextField
@@ -474,6 +543,35 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
       </Select>
     ),
     [dropdownValues.taxType, handleDropdownChange, isApproved]
+  );
+
+  const renderIssueDepartmentCell = useCallback(
+    (params: GridRenderCellParams) => {
+      const row = params.row as PurchaseOrderGRNDetailRow;
+      const hasIssueDept = row._issueDepartment;
+
+      return (
+        <Box display="flex" alignItems="center" gap={1}>
+          {hasIssueDept ? (
+            <>
+              <Chip label={`${row._issueDepartment?.deptName} (${row._issueDepartment?.quantity})`} size="small" color="success" variant="outlined" />
+              <Tooltip title="Edit Issue Department">
+                <IconButton size="small" onClick={() => handleIssueDepartmentClick(row)} disabled={isApproved}>
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          ) : (
+            <Tooltip title="Add Issue Department">
+              <IconButton size="small" onClick={() => handleIssueDepartmentClick(row)} disabled={isApproved} color="primary">
+                <IssueIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      );
+    },
+    [handleIssueDepartmentClick, isApproved]
   );
 
   const columns: GridColDef[] = useMemo(
@@ -703,6 +801,13 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
         renderCell: (params) => renderNumberField(params, "sellUnitPrice"),
       },
       {
+        field: "issueDepartment",
+        headerName: "Issue Department",
+        width: 200,
+        sortable: false,
+        renderCell: renderIssueDepartmentCell,
+      },
+      {
         field: "actions",
         type: "actions",
         headerName: "Delete",
@@ -723,7 +828,7 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
         ],
       },
     ],
-    [renderNumberField, renderTextField, renderDateField, renderCheckbox, renderGSTSelect, handleDeleteClick, isApproved]
+    [renderNumberField, renderTextField, renderDateField, renderCheckbox, renderGSTSelect, renderIssueDepartmentCell, handleDeleteClick, isApproved]
   );
 
   return (
@@ -849,7 +954,7 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
                       </Typography>
                     </Box>
                   ) : gridRows.length > 0 ? (
-                    <Box sx={{ height: 600, width: "100%" }}>
+                    <Box sx={{ width: "100%" }}>
                       <DataGrid
                         rows={gridRows}
                         columns={columns}
@@ -895,7 +1000,6 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
                       sx={{
                         p: 4,
                         textAlign: "center",
-                        bgcolor: alpha(theme.palette.grey[50], 0.8),
                         borderRadius: 2,
                         border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
                       }}
@@ -947,6 +1051,16 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
         confirmText="Delete"
         cancelText="Cancel"
         type="warning"
+      />
+
+      {/* Issue Department Dialog */}
+      <IssueDepartmentDialog
+        open={isIssueDeptDialogOpen}
+        onClose={handleIssueDepartmentDialogClose}
+        onSubmit={handleIssueDepartmentSubmit}
+        selectedProduct={selectedProductForIssue}
+        editData={editingIssueDepartment}
+        title={editingIssueDepartment ? "Edit Issue Department" : "New Issue Department"}
       />
     </>
   );
