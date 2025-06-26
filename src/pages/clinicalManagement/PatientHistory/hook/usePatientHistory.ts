@@ -1,9 +1,11 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
+import { AllergyDto } from "@/interfaces/ClinicalManagement/AllergyDto";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
 import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
+import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
 import { fhService, pmhService, pshService, rosService, shService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 const useGenericFamilyHistory = createEntityHook<OPIPHistFHDto>(fhService, "opipFHID");
@@ -84,5 +86,26 @@ export const usePSHHistory = () => {
     savePSHHistory: hook.saveEntity,
     deletePSHHistory: hook.deleteEntity,
     updatePSHHistoryStatus: hook.updateEntityStatus,
+  };
+};
+
+// Allergy Hook
+export const useAllergy = () => {
+  const hook = createEntityHook<AllergyDto>(allergyService, "opIPHistAllergyMastDto.opipAlgId")();
+
+  return {
+    allergyList: hook.entityList,
+    isLoading: hook.isLoading,
+    error: hook.error,
+    fetchAllergyList: hook.fetchEntityList,
+    getAllergyById: hook.getEntityById,
+    saveAllergy: async (data: AllergyDto) => {
+      return allergyService.createOrUpdateAllergy(data);
+    },
+    deleteAllergy: hook.deleteEntity,
+    updateAllergyStatus: hook.updateEntityStatus,
+    getByKeyFields: async (pChartID: number, opipNo: number, opipCaseNo: number) => {
+      return allergyService.getByKeyFields(pChartID, opipNo, opipCaseNo);
+    },
   };
 };

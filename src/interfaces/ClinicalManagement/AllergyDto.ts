@@ -4,7 +4,7 @@ import { BaseHistoryDto } from "./BaseHistoryDto";
 
 export interface AllergyDto extends BaseDto {
   opIPHistAllergyMastDto: OPIPHistAllergyMastDto;
-  allergyDetails: OPIPHistAllergyDetailDto[];
+  allergyDetails?: OPIPHistAllergyDetailDto[];
 }
 
 export interface OPIPHistAllergyMastDto extends BaseHistoryDto {
@@ -17,7 +17,7 @@ export interface OPIPHistAllergyDetailDto extends RecordFields {
   opipAlgId: number;
   mfId: number;
   mfName: string;
-  mlId: Number;
+  mlId: number;
   medText: string;
   mGenId: number;
   mGenName: string;
