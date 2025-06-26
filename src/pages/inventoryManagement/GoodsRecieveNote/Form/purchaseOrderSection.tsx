@@ -1,5 +1,3 @@
-// PurchaseOrderSection.tsx - Complete Updated Version
-
 import CustomButton from "@/components/Button/CustomButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
@@ -289,42 +287,77 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
       const currentRow = updatedDetails[index];
       (currentRow as any)[field] = value;
 
-      const recvdPack = currentRow.recvdPack || 0;
-      const unitsPerPack = currentRow.pUnitsPerPack || 1;
-      const unitPrice = currentRow.unitPrice || 0;
-      const discPercentage = currentRow.discPercentage || 0;
-
+      // --- Field-Specific Preparations ---
+      if (field === "packPrice" || field === "pUnitsPerPack") {
+        if ((currentRow.pUnitsPerPack || 0) > 0) {
+          currentRow.unitPrice = parseFloat(((currentRow.packPrice || 0) / (currentRow.pUnitsPerPack || 1)).toFixed(4));
+        }
+      }
       if (field === "recvdPack" || field === "pUnitsPerPack") {
-        currentRow.recvdQty = parseFloat((recvdPack * unitsPerPack).toFixed(2));
-        currentRow._recievedQty = currentRow.recvdQty;
+        currentRow.recvdQty = parseFloat(((currentRow.recvdPack || 0) * (currentRow.pUnitsPerPack || 1)).toFixed(2));
         currentRow.acceptQty = currentRow.recvdQty;
       }
+      if (field === "gstPercentage") {
+        const gstValue = Number(value) || 0;
+        currentRow.cgstPerValue = parseFloat((gstValue / 2).toFixed(2));
+        currentRow.sgstPerValue = parseFloat((gstValue / 2).toFixed(2));
+      }
 
-      const baseAmount = unitPrice * recvdPack;
-      const discountAmount = parseFloat(((baseAmount * discPercentage) / 100).toFixed(2));
-      const taxableAmount = baseAmount - discountAmount;
+      // --- Core Calculation Logic based on Rules ---
+      const receivedPack = currentRow.recvdPack || 0;
+      const packPrice = currentRow.packPrice || 0;
+      const discPercentage = currentRow.discPercentage || 0;
+      const gstPercentage = currentRow.gstPercentage || 0;
+      const isTaxAfterDisc = currentRow.taxAfterDiscYN === "Y";
+      const isTaxInclusive = currentRow.includeTaxYN === "Y";
 
-      const cgstAmount = parseFloat(((taxableAmount * (currentRow.cgstPerValue || 0)) / 100).toFixed(2));
-      const sgstAmount = parseFloat(((taxableAmount * (currentRow.sgstPerValue || 0)) / 100).toFixed(2));
-      const totalTaxAmount = cgstAmount + sgstAmount;
+      let baseAmount = 0,
+        discountAmount = 0,
+        taxableAmount = 0,
+        totalTaxAmount = 0,
+        finalValue = 0;
 
-      currentRow.discAmt = discountAmount;
-      currentRow.taxableAmt = taxableAmount;
-      currentRow.cgstTaxAmt = cgstAmount;
-      currentRow.sgstTaxAmt = sgstAmount;
-      currentRow.totalTaxAmt = totalTaxAmount;
-      currentRow.productValue = taxableAmount + totalTaxAmount;
+      baseAmount = receivedPack * packPrice;
+
+      if (isTaxInclusive) {
+        finalValue = baseAmount;
+        if (isTaxAfterDisc) {
+          taxableAmount = baseAmount / (1 + gstPercentage / 100);
+          totalTaxAmount = taxableAmount * (gstPercentage / 100);
+          discountAmount = baseAmount - taxableAmount;
+        } else {
+          totalTaxAmount = baseAmount * (gstPercentage / 100);
+          discountAmount = totalTaxAmount;
+          taxableAmount = baseAmount - discountAmount;
+        }
+      } else {
+        discountAmount = baseAmount * (discPercentage / 100);
+        taxableAmount = baseAmount - discountAmount;
+        if (isTaxAfterDisc) {
+          totalTaxAmount = taxableAmount * (gstPercentage / 100);
+        } else {
+          totalTaxAmount = baseAmount * (gstPercentage / 100);
+        }
+        finalValue = taxableAmount + totalTaxAmount;
+      }
+
+      currentRow.discAmt = parseFloat(discountAmount.toFixed(2));
+      currentRow.taxableAmt = parseFloat(taxableAmount.toFixed(2));
+
+      const totalGstPercentage = (currentRow.cgstPerValue || 0) + (currentRow.sgstPerValue || 0);
+      if (totalGstPercentage > 0) {
+        currentRow.cgstTaxAmt = parseFloat((totalTaxAmount * ((currentRow.cgstPerValue || 0) / totalGstPercentage)).toFixed(2));
+        currentRow.sgstTaxAmt = parseFloat((totalTaxAmount * ((currentRow.sgstPerValue || 0) / totalGstPercentage)).toFixed(2));
+      } else {
+        currentRow.cgstTaxAmt = 0;
+        currentRow.sgstTaxAmt = 0;
+      }
+
+      currentRow.totalTaxAmt = parseFloat(totalTaxAmount.toFixed(2));
+      currentRow.productValue = parseFloat(finalValue.toFixed(2));
       currentRow._calculatedValue = currentRow.productValue;
       currentRow._totalWithTax = currentRow.productValue;
-
-      if (field === "gstPercentage") {
-        currentRow.cgstPerValue = parseFloat((value / 2).toFixed(2));
-        currentRow.sgstPerValue = parseFloat((value / 2).toFixed(2));
-      }
-
-      if (field === "unitPrice") {
-        currentRow.packPrice = parseFloat((value * unitsPerPack).toFixed(2));
-      }
+      currentRow._recievedQty = currentRow.recvdQty;
 
       setGrnDetails(updatedDetails);
       if (onGRNDataFetched) {
@@ -658,7 +691,9 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({ expanded, o
         headerName: "Unit Price",
         width: 120,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "unitPrice"),
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (params.row.unitPrice || 0).toFixed(4),
       },
       {
         field: "sellUnitPrice",
