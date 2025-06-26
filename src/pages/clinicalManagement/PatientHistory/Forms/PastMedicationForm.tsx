@@ -97,7 +97,6 @@ interface PastMedicationFormProps {
 export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, onClose, onSubmit, admission, existingMedication, viewOnly = false }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
-  const [medicationDetails, setMedicationDetails] = useState<PastMedicationDetailDto[]>([]);
 
   // Master data states
   const [medicationForms, setMedicationForms] = useState<MedicationFormDto[]>([]);
@@ -122,11 +121,18 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
     control,
     handleSubmit,
     reset,
-    formState: { isDirty },
+    setValue,
+    watch,
+    formState: { isDirty, errors },
   } = useForm<PastMedicationFormData>({
     resolver: zodResolver(pastMedicationFormSchema),
     mode: "onChange",
+    defaultValues: {
+      details: [],
+    },
   });
+
+  const details = watch("details", []);
 
   // Load master data
   useEffect(() => {
@@ -185,7 +191,6 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
           };
 
       reset(initialData);
-      //   setMedicationDetails(initialData.details);
     }
   }, [open, admission, existingMedication, reset, serverDate]);
 
@@ -209,8 +214,8 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
       mdName: selectedDosage?.mDName || "",
       mFrqID: selectedFrequency.mFrqID,
       mFrqName: selectedFrequency.mFrqName,
-      mInsID: selectedInstruction?.mInsID || 0,
-      mInsName: selectedInstruction?.mInsName || "",
+      mInsID: selectedInstruction?.minsId || 0,
+      mInsName: selectedInstruction?.minsName || "",
       fromDate: fromDate,
       toDate: toDate,
       rActiveYN: "Y",
@@ -218,7 +223,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
       rNotes: null,
     };
 
-    setMedicationDetails([...medicationDetails, newDetail]);
+    setValue("details", [...details, newDetail], { shouldDirty: true });
 
     // Reset form
     setSelectedMedication(null);
@@ -230,16 +235,13 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
   };
 
   const handleRemoveDetail = (index: number) => {
-    setMedicationDetails(medicationDetails.filter((_, i) => i !== index));
+    const newDetails = details.filter((_, i) => i !== index);
+    setValue("details", newDetails, { shouldDirty: true });
   };
 
   const onFormSubmit = async (data: PastMedicationFormData) => {
     try {
       setIsSubmitting(true);
-
-      if (medicationDetails.length === 0) {
-        throw new Error("Please add at least one medication");
-      }
 
       const submissionData: PastMedicationDto = {
         opipPastMedID: data.opipPastMedID || 0,
@@ -253,7 +255,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
         rActiveYN: data.rActiveYN || "Y",
         transferYN: data.transferYN || "N",
         rNotes: data.rNotes || "",
-        details: medicationDetails.map((detail) => ({
+        details: details.map((detail) => ({
           opipPastMedDtlID: detail.opipPastMedDtlID || 0,
           opipPastMedID: data.opipPastMedID || 0,
           mfID: detail.mfID,
@@ -280,7 +282,6 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
       await onSubmit(submissionData);
 
       reset();
-      setMedicationDetails([]);
       onClose();
     } catch (error) {
       console.error("Error submitting past medication:", error);
@@ -291,7 +292,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
   };
 
   const handleReset = () => {
-    if (isDirty || medicationDetails.length > 0) {
+    if (isDirty || details.length > 0) {
       setShowResetConfirmation(true);
     } else {
       performReset();
@@ -309,16 +310,21 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
           toDate: new Date(d.toDate),
         })),
       });
-      setMedicationDetails(
-        existingMedication.details.map((d) => ({
-          ...d,
-          fromDate: new Date(d.fromDate),
-          toDate: new Date(d.toDate),
-        }))
-      );
     } else {
-      reset();
-      setMedicationDetails([]);
+      reset({
+        opipPastMedID: 0,
+        opipDate: serverDate,
+        rActiveYN: "Y",
+        pChartID: admission?.ipAdmissionDto.pChartID || 0,
+        opipNo: admission?.ipAdmissionDto.admitID || 0,
+        opipCaseNo: admission?.ipAdmissionDto.oPIPCaseNo || 0,
+        patOpip: admission?.ipAdmissionDto.patOpip || "I",
+        transferYN: "N",
+        opvID: 0,
+        oldPChartID: 0,
+        rNotes: null,
+        details: [],
+      });
     }
     setShowResetConfirmation(false);
   };
@@ -352,7 +358,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                   variant="outlined"
                   color="error"
                   icon={CancelIcon}
-                  disabled={isSubmitting || (!isDirty && medicationDetails.length === 0)}
+                  disabled={isSubmitting || (!isDirty && details.length === 0)}
                   size="small"
                 />
                 <SmartButton
@@ -361,7 +367,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                   variant="contained"
                   color="primary"
                   icon={SaveIcon}
-                  disabled={isSubmitting || medicationDetails.length === 0}
+                  disabled={isSubmitting || details.length === 0}
                   asynchronous
                   showLoadingIndicator
                   loadingText={isEditMode ? "Updating..." : "Saving..."}
@@ -436,7 +442,15 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                           value={selectedMedication}
                           onChange={(_, newValue) => setSelectedMedication(newValue)}
                           size="small"
-                          renderInput={(params) => <TextField {...params} label="Medication" required />}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Medication"
+                              required
+                              error={!!errors.details?.message && details.length === 0}
+                              helperText={errors.details?.message && details.length === 0 ? errors.details.message : ""}
+                            />
+                          )}
                           isOptionEqualToValue={(option, value) => option.mlID === value.mlID}
                         />
                       </Grid>
@@ -458,7 +472,15 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                           value={selectedFrequency}
                           onChange={(_, newValue) => setSelectedFrequency(newValue)}
                           size="small"
-                          renderInput={(params) => <TextField {...params} label="Frequency" required />}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Frequency"
+                              required
+                              error={!selectedFrequency && details.length === 0}
+                              helperText={!selectedFrequency && details.length === 0 ? "Frequency is required" : ""}
+                            />
+                          )}
                           isOptionEqualToValue={(option, value) => option.mFrqID === value.mFrqID}
                         />
                       </Grid>
@@ -516,10 +538,10 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="subtitle2" gutterBottom>
-                    Medication Details ({medicationDetails.length})
+                    Medication Details ({details.length})
                   </Typography>
 
-                  {medicationDetails.length === 0 ? (
+                  {details.length === 0 ? (
                     <Alert severity="info">No medications added. Please add at least one medication.</Alert>
                   ) : (
                     <TableContainer component={Paper} variant="outlined">
@@ -538,7 +560,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {medicationDetails.map((detail, index) => (
+                          {details.map((detail, index) => (
                             <TableRow key={index}>
                               <TableCell>{detail.medText}</TableCell>
                               <TableCell>
