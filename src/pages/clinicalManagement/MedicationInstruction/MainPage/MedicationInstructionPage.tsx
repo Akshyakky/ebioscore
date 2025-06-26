@@ -96,7 +96,7 @@ const MedicationInstructionPage: React.FC = () => {
     if (!selectedInstruction) return;
 
     try {
-      const success = await deleteMedicationInstruction(selectedInstruction.mGenID);
+      const success = await deleteMedicationInstruction(selectedInstruction.minsId);
 
       if (success) {
         showAlert("Success", "Instruction medication deleted successfully", "success");
