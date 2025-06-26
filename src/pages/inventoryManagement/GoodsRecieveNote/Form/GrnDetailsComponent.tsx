@@ -4,7 +4,15 @@ import { GRNDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { Delete as DeleteIcon, ExpandMore as ExpandMoreIcon, Inventory as InventoryIcon, LocalFireDepartment, ShoppingCart as PurchaseIcon } from "@mui/icons-material";
+import {
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  ExpandMore as ExpandMoreIcon,
+  Inventory as InventoryIcon,
+  AddBusiness as IssueIcon,
+  LocalFireDepartment,
+  ShoppingCart as PurchaseIcon,
+} from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
@@ -19,6 +27,7 @@ import {
   CircularProgress,
   Divider,
   Grid,
+  IconButton,
   MenuItem,
   Paper,
   Select,
@@ -32,6 +41,7 @@ import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from 
 import dayjs from "dayjs";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
+import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 
 interface UpdatedGrnDetailsComponentProps {
   grnDetails: GRNDetailDto[];
@@ -40,15 +50,28 @@ interface UpdatedGrnDetailsComponentProps {
   grnApproved?: boolean;
   expanded: boolean;
   onToggle: () => void;
+  // New props for issue department management
+  issueDepartments?: IssueDepartmentData[];
+  onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
 }
 
 interface GRNDetailRow extends GRNDetailDto {
   id: string | number;
   _serialNo: number;
   _pastReceivedPack: number;
+  _issueDepartment?: IssueDepartmentData;
 }
 
-const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDetails, onGrnDetailsChange, disabled = false, grnApproved = false, expanded, onToggle }) => {
+const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
+  grnDetails,
+  onGrnDetailsChange,
+  disabled = false,
+  grnApproved = false,
+  expanded,
+  onToggle,
+  issueDepartments = [],
+  onIssueDepartmentChange,
+}) => {
   const theme = useTheme();
   const { showAlert } = useAlert();
   const dropdownValues = useDropdownValues(["taxType"]);
@@ -59,15 +82,26 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
     index: number | null;
   }>({ open: false, index: null });
 
+  // Issue Department Dialog state
+  const [isIssueDeptDialogOpen, setIsIssueDeptDialogOpen] = useState(false);
+  const [selectedProductForIssue, setSelectedProductForIssue] = useState<GRNDetailDto | null>(null);
+  const [editingIssueDepartment, setEditingIssueDepartment] = useState<IssueDepartmentData | null>(null);
+
   // Convert GRN details to rows with proper IDs
   const gridRows: GRNDetailRow[] = useMemo(() => {
-    return grnDetails.map((detail, index) => ({
-      ...detail,
-      id: detail.grnDetID || `temp-${index}`,
-      _serialNo: index + 1,
-      _pastReceivedPack: detail._pastReceivedPack || 0,
-    }));
-  }, [grnDetails]);
+    return grnDetails.map((detail, index) => {
+      // Find associated issue department
+      const associatedIssueDept = issueDepartments.find((dept) => dept.productID === detail.productID);
+
+      return {
+        ...detail,
+        id: detail.grnDetID || `temp-${index}`,
+        _serialNo: index + 1,
+        _pastReceivedPack: detail._pastReceivedPack || 0,
+        _issueDepartment: associatedIssueDept,
+      };
+    });
+  }, [grnDetails, issueDepartments]);
 
   const handleProductSelect = useCallback(
     async (product: ProductListDto | null) => {
@@ -327,6 +361,47 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
     [dropdownValues.taxType, handleCellValueChange]
   );
 
+  // Issue Department handlers
+  const handleIssueDepartmentClick = useCallback((row: GRNDetailRow) => {
+    setSelectedProductForIssue(row);
+    setEditingIssueDepartment(row._issueDepartment || null);
+    setIsIssueDeptDialogOpen(true);
+  }, []);
+
+  const handleIssueDepartmentSubmit = useCallback(
+    (data: IssueDepartmentData) => {
+      if (onIssueDepartmentChange) {
+        let updatedDepartments = [...issueDepartments];
+
+        if (editingIssueDepartment) {
+          // Update existing
+          const index = updatedDepartments.findIndex((dept) => dept.id === editingIssueDepartment.id);
+          if (index !== -1) {
+            updatedDepartments[index] = data;
+            showAlert("Success", "Issue department updated successfully.", "success");
+          }
+        } else {
+          // Add new
+          updatedDepartments.push(data);
+          showAlert("Success", "Issue department added successfully.", "success");
+        }
+
+        onIssueDepartmentChange(updatedDepartments);
+      }
+
+      setIsIssueDeptDialogOpen(false);
+      setEditingIssueDepartment(null);
+      setSelectedProductForIssue(null);
+    },
+    [editingIssueDepartment, issueDepartments, onIssueDepartmentChange, showAlert]
+  );
+
+  const handleIssueDepartmentDialogClose = useCallback(() => {
+    setIsIssueDeptDialogOpen(false);
+    setEditingIssueDepartment(null);
+    setSelectedProductForIssue(null);
+  }, []);
+
   // Render functions for different cell types
   const renderNumberField = useCallback(
     (params: GridRenderCellParams, field: keyof GRNDetailDto, precision: number = 2) => (
@@ -428,12 +503,41 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
     [dropdownValues.taxType, handleDropdownChange, disabled, grnApproved]
   );
 
+  const renderIssueDepartmentCell = useCallback(
+    (params: GridRenderCellParams) => {
+      const row = params.row as GRNDetailRow;
+      const hasIssueDept = row._issueDepartment;
+
+      return (
+        <Box display="flex" alignItems="center" gap={1}>
+          {hasIssueDept ? (
+            <>
+              <Chip label={`${row._issueDepartment?.deptName} (${row._issueDepartment?.quantity})`} size="small" color="success" variant="outlined" />
+              <Tooltip title="Edit Issue Department">
+                <IconButton size="small" onClick={() => handleIssueDepartmentClick(row)} disabled={disabled || grnApproved}>
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          ) : (
+            <Tooltip title="Add Issue Department">
+              <IconButton size="small" onClick={() => handleIssueDepartmentClick(row)} disabled={disabled || grnApproved} color="primary">
+                <IssueIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      );
+    },
+    [handleIssueDepartmentClick, disabled, grnApproved]
+  );
+
   const handleRemoveAll = useCallback(() => {
     onGrnDetailsChange([]);
     showAlert("Success", "All products removed successfully.", "success");
   }, [onGrnDetailsChange, showAlert]);
 
-  // Define columns for DataGrid - Same as PurchaseOrderSection
+  // Define columns for DataGrid - Same as PurchaseOrderSection but updated for manual products
   const columns: GridColDef[] = useMemo(
     () => [
       {
@@ -659,6 +763,13 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
         renderCell: (params) => renderNumberField(params, "sellUnitPrice"),
       },
       {
+        field: "issueDepartment",
+        headerName: "Issue Department",
+        width: 200,
+        sortable: false,
+        renderCell: renderIssueDepartmentCell,
+      },
+      {
         field: "actions",
         type: "actions",
         headerName: "Delete",
@@ -679,7 +790,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
         ],
       },
     ],
-    [renderNumberField, renderTextField, renderDateField, renderCheckbox, renderGSTSelect, handleDeleteClick, disabled, grnApproved]
+    [renderNumberField, renderTextField, renderDateField, renderCheckbox, renderGSTSelect, renderIssueDepartmentCell, handleDeleteClick, disabled, grnApproved]
   );
 
   const isComponentDisabled = disabled || grnApproved;
@@ -808,7 +919,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
                     </Typography>
                   </Box>
                 ) : gridRows.length > 0 ? (
-                  <Box sx={{ height: 600, width: "100%" }}>
+                  <Box sx={{ width: "100%" }}>
                     <DataGrid
                       rows={gridRows}
                       columns={columns}
@@ -854,7 +965,6 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
                     sx={{
                       p: 4,
                       textAlign: "center",
-                      bgcolor: alpha(theme.palette.grey[50], 0.8),
                       borderRadius: 2,
                       border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
                     }}
@@ -897,6 +1007,16 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({ grnDet
         confirmText="Delete"
         cancelText="Cancel"
         type="warning"
+      />
+
+      {/* Issue Department Dialog */}
+      <IssueDepartmentDialog
+        open={isIssueDeptDialogOpen}
+        onClose={handleIssueDepartmentDialogClose}
+        onSubmit={handleIssueDepartmentSubmit}
+        selectedProduct={selectedProductForIssue}
+        editData={editingIssueDepartment}
+        title={editingIssueDepartment ? "Edit Issue Department" : "New Issue Department"}
       />
     </>
   );

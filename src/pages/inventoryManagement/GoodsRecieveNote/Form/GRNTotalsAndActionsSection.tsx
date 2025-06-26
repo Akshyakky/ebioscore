@@ -1,10 +1,12 @@
 import CustomButton from "@/components/Button/CustomButton";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { GRNDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { useAlert } from "@/providers/AlertProvider";
 import { Check as ApplyIcon, DeleteSweep as DeleteAllIcon, History as HistoryIcon, AddBusiness as NewDeptIcon } from "@mui/icons-material";
 import { Box, FormControlLabel, Grid, Paper, Stack, Switch, Typography, useTheme } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 
 interface GRNTotalsAndActionsSectionProps {
   grnDetails: GRNDetailDto[];
@@ -17,6 +19,11 @@ interface GRNTotalsAndActionsSectionProps {
   onApplyDiscount: () => void;
   disabled?: boolean;
   isApproved?: boolean;
+  // New props for issue department management
+  issueDepartments?: IssueDepartmentData[];
+  onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
+  selectedProductForIssue?: GRNDetailDto | null;
+  onSelectedProductForIssueChange?: (product: GRNDetailDto | null) => void;
 }
 
 interface CalculatedTotals {
@@ -61,9 +68,16 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
   onApplyDiscount,
   disabled = false,
   isApproved = false,
+  issueDepartments = [],
+  onIssueDepartmentChange,
+  selectedProductForIssue,
+  onSelectedProductForIssueChange,
 }) => {
   const theme = useTheme();
+  const { showAlert } = useAlert();
   const [isDiscountInPercentage, setIsDiscountInPercentage] = useState(watch("discPercentageYN") === "Y");
+  const [isIssueDeptDialogOpen, setIsIssueDeptDialogOpen] = useState(false);
+  const [editingIssueDepartment, setEditingIssueDepartment] = useState<IssueDepartmentData | null>(null);
 
   // Watch form values for calculations
   const watchedDiscountType = watch("discPercentageYN");
@@ -230,101 +244,180 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
     setValue("balanceAmt", totals.grandTotal, { shouldDirty: true });
   };
 
+  const handleNewIssueDepartmentClick = () => {
+    // Check if there are any products in the grid
+    if (!grnDetails || grnDetails.length === 0) {
+      showAlert("Warning", "Please add products to GRN before creating issue departments.", "warning");
+      return;
+    }
+
+    // For simplicity, we'll use the first product or let user select in dialog
+    // You can modify this logic to show a product selection step if needed
+    const firstProduct = grnDetails[0];
+    if (onSelectedProductForIssueChange) {
+      onSelectedProductForIssueChange(firstProduct);
+    }
+
+    setEditingIssueDepartment(null);
+    setIsIssueDeptDialogOpen(true);
+    onNewIssueDepartment(); // Call the original handler if needed
+  };
+
+  const handleIssueDepartmentSubmit = (data: IssueDepartmentData) => {
+    if (onIssueDepartmentChange) {
+      let updatedDepartments = [...issueDepartments];
+
+      if (editingIssueDepartment) {
+        // Update existing
+        const index = updatedDepartments.findIndex((dept) => dept.id === editingIssueDepartment.id);
+        if (index !== -1) {
+          updatedDepartments[index] = data;
+          showAlert("Success", "Issue department updated successfully.", "success");
+        }
+      } else {
+        // Add new
+        updatedDepartments.push(data);
+        showAlert("Success", "Issue department added successfully.", "success");
+      }
+
+      onIssueDepartmentChange(updatedDepartments);
+    }
+
+    setIsIssueDeptDialogOpen(false);
+    setEditingIssueDepartment(null);
+    if (onSelectedProductForIssueChange) {
+      onSelectedProductForIssueChange(null);
+    }
+  };
+
+  const handleIssueDepartmentDialogClose = () => {
+    setIsIssueDeptDialogOpen(false);
+    setEditingIssueDepartment(null);
+    if (onSelectedProductForIssueChange) {
+      onSelectedProductForIssueChange(null);
+    }
+  };
+
   const allDisabled = disabled || isApproved;
 
   return (
-    <Paper
-      elevation={2}
-      sx={{
-        p: 2.5,
-        mt: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        borderRadius: 2,
-      }}
-    >
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems="center" mb={2.5}>
-        <CustomButton text="Delete All" icon={DeleteAllIcon} color="error" onClick={onDeleteAll} disabled={allDisabled} />
-        <CustomButton text="Show History" icon={HistoryIcon} color="warning" onClick={onShowHistory} />
-        <CustomButton text="New Issual Department" icon={NewDeptIcon} color="primary" onClick={onNewIssueDepartment} />
-        <Box sx={{ flexGrow: 1 }} />
-        <Stack direction="row" spacing={1} alignItems="center">
-          <FormControlLabel
-            control={<Switch checked={isDiscountInPercentage} onChange={handleDiscountToggle} disabled={allDisabled} color="primary" />}
-            label=""
-            title={isDiscountInPercentage ? "Switch to Amount-based Discount" : "Switch to Percentage-based Discount"}
-            sx={{ mr: 0 }}
+    <>
+      <Paper
+        elevation={2}
+        sx={{
+          p: 2.5,
+          mt: 2,
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 2,
+        }}
+      >
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems="center" mb={2.5}>
+          <CustomButton text="Delete All" icon={DeleteAllIcon} color="error" onClick={onDeleteAll} disabled={allDisabled} />
+          <CustomButton text="Show History" icon={HistoryIcon} color="warning" onClick={onShowHistory} />
+          <CustomButton
+            text="New Issue Department"
+            icon={NewDeptIcon}
+            color="primary"
+            onClick={handleNewIssueDepartmentClick}
+            disabled={allDisabled || !grnDetails || grnDetails.length === 0}
           />
-          <EnhancedFormField name="disc" control={control} type="number" placeholder={isDiscountInPercentage ? "Discount %" : "Discount Amt"} size="small" disabled={allDisabled} />
-          <CustomButton text="Apply" icon={ApplyIcon} color="secondary" onClick={handleApplyDiscountClick} disabled={allDisabled} />
+          <Box sx={{ flexGrow: 1 }} />
+          <Stack direction="row" spacing={1} alignItems="center">
+            <FormControlLabel
+              control={<Switch checked={isDiscountInPercentage} onChange={handleDiscountToggle} disabled={allDisabled} color="primary" />}
+              label=""
+              title={isDiscountInPercentage ? "Switch to Amount-based Discount" : "Switch to Percentage-based Discount"}
+              sx={{ mr: 0 }}
+            />
+            <EnhancedFormField
+              name="disc"
+              control={control}
+              type="number"
+              placeholder={isDiscountInPercentage ? "Discount %" : "Discount Amt"}
+              size="small"
+              disabled={allDisabled}
+            />
+            <CustomButton text="Apply" icon={ApplyIcon} color="secondary" onClick={handleApplyDiscountClick} disabled={allDisabled} />
+          </Stack>
         </Stack>
-      </Stack>
 
-      <Grid container spacing={1}>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="Items Total">
-            <EnhancedFormField name="tot" control={control} type="number" disabled fullWidth variant="outlined" />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="Tax Amount">
-            <EnhancedFormField name="taxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="PO Disc. Amt">
-            <EnhancedFormField name="poDiscAmt" control={control} type="number" disabled fullWidth variant="outlined" />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="Rounding Adjustment">
-            <EnhancedFormField name="roundingAdjustment" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="Net Total">
-            <EnhancedFormField name="netTot" control={control} type="number" disabled fullWidth variant="outlined" />
-          </TotalDisplayField>
+        <Grid container spacing={1}>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="Items Total">
+              <EnhancedFormField name="tot" control={control} type="number" disabled fullWidth variant="outlined" />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="Tax Amount">
+              <EnhancedFormField name="taxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="PO Disc. Amt">
+              <EnhancedFormField name="poDiscAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="Rounding Adjustment">
+              <EnhancedFormField name="roundingAdjustment" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="Net Total">
+              <EnhancedFormField name="netTot" control={control} type="number" disabled fullWidth variant="outlined" />
+            </TotalDisplayField>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="Others">
+              <EnhancedFormField name="otherAmt" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="CGST Total">
+              <EnhancedFormField name="netCGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="SGST Total">
+              <EnhancedFormField name="netSGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="Coin Adjustment">
+              <EnhancedFormField name="coinAdj" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
+            </TotalDisplayField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+            <TotalDisplayField label="Balance">
+              <EnhancedFormField name="balanceAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+            </TotalDisplayField>
+          </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="Others">
-            <EnhancedFormField name="otherAmt" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="CGST Total">
-            <EnhancedFormField name="netCGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="SGST Total">
-            <EnhancedFormField name="netSGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="Coin Adjustment">
-            <EnhancedFormField name="coinAdj" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
-          </TotalDisplayField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-          <TotalDisplayField label="Balance">
-            <EnhancedFormField name="balanceAmt" control={control} type="number" disabled fullWidth variant="outlined" />
-          </TotalDisplayField>
-        </Grid>
-      </Grid>
+        <Box mt={2.5}>
+          <EnhancedFormField
+            name="rNotes"
+            control={control}
+            type="textarea"
+            label="Remarks"
+            fullWidth
+            disabled={allDisabled}
+            placeholder="Enter any additional remarks or notes for this GRN..."
+          />
+        </Box>
+      </Paper>
 
-      <Box mt={2.5}>
-        <EnhancedFormField
-          name="rNotes"
-          control={control}
-          type="textarea"
-          label="Remarks"
-          fullWidth
-          disabled={allDisabled}
-          placeholder="Enter any additional remarks or notes for this GRN..."
-        />
-      </Box>
-    </Paper>
+      {/* Issue Department Dialog */}
+      <IssueDepartmentDialog
+        open={isIssueDeptDialogOpen}
+        onClose={handleIssueDepartmentDialogClose}
+        onSubmit={handleIssueDepartmentSubmit}
+        selectedProduct={selectedProductForIssue}
+        editData={editingIssueDepartment}
+        title={editingIssueDepartment ? "Edit Issue Department" : "New Issue Department"}
+      />
+    </>
   );
 };
 
