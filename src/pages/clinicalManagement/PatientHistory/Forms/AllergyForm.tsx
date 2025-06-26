@@ -33,31 +33,31 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-// Define schemas
+// Define schemas - removed mGenCode as it's not in the interface
 const allergyDetailSchema = z.object({
   opipAlgDetailId: z.number().default(0),
   opipAlgId: z.number().default(0),
   mfId: z.number().min(1, "Medication form is required"),
-  mfName: z.string().min(1, "Medication form name is required"), // Added validation
-  mlId: z.number().min(1, "Medication ID is required"), // Changed to number and added validation
+  mfName: z.string().min(1, "Medication form name is required"),
+  mlId: z.number().min(1, "Medication ID is required"),
   medText: z.string().min(1, "Medication text is required"),
   mGenId: z.number().min(1, "Generic is required"),
-  mGenCode: z.string().optional().nullable(),
-  mGenName: z.string().min(1, "Generic name is required"), // Added validation
+  mGenName: z.string().min(1, "Generic name is required"),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().default("N"),
   rNotes: z.string().optional().nullable(),
 });
+
 const allergyFormSchema = z.object({
   opIPHistAllergyMastDto: z.object({
     opipAlgId: z.number().default(0),
     opipNo: z.number(),
-    pChartID: z.number(), // Changed from pChartId
-    opvID: z.number().default(0), // Changed from opvId
+    pChartID: z.number(),
+    opvID: z.number().default(0),
     opipCaseNo: z.number().default(0),
     patOpip: z.string().length(1).default("I"),
     opipDate: z.date(),
-    oldPChartID: z.number().default(0), // Changed from oldPChartId
+    oldPChartID: z.number().default(0),
     rActiveYN: z.string().default("Y"),
     transferYN: z.string().default("N"),
     rNotes: z.string().optional().nullable(),
@@ -109,7 +109,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
           medicationListService.getAll(),
         ]);
 
-        ස: setMedicationForms(forms.filter((f) => f.rActiveYN === "Y"));
+        setMedicationForms(forms.filter((f) => f.rActiveYN === "Y"));
         setMedicationGenerics(generics.filter((g) => g.rActiveYN === "Y"));
         setMedicationList(medications.filter((m) => m.rActiveYN === "Y"));
       } catch (error) {
@@ -127,32 +127,19 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
       const initialData: AllergyFormData = existingAllergy
         ? {
             opIPHistAllergyMastDto: {
-              opipDate: existingAllergy.opIPHistAllergyMastDto.opipDate || serverDate,
+              opipDate: new Date(existingAllergy.opIPHistAllergyMastDto.opipDate),
               opipAlgId: existingAllergy.opIPHistAllergyMastDto.opipAlgId || 0,
               opipNo: existingAllergy.opIPHistAllergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
               pChartID: existingAllergy.opIPHistAllergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
               opvID: existingAllergy.opIPHistAllergyMastDto.opvID || 0,
               opipCaseNo: existingAllergy.opIPHistAllergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
-              patOpip: admission.ipAdmissionDto.patOpip || "I",
+              patOpip: existingAllergy.opIPHistAllergyMastDto.patOpip || admission.ipAdmissionDto.patOpip || "I",
               oldPChartID: existingAllergy.opIPHistAllergyMastDto.oldPChartID || 0,
               rNotes: existingAllergy.opIPHistAllergyMastDto.rNotes || null,
               rActiveYN: existingAllergy.opIPHistAllergyMastDto.rActiveYN || "Y",
               transferYN: existingAllergy.opIPHistAllergyMastDto.transferYN || "N",
             },
-            allergyDetails: (existingAllergy.allergyDetails || []).map((detail) => ({
-              ...detail,
-              mlId: detail.mlId || 0,
-              mfId: detail.mfId || 0,
-              mGenId: detail.mGenId || 0,
-              opipAlgDetailId: detail.opipAlgDetailId || 0,
-              opipAlgId: detail.opipAlgId || 0,
-              mfName: detail.mfName || "",
-              medText: detail.medText || "",
-              mGenName: detail.mGenName || "",
-              rActiveYN: detail.rActiveYN || "Y",
-              transferYN: detail.transferYN || "N",
-              rNotes: detail.rNotes || "",
-            })),
+            allergyDetails: existingAllergy.allergyDetails || [],
           }
         : {
             opIPHistAllergyMastDto: {
@@ -162,37 +149,37 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
               pChartID: admission.ipAdmissionDto.pChartID,
               opipNo: admission.ipAdmissionDto.admitID,
               opipCaseNo: admission.ipAdmissionDto.oPIPCaseNo || 0,
-              patOpip: "I",
+              patOpip: admission.ipAdmissionDto.patOpip || "I",
               transferYN: "N",
               opvID: 0,
               oldPChartID: 0,
-              rNotes: "",
+              rNotes: null,
             },
             allergyDetails: [],
           };
 
       reset(initialData);
-      setAllergyDetails((initialData?.allergyDetails as OPIPHistAllergyDetailDto[]) ?? []);
+      // setAllergyDetails(initialData.allergyDetails);
     }
   }, [open, admission, existingAllergy, reset, serverDate]);
 
   const handleMedicationSelect = (medication: MedicationListDto | null) => {
-    if (medication) {
+    if (medication && !allergyDetails.some((detail) => detail.mlId === medication.mlID)) {
       const form = medicationForms.find((f) => f.mFID === medication.mfID);
       const generic = medicationGenerics.find((g) => g.mGenID === medication.mGenID);
+
       const newDetail: OPIPHistAllergyDetailDto = {
         opipAlgDetailId: 0,
-        opipAlgId: 0,
+        opipAlgId: existingAllergy?.opIPHistAllergyMastDto.opipAlgId || 0,
         mfId: medication.mfID,
-        mfName: form?.mFName || "Unknown Form", // Provide fallback
-        mlId: medication.mlID,
+        mfName: form?.mFName || "Unknown Form",
+        mlId: medication.mlID, // Note: using mlID from medication object
         medText: medication.medText,
         mGenId: medication.mGenID,
-        mGenCode: generic?.mGenCode || null,
-        mGenName: generic?.mGenName || "Unknown Generic", // Provide fallback
+        mGenName: generic?.mGenName || "Unknown Generic",
         rActiveYN: "Y",
         transferYN: "N",
-        rNotes: "",
+        rNotes: null,
       };
 
       setAllergyDetails([...allergyDetails, newDetail]);
@@ -206,30 +193,35 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
   const onFormSubmit = async (data: AllergyFormData) => {
     try {
       setIsSubmitting(true);
+
+      // Validate that we have allergy details
+      if (allergyDetails.length === 0) {
+        throw new Error("Please add at least one allergy");
+      }
+
       const submissionData: AllergyDto = {
         opIPHistAllergyMastDto: {
           opipAlgId: data.opIPHistAllergyMastDto.opipAlgId || 0,
-          opipDate: data.opIPHistAllergyMastDto.opipDate || serverDate,
-          opipNo: data.opIPHistAllergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
-          pChartID: data.opIPHistAllergyMastDto.pChartID,
-          opvID: data.opIPHistAllergyMastDto.opvID || 0,
-          opipCaseNo: data.opIPHistAllergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
-          oldPChartID: data.opIPHistAllergyMastDto.oldPChartID || 0,
-          patOpip: data.opIPHistAllergyMastDto.patOpip || "I",
           rActiveYN: data.opIPHistAllergyMastDto.rActiveYN || "Y",
           transferYN: data.opIPHistAllergyMastDto.transferYN || "N",
-          rNotes: data.opIPHistAllergyMastDto.rNotes || null,
+          opvID: data.opIPHistAllergyMastDto.opvID || 0,
+          oldPChartID: data.opIPHistAllergyMastDto.oldPChartID || 0,
+          opipDate: data.opIPHistAllergyMastDto.opipDate,
+          opipNo: data.opIPHistAllergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
+          pChartID: data.opIPHistAllergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
+          opipCaseNo: data.opIPHistAllergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
+          patOpip: data.opIPHistAllergyMastDto.patOpip || admission.ipAdmissionDto.patOpip || "I",
+          rNotes: data.opIPHistAllergyMastDto.rNotes || "",
         },
         allergyDetails: allergyDetails.map((detail) => ({
-          opipAlgId: data.opIPHistAllergyMastDto.opipAlgId || 0,
           opipAlgDetailId: detail.opipAlgDetailId || 0,
-          mfId: detail.mfId || 0,
-          mfName: detail.mfName || "",
-          mlId: detail.mlId || 0,
-          medText: detail.medText || "",
-          mGenId: detail.mGenId || 0,
-          mGenName: detail.mGenName || "",
-          mGenCode: detail.mGenCode || null,
+          opipAlgId: existingAllergy?.opIPHistAllergyMastDto.opipAlgId || 0,
+          mfId: detail.mfId,
+          mfName: detail.mfName,
+          mlId: detail.mlId,
+          medText: detail.medText,
+          mGenId: detail.mGenId,
+          mGenName: detail.mGenName,
           rActiveYN: detail.rActiveYN || "Y",
           transferYN: detail.transferYN || "N",
           rNotes: detail.rNotes || null,
@@ -237,6 +229,8 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
       };
 
       await onSubmit(submissionData);
+
+      // Reset form after successful submission
       reset({
         opIPHistAllergyMastDto: {
           opipAlgId: 0,
@@ -245,7 +239,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
           pChartID: admission.ipAdmissionDto.pChartID,
           opipNo: admission.ipAdmissionDto.admitID,
           opipCaseNo: admission.ipAdmissionDto.oPIPCaseNo || 0,
-          patOpip: "I",
+          patOpip: admission.ipAdmissionDto.patOpip || "I",
           transferYN: "N",
           opvID: 0,
           oldPChartID: 0,
@@ -257,6 +251,8 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
       onClose();
     } catch (error) {
       console.error("Error submitting allergy:", error);
+      // The error should be handled by the parent component
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -275,6 +271,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
       reset({
         opIPHistAllergyMastDto: {
           ...existingAllergy.opIPHistAllergyMastDto,
+          opipDate: new Date(existingAllergy.opIPHistAllergyMastDto.opipDate),
           opipNo: existingAllergy.opIPHistAllergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
           pChartID: existingAllergy.opIPHistAllergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
           opvID: existingAllergy.opIPHistAllergyMastDto.opvID || 0,
@@ -294,7 +291,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
           pChartID: admission.ipAdmissionDto.pChartID,
           opipNo: admission.ipAdmissionDto.admitID,
           opipCaseNo: admission.ipAdmissionDto.oPIPCaseNo || 0,
-          patOpip: "I",
+          patOpip: admission.ipAdmissionDto.patOpip || "I",
           transferYN: "N",
           opvID: 0,
           oldPChartID: 0,
@@ -304,6 +301,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
       });
       setAllergyDetails([]);
     }
+    setShowResetConfirmation(false);
   };
 
   const patientName = admission
@@ -395,6 +393,9 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                     <Grid size={{ xs: 12, md: 4 }}>
                       <EnhancedFormField name="opIPHistAllergyMastDto.rActiveYN" control={control} type="switch" label="Active" disabled={viewOnly} size="small" />
                     </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <EnhancedFormField name="opIPHistAllergyMastDto.rNotes" control={control} type="text" label="Notes" disabled={viewOnly} size="small" />
+                    </Grid>
                   </Grid>
                 </CardContent>
               </Card>
@@ -416,6 +417,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                           onChange={(_, newValue) => handleMedicationSelect(newValue)}
                           size="small"
                           renderInput={(params) => <TextField {...params} label="Search Medication" placeholder="Type to search..." />}
+                          isOptionEqualToValue={(option, value) => option.mlID === value.mlID}
                         />
                       </Grid>
                     </Grid>
@@ -480,7 +482,6 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
         onClose={() => setShowResetConfirmation(false)}
         onConfirm={() => {
           performReset();
-          setShowResetConfirmation(false);
         }}
         title="Reset Form"
         message="Are you sure you want to reset the form? All unsaved changes will be lost."
