@@ -119,6 +119,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         break;
       default:
         setCurrentHistoryType("family");
+        break;
     }
   };
 
@@ -299,7 +300,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   }, []);
 
   const handleEdit = useCallback(async (history: any) => {
-    if (tabValue === 0) {
+    if (tabValue === 6) {
       const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
       setSelectedHistory(selectedPastMedication);
     } else {
@@ -310,7 +311,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   }, []);
 
   const handleView = useCallback(async (history: any) => {
-    if (tabValue === 0) {
+    if (tabValue === 6) {
       const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
       setSelectedHistory(selectedPastMedication);
     } else {
@@ -325,6 +326,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     setIsDeleteConfirmOpen(true);
   }, []);
 
+  useEffect(() => {
+    console.log(tabValue, "tabValue");
+  }, [tabValue]);
   return (
     <>
       <GenericDialog
