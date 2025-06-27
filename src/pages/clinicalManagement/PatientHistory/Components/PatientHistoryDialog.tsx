@@ -299,27 +299,33 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback(async (history: any) => {
-    if (tabValue === 6) {
-      const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
-      setSelectedHistory(selectedPastMedication);
-    } else {
-      setSelectedHistory(history);
-    }
-    setIsViewMode(false);
-    setIsFormOpen(true);
-  }, []);
+  const handleEdit = useCallback(
+    async (history: any) => {
+      if (tabValue === 6) {
+        const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+        setSelectedHistory(selectedPastMedication);
+      } else {
+        setSelectedHistory(history);
+      }
+      setIsViewMode(false);
+      setIsFormOpen(true);
+    },
+    [tabValue]
+  );
 
-  const handleView = useCallback(async (history: any) => {
-    if (tabValue === 6) {
-      const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
-      setSelectedHistory(selectedPastMedication);
-    } else {
-      setSelectedHistory(history);
-    }
-    setIsViewMode(true);
-    setIsFormOpen(true);
-  }, []);
+  const handleView = useCallback(
+    async (history: any) => {
+      if (tabValue === 6) {
+        const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+        setSelectedHistory(selectedPastMedication);
+      } else {
+        setSelectedHistory(history);
+      }
+      setIsViewMode(true);
+      setIsFormOpen(true);
+    },
+    [tabValue]
+  );
 
   const handleDeleteClick = useCallback((history: any) => {
     setHistoryToDelete(history);
