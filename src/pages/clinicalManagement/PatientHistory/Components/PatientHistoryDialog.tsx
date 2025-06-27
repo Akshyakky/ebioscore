@@ -332,16 +332,13 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     setIsDeleteConfirmOpen(true);
   }, []);
 
-  useEffect(() => {
-    console.log(tabValue, "tabValue");
-  }, [tabValue]);
   return (
     <>
       <GenericDialog
         open={open}
         onClose={onClose}
         title={`Patient History - ${patientName}`}
-        maxWidth="lg"
+        maxWidth="xl"
         fullWidth
         showCloseButton
         actions={
