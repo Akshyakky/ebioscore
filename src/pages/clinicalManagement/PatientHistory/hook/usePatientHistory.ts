@@ -122,14 +122,9 @@ export const usePastMedication = () => {
     error: hook.error,
     fetchPastMedicationList: hook.fetchEntityList,
     getPastMedicationById: hook.getEntityById,
-    savePastMedication: async (data: PastMedicationDto) => {
-      return pastMedicationService.createOrUpdatePastMedication(data);
-    },
+    savePastMedication: hook.saveEntity,
     deletePastMedication: hook.deleteEntity,
     updatePastMedicationStatus: hook.updateEntityStatus,
-    getPastMedicationWithDetails: async (id: number) => {
-      return pastMedicationService.getPastMedicationWithDetails(id);
-    },
     getByKeyFields: async (pChartID: number, opipNo: number, opipCaseNo: number) => {
       return pastMedicationService.getByKeyFields(pChartID, opipNo, opipCaseNo);
     },

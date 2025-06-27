@@ -69,17 +69,19 @@ const pastMedicationDetailSchema = z.object({
 });
 
 const pastMedicationFormSchema = z.object({
-  opipPastMedID: z.number().default(0),
-  opipNo: z.number(),
-  pChartID: z.number(),
-  opvID: z.number().default(0),
-  opipCaseNo: z.number().default(0),
-  patOpip: z.string().length(1).default("I"),
-  opipDate: z.date(),
-  oldPChartID: z.number().default(0),
-  rActiveYN: z.string().default("Y"),
-  transferYN: z.string().default("N"),
-  rNotes: z.string().optional().nullable(),
+  pastMedicationMastDto: z.object({
+    opipPastMedID: z.number().default(0),
+    opipDate: z.date(),
+    opipNo: z.number().default(0),
+    opvID: z.number().default(0),
+    pChartID: z.number().default(0),
+    opipCaseNo: z.number().default(0),
+    patOpip: z.string().length(1).default("I"),
+    oldPChartID: z.number().default(0),
+    rActiveYN: z.string().default("Y"),
+    transferYN: z.string().default("N"),
+    rNotes: z.string().optional().nullable(),
+  }),
   details: z.array(pastMedicationDetailSchema).min(1, "At least one medication must be added"),
 });
 
@@ -95,6 +97,7 @@ interface PastMedicationFormProps {
 }
 
 export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, onClose, onSubmit, admission, existingMedication, viewOnly = false }) => {
+  console.log("existingMedication", existingMedication);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
@@ -168,25 +171,39 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
       const initialData: PastMedicationFormData = existingMedication
         ? {
             ...existingMedication,
-            opipDate: new Date(existingMedication.opipDate),
-            details: existingMedication.details.map((d) => ({
+            pastMedicationMastDto: {
+              opipPastMedID: existingMedication.pastMedicationMastDto?.opipPastMedID,
+              opipDate: new Date(existingMedication.pastMedicationMastDto?.opipDate),
+              rActiveYN: existingMedication.pastMedicationMastDto?.rActiveYN,
+              pChartID: existingMedication.pastMedicationMastDto?.pChartID,
+              opipNo: existingMedication.pastMedicationMastDto?.opipNo,
+              opipCaseNo: existingMedication.pastMedicationMastDto?.opipCaseNo,
+              patOpip: existingMedication.pastMedicationMastDto?.patOpip,
+              transferYN: existingMedication.pastMedicationMastDto?.transferYN,
+              opvID: existingMedication.pastMedicationMastDto?.opvID,
+              oldPChartID: existingMedication.pastMedicationMastDto?.oldPChartID,
+              rNotes: existingMedication.pastMedicationMastDto?.rNotes || null,
+            },
+            details: existingMedication.details?.map((d) => ({
               ...d,
               fromDate: new Date(d.fromDate),
               toDate: new Date(d.toDate),
             })),
           }
         : {
-            opipPastMedID: 0,
-            opipDate: serverDate,
-            rActiveYN: "Y",
-            pChartID: admission.ipAdmissionDto.pChartID,
-            opipNo: admission.ipAdmissionDto.admitID,
-            opipCaseNo: admission.ipAdmissionDto.oPIPCaseNo || 0,
-            patOpip: admission.ipAdmissionDto.patOpip || "I",
-            transferYN: "N",
-            opvID: 0,
-            oldPChartID: 0,
-            rNotes: null,
+            pastMedicationMastDto: {
+              opipPastMedID: 0,
+              opipDate: serverDate,
+              rActiveYN: "Y",
+              pChartID: admission.ipAdmissionDto.pChartID,
+              opipNo: admission.ipAdmissionDto.admitID,
+              opipCaseNo: admission.ipAdmissionDto.oPIPCaseNo || 0,
+              patOpip: admission.ipAdmissionDto.patOpip || "I",
+              transferYN: "N",
+              opvID: 0,
+              oldPChartID: 0,
+              rNotes: null,
+            },
             details: [],
           };
 
@@ -202,7 +219,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
 
     const newDetail: PastMedicationDetailDto = {
       opipPastMedDtlID: 0,
-      opipPastMedID: existingMedication?.opipPastMedID || 0,
+      opipPastMedID: existingMedication?.pastMedicationMastDto?.opipPastMedID || 0,
       mfID: selectedMedication.mfID,
       mfName: form?.mFName || "Unknown Form",
       mlID: selectedMedication.mlID,
@@ -244,20 +261,22 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
       setIsSubmitting(true);
 
       const submissionData: PastMedicationDto = {
-        opipPastMedID: data.opipPastMedID || 0,
-        opipDate: data.opipDate || serverDate,
-        opipNo: data.opipNo || 0,
-        opvID: data.opvID || 0,
-        pChartID: data.pChartID || 0,
-        opipCaseNo: data.opipCaseNo || 0,
-        patOpip: data.patOpip || "I",
-        oldPChartID: data.oldPChartID || 0,
-        rActiveYN: data.rActiveYN || "Y",
-        transferYN: data.transferYN || "N",
-        rNotes: data.rNotes || "",
-        details: details.map((detail) => ({
+        pastMedicationMastDto: {
+          opipPastMedID: data.pastMedicationMastDto?.opipPastMedID || 0,
+          opipDate: data.pastMedicationMastDto?.opipDate || serverDate,
+          opipNo: data.pastMedicationMastDto?.opipNo || 0,
+          opvID: data.pastMedicationMastDto?.opvID || 0,
+          pChartID: data.pastMedicationMastDto?.pChartID || 0,
+          opipCaseNo: data.pastMedicationMastDto?.opipCaseNo || 0,
+          patOpip: data.pastMedicationMastDto?.patOpip || "I",
+          oldPChartID: data.pastMedicationMastDto?.oldPChartID || 0,
+          rActiveYN: data.pastMedicationMastDto?.rActiveYN || "Y",
+          transferYN: data.pastMedicationMastDto?.transferYN || "N",
+          rNotes: data.pastMedicationMastDto?.rNotes || "",
+        },
+        details: details?.map((detail) => ({
           opipPastMedDtlID: detail.opipPastMedDtlID || 0,
-          opipPastMedID: data.opipPastMedID || 0,
+          opipPastMedID: data.pastMedicationMastDto?.opipPastMedID || 0,
           mfID: detail.mfID,
           mfName: detail.mfName,
           mlID: detail.mlID,
@@ -303,8 +322,12 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
     if (existingMedication) {
       reset({
         ...existingMedication,
-        opipDate: new Date(existingMedication.opipDate),
-        details: existingMedication.details.map((d) => ({
+        pastMedicationMastDto: {
+          ...existingMedication.pastMedicationMastDto,
+          opipPastMedID: existingMedication.pastMedicationMastDto?.opipPastMedID || 0,
+          opipDate: new Date(existingMedication.pastMedicationMastDto?.opipDate),
+        },
+        details: existingMedication.details?.map((d) => ({
           ...d,
           fromDate: new Date(d.fromDate),
           toDate: new Date(d.toDate),
@@ -312,17 +335,19 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
       });
     } else {
       reset({
-        opipPastMedID: 0,
-        opipDate: serverDate,
-        rActiveYN: "Y",
-        pChartID: admission?.ipAdmissionDto.pChartID || 0,
-        opipNo: admission?.ipAdmissionDto.admitID || 0,
-        opipCaseNo: admission?.ipAdmissionDto.oPIPCaseNo || 0,
-        patOpip: admission?.ipAdmissionDto.patOpip || "I",
-        transferYN: "N",
-        opvID: 0,
-        oldPChartID: 0,
-        rNotes: null,
+        pastMedicationMastDto: {
+          opipPastMedID: 0,
+          opipDate: serverDate,
+          rActiveYN: "Y",
+          pChartID: admission?.ipAdmissionDto.pChartID || 0,
+          opipNo: admission?.ipAdmissionDto.admitID || 0,
+          opipCaseNo: admission?.ipAdmissionDto.oPIPCaseNo || 0,
+          patOpip: admission?.ipAdmissionDto.patOpip || "I",
+          transferYN: "N",
+          opvID: 0,
+          oldPChartID: 0,
+          rNotes: null,
+        },
         details: [],
       });
     }
@@ -413,13 +438,13 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="opipDate" control={control} type="datepicker" label="Date" required disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="pastMedicationMastDto.opipDate" control={control} type="datepicker" label="Date" required disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="rActiveYN" control={control} type="switch" label="Active" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="pastMedicationMastDto.rActiveYN" control={control} type="switch" label="Active" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="rNotes" control={control} type="text" label="Notes" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="pastMedicationMastDto.rNotes" control={control} type="text" label="Notes" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -560,7 +585,7 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {details.map((detail, index) => (
+                          {details?.map((detail, index) => (
                             <TableRow key={index}>
                               <TableCell>{detail.medText}</TableCell>
                               <TableCell>

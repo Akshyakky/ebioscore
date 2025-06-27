@@ -59,7 +59,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   const { pmhHistoryList, fetchPMHHistoryList, savePMHHistory, deletePMHHistory } = usePMHHistory();
   const { pshHistoryList, fetchPSHHistoryList, savePSHHistory, deletePSHHistory } = usePSHHistory();
   const { allergyList, fetchAllergyList, saveAllergy, deleteAllergy } = useAllergy();
-  const { pastMedicationList, fetchPastMedicationList, savePastMedication, deletePastMedication } = usePastMedication();
+  const { pastMedicationList, fetchPastMedicationList, savePastMedication, getPastMedicationById, deletePastMedication } = usePastMedication();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<any>(null);
@@ -289,20 +289,33 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     ? `${admission.ipAdmissionDto.pTitle} ${admission.ipAdmissionDto.pfName} ${admission.ipAdmissionDto.pmName || ""} ${admission.ipAdmissionDto.plName}`.trim()
     : "Patient";
 
+  const fetchPastMedicationById = async (id: number) => {
+    return await getPastMedicationById(id);
+  };
   const handleAddNew = useCallback(() => {
     setSelectedHistory(null);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((history: any) => {
-    setSelectedHistory(history);
+  const handleEdit = useCallback(async (history: any) => {
+    if (tabValue === 0) {
+      const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+      setSelectedHistory(selectedPastMedication);
+    } else {
+      setSelectedHistory(history);
+    }
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleView = useCallback((history: any) => {
-    setSelectedHistory(history);
+  const handleView = useCallback(async (history: any) => {
+    if (tabValue === 0) {
+      const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+      setSelectedHistory(selectedPastMedication);
+    } else {
+      setSelectedHistory(history);
+    }
     setIsViewMode(true);
     setIsFormOpen(true);
   }, []);

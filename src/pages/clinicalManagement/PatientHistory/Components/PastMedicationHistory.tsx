@@ -15,7 +15,7 @@ export const PastMedicationHistory = (props: any) => {
       visible: true,
       sortable: true,
       width: 120,
-      render: (medication) => <Typography variant="body2">{formatDt(medication.opipDate)}</Typography>,
+      render: (medication) => <Typography variant="body2">{formatDt(medication.pastMedicationMastDto.opipDate)}</Typography>,
     },
     {
       key: "details",
@@ -63,7 +63,12 @@ export const PastMedicationHistory = (props: any) => {
       sortable: true,
       width: 100,
       render: (medication) => (
-        <Chip label={medication.rActiveYN === "Y" ? "Active" : "Inactive"} size="small" color={medication.rActiveYN === "Y" ? "success" : "default"} variant="filled" />
+        <Chip
+          label={medication.pastMedicationMastDto.rActiveYN === "Y" ? "Active" : "Inactive"}
+          size="small"
+          color={medication.pastMedicationMastDto.rActiveYN === "Y" ? "success" : "default"}
+          variant="filled"
+        />
       ),
     },
     {
@@ -74,13 +79,13 @@ export const PastMedicationHistory = (props: any) => {
       width: 150,
       render: (medication) => (
         <Stack direction="row" spacing={0.5}>
-          <IconButton size="small" color="primary" onClick={() => props.onView(medication)} title="View">
+          <IconButton size="small" color="primary" onClick={() => props.onView(medication.pastMedicationMastDto)} title="View">
             <ViewIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="info" onClick={() => props.onEdit(medication)} title="Edit">
+          <IconButton size="small" color="info" onClick={() => props.onEdit(medication.pastMedicationMastDto)} title="Edit">
             <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="error" onClick={() => props.onDelete(medication)} title="Delete">
+          <IconButton size="small" color="error" onClick={() => props.onDelete(medication.pastMedicationMastDto)} title="Delete">
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Stack>
@@ -99,6 +104,7 @@ export const PastMedicationHistory = (props: any) => {
       descField="details"
       notesField="rNotes"
       activeField="rActiveYN"
+      isMedication={true}
     />
   );
 };

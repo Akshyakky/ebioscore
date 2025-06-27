@@ -23,6 +23,7 @@ interface GenericHistoryListProps<T> {
   descField: keyof T;
   notesField: keyof T;
   activeField: keyof T;
+  isMedication: boolean;
 }
 
 export const GenericHistoryList = <T extends Record<string, any>>({
@@ -37,13 +38,17 @@ export const GenericHistoryList = <T extends Record<string, any>>({
   idField,
   dateField,
   activeField,
+  isMedication = false,
 }: GenericHistoryListProps<T>) => {
   const patientHistories = React.useMemo(() => {
     if (!admission) return [];
-
-    return historyList
-      .filter((history) => history.pChartID === admission.ipAdmissionDto.pChartID && history[activeField] === "Y")
-      .sort((a, b) => new Date(b[dateField]).getTime() - new Date(a[dateField]).getTime());
+    if (isMedication) {
+      return historyList;
+    } else {
+      return historyList
+        .filter((history) => history.pChartID === admission.ipAdmissionDto.pChartID && history[activeField] === "Y")
+        .sort((a, b) => new Date(b[dateField]).getTime() - new Date(a[dateField]).getTime());
+    }
   }, [historyList, admission, activeField, dateField]);
 
   return (
