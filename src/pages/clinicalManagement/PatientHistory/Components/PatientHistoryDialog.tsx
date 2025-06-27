@@ -1,3 +1,4 @@
+// src/pages/clinicalManagement/PatientHistory/Components/PatientHistoryDialog.tsx
 import CustomButton from "@/components/Button/CustomButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -7,6 +8,7 @@ import {
   LocalPharmacy as AllergyIcon,
   FamilyRestroom as FamilyIcon,
   MedicalServices as MedicalIcon,
+  Medication as MedicationIcon,
   LocalHospital as PastMedicalIcon,
   Psychology as ReviewIcon,
   Assignment as SocialIcon,
@@ -15,15 +17,17 @@ import {
 import { Avatar, Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import { PastMedicalHistoryForm } from "../Forms/PastMedicalHistoryForm";
+import { PastMedicationForm } from "../Forms/PastMedicationForm";
 import { PastSurgicalHistoryForm } from "../Forms/PastSurgicalHistoryForm";
 import { ReviewOfSystemForm } from "../Forms/ReviewOfSystemForm";
 import { SocialHistoryForm } from "../Forms/SocialHistoryForm";
-import { useAllergy, useFamilyHistory, usePMHHistory, usePSHHistory, useROSHistory, useSocialHistory } from "../hook/usePatientHistory";
+import { useAllergy, useFamilyHistory, usePastMedication, usePMHHistory, usePSHHistory, useROSHistory, useSocialHistory } from "../hook/usePatientHistory";
 import { AllergyForm } from "./../Forms/AllergyForm";
 import { FamilyHistoryForm } from "./../Forms/FamilyHistoryForm";
 import { AllergyHistory } from "./AllergyHistory";
 import { FamilyHistory } from "./FamilyHistory";
 import PastMedicalHistory from "./PastMedicalHistory";
+import { PastMedicationHistory } from "./PastMedicationHistory";
 import PastSurgicalHistory from "./PastSurgicalHistory";
 import ReviewOfSystem from "./ReviewOfSystem";
 import { SocialHistory } from "./SocialHistory";
@@ -55,13 +59,14 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   const { pmhHistoryList, fetchPMHHistoryList, savePMHHistory, deletePMHHistory } = usePMHHistory();
   const { pshHistoryList, fetchPSHHistoryList, savePSHHistory, deletePSHHistory } = usePSHHistory();
   const { allergyList, fetchAllergyList, saveAllergy, deleteAllergy } = useAllergy();
+  const { pastMedicationList, fetchPastMedicationList, savePastMedication, getPastMedicationById, deletePastMedication } = usePastMedication();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<any>(null);
   const [isViewMode, setIsViewMode] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [historyToDelete, setHistoryToDelete] = useState<any>(null);
-  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social" | "pmh" | "psh" | "ros" | "allergy">("family");
+  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social" | "pmh" | "psh" | "ros" | "allergy" | "pastMedication">("family");
   const { setLoading } = useLoading();
   const [tabValue, setTabValue] = useState(0);
 
@@ -82,6 +87,8 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       fetchRosHistoryList();
     } else if (tabValue === 5) {
       fetchAllergyList();
+    } else if (tabValue === 6) {
+      fetchPastMedicationList();
     }
   }, [open, admission, tabValue]);
 
@@ -107,8 +114,12 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       case 5:
         setCurrentHistoryType("allergy");
         break;
+      case 6:
+        setCurrentHistoryType("pastMedication");
+        break;
       default:
         setCurrentHistoryType("family");
+        break;
     }
   };
 
@@ -137,17 +148,41 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         case "allergy":
           result = await deleteAllergy(historyToDelete.opIPHistAllergyMastDto.opipAlgId);
           break;
+        case "pastMedication":
+          result = await deletePastMedication(historyToDelete.opipPastMedID);
+          break;
       }
 
       if (result) {
-        showAlert("Success", `${currentHistoryType === "allergy" ? "Allergy" : currentHistoryType} history deleted successfully`, "success");
+        showAlert(
+          "Success",
+          `${currentHistoryType === "allergy" ? "Allergy" : currentHistoryType === "pastMedication" ? "Past medication" : currentHistoryType} history deleted successfully`,
+          "success"
+        );
 
         // Refresh the list after deletion
         switch (currentHistoryType) {
+          case "family":
+            await fetchFamilyHistoryList();
+            break;
+          case "social":
+            await fetchSocialHistoryList();
+            break;
+          case "pmh":
+            await fetchPMHHistoryList();
+            break;
+          case "psh":
+            await fetchPSHHistoryList();
+            break;
+          case "ros":
+            await fetchRosHistoryList();
+            break;
           case "allergy":
             await fetchAllergyList();
             break;
-          // ... other cases remain the same
+          case "pastMedication":
+            await fetchPastMedicationList();
+            break;
         }
       } else {
         throw new Error(`Failed to delete ${currentHistoryType} history`);
@@ -158,7 +193,18 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       setIsDeleteConfirmOpen(false);
       setHistoryToDelete(null);
     }
-  }, [historyToDelete, currentHistoryType, deleteFamilyHistory, deleteSocialHistory, deletePMHHistory, deletePSHHistory, deleteRosHistory, deleteAllergy, showAlert]);
+  }, [
+    historyToDelete,
+    currentHistoryType,
+    deleteFamilyHistory,
+    deleteSocialHistory,
+    deletePMHHistory,
+    deletePSHHistory,
+    deleteRosHistory,
+    deleteAllergy,
+    deletePastMedication,
+    showAlert,
+  ]);
 
   const handleFormSubmit = useCallback(
     async (data: any) => {
@@ -185,10 +231,17 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
           case "allergy":
             result = await saveAllergy(data);
             break;
+          case "pastMedication":
+            result = await savePastMedication(data);
+            break;
         }
 
         if (result && (result.success !== undefined ? result.success : true)) {
-          showAlert("Success", `${currentHistoryType === "allergy" ? "Allergy" : "History"} saved successfully`, "success");
+          showAlert(
+            "Success",
+            `${currentHistoryType === "allergy" ? "Allergy" : currentHistoryType === "pastMedication" ? "Past medication" : "History"} saved successfully`,
+            "success"
+          );
           setIsFormOpen(false);
 
           switch (currentHistoryType) {
@@ -210,6 +263,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
             case "allergy":
               await fetchAllergyList();
               break;
+            case "pastMedication":
+              await fetchPastMedicationList();
+              break;
           }
         } else {
           throw new Error(`Failed to save ${currentHistoryType} history`);
@@ -221,7 +277,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         setLoading(false);
       }
     },
-    [currentHistoryType, saveFamilyHistory, saveSocialHistory, savePMHHistory, savePSHHistory, saveRosHistory, saveAllergy, showAlert, setLoading]
+    [currentHistoryType, saveFamilyHistory, saveSocialHistory, savePMHHistory, savePSHHistory, saveRosHistory, saveAllergy, savePastMedication, showAlert, setLoading]
   );
 
   const handleFormClose = useCallback(() => {
@@ -234,23 +290,42 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     ? `${admission.ipAdmissionDto.pTitle} ${admission.ipAdmissionDto.pfName} ${admission.ipAdmissionDto.pmName || ""} ${admission.ipAdmissionDto.plName}`.trim()
     : "Patient";
 
+  const fetchPastMedicationById = async (id: number) => {
+    return await getPastMedicationById(id);
+  };
   const handleAddNew = useCallback(() => {
     setSelectedHistory(null);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((history: any) => {
-    setSelectedHistory(history);
-    setIsViewMode(false);
-    setIsFormOpen(true);
-  }, []);
+  const handleEdit = useCallback(
+    async (history: any) => {
+      if (tabValue === 6) {
+        const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+        setSelectedHistory(selectedPastMedication);
+      } else {
+        setSelectedHistory(history);
+      }
+      setIsViewMode(false);
+      setIsFormOpen(true);
+    },
+    [tabValue]
+  );
 
-  const handleView = useCallback((history: any) => {
-    setSelectedHistory(history);
-    setIsViewMode(true);
-    setIsFormOpen(true);
-  }, []);
+  const handleView = useCallback(
+    async (history: any) => {
+      if (tabValue === 6) {
+        const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+        setSelectedHistory(selectedPastMedication);
+      } else {
+        setSelectedHistory(history);
+      }
+      setIsViewMode(true);
+      setIsFormOpen(true);
+    },
+    [tabValue]
+  );
 
   const handleDeleteClick = useCallback((history: any) => {
     setHistoryToDelete(history);
@@ -263,7 +338,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         open={open}
         onClose={onClose}
         title={`Patient History - ${patientName}`}
-        maxWidth="lg"
+        maxWidth="xl"
         fullWidth
         showCloseButton
         actions={
@@ -349,6 +424,14 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
                 aria-controls="patient-history-tabpanel-5"
                 sx={{ minHeight: 48, textTransform: "none" }}
               />
+              <Tab
+                label="Past Medications"
+                icon={<MedicationIcon fontSize="small" />}
+                iconPosition="start"
+                id="patient-history-tab-6"
+                aria-controls="patient-history-tabpanel-6"
+                sx={{ minHeight: 48, textTransform: "none" }}
+              />
             </Tabs>
           </Box>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -423,6 +506,18 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
                 onDelete={handleDeleteClick}
               />
             </TabPanel>
+
+            <TabPanel value={tabValue} index={6}>
+              <PastMedicationHistory
+                admission={admission}
+                historyList={pastMedicationList}
+                fetchHistoryList={fetchPastMedicationList}
+                onAddNew={handleAddNew}
+                onEdit={handleEdit}
+                onView={handleView}
+                onDelete={handleDeleteClick}
+              />
+            </TabPanel>
           </Box>
         </Box>
       </GenericDialog>
@@ -471,13 +566,27 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         <AllergyForm open={isFormOpen} onClose={handleFormClose} onSubmit={handleFormSubmit} admission={admission} existingAllergy={selectedHistory} viewOnly={isViewMode} />
       )}
 
+      {/* Past Medication Form */}
+      {isFormOpen && currentHistoryType === "pastMedication" && (
+        <PastMedicationForm
+          open={isFormOpen}
+          onClose={handleFormClose}
+          onSubmit={handleFormSubmit}
+          admission={admission}
+          existingMedication={selectedHistory}
+          viewOnly={isViewMode}
+        />
+      )}
+
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
-        title={`Delete ${currentHistoryType === "allergy" ? "Allergy" : currentHistoryType} History`}
-        message={`Are you sure you want to delete this ${currentHistoryType === "allergy" ? "allergy" : currentHistoryType + " history"} record? This action cannot be undone.`}
+        title={`Delete ${currentHistoryType === "allergy" ? "Allergy" : currentHistoryType === "pastMedication" ? "Past Medication" : currentHistoryType} History`}
+        message={`Are you sure you want to delete this ${
+          currentHistoryType === "allergy" ? "allergy" : currentHistoryType === "pastMedication" ? "past medication" : currentHistoryType + " history"
+        } record? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         type="error"

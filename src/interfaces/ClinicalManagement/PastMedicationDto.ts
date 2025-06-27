@@ -3,10 +3,14 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { BaseHistoryDto } from "./BaseHistoryDto";
 
-export interface PastMedicationDto extends BaseHistoryDto {
+export interface PastMedicationDto {
+  pastMedicationMastDto: PastMedicationMastDto;
+  details: PastMedicationDetailDto[];
+}
+
+export interface PastMedicationMastDto extends BaseHistoryDto {
   opipPastMedID: number;
   opipDate: Date;
-  details: PastMedicationDetailDto[];
 }
 
 export interface PastMedicationDetailDto extends BaseDto {

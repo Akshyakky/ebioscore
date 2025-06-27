@@ -1,3 +1,4 @@
+// src/pages/clinicalManagement/PatientHistory/Forms/AllergyForm.tsx
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
@@ -33,7 +34,6 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-// Define schemas - removed mGenCode as it's not in the interface
 const allergyDetailSchema = z.object({
   opipAlgDetailId: z.number().default(0),
   opipAlgId: z.number().default(0),
@@ -79,12 +79,14 @@ interface AllergyFormProps {
 export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmit, admission, existingAllergy, viewOnly = false }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
-  const [allergyDetails, setAllergyDetails] = useState<OPIPHistAllergyDetailDto[]>([]);
 
   // Master data states
   const [medicationForms, setMedicationForms] = useState<MedicationFormDto[]>([]);
   const [medicationGenerics, setMedicationGenerics] = useState<MedicationGenericDto[]>([]);
   const [medicationList, setMedicationList] = useState<MedicationListDto[]>([]);
+
+  // Form states for new allergy detail
+  const [selectedMedication, setSelectedMedication] = useState<MedicationListDto | null>(null);
 
   const serverDate = useServerDate();
   const isEditMode = !!existingAllergy;
@@ -93,11 +95,18 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
     control,
     handleSubmit,
     reset,
-    formState: { isDirty },
+    setValue,
+    watch,
+    formState: { isDirty, errors },
   } = useForm<AllergyFormData>({
     resolver: zodResolver(allergyFormSchema),
     mode: "onChange",
+    defaultValues: {
+      allergyDetails: [],
+    },
   });
+
+  const allergyDetails = watch("allergyDetails", []);
 
   // Load master data
   useEffect(() => {
@@ -159,45 +168,47 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
           };
 
       reset(initialData);
-      // setAllergyDetails(initialData.allergyDetails);
     }
   }, [open, admission, existingAllergy, reset, serverDate]);
 
   const handleMedicationSelect = (medication: MedicationListDto | null) => {
-    if (medication && !allergyDetails.some((detail) => detail.mlId === medication.mlID)) {
-      const form = medicationForms.find((f) => f.mFID === medication.mfID);
-      const generic = medicationGenerics.find((g) => g.mGenID === medication.mGenID);
+    if (!medication) return;
 
-      const newDetail: OPIPHistAllergyDetailDto = {
-        opipAlgDetailId: 0,
-        opipAlgId: existingAllergy?.opIPHistAllergyMastDto.opipAlgId || 0,
-        mfId: medication.mfID,
-        mfName: form?.mFName || "Unknown Form",
-        mlId: medication.mlID, // Note: using mlID from medication object
-        medText: medication.medText,
-        mGenId: medication.mGenID,
-        mGenName: generic?.mGenName || "Unknown Generic",
-        rActiveYN: "Y",
-        transferYN: "N",
-        rNotes: null,
-      };
+    setSelectedMedication(null); // Clear the selection
 
-      setAllergyDetails([...allergyDetails, newDetail]);
+    // Check if this medication is already added
+    if (allergyDetails.some((detail) => detail.mlId === medication.mlID)) {
+      return;
     }
+
+    const form = medicationForms.find((f) => f.mFID === medication.mfID);
+    const generic = medicationGenerics.find((g) => g.mGenID === medication.mGenID);
+
+    const newDetail: OPIPHistAllergyDetailDto = {
+      opipAlgDetailId: 0,
+      opipAlgId: existingAllergy?.opIPHistAllergyMastDto.opipAlgId || 0,
+      mfId: medication.mfID,
+      mfName: form?.mFName || "Unknown Form",
+      mlId: medication.mlID,
+      medText: medication.medText,
+      mGenId: medication.mGenID,
+      mGenName: generic?.mGenName || "Unknown Generic",
+      rActiveYN: "Y",
+      transferYN: "N",
+      rNotes: null,
+    };
+
+    setValue("allergyDetails", [...allergyDetails, newDetail], { shouldDirty: true });
   };
 
   const handleRemoveDetail = (index: number) => {
-    setAllergyDetails(allergyDetails.filter((_, i) => i !== index));
+    const newDetails = allergyDetails.filter((_, i) => i !== index);
+    setValue("allergyDetails", newDetails, { shouldDirty: true });
   };
 
   const onFormSubmit = async (data: AllergyFormData) => {
     try {
       setIsSubmitting(true);
-
-      // Validate that we have allergy details
-      if (allergyDetails.length === 0) {
-        throw new Error("Please add at least one allergy");
-      }
 
       const submissionData: AllergyDto = {
         opIPHistAllergyMastDto: {
@@ -213,7 +224,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
           patOpip: data.opIPHistAllergyMastDto.patOpip || admission.ipAdmissionDto.patOpip || "I",
           rNotes: data.opIPHistAllergyMastDto.rNotes || "",
         },
-        allergyDetails: allergyDetails.map((detail) => ({
+        allergyDetails: data.allergyDetails.map((detail) => ({
           opipAlgDetailId: detail.opipAlgDetailId || 0,
           opipAlgId: existingAllergy?.opIPHistAllergyMastDto.opipAlgId || 0,
           mfId: detail.mfId,
@@ -247,11 +258,9 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
         },
         allergyDetails: [],
       });
-      setAllergyDetails([]);
       onClose();
     } catch (error) {
       console.error("Error submitting allergy:", error);
-      // The error should be handled by the parent component
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -272,16 +281,9 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
         opIPHistAllergyMastDto: {
           ...existingAllergy.opIPHistAllergyMastDto,
           opipDate: new Date(existingAllergy.opIPHistAllergyMastDto.opipDate),
-          opipNo: existingAllergy.opIPHistAllergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
-          pChartID: existingAllergy.opIPHistAllergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
-          opvID: existingAllergy.opIPHistAllergyMastDto.opvID || 0,
-          opipCaseNo: existingAllergy.opIPHistAllergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
-          oldPChartID: existingAllergy.opIPHistAllergyMastDto.oldPChartID || 0,
-          rNotes: existingAllergy.opIPHistAllergyMastDto.rNotes || null,
         },
         allergyDetails: existingAllergy.allergyDetails || [],
       });
-      setAllergyDetails(existingAllergy.allergyDetails || []);
     } else {
       reset({
         opIPHistAllergyMastDto: {
@@ -299,7 +301,6 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
         },
         allergyDetails: [],
       });
-      setAllergyDetails([]);
     }
     setShowResetConfirmation(false);
   };
@@ -414,9 +415,18 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                         <Autocomplete
                           options={medicationList}
                           getOptionLabel={(option) => option.medText}
+                          value={selectedMedication}
                           onChange={(_, newValue) => handleMedicationSelect(newValue)}
                           size="small"
-                          renderInput={(params) => <TextField {...params} label="Search Medication" placeholder="Type to search..." />}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Search Medication"
+                              placeholder="Type to search..."
+                              error={!!errors.allergyDetails?.message && allergyDetails.length === 0}
+                              helperText={errors.allergyDetails?.message && allergyDetails.length === 0 ? errors.allergyDetails.message : ""}
+                            />
+                          )}
                           isOptionEqualToValue={(option, value) => option.mlID === value.mlID}
                         />
                       </Grid>

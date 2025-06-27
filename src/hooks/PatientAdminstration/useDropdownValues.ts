@@ -347,6 +347,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: any) => ({
           value: item.mGenID || 0,
           label: item.mGenName || "",
+          ...item,
         }));
       },
       taxType: async () => {

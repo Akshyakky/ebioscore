@@ -3,47 +3,40 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
+import { MedicationInstructionDto } from "@/interfaces/ClinicalManagement/MedicationInstructionDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel, Refresh, Save } from "@mui/icons-material";
 import { Alert, Box, Card, CardContent, CircularProgress, Divider, Grid, InputAdornment, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useMedicationList } from "../hooks/useMedicationList";
+import { useMedicationInstruction } from "../hook/useMedicationInstruction";
 
-interface MedicationListFormProps {
+// Define the Zod schema for MedicationInstructionForm
+const schema = z.object({
+  minsId: z.number(),
+  minsCode: z.string().nonempty("Instruction code is required"),
+  minsName: z.string().nonempty("Instruction description is required"),
+  modifyYn: z.string(),
+  defaultYn: z.string(),
+  rActiveYN: z.string(),
+  transferYN: z.string(),
+  rNotes: z.string().nullable().optional(),
+});
+
+type MedicationInstructionFormData = z.infer<typeof schema>;
+
+interface MedicationInstructionFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: MedicationListDto | null;
+  initialData: MedicationInstructionDto | null;
   viewOnly?: boolean;
 }
 
-const schema = z.object({
-  mlID: z.number(),
-  mlCode: z.string().nonempty("Medication code is required"),
-  mGrpID: z.number().default(1),
-  mfID: z.number().min(1, "Manufacturer is required"),
-  mfName: z.string().nonempty("Manufacturer name is required"),
-  medText: z.string().nonempty("Medication name is required"),
-  medText1: z.string().nullable().optional(),
-  mGenID: z.number().min(1, "Generic medication is required"),
-  mGenCode: z.string().nonempty("Generic code is required"),
-  mGenName: z.string().nonempty("Generic name is required"),
-  productID: z.number().nullable().optional(),
-  calcQtyYN: z.string().default("N"),
-  rActiveYN: z.string().default("Y"),
-  transferYN: z.string().default("N"),
-  rNotes: z.string().default(""),
-});
-
-type MedicationListFormData = z.infer<typeof schema>;
-
-const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const MedicationInstructionForm: React.FC<MedicationInstructionFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, saveMedication } = useMedicationList();
+  const { getNextCode, saveMedicationInstruction } = useMedicationInstruction();
   const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -51,20 +44,13 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData;
-  const { manufacturer, medicationGeneric } = useDropdownValues(["manufacturer", "medicationGeneric"]);
-  const defaultValues: MedicationListFormData = {
-    mlID: 0,
-    mlCode: "",
-    mGrpID: 0,
-    mfID: 0,
-    mfName: "",
-    medText: "",
-    medText1: null,
-    mGenID: 0,
-    mGenCode: "",
-    mGenName: "",
-    productID: null,
-    calcQtyYN: "N",
+
+  const defaultValues: MedicationInstructionFormData = {
+    minsId: 0,
+    minsCode: "",
+    minsName: "",
+    modifyYn: "Y",
+    defaultYn: "N",
     rActiveYN: "Y",
     transferYN: "N",
     rNotes: "",
@@ -76,28 +62,26 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
     reset,
     setValue,
     formState: { errors, isDirty, isValid },
-  } = useForm<MedicationListFormData>({
+  } = useForm<MedicationInstructionFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
-  const rActiveYN = useWatch({ control, name: "rActiveYN" });
-  const calcQtyYN = useWatch({ control, name: "calcQtyYN" });
-
-  const generateMedicationCode = async () => {
+  const generateInstructionCode = async () => {
     if (!isAddMode) return;
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("MED", 3);
+      const nextCode = await getNextCode("MINS", 5);
       if (nextCode) {
-        setValue("mlCode", nextCode, { shouldValidate: true, shouldDirty: true });
+        setValue("minsCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate medication code", "warning");
+        showAlert("Warning", "Failed to generate instruction code", "warning");
       }
     } catch (error) {
-      console.error("Error generating medication code:", error);
+      console.error("Error generating instruction code:", error);
+      showAlert("Error", "Failed to generate instruction code", "error");
     } finally {
       setIsGeneratingCode(false);
     }
@@ -105,14 +89,23 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as MedicationListFormData);
+      reset({
+        minsId: initialData.minsId,
+        minsCode: initialData.minsCode || "",
+        minsName: initialData.minsName || "",
+        modifyYn: initialData.modifyYn || "Y",
+        defaultYn: initialData.defaultYn || "N",
+        rActiveYN: initialData.rActiveYN || "Y",
+        transferYN: initialData.transferYN || "N",
+        rNotes: initialData.rNotes || "",
+      });
     } else {
       reset(defaultValues);
-      generateMedicationCode();
+      generateInstructionCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: MedicationListFormData) => {
+  const onSubmit = async (data: MedicationInstructionFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -121,35 +114,28 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
       setIsSaving(true);
       setLoading(true);
 
-      const medicationData: MedicationListDto = {
-        mlID: data.mlID,
-        mlCode: data.mlCode,
-        mGrpID: data.mGrpID || 1,
-        mfID: data.mfID,
-        mfName: data.mfName,
-        medText: data.medText,
-        medText1: data.medText1,
-        mGenID: data.mGenID,
-        mGenCode: data.mGenCode,
-        mGenName: data.mGenName,
-        productID: data.productID,
-        calcQtyYN: data.calcQtyYN,
-        rActiveYN: data.rActiveYN,
-        transferYN: data.transferYN,
-        rNotes: data.rNotes,
+      const instructionData: MedicationInstructionDto = {
+        minsId: data.minsId || 0,
+        minsCode: data.minsCode || "",
+        minsName: data.minsName || "",
+        modifyYn: data.modifyYn || "N",
+        defaultYn: data.defaultYn || "N",
+        rActiveYN: data.rActiveYN || "Y",
+        transferYN: data.transferYN || "N",
+        rNotes: data.rNotes || "",
       };
 
-      const response = await saveMedication(medicationData);
+      const response = await saveMedicationInstruction(instructionData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Medication created successfully" : "Medication updated successfully", "success");
+        showAlert("Success", isAddMode ? "Medication instruction created successfully" : "Medication instruction updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save medication");
+        throw new Error(response.errorMessage || "Failed to save medication instruction");
       }
     } catch (error) {
-      console.error("Error saving medication:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save medication";
+      console.error("Error saving medication instruction:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save medication instruction";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -159,11 +145,24 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
   };
 
   const performReset = () => {
-    reset(initialData ? (initialData as MedicationListFormData) : defaultValues);
+    reset(
+      initialData
+        ? {
+            minsId: initialData.minsId,
+            minsCode: initialData.minsCode || "",
+            minsName: initialData.minsName || "",
+            modifyYn: initialData.modifyYn || "Y",
+            defaultYn: initialData.defaultYn || "N",
+            rActiveYN: initialData.rActiveYN || "Y",
+            transferYN: "N",
+            rNotes: initialData.rNotes || "",
+          }
+        : defaultValues
+    );
     setFormError(null);
 
     if (isAddMode) {
-      generateMedicationCode();
+      generateInstructionCode();
     }
   };
 
@@ -201,7 +200,7 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
     setShowCancelConfirmation(false);
   };
 
-  const dialogTitle = viewOnly ? "View Medication Details" : isAddMode ? "Create New Medication" : `Edit Medication - ${initialData?.medText}`;
+  const dialogTitle = viewOnly ? "View Medication Instruction Details" : isAddMode ? "Create New Medication Instruction" : `Edit Medication Instruction - ${initialData?.minsName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -211,7 +210,7 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Medication" : "Update Medication"}
+          text={isAddMode ? "Create Medication Instruction" : "Update Medication Instruction"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -228,7 +227,7 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
 
   const handleRefreshCode = () => {
     if (isAddMode) {
-      generateMedicationCode();
+      generateInstructionCode();
     }
   };
 
@@ -245,7 +244,7 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
         disableEscapeKeyDown={!viewOnly && (isDirty || isSaving)}
         actions={dialogActions}
       >
-        <Box component="form" noValidate sx={{ p: 1 }}>
+        <Box component="form" noValidate sx={{ p: 1 }} onSubmit={handleSubmit(onSubmit)}>
           {formError && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
               {formError}
@@ -253,7 +252,6 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
           )}
 
           <Grid container spacing={3}>
-            {/* Status Toggle - Prominent Position */}
             <Grid size={{ sm: 12 }}>
               <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
                 <Typography variant="body2" color="text.secondary">
@@ -263,7 +261,6 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
               </Box>
             </Grid>
 
-            {/* Basic Information Section */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -275,9 +272,9 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
-                        name="mlCode"
+                        name="minsCode"
                         control={control}
-                        label="Medication Code"
+                        label="Instruction Code"
                         type="text"
                         required
                         disabled={viewOnly || !isAddMode}
@@ -299,70 +296,55 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="medText" control={control} label="Medication Name" type="text" required disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="medText1" control={control} label="Alternative Name" type="text" disabled={viewOnly} size="small" fullWidth />
+                      <FormField name="minsName" control={control} label="Instruction Description" type="text" required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* Medication Details Section */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Medication Details
+                    Instruction Settings
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="defaultYn" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="modifyYn" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Additional Information
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12 }}>
                       <FormField
-                        name="mfID"
+                        name="rNotes"
                         control={control}
-                        label="Manufacturer"
-                        type="select"
-                        options={manufacturer}
-                        required
+                        label="Notes"
+                        type="textarea"
                         disabled={viewOnly}
                         size="small"
                         fullWidth
-                        onChange={(value) => {
-                          const selectedManufacturer = manufacturer?.find((manufacturer) => Number(manufacturer.value) === Number(value.value));
-                          if (selectedManufacturer) {
-                            setValue("mfName", selectedManufacturer.label);
-                          }
-                        }}
+                        rows={4}
+                        placeholder="Enter any additional information about this medication instruction"
                       />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="mGenID"
-                        control={control}
-                        label="Generic Medication"
-                        type="select"
-                        options={medicationGeneric}
-                        required
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                        onChange={(value) => {
-                          const selectedGeneric = medicationGeneric?.find((generic) => Number(generic.value) === Number(value.value));
-                          if (selectedGeneric) {
-                            setValue("mGenName", selectedGeneric.label);
-                            setValue("mGenCode", selectedGeneric.mGenCode || "");
-                          }
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="calcQtyYN" control={control} label="Calculate Quantity" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -399,4 +381,4 @@ const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, 
   );
 };
 
-export default MedicationListForm;
+export default MedicationInstructionForm;
