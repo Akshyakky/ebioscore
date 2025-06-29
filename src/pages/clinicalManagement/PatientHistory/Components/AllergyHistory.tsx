@@ -8,27 +8,27 @@ import { GenericHistoryList } from "./GenericHistoryList";
 export const AllergyHistory = (props: any) => {
   const columns: Column<AllergyDto>[] = [
     {
-      key: "opIPHistAllergyMastDto.opipDate",
+      key: "opipDate",
       header: "Date",
       visible: true,
       sortable: true,
       width: 120,
-      render: (allergy) => <Typography variant="body2">{formatDt(allergy.opIPHistAllergyMastDto.opipDate)}</Typography>,
+      render: (allergy) => <Typography variant="body2">{formatDt(allergy.allergyMastDto.opipDate)}</Typography>,
     },
     {
-      key: "allergyDetails",
+      key: "details",
       header: "Allergies",
       visible: true,
       sortable: false,
       width: 400,
       render: (allergy) => (
         <Box>
-          {allergy.allergyDetails && allergy.allergyDetails.length > 0 ? (
+          {allergy.details && allergy.details.length > 0 ? (
             <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
-              {allergy.allergyDetails.slice(0, 3).map((detail, index) => (
+              {allergy.details.slice(0, 3).map((detail, index) => (
                 <Chip key={index} label={detail.mfName || detail.medText} size="small" variant="outlined" color="error" />
               ))}
-              {allergy.allergyDetails.length > 3 && <Chip label={`+${allergy.allergyDetails.length - 3} more`} size="small" variant="filled" color="default" />}
+              {allergy.details.length > 3 && <Chip label={`+${allergy.details.length - 3} more`} size="small" variant="filled" color="default" />}
             </Stack>
           ) : (
             <Typography variant="body2" color="text.secondary">
@@ -44,19 +44,19 @@ export const AllergyHistory = (props: any) => {
       visible: true,
       sortable: true,
       width: 100,
-      render: (allergy) => <Chip label={`${allergy.allergyDetails?.length || 0} items`} size="small" color="primary" variant="filled" />,
+      render: (allergy) => <Chip label={`${allergy.details?.length || 0} items`} size="small" color="primary" variant="filled" />,
     },
     {
-      key: "opIPHistAllergyMastDto.rActiveYN",
+      key: "rActiveYN",
       header: "Status",
       visible: true,
       sortable: true,
       width: 100,
       render: (allergy) => (
         <Chip
-          label={allergy.opIPHistAllergyMastDto.rActiveYN === "Y" ? "Active" : "Inactive"}
+          label={allergy.allergyMastDto.rActiveYN === "Y" ? "Active" : "Inactive"}
           size="small"
-          color={allergy.opIPHistAllergyMastDto.rActiveYN === "Y" ? "success" : "default"}
+          color={allergy.allergyMastDto.rActiveYN === "Y" ? "success" : "default"}
           variant="filled"
         />
       ),
@@ -89,11 +89,12 @@ export const AllergyHistory = (props: any) => {
       title="Allergy"
       icon={<AllergyIcon />}
       columns={columns}
-      idField="opIPHistAllergyMastDto.opipAlgId"
-      dateField="opIPHistAllergyMastDto.opipDate"
-      descField="allergyDetails"
-      notesField="opIPHistAllergyMastDto.rNotes"
-      activeField="opIPHistAllergyMastDto.rActiveYN"
+      idField="opipAlgId"
+      dateField="opipDate"
+      descField="details"
+      notesField="rNotes"
+      activeField="rActiveYN"
+      isMedication={true}
     />
   );
 };

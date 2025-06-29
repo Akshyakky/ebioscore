@@ -101,9 +101,7 @@ export const useAllergy = () => {
     error: hook.error,
     fetchAllergyList: hook.fetchEntityList,
     getAllergyById: hook.getEntityById,
-    saveAllergy: async (data: AllergyDto) => {
-      return allergyService.createOrUpdateAllergy(data);
-    },
+    saveAllergy: hook.saveEntity,
     deleteAllergy: hook.deleteEntity,
     updateAllergyStatus: hook.updateEntityStatus,
     getByKeyFields: async (pChartID: number, opipNo: number, opipCaseNo: number) => {

@@ -42,6 +42,7 @@ const allergyDetailSchema = z.object({
   mlId: z.number().min(1, "Medication ID is required"),
   medText: z.string().min(1, "Medication text is required"),
   mGenId: z.number().min(1, "Generic is required"),
+  mGenCode: z.string().optional().nullable(),
   mGenName: z.string().min(1, "Generic name is required"),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().default("N"),
@@ -49,7 +50,7 @@ const allergyDetailSchema = z.object({
 });
 
 const allergyFormSchema = z.object({
-  opIPHistAllergyMastDto: z.object({
+  allergyMastDto: z.object({
     opipAlgId: z.number().default(0),
     opipNo: z.number(),
     pChartID: z.number(),
@@ -62,7 +63,7 @@ const allergyFormSchema = z.object({
     transferYN: z.string().default("N"),
     rNotes: z.string().optional().nullable(),
   }),
-  allergyDetails: z.array(allergyDetailSchema).min(1, "At least one allergy must be added"),
+  details: z.array(allergyDetailSchema).min(1, "At least one allergy must be added"),
 });
 
 type AllergyFormData = z.infer<typeof allergyFormSchema>;
@@ -102,11 +103,11 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
     resolver: zodResolver(allergyFormSchema),
     mode: "onChange",
     defaultValues: {
-      allergyDetails: [],
+      details: [],
     },
   });
 
-  const allergyDetails = watch("allergyDetails", []);
+  const details = watch("details", []);
 
   // Load master data
   useEffect(() => {
@@ -135,23 +136,23 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
     if (open && admission) {
       const initialData: AllergyFormData = existingAllergy
         ? {
-            opIPHistAllergyMastDto: {
-              opipDate: new Date(existingAllergy.opIPHistAllergyMastDto.opipDate),
-              opipAlgId: existingAllergy.opIPHistAllergyMastDto.opipAlgId || 0,
-              opipNo: existingAllergy.opIPHistAllergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
-              pChartID: existingAllergy.opIPHistAllergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
-              opvID: existingAllergy.opIPHistAllergyMastDto.opvID || 0,
-              opipCaseNo: existingAllergy.opIPHistAllergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
-              patOpip: existingAllergy.opIPHistAllergyMastDto.patOpip || admission.ipAdmissionDto.patOpip || "I",
-              oldPChartID: existingAllergy.opIPHistAllergyMastDto.oldPChartID || 0,
-              rNotes: existingAllergy.opIPHistAllergyMastDto.rNotes || null,
-              rActiveYN: existingAllergy.opIPHistAllergyMastDto.rActiveYN || "Y",
-              transferYN: existingAllergy.opIPHistAllergyMastDto.transferYN || "N",
+            allergyMastDto: {
+              opipDate: new Date(existingAllergy.allergyMastDto.opipDate),
+              opipAlgId: existingAllergy.allergyMastDto.opipAlgId || 0,
+              opipNo: existingAllergy.allergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
+              pChartID: existingAllergy.allergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
+              opvID: existingAllergy.allergyMastDto.opvID || 0,
+              opipCaseNo: existingAllergy.allergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
+              patOpip: existingAllergy.allergyMastDto.patOpip || admission.ipAdmissionDto.patOpip || "I",
+              oldPChartID: existingAllergy.allergyMastDto.oldPChartID || 0,
+              rNotes: existingAllergy.allergyMastDto.rNotes || null,
+              rActiveYN: existingAllergy.allergyMastDto.rActiveYN || "Y",
+              transferYN: existingAllergy.allergyMastDto.transferYN || "N",
             },
-            allergyDetails: existingAllergy.allergyDetails || [],
+            details: existingAllergy.details || [],
           }
         : {
-            opIPHistAllergyMastDto: {
+            allergyMastDto: {
               opipAlgId: 0,
               opipDate: serverDate,
               rActiveYN: "Y",
@@ -164,7 +165,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
               oldPChartID: 0,
               rNotes: null,
             },
-            allergyDetails: [],
+            details: [],
           };
 
       reset(initialData);
@@ -177,7 +178,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
     setSelectedMedication(null); // Clear the selection
 
     // Check if this medication is already added
-    if (allergyDetails.some((detail) => detail.mlId === medication.mlID)) {
+    if (details.some((detail) => detail.mlId === medication.mlID)) {
       return;
     }
 
@@ -186,24 +187,25 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
 
     const newDetail: OPIPHistAllergyDetailDto = {
       opipAlgDetailId: 0,
-      opipAlgId: existingAllergy?.opIPHistAllergyMastDto.opipAlgId || 0,
+      opipAlgId: existingAllergy?.allergyMastDto.opipAlgId || 0,
       mfId: medication.mfID,
       mfName: form?.mFName || "Unknown Form",
       mlId: medication.mlID,
       medText: medication.medText,
       mGenId: medication.mGenID,
+      mGenCode: generic?.mGenCode || null,
       mGenName: generic?.mGenName || "Unknown Generic",
       rActiveYN: "Y",
       transferYN: "N",
       rNotes: null,
     };
 
-    setValue("allergyDetails", [...allergyDetails, newDetail], { shouldDirty: true });
+    setValue("details", [...details, newDetail], { shouldDirty: true });
   };
 
   const handleRemoveDetail = (index: number) => {
-    const newDetails = allergyDetails.filter((_, i) => i !== index);
-    setValue("allergyDetails", newDetails, { shouldDirty: true });
+    const newDetails = details.filter((_, i) => i !== index);
+    setValue("details", newDetails, { shouldDirty: true });
   };
 
   const onFormSubmit = async (data: AllergyFormData) => {
@@ -211,27 +213,28 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
       setIsSubmitting(true);
 
       const submissionData: AllergyDto = {
-        opIPHistAllergyMastDto: {
-          opipAlgId: data.opIPHistAllergyMastDto.opipAlgId || 0,
-          rActiveYN: data.opIPHistAllergyMastDto.rActiveYN || "Y",
-          transferYN: data.opIPHistAllergyMastDto.transferYN || "N",
-          opvID: data.opIPHistAllergyMastDto.opvID || 0,
-          oldPChartID: data.opIPHistAllergyMastDto.oldPChartID || 0,
-          opipDate: data.opIPHistAllergyMastDto.opipDate,
-          opipNo: data.opIPHistAllergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
-          pChartID: data.opIPHistAllergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
-          opipCaseNo: data.opIPHistAllergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
-          patOpip: data.opIPHistAllergyMastDto.patOpip || admission.ipAdmissionDto.patOpip || "I",
-          rNotes: data.opIPHistAllergyMastDto.rNotes || "",
+        allergyMastDto: {
+          opipAlgId: data.allergyMastDto.opipAlgId || 0,
+          rActiveYN: data.allergyMastDto.rActiveYN || "Y",
+          transferYN: data.allergyMastDto.transferYN || "N",
+          opvID: data.allergyMastDto.opvID || 0,
+          oldPChartID: data.allergyMastDto.oldPChartID || 0,
+          opipDate: data.allergyMastDto.opipDate,
+          opipNo: data.allergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
+          pChartID: data.allergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,
+          opipCaseNo: data.allergyMastDto.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
+          patOpip: data.allergyMastDto.patOpip || admission.ipAdmissionDto.patOpip || "I",
+          rNotes: data.allergyMastDto.rNotes || "",
         },
-        allergyDetails: data.allergyDetails.map((detail) => ({
+        details: data.details.map((detail) => ({
           opipAlgDetailId: detail.opipAlgDetailId || 0,
-          opipAlgId: existingAllergy?.opIPHistAllergyMastDto.opipAlgId || 0,
+          opipAlgId: existingAllergy?.allergyMastDto.opipAlgId || 0,
           mfId: detail.mfId,
           mfName: detail.mfName,
           mlId: detail.mlId,
           medText: detail.medText,
           mGenId: detail.mGenId,
+          mGenCode: detail.mGenCode || undefined,
           mGenName: detail.mGenName,
           rActiveYN: detail.rActiveYN || "Y",
           transferYN: detail.transferYN || "N",
@@ -243,7 +246,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
 
       // Reset form after successful submission
       reset({
-        opIPHistAllergyMastDto: {
+        allergyMastDto: {
           opipAlgId: 0,
           opipDate: serverDate,
           rActiveYN: "Y",
@@ -256,7 +259,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
           oldPChartID: 0,
           rNotes: null,
         },
-        allergyDetails: [],
+        details: [],
       });
       onClose();
     } catch (error) {
@@ -268,7 +271,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
   };
 
   const handleReset = () => {
-    if (isDirty || allergyDetails.length > 0) {
+    if (isDirty || details.length > 0) {
       setShowResetConfirmation(true);
     } else {
       performReset();
@@ -278,15 +281,15 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
   const performReset = () => {
     if (existingAllergy) {
       reset({
-        opIPHistAllergyMastDto: {
-          ...existingAllergy.opIPHistAllergyMastDto,
-          opipDate: new Date(existingAllergy.opIPHistAllergyMastDto.opipDate),
+        allergyMastDto: {
+          ...existingAllergy.allergyMastDto,
+          opipDate: new Date(existingAllergy.allergyMastDto.opipDate),
         },
-        allergyDetails: existingAllergy.allergyDetails || [],
+        details: existingAllergy.details || [],
       });
     } else {
       reset({
-        opIPHistAllergyMastDto: {
+        allergyMastDto: {
           opipAlgId: 0,
           opipDate: serverDate,
           rActiveYN: "Y",
@@ -299,7 +302,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
           oldPChartID: 0,
           rNotes: null,
         },
-        allergyDetails: [],
+        details: [],
       });
     }
     setShowResetConfirmation(false);
@@ -334,7 +337,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                   variant="outlined"
                   color="error"
                   icon={CancelIcon}
-                  disabled={isSubmitting || (!isDirty && allergyDetails.length === 0)}
+                  disabled={isSubmitting || (!isDirty && details.length === 0)}
                   size="small"
                 />
                 <SmartButton
@@ -343,7 +346,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                   variant="contained"
                   color="primary"
                   icon={SaveIcon}
-                  disabled={isSubmitting || allergyDetails.length === 0}
+                  disabled={isSubmitting || details.length === 0}
                   asynchronous
                   showLoadingIndicator
                   loadingText={isEditMode ? "Updating..." : "Saving..."}
@@ -389,13 +392,13 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="opIPHistAllergyMastDto.opipDate" control={control} type="datepicker" label="Date" required disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="allergyMastDto.opipDate" control={control} type="datepicker" label="Date" required disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="opIPHistAllergyMastDto.rActiveYN" control={control} type="switch" label="Active" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="allergyMastDto.rActiveYN" control={control} type="switch" label="Active" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="opIPHistAllergyMastDto.rNotes" control={control} type="text" label="Notes" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="allergyMastDto.rNotes" control={control} type="text" label="Notes" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -423,8 +426,8 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                               {...params}
                               label="Search Medication"
                               placeholder="Type to search..."
-                              error={!!errors.allergyDetails?.message && allergyDetails.length === 0}
-                              helperText={errors.allergyDetails?.message && allergyDetails.length === 0 ? errors.allergyDetails.message : ""}
+                              error={!!errors.details?.message && details.length === 0}
+                              helperText={errors.details?.message && details.length === 0 ? errors.details.message : ""}
                             />
                           )}
                           isOptionEqualToValue={(option, value) => option.mlID === value.mlID}
@@ -441,10 +444,10 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="subtitle2" gutterBottom>
-                    Allergy Details ({allergyDetails.length})
+                    Allergy Details ({details.length})
                   </Typography>
 
-                  {allergyDetails.length === 0 ? (
+                  {details.length === 0 ? (
                     <Alert severity="info">No allergies added. Please add at least one allergy.</Alert>
                   ) : (
                     <TableContainer component={Paper} variant="outlined">
@@ -458,7 +461,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {allergyDetails.map((detail, index) => (
+                          {details.map((detail, index) => (
                             <TableRow key={index}>
                               <TableCell>{detail.medText}</TableCell>
                               <TableCell>

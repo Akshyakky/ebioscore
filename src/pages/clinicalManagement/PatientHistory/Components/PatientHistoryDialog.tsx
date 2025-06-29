@@ -58,7 +58,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   const { rosHistoryList, fetchRosHistoryList, saveRosHistory, deleteRosHistory } = useROSHistory();
   const { pmhHistoryList, fetchPMHHistoryList, savePMHHistory, deletePMHHistory } = usePMHHistory();
   const { pshHistoryList, fetchPSHHistoryList, savePSHHistory, deletePSHHistory } = usePSHHistory();
-  const { allergyList, fetchAllergyList, saveAllergy, deleteAllergy } = useAllergy();
+  const { allergyList, fetchAllergyList, saveAllergy, getAllergyById, deleteAllergy } = useAllergy();
   const { pastMedicationList, fetchPastMedicationList, savePastMedication, getPastMedicationById, deletePastMedication } = usePastMedication();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -146,10 +146,10 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
           result = await deleteRosHistory(historyToDelete.opipRosID);
           break;
         case "allergy":
-          result = await deleteAllergy(historyToDelete.opIPHistAllergyMastDto.opipAlgId);
+          result = await deleteAllergy(historyToDelete.allergyMastDto.opipAlgId);
           break;
         case "pastMedication":
-          result = await deletePastMedication(historyToDelete.opipPastMedID);
+          result = await deletePastMedication(historyToDelete.pastMedicationMastDto.opipPastMedID);
           break;
       }
 
@@ -290,9 +290,6 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     ? `${admission.ipAdmissionDto.pTitle} ${admission.ipAdmissionDto.pfName} ${admission.ipAdmissionDto.pmName || ""} ${admission.ipAdmissionDto.plName}`.trim()
     : "Patient";
 
-  const fetchPastMedicationById = async (id: number) => {
-    return await getPastMedicationById(id);
-  };
   const handleAddNew = useCallback(() => {
     setSelectedHistory(null);
     setIsViewMode(false);
@@ -302,7 +299,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   const handleEdit = useCallback(
     async (history: any) => {
       if (tabValue === 6) {
-        const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+        const selectedPastMedication = await getPastMedicationById(history.opipPastMedID);
         setSelectedHistory(selectedPastMedication);
       } else {
         setSelectedHistory(history);
@@ -316,7 +313,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   const handleView = useCallback(
     async (history: any) => {
       if (tabValue === 6) {
-        const selectedPastMedication = await fetchPastMedicationById(history.opipPastMedID);
+        const selectedPastMedication = await getPastMedicationById(history.opipPastMedID);
         setSelectedHistory(selectedPastMedication);
       } else {
         setSelectedHistory(history);

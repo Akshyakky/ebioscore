@@ -50,6 +50,7 @@ export const GenericHistoryList = <T extends Record<string, any>>({
         .sort((a, b) => new Date(b[dateField]).getTime() - new Date(a[dateField]).getTime());
     }
   }, [historyList, admission, activeField, dateField]);
+  console.log("historyList props:", historyList);
 
   return (
     <>
