@@ -1,695 +1,843 @@
 import CustomButton from "@/components/Button/CustomButton";
+import SmartButton from "@/components/Button/SmartButton";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { GRNWithAllDetailsDto } from "@/interfaces/InventoryManagement/GRNDto";
-import { formatCurrency } from "@/utils/Common/formatUtils";
+import { GrnDetailDto, GrnMastDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { PurchaseOrderDetailDto, PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircle as ApproveIcon,
-  ContentCopy as CopyIcon,
-  CalendarToday as DateIcon,
-  Delete as DeleteIcon,
+  Clear as ClearIcon,
   Business as DeptIcon,
-  Edit as EditIcon,
-  Receipt as GrnIcon,
-  Info as InfoIcon,
-  Description as InvoiceIcon,
-  AccountBalance as PaymentIcon,
-  Inventory as ProductIcon,
-  LocalShipping as SupplierIcon,
-  Assessment as TaxIcon,
+  ExpandMore as ExpandMoreIcon,
+  Receipt as InvoiceIcon,
+  Save as SaveIcon,
   Warning as WarningIcon,
 } from "@mui/icons-material";
-import {
-  Alert,
-  Avatar,
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  Grid,
-  Paper,
-  Stack,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tabs,
-  Typography,
-} from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Chip, FormControlLabel, Grid, Stack, Switch, Typography } from "@mui/material";
 import dayjs from "dayjs";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-interface GrnDetailsDialogProps {
-  open: boolean;
-  onClose: () => void;
-  grn: GRNWithAllDetailsDto | null;
-  mode?: "view" | "edit";
-  onEdit: (grn: GRNWithAllDetailsDto) => void;
-  onDelete: (grnId: number) => void;
-  onApprove: (grnId: number) => void;
-}
+import GrnDetailsComponent from "./GrnDetailsComponent";
+import GRNTotalsAndActionsSection from "./GRNTotalsAndActionsSection";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
+import { useGrn } from "../hooks/useGrnhooks";
+import { IssueDepartmentData } from "./NewIssueDepartmentDialog";
+import PurchaseOrderSection from "./purchaseOrderSection";
 
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
-  return (
-    <div role="tabpanel" hidden={value !== index} id={`grn-tabpanel-${index}`} aria-labelledby={`grn-tab-${index}`} {...other}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-};
+// Helper functions for GRN calculations
+const GRNHelpers = {
+  /**
+   * Calculate product value for a GRN detail with all considerations
+   */
+  calculateProductValue: (detail: Partial<GrnDetailDto>): number => {
+    const qty = detail.AcceptQty || detail.RecvdQty || 0;
+    const price = detail.UnitPrice || 0;
+    const discount = detail.DiscAmt || 0;
+    const discountPercentage = detail.DiscPercentage || 0;
 
-const GrnDetailsDialog: React.FC<GrnDetailsDialogProps> = ({ open, onClose, grn, mode = "view", onEdit, onDelete, onApprove }) => {
-  const [tabValue, setTabValue] = useState(0);
+    let productValue = qty * price;
 
-  const grnStatistics = useMemo(() => {
-    if (!grn) return null;
+    // Apply discount
+    if (discount > 0) {
+      productValue -= discount;
+    } else if (discountPercentage > 0) {
+      productValue -= (productValue * discountPercentage) / 100;
+    }
 
-    const grnDetails = grn.grnDetails || [];
-    const totalItems = grnDetails.length;
-    const totalQty = grnDetails.reduce((sum, detail) => sum + (detail.acceptQty || detail.recvdQty || 0), 0);
-    const totalValue = grn.netTot || grn.tot || 0;
-    const totalTax = (grn.netCGSTTaxAmt || 0) + (grn.netSGSTTaxAmt || 0);
-    const pendingApproval = grn.grnApprovedYN !== "Y";
-    const daysOld = dayjs().diff(dayjs(grn.grnDate), "days");
+    return Math.max(0, Math.round(productValue * 100) / 100);
+  },
 
-    let minPrice = 0;
-    let maxPrice = 0;
-    if (grnDetails.length > 0) {
-      const prices = grnDetails.map((detail) => detail.productValue || 0).filter((price) => price > 0);
-      if (prices.length > 0) {
-        minPrice = Math.min(...prices);
-        maxPrice = Math.max(...prices);
+  /**
+   * Calculate comprehensive tax amounts
+   */
+  calculateTaxAmounts: (
+    detail: Partial<GrnDetailDto>
+  ): {
+    cgstAmount: number;
+    sgstAmount: number;
+    taxableAmount: number;
+    totalTax: number;
+    totalWithTax: number;
+  } => {
+    const productValue = GRNHelpers.calculateProductValue(detail);
+    const cgstRate = detail.CgstPerValue || 0;
+    const sgstRate = detail.SgstPerValue || 0;
+
+    const taxableAmount = productValue;
+    const cgstAmount = (taxableAmount * cgstRate) / 100;
+    const sgstAmount = (taxableAmount * sgstRate) / 100;
+    const totalTax = cgstAmount + sgstAmount;
+
+    return {
+      cgstAmount: Math.round(cgstAmount * 100) / 100,
+      sgstAmount: Math.round(sgstAmount * 100) / 100,
+      taxableAmount: Math.round(taxableAmount * 100) / 100,
+      totalTax: Math.round(totalTax * 100) / 100,
+      totalWithTax: Math.round((taxableAmount + totalTax) * 100) / 100,
+    };
+  },
+
+  /**
+   * Calculate comprehensive GRN totals
+   */
+  calculateGRNTotals: (
+    details: GrnDetailDto[],
+    discount: number = 0,
+    otherCharges: number = 0,
+    coinAdjustment: number = 0
+  ): {
+    total: number;
+    netTotal: number;
+    totalTaxable: number;
+    totalCGST: number;
+    totalSGST: number;
+    totalTax: number;
+    grandTotal: number;
+    totalItems: number;
+    totalQty: number;
+  } => {
+    let total = 0;
+    let totalTaxable = 0;
+    let totalCGST = 0;
+    let totalSGST = 0;
+    let totalItems = details.length;
+    let totalQty = 0;
+
+    details.forEach((detail) => {
+      const productValue = GRNHelpers.calculateProductValue(detail);
+      const taxAmounts = GRNHelpers.calculateTaxAmounts(detail);
+
+      total += productValue;
+      totalTaxable += taxAmounts.taxableAmount;
+      totalCGST += taxAmounts.cgstAmount;
+      totalSGST += taxAmounts.sgstAmount;
+      totalQty += detail.AcceptQty || detail.RecvdQty || 0;
+    });
+
+    const netTotal = total - discount;
+    const totalTax = totalCGST + totalSGST;
+    const grandTotal = netTotal + totalTax + otherCharges + coinAdjustment;
+
+    return {
+      total: Math.round(total * 100) / 100,
+      netTotal: Math.round(netTotal * 100) / 100,
+      totalTaxable: Math.round(totalTaxable * 100) / 100,
+      totalCGST: Math.round(totalCGST * 100) / 100,
+      totalSGST: Math.round(totalSGST * 100) / 100,
+      totalTax: Math.round(totalTax * 100) / 100,
+      grandTotal: Math.round(grandTotal * 100) / 100,
+      totalItems,
+      totalQty,
+    };
+  },
+
+  /**
+   * Validate GRN master data with enhanced checks
+   */
+  validateGRNMaster: (grn: Partial<GrnMastDto>): { isValid: boolean; errors: string[]; warnings?: string[] } => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Required field validations
+    if (!grn.DeptID || grn.DeptID <= 0) {
+      errors.push("Department is required");
+    }
+
+    if (!grn.DeptName || grn.DeptName.trim() === "") {
+      errors.push("Department name is required");
+    }
+
+    if (!grn.SupplrID || grn.SupplrID <= 0) {
+      errors.push("Supplier is required");
+    }
+
+    if (!grn.SupplrName || grn.SupplrName.trim() === "") {
+      errors.push("Supplier name is required");
+    }
+
+    if (!grn.InvoiceNo || grn.InvoiceNo.trim() === "") {
+      errors.push("Invoice number is required");
+    }
+
+    if (!grn.GrnDate) {
+      errors.push("GRN date is required");
+    }
+
+    if (!grn.InvDate) {
+      errors.push("Invoice date is required");
+    }
+
+    // Date validations
+    if (grn.GrnDate && grn.InvDate) {
+      const grnDate = new Date(grn.GrnDate);
+      const invDate = new Date(grn.InvDate);
+
+      if (grnDate < invDate) {
+        warnings.push("GRN date is earlier than invoice date");
+      }
+
+      const today = new Date();
+      if (grnDate > today) {
+        warnings.push("GRN date is in the future");
+      }
+    }
+
+    // Business rule validations
+    if (grn.Disc && grn.Tot && grn.Disc > grn.Tot) {
+      errors.push("Discount cannot be greater than total amount");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  },
+
+  /**
+   * Validate GRN detail data with comprehensive checks
+   */
+  validateGRNDetail: (detail: Partial<GrnDetailDto>, index: number): { isValid: boolean; errors: string[]; warnings?: string[] } => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Required field validations
+    if (!detail.ProductID || detail.ProductID <= 0) {
+      errors.push(`Product is required for item ${index + 1}`);
+    }
+
+    if (!detail.CatValue || detail.CatValue.trim() === "") {
+      errors.push(`Category value is required for item ${index + 1}`);
+    }
+
+    if (!detail.RecvdQty || detail.RecvdQty <= 0) {
+      errors.push(`Received quantity must be greater than 0 for item ${index + 1}`);
+    }
+
+    if (!detail.UnitPrice || detail.UnitPrice <= 0) {
+      errors.push(`Unit price must be greater than 0 for item ${index + 1}`);
+    }
+
+    // Business rule validations
+    if (detail.AcceptQty && detail.RecvdQty && detail.AcceptQty > detail.RecvdQty) {
+      errors.push(`Accept quantity cannot be greater than received quantity for item ${index + 1}`);
+    }
+
+    if (detail.FreeItems && detail.RecvdQty && detail.FreeItems > detail.RecvdQty) {
+      warnings.push(`Free items quantity seems high for item ${index + 1}`);
+    }
+
+    if (detail.DiscAmt && detail.UnitPrice && detail.RecvdQty) {
+      const productValue = detail.UnitPrice * (detail.RecvdQty || 0);
+      if (detail.DiscAmt > productValue) {
+        errors.push(`Discount amount cannot be greater than product value for item ${index + 1}`);
+      }
+    }
+
+    if (detail.DiscPercentage && detail.DiscPercentage > 100) {
+      errors.push(`Discount percentage cannot be greater than 100% for item ${index + 1}`);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  },
+
+  /**
+   * Validate complete GRN data with all checks
+   */
+  validateCompleteGRN: (grn: Partial<GrnMastDto & { GrnDetails: GrnDetailDto[] }>): { isValid: boolean; errors: string[]; warnings?: string[] } => {
+    const masterValidation = GRNHelpers.validateGRNMaster(grn);
+    const allErrors = [...masterValidation.errors];
+    const allWarnings = [...(masterValidation.warnings || [])];
+
+    // Validate details
+    if (!grn.GrnDetails || grn.GrnDetails.length === 0) {
+      allErrors.push("At least one product detail is required");
+    } else {
+      grn.GrnDetails.forEach((detail, index) => {
+        const detailValidation = GRNHelpers.validateGRNDetail(detail, index);
+        allErrors.push(...detailValidation.errors);
+        allWarnings.push(...(detailValidation.warnings || []));
+      });
+
+      // Check for duplicate products
+      const productIds = grn.GrnDetails.map((d) => d.ProductID);
+      const duplicates = productIds.filter((id, index) => productIds.indexOf(id) !== index);
+      if (duplicates.length > 0) {
+        allWarnings.push("Duplicate products detected in the GRN");
       }
     }
 
     return {
-      totalItems,
-      totalQty,
-      totalValue,
-      totalTax,
-      minPrice,
-      maxPrice,
-      pendingApproval,
-      daysOld,
-      isOverdue: daysOld > 7 && pendingApproval,
-      canEdit: pendingApproval,
-      canApprove: pendingApproval,
+      isValid: allErrors.length === 0,
+      errors: allErrors,
+      warnings: allWarnings,
     };
-  }, [grn]);
+  },
+};
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+// Schema based on exact backend DTO properties
+const grnSchema = z.object({
+  GrnID: z.number().default(0),
+  GrnCode: z.string().optional(),
+  DeptID: z.number().min(1, "Department is required"),
+  DeptName: z.string().min(1, "Department name is required"),
+  SupplrID: z.number().min(1, "Supplier is required"),
+  SupplrName: z.string().min(1, "Supplier name is required"),
+  GrnDate: z.union([z.date(), z.any()]).refine((date) => (date ? dayjs(date).isValid() : false), { message: "Valid GRN date is required" }),
+  InvoiceNo: z.string().min(1, "Invoice number is required"),
+  InvDate: z.union([z.date(), z.any()]).refine((date) => (date ? dayjs(date).isValid() : false), { message: "Valid invoice date is required" }),
+  GrnType: z.string().default("Invoice"),
+  GrnStatus: z.string().default("Pending"),
+  GrnStatusCode: z.string().default("PEND"),
+  GrnApprovedYN: z.string().default("N"),
+  GrnApprovedBy: z.string().optional(),
+  GrnApprovedID: z.number().optional(),
+  PoNo: z.string().optional(),
+  PoID: z.number().optional(),
+  PoDate: z.union([z.date(), z.any()]).optional().nullable(),
+  PoTotalAmt: z.number().optional().default(0),
+  PoDiscAmt: z.number().optional().default(0),
+  PoCoinAdjAmt: z.number().optional().default(0),
+  DcNo: z.string().optional(),
+  Tot: z.number().optional().default(0),
+  Disc: z.number().optional().default(0),
+  NetTot: z.number().optional().default(0),
+  TaxAmt: z.number().optional().default(0),
+  TotalTaxableAmt: z.number().optional().default(0),
+  NetCGSTTaxAmt: z.number().optional().default(0),
+  NetSGSTTaxAmt: z.number().optional().default(0),
+  BalanceAmt: z.number().optional().default(0),
+  OtherAmt: z.number().optional().default(0),
+  CoinAdj: z.number().optional().default(0),
+  TransDeptID: z.number().optional(),
+  TransDeptName: z.string().optional(),
+  CatValue: z.string().default("MEDI"),
+  CatDesc: z.string().default("REVENUE"),
+  AuGrpID: z.number().default(18),
+  DiscPercentageYN: z.string().default("N"),
+  GrnDetails: z.array(z.any()).default([]),
+  RActiveYN: z.string().default("Y"),
+  RNotes: z.string().optional().nullable(),
+});
 
-  const getStatusColor = (grn: GRNWithAllDetailsDto) => {
-    if (grn.grnApprovedYN === "Y") return "success";
-    if (grnStatistics?.isOverdue) return "error";
-    if (grnStatistics?.daysOld && grnStatistics.daysOld > 3) return "warning";
-    return "info";
-  };
+type GrnFormData = z.infer<typeof grnSchema>;
 
-  const dialogActions = (
-    <>
-      <CustomButton variant="outlined" text="Close" onClick={onClose} />
-      {mode === "edit" && grn && grnStatistics?.canEdit && (
-        <>
-          <CustomButton variant="outlined" text="Copy" icon={CopyIcon} onClick={() => onEdit(grn)} color="info" />
-          <CustomButton variant="outlined" text="Edit" icon={EditIcon} onClick={() => onEdit(grn)} color="primary" />
-          <CustomButton variant="outlined" text="Delete" icon={DeleteIcon} onClick={() => onDelete(grn.grnID)} color="error" />
-          {grnStatistics?.canApprove && <CustomButton variant="contained" text="Approve" icon={ApproveIcon} onClick={() => onApprove(grn.grnID)} color="success" />}
-        </>
-      )}
-    </>
+interface ComprehensiveGrnFormDialogProps {
+  open: boolean;
+  onClose: () => void;
+
+  grn: GrnMastDto | null;
+  departments: { value: string; label: string }[];
+  suppliers: { value: string; label: string }[];
+  products: { value: string; label: string }[];
+}
+
+const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({ open, onClose, grn, departments, suppliers, products }) => {
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [grnDetails, setGrnDetails] = useState<GrnDetailDto[]>([]); // For manually added products
+  const [poGrnDetails, setPOGrnDetails] = useState<GrnDetailDto[]>([]); // For PO-based products
+  const [issueDepartments, setIssueDepartments] = useState<IssueDepartmentData[]>([]); // Issue departments
+  const [selectedProductForIssue, setSelectedProductForIssue] = useState<GrnDetailDto | null>(null);
+
+  const [expandedSections, setExpandedSections] = useState({
+    basic: true,
+    invoice: true,
+    po: false,
+    manual: true,
+    financial: false,
+    configuration: false,
+  });
+
+  const isEditMode = !!grn && grn.GrnID > 0;
+  const isApproved = grn?.GrnApprovedYN === "Y";
+  const { generateGrnCode } = useGrn();
+  const { showAlert } = useAlert();
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    trigger,
+    getValues,
+    formState: { isSubmitting, errors },
+  } = useForm<GrnFormData>({
+    resolver: zodResolver(grnSchema),
+    mode: "onChange",
+  });
+
+  const watchedDeptID = watch("DeptID");
+  const watchedSupplierID = watch("SupplrID");
+  const watchedGrnCode = watch("GrnCode");
+  const watchedInvoiceNo = watch("InvoiceNo");
+  const watchedDiscount = watch("Disc");
+  const watchedDeptName = watch("DeptName");
+
+  const isMandatoryFieldsFilled = !!(watchedDeptID && watchedSupplierID && watchedGrnCode && watchedInvoiceNo);
+
+  // Combine both arrays for total calculations
+  const allGrnDetails = useMemo(() => [...poGrnDetails, ...grnDetails], [poGrnDetails, grnDetails]);
+
+  useEffect(() => {
+    if (open) {
+      if (grn) {
+        const formData: GrnFormData = {
+          GrnID: grn.GrnID || 0,
+          GrnCode: grn.GrnCode || "",
+          DeptID: grn.DeptID || 0,
+          DeptName: grn.DeptName || "",
+          SupplrID: grn.SupplrID || 0,
+          SupplrName: grn.SupplrName || "",
+          GrnDate: grn.GrnDate ? new Date(grn.GrnDate) : new Date(),
+          InvoiceNo: grn.InvoiceNo || "",
+          InvDate: grn.InvDate ? new Date(grn.InvDate) : new Date(),
+          GrnType: grn.GrnType || "Invoice",
+          GrnStatus: grn.GrnStatus || "Pending",
+          GrnStatusCode: grn.GrnStatusCode || "PEND",
+          GrnApprovedYN: grn.GrnApprovedYN || "N",
+          GrnApprovedBy: grn.GrnApprovedBy || "",
+          GrnApprovedID: grn.GrnApprovedID || 0,
+          PoNo: grn.PoNo || "",
+          PoID: grn.PoID || 0,
+          PoDate: grn.PoDate ? new Date(grn.PoDate) : null,
+          PoTotalAmt: grn.PoTotalAmt || 0,
+          PoDiscAmt: grn.PoDiscAmt || 0,
+          PoCoinAdjAmt: grn.PoCoinAdjAmt || 0,
+          DcNo: grn.DcNo || "",
+          Tot: grn.Tot || 0,
+          Disc: grn.Disc || 0,
+          NetTot: grn.NetTot || 0,
+          TaxAmt: grn.TaxAmt || 0,
+          TotalTaxableAmt: grn.TotalTaxableAmt || 0,
+          NetCGSTTaxAmt: grn.NetCGSTTaxAmt || 0,
+          NetSGSTTaxAmt: grn.NetSGSTTaxAmt || 0,
+          BalanceAmt: grn.BalanceAmt || 0,
+          OtherAmt: grn.OtherAmt || 0,
+          CoinAdj: grn.CoinAdj || 0,
+          TransDeptID: grn.TransDeptID || 0,
+          TransDeptName: grn.TransDeptName || "",
+          CatValue: grn.CatValue || "MEDI",
+          CatDesc: grn.CatDesc || "REVENUE",
+          AuGrpID: grn.AuGrpID || 18,
+          DiscPercentageYN: grn.DiscPercentageYN || "N",
+          GrnDetails: grn.GrnDetails || [],
+          RActiveYN: grn.RActiveYN || "Y",
+          RNotes: grn.RNotes || "",
+        };
+
+        reset(formData);
+        const poBasedDetails = (grn.GrnDetails || []).filter((detail) => detail.PoDetID && detail.PoDetID > 0);
+        const manualDetails = (grn.GrnDetails || []).filter((detail) => !detail.PoDetID || detail.PoDetID === 0);
+
+        setPOGrnDetails(poBasedDetails);
+        setGrnDetails(manualDetails);
+        setIssueDepartments([]);
+      } else {
+        reset();
+        setGrnDetails([]);
+        setPOGrnDetails([]);
+        setIssueDepartments([]);
+      }
+    }
+  }, [open, grn, reset]);
+
+  const handleGenerateCode = useCallback(async () => {
+    if (!watchedDeptID) {
+      showAlert("Warning", "Please select a department first", "warning");
+      return;
+    }
+    try {
+      setIsGeneratingCode(true);
+      const newCode = await generateGrnCode(watchedDeptID);
+      setValue("GrnCode", newCode, { shouldValidate: true, shouldDirty: true });
+      trigger();
+    } catch (error) {
+      showAlert("Error", "Failed to generate GRN code", "error");
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  }, [watchedDeptID, generateGrnCode, setValue, trigger, showAlert]);
+
+  useEffect(() => {
+    if (!isEditMode && watchedDeptID && !watchedGrnCode) {
+      handleGenerateCode();
+    }
+  }, [watchedDeptID, isEditMode, watchedGrnCode, handleGenerateCode]);
+
+  const handleDepartmentChange = useCallback(
+    (value: any) => {
+      const selectedDept = departments.find((dept) => dept.value === value.toString());
+      if (selectedDept) {
+        setValue("DeptID", Number(selectedDept.value), { shouldValidate: true, shouldDirty: true });
+        setValue("DeptName", selectedDept.label, { shouldValidate: true, shouldDirty: true });
+        trigger();
+      }
+    },
+    [departments, setValue, trigger]
   );
 
-  if (!grn) return null;
+  const handleSupplierChange = useCallback(
+    (newValue: any) => {
+      let selectedSupplier = null;
+      if (newValue && typeof newValue === "object" && newValue.value) {
+        selectedSupplier = suppliers.find((s) => s.value == newValue.value);
+      } else if (newValue) {
+        selectedSupplier = suppliers.find((s) => s.value == newValue);
+      }
+      if (selectedSupplier) {
+        setValue("SupplrID", Number(selectedSupplier.value), { shouldValidate: true, shouldDirty: true });
+        setValue("SupplrName", selectedSupplier.label, { shouldValidate: true, shouldDirty: true });
+      } else {
+        setValue("SupplrID", 0, { shouldValidate: true, shouldDirty: true });
+        setValue("SupplrName", "", { shouldValidate: true, shouldDirty: true });
+      }
+      trigger("SupplrID");
+    },
+    [suppliers, setValue, trigger]
+  );
+
+  const calculateTotals = useCallback(
+    (allDetails: GrnDetailDto[]) => {
+      const itemsTotal = allDetails.reduce((sum, detail) => {
+        const receivedQty = detail.RecvdQty || 0;
+        const unitPrice = detail.UnitPrice || 0;
+        return sum + receivedQty * unitPrice;
+      }, 0);
+      setValue("Tot", parseFloat(itemsTotal.toFixed(2)), { shouldDirty: true });
+      const discountValue = watchedDiscount || 0;
+      const otherCharges = getValues("OtherAmt") || 0;
+      const coinAdjustment = getValues("CoinAdj") || 0;
+      const totals = GRNHelpers.calculateGRNTotals(allDetails, discountValue, otherCharges, coinAdjustment);
+      setValue("NetTot", totals.netTotal);
+      setValue("TotalTaxableAmt", totals.totalTaxable);
+      setValue("NetCGSTTaxAmt", totals.totalCGST);
+      setValue("NetSGSTTaxAmt", totals.totalSGST);
+      setValue("TaxAmt", totals.totalTax);
+      setValue("BalanceAmt", totals.grandTotal);
+      trigger();
+    },
+    [setValue, trigger, watchedDiscount, getValues]
+  );
+
+  const handleManualGrnDetailsChange = useCallback(
+    (details: GrnDetailDto[]) => {
+      setGrnDetails(details);
+      calculateTotals([...poGrnDetails, ...details]);
+    },
+    [poGrnDetails, calculateTotals]
+  );
+
+  const handlePOGrnDetailsChange = useCallback(
+    (details: GrnDetailDto[]) => {
+      setPOGrnDetails(details);
+      calculateTotals([...details, ...grnDetails]);
+    },
+    [grnDetails, calculateTotals]
+  );
+
+  const handlePoDataFetched = useCallback(
+    (mast: PurchaseOrderMastDto | null, details: PurchaseOrderDetailDto[]) => {
+      if (mast && details.length > 0) {
+        showAlert("Success", `PO ${mast.pOCode} selected with ${details.length} items.`, "success");
+        if (!watchedSupplierID && mast.supplierID) {
+          handleSupplierChange(mast.supplierID);
+        }
+      } else if (mast) {
+        showAlert("Info", `PO ${mast.pOCode} selected, but it has no item details.`, "info");
+        setPOGrnDetails([]);
+      } else {
+        setPOGrnDetails([]);
+        showAlert("Info", "PO selection cleared.", "info");
+      }
+    },
+    [showAlert, watchedSupplierID, handleSupplierChange]
+  );
+
+  const handleIssueDepartmentChange = useCallback((departments: IssueDepartmentData[]) => {
+    setIssueDepartments(departments);
+  }, []);
+
+  const handleDeleteAll = useCallback(() => {
+    setGrnDetails([]);
+    setPOGrnDetails([]);
+    setIssueDepartments([]);
+    calculateTotals([]);
+    showAlert("Success", "All products removed from GRN", "success");
+  }, [calculateTotals, showAlert]);
+
+  const handleShowHistory = useCallback(() => {
+    showAlert("Info", "History functionality to be implemented", "info");
+  }, [showAlert]);
+
+  const handleNewIssueDepartment = useCallback(() => {}, []);
+
+  const handleApplyDiscount = useCallback(() => {
+    calculateTotals(allGrnDetails);
+    showAlert("Success", "Discount applied and totals recalculated", "success");
+  }, [allGrnDetails, calculateTotals, showAlert]);
+
+  const onFormSubmit = async (data: GrnFormData) => {
+    if (!allGrnDetails || allGrnDetails.length === 0) {
+      showAlert("Validation Error", "Please add at least one product to the GRN", "warning");
+      return;
+    }
+
+    const validationResult = GRNHelpers.validateCompleteGRN({ ...data, GrnDetails: allGrnDetails });
+    if (!validationResult.isValid) {
+      showAlert("Validation Error", validationResult.errors.join(", "), "error");
+      return;
+    }
+  };
+
+  const handleClear = () => {
+    reset();
+    setGrnDetails([]);
+    setPOGrnDetails([]);
+    setIssueDepartments([]);
+  };
+
+  const handleSectionToggle = (section: keyof typeof expandedSections) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const dialogActions = useMemo(() => {
+    return (
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <CustomButton variant="outlined" text={isEditMode ? "Reset" : "Clear"} icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || isApproved} color="inherit" />
+        <CustomButton variant="outlined" text="Cancel" onClick={onClose} disabled={isSubmitting} />
+
+        <SmartButton
+          text={isEditMode ? "Update GRN" : "Create GRN"}
+          onClick={handleSubmit(onFormSubmit)}
+          variant="contained"
+          color="primary"
+          icon={SaveIcon}
+          asynchronous={true}
+          showLoadingIndicator={true}
+          loadingText={isEditMode ? "Updating..." : "Creating..."}
+          successText={isEditMode ? "Updated!" : "Created!"}
+          disabled={isSubmitting || !isMandatoryFieldsFilled || isApproved}
+        />
+      </Box>
+    );
+  }, [handleSubmit, onFormSubmit, onClose, isEditMode, isSubmitting, isMandatoryFieldsFilled, isApproved]);
 
   return (
-    <GenericDialog open={open} onClose={onClose} title={`GRN Details - ${grn.grnCode || "Pending"}`} maxWidth="xl" fullWidth actions={dialogActions}>
+    <GenericDialog
+      open={open}
+      onClose={onClose}
+      title="Goods Receive Note (GRN)"
+      maxWidth="xl"
+      fullWidth
+      disableBackdropClick={isSubmitting}
+      disableEscapeKeyDown={isSubmitting}
+      actions={dialogActions}
+    >
       <Box sx={{ width: "100%" }}>
-        {/* Header Card */}
-        <Card sx={{ mb: 3, borderLeft: "4px solid #1976d2" }}>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 8 }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Avatar sx={{ bgcolor: "primary.main", width: 48, height: 48 }}>
-                    <GrnIcon />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h5" fontWeight="bold" color="primary">
-                      {grn.grnCode || "Pending Code Generation"}
-                    </Typography>
-                    <Typography variant="h6" color="text.secondary">
-                      Invoice: {grn.invoiceNo} | Type: {grn.grnType}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      GRN Date: {dayjs(grn.grnDate).format("DD/MM/YYYY")} | Invoice Date: {dayjs(grn.invDate).format("DD/MM/YYYY")}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-                  <Chip
-                    label={grn.grnApprovedYN === "Y" ? "Approved" : "Pending Approval"}
-                    color={getStatusColor(grn)}
-                    variant="filled"
-                    icon={grn.grnApprovedYN === "Y" ? <ApproveIcon /> : <WarningIcon />}
-                  />
-                  <Chip label={grn.grnStatus || "Pending"} color="primary" variant="outlined" />
-                  <Chip label={grn.grnType || "INV"} color="secondary" variant="outlined" />
-                  {grnStatistics?.isOverdue && <Chip label={`Overdue (${grnStatistics.daysOld} days)`} color="error" variant="filled" />}
-                  {grn.grnApprovedYN === "Y" && grn.grnApprovedBy && <Chip label={`Approved by: ${grn.grnApprovedBy}`} color="success" variant="outlined" />}
-                </Stack>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box textAlign="right">
-                  {grnStatistics && grnStatistics.totalValue > 0 && (
-                    <Box mb={2}>
-                      <Typography variant="h4" color="primary" fontWeight="bold">
-                        {formatCurrency(grnStatistics.totalValue, "INR", "en-IN")}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Net Total Amount
-                      </Typography>
-                    </Box>
-                  )}
-
-                  <Stack direction="row" spacing={2} justifyContent="flex-end">
-                    <Box textAlign="center">
-                      <Typography variant="h6" color="primary" fontWeight="bold">
-                        {grnStatistics?.totalItems || 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Product Items
-                      </Typography>
-                    </Box>
-                    <Box textAlign="center">
-                      <Typography variant="h6" color="warning.main" fontWeight="bold">
-                        {grnStatistics?.totalQty || 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Total Quantity
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="grn details tabs">
-            <Tab icon={<InfoIcon />} iconPosition="start" label="Basic Information" />
-            <Tab icon={<ProductIcon />} iconPosition="start" label={`Product Details (${grnStatistics?.totalItems || 0})`} />
-            <Tab icon={<TaxIcon />} iconPosition="start" label="Tax & Financial Summary" />
-            <Tab icon={<PaymentIcon />} iconPosition="start" label="Purchase Order Details" />
-          </Tabs>
-        </Box>
-
-        {/* Tab Panels */}
-        <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-                  <InfoIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  GRN Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      GRN Code
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {grn.grnCode || "Pending"}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      GRN Type
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {grn.grnType || "INV"}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      GRN Date
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      <DateIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                      {dayjs(grn.grnDate).format("DD/MM/YYYY")}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Status
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {grn.grnStatus || "Pending"}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Invoice Number
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      <InvoiceIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                      {grn.invoiceNo}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Invoice Date
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      <DateIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                      {dayjs(grn.invDate).format("DD/MM/YYYY")}
-                    </Typography>
-                  </Grid>
-                  {grn.dcNo && (
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        DC Number
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {grn.dcNo}
-                      </Typography>
-                    </Grid>
-                  )}
-                </Grid>
-              </Paper>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-                  <SupplierIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  Supplier & Department
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Supplier
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      <SupplierIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                      {grn.supplrID}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Department
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      <DeptIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                      {grn.deptID}
-                    </Typography>
-                  </Grid>
-                  {grn.transDeptName && (
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Transfer Department
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {grn.transDeptName}
-                      </Typography>
-                    </Grid>
-                  )}
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Category
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {grn.catDesc || "REVENUE"} ({grn.catValue || "MEDI"})
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
-          </Grid>
-
-          {/* Approval Information */}
-          {grn.grnApprovedYN === "Y" && (
-            <Paper sx={{ p: 3, mt: 3, backgroundColor: "success.light", color: "success.contrastText" }}>
-              <Typography variant="h6" gutterBottom fontWeight="bold">
-                <ApproveIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                Approval Information
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 4 }}>
-                  <Typography variant="body2">
-                    <strong>Approved By:</strong> {grn.grnApprovedBy || "System"}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 4 }}>
-                  <Typography variant="body2">
-                    <strong>Approved ID:</strong> {grn.grnApprovedID || "N/A"}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 4 }}>
-                  <Typography variant="body2">
-                    <strong>Status:</strong> Stock Updated
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-          )}
-
-          {/* Warning for pending approval */}
-          {grn.grnApprovedYN !== "Y" && (
-            <Alert severity={grnStatistics?.isOverdue ? "error" : "warning"} sx={{ mt: 3 }}>
-              <Typography variant="body2">
-                This GRN is pending approval{grnStatistics?.isOverdue ? " and is overdue" : ""}. Product stock will not be updated until the GRN is approved.
-                {grnStatistics?.daysOld && grnStatistics.daysOld > 0 && ` (${grnStatistics.daysOld} days old)`}
-              </Typography>
+        <form id="grn-form" onSubmit={handleSubmit(onFormSubmit)}>
+          {isApproved && (
+            <Alert severity="info" sx={{ mb: 2 }} icon={<ApproveIcon />}>
+              This GRN has been approved and cannot be modified. Stock has been updated.
             </Alert>
           )}
-        </TabPanel>
 
-        <TabPanel value={tabValue} index={1}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-              <ProductIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-              Product Details
-            </Typography>
-            <Divider sx={{ mb: 3 }} />
-
-            {grn.grnDetails && grn.grnDetails.length > 0 ? (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: "primary.main" }}>
-                      <TableCell sx={{ color: "white", fontWeight: "bold" }}>Product</TableCell>
-                      <TableCell sx={{ color: "white", fontWeight: "bold" }}>Batch/Expiry</TableCell>
-                      <TableCell align="right" sx={{ color: "white", fontWeight: "bold" }}>
-                        Unit Price
-                      </TableCell>
-                      <TableCell align="right" sx={{ color: "white", fontWeight: "bold" }}>
-                        Received Qty
-                      </TableCell>
-                      <TableCell align="right" sx={{ color: "white", fontWeight: "bold" }}>
-                        Accept Qty
-                      </TableCell>
-                      <TableCell align="right" sx={{ color: "white", fontWeight: "bold" }}>
-                        Free Items
-                      </TableCell>
-                      <TableCell align="right" sx={{ color: "white", fontWeight: "bold" }}>
-                        Product Value
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {grn.grnDetails.map((detail, index) => (
-                      <TableRow key={index} hover>
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body2" fontWeight="medium">
-                              {detail.productName || `Product ${detail.productID}`}
-                            </Typography>
-                            {detail.productCode && (
-                              <Typography variant="caption" color="text.secondary">
-                                Code: {detail.productCode}
-                              </Typography>
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Box>
-                            {detail.batchNo && <Typography variant="body2">Batch: {detail.batchNo}</Typography>}
-                            {detail.expiryDate && (
-                              <Typography variant="caption" color="text.secondary">
-                                Exp: {dayjs(detail.expiryDate).format("DD/MM/YYYY")}
-                              </Typography>
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" fontWeight="medium">
-                            {formatCurrency(detail.unitPrice || 0, "INR", "en-IN")}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2">{detail.recvdQty || 0}</Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" fontWeight="medium" color="primary">
-                            {detail.acceptQty || 0}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2">{detail.freeItems || 0}</Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body1" fontWeight="bold" color="success.main">
-                            {formatCurrency(detail.productValue || 0, "INR", "en-IN")}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Box textAlign="center" py={6}>
-                <ProductIcon sx={{ fontSize: 64, color: "grey.400", mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
-                  No product details available
+          <Accordion expanded={expandedSections.basic} onChange={() => handleSectionToggle("basic")}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <DeptIcon color="primary" />
+                <Typography variant="h6" color="primary">
+                  Basic GRN Information
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Product details have not been added to this GRN.
-                </Typography>
+                <Chip label="Required" size="small" color="error" variant="outlined" />
               </Box>
-            )}
-          </Paper>
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={2}>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-                  <TaxIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                  Amount Summary
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Amount
-                    </Typography>
-                    <Typography variant="h6" color="primary" fontWeight="bold">
-                      {formatCurrency(grn.tot || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Discount
-                    </Typography>
-                    <Typography variant="h6" color="warning.main" fontWeight="bold">
-                      {formatCurrency(grn.disc || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Net Total
-                    </Typography>
-                    <Typography variant="h5" color="success.main" fontWeight="bold">
-                      {formatCurrency(grn.netTot || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Balance Amount
-                    </Typography>
-                    <Typography variant="h6" color="info.main" fontWeight="bold">
-                      {formatCurrency(grn.balanceAmt || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <EnhancedFormField
+                    name="GrnCode"
+                    control={control}
+                    type="text"
+                    label="GRN Code"
+                    required
+                    disabled={isEditMode || isApproved}
+                    size="small"
+                    helperText={isEditMode ? "Code cannot be changed" : isGeneratingCode ? "Generating..." : "Auto-generated"}
+                    adornment={
+                      !isEditMode &&
+                      !isApproved && <CustomButton size="small" variant="outlined" text="Generate" onClick={handleGenerateCode} disabled={!watchedDeptID || isGeneratingCode} />
+                    }
+                  />
                 </Grid>
-              </Paper>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-                  Tax Breakdown
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Taxable Amount
-                    </Typography>
-                    <Typography variant="h6" fontWeight="medium">
-                      {formatCurrency(grn.totalTaxableAmt || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Tax
-                    </Typography>
-                    <Typography variant="h6" color="error.main" fontWeight="bold">
-                      {formatCurrency(grn.taxAmt || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      CGST Amount
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {formatCurrency(grn.netCGSTTaxAmt || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      SGST Amount
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {formatCurrency(grn.netSGSTTaxAmt || 0, "INR", "en-IN")}
-                    </Typography>
-                  </Grid>
-                  {grn.otherAmt && grn.otherAmt > 0 && (
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Other Amount
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatCurrency(grn.otherAmt, "INR", "en-IN")}
-                      </Typography>
-                    </Grid>
-                  )}
-                  {grn.coinAdj && grn.coinAdj !== 0 && (
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Coin Adjustment
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium" color={grn.coinAdj > 0 ? "success.main" : "error.main"}>
-                        {formatCurrency(grn.coinAdj, "INR", "en-IN")}
-                      </Typography>
-                    </Grid>
-                  )}
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <EnhancedFormField
+                    name="DeptID"
+                    control={control}
+                    type="select"
+                    label="Department"
+                    required
+                    size="small"
+                    options={departments}
+                    onChange={handleDepartmentChange}
+                    disabled={isEditMode || isApproved}
+                  />
                 </Grid>
-              </Paper>
-            </Grid>
-          </Grid>
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={3}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-              <PaymentIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-              Purchase Order Information
-            </Typography>
-            <Divider sx={{ mb: 3 }} />
-
-            {grn.poNo || grn.poID ? (
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        PO Number
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {grn.poNo || "N/A"}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        PO ID
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {grn.poID || "N/A"}
-                      </Typography>
-                    </Grid>
-                    {grn.poDate && (
-                      <Grid size={{ xs: 6 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          PO Date
-                        </Typography>
-                        <Typography variant="body1" fontWeight="medium">
-                          {dayjs(grn.poDate).format("DD/MM/YYYY")}
-                        </Typography>
-                      </Grid>
-                    )}
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        PO Total Amount
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatCurrency(grn.poTotalAmt || 0, "INR", "en-IN")}
-                      </Typography>
-                    </Grid>
-                  </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <EnhancedFormField
+                    name="SupplrID"
+                    control={control}
+                    type="select"
+                    label="Supplier"
+                    required
+                    size="small"
+                    options={suppliers}
+                    onChange={handleSupplierChange}
+                    disabled={isApproved}
+                  />
                 </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        PO Discount
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatCurrency(grn.poDiscAmt || 0, "INR", "en-IN")}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        PO Coin Adjustment
-                      </Typography>
-                      <Typography variant="body1" fontWeight="medium">
-                        {formatCurrency(grn.poCoinAdjAmt || 0, "INR", "en-IN")}
-                      </Typography>
-                    </Grid>
-                  </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <EnhancedFormField name="GrnDate" control={control} type="datepicker" label="GRN Date" required size="small" disabled={isApproved} />
                 </Grid>
-
-                {grn.rNotes && (
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Notes
-                    </Typography>
-                    <Paper sx={{ p: 2, backgroundColor: "grey.50" }}>
-                      <Typography variant="body2">{grn.rNotes}</Typography>
-                    </Paper>
-                  </Grid>
-                )}
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <EnhancedFormField
+                    name="GrnType"
+                    control={control}
+                    type="select"
+                    label="GRN Type"
+                    size="small"
+                    disabled={isApproved}
+                    options={[{ value: "Invoice", label: "Invoice" }]}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <EnhancedFormField name="DcNo" control={control} type="text" label="DC Number" size="small" disabled={isApproved} />
+                </Grid>
               </Grid>
-            ) : (
-              <Box textAlign="center" py={6}>
-                <PaymentIcon sx={{ fontSize: 64, color: "grey.400", mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
-                  No Purchase Order Information
+            </AccordionDetails>
+          </Accordion>
+
+          <Accordion expanded={expandedSections.invoice} onChange={() => handleSectionToggle("invoice")}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <InvoiceIcon color="primary" />
+                <Typography variant="h6" color="primary">
+                  Invoice Information
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  This GRN is not linked to any purchase order.
-                </Typography>
+                <Chip label="Required" size="small" color="error" variant="outlined" />
               </Box>
-            )}
-          </Paper>
-        </TabPanel>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <EnhancedFormField name="InvoiceNo" control={control} type="text" label="Invoice Number" required size="small" disabled={isApproved} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <EnhancedFormField name="InvDate" control={control} type="datepicker" label="Invoice Date" required size="small" disabled={isApproved} />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+
+          <PurchaseOrderSection
+            expanded={expandedSections.po}
+            onChange={() => handleSectionToggle("po")}
+            isApproved={isApproved}
+            watchedDeptID={watchedDeptID}
+            watchedDeptName={watchedDeptName}
+            onPoDataFetched={handlePoDataFetched}
+            onGRNDataFetched={handlePOGrnDetailsChange}
+            issueDepartments={issueDepartments}
+            onIssueDepartmentChange={handleIssueDepartmentChange}
+          />
+
+          <GrnDetailsComponent
+            grnDetails={grnDetails}
+            onGrnDetailsChange={handleManualGrnDetailsChange}
+            disabled={isSubmitting}
+            grnApproved={isApproved}
+            expanded={expandedSections.manual}
+            onToggle={() => handleSectionToggle("manual")}
+            issueDepartments={issueDepartments}
+            onIssueDepartmentChange={handleIssueDepartmentChange}
+          />
+
+          <GRNTotalsAndActionsSection
+            grnDetails={allGrnDetails}
+            control={control}
+            setValue={setValue}
+            watch={watch}
+            onDeleteAll={handleDeleteAll}
+            onShowHistory={handleShowHistory}
+            onNewIssueDepartment={handleNewIssueDepartment}
+            onApplyDiscount={handleApplyDiscount}
+            disabled={isSubmitting}
+            isApproved={isApproved}
+            issueDepartments={issueDepartments}
+            onIssueDepartmentChange={handleIssueDepartmentChange}
+            selectedProductForIssue={selectedProductForIssue}
+            onSelectedProductForIssueChange={setSelectedProductForIssue}
+          />
+
+          <Accordion expanded={expandedSections.configuration} onChange={() => handleSectionToggle("configuration")}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <WarningIcon color="primary" />
+                <Typography variant="h6" color="primary">
+                  Advanced Configuration
+                </Typography>
+                <Chip label="Optional" size="small" color="default" variant="outlined" />
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Stack spacing={2}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={getValues("DiscPercentageYN") === "Y"}
+                          onChange={(e) => setValue("DiscPercentageYN", e.target.checked ? "Y" : "N")}
+                          disabled={isApproved}
+                        />
+                      }
+                      label="Discount as Percentage"
+                    />
+                  </Stack>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Additional configuration options for discount calculations.
+                  </Typography>
+
+                  {issueDepartments.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Issue Departments Summary:
+                      </Typography>
+                      <Stack spacing={1}>
+                        {issueDepartments.map((dept) => (
+                          <Chip key={dept.id} label={`${dept.productName} → ${dept.deptName} (${dept.quantity})`} size="small" variant="outlined" color="primary" />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+        </form>
       </Box>
     </GenericDialog>
   );
 };
 
-export default GrnDetailsDialog;
+export default ComprehensiveGrnFormDialog;

@@ -2,7 +2,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { GRNDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { GrnDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, Box, Grid, Typography } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
@@ -23,7 +23,7 @@ interface IssueDepartmentDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: IssueDepartmentData) => void;
-  selectedProduct?: GRNDetailDto | null;
+  selectedProduct?: GrnDetailDto | null;
   editData?: IssueDepartmentData | null;
   title?: string;
 }
@@ -32,6 +32,7 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
   const { department } = useDropdownValues(["department"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableQuantity, setAvailableQuantity] = useState(0);
+
   const issueDepartmentSchema = useMemo(
     () =>
       z.object({
@@ -48,6 +49,7 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
   );
 
   type IssueDepartmentFormData = z.infer<typeof issueDepartmentSchema>;
+
   const { control, handleSubmit, reset, setValue, watch } = useForm<IssueDepartmentFormData>({
     resolver: zodResolver(issueDepartmentSchema),
     defaultValues: {
@@ -58,10 +60,13 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
       productID: 0,
     },
   });
+
   const watchedDeptID = watch("deptID");
+
   useEffect(() => {
     if (open) {
-      const totalAvailable = selectedProduct?.recvdQty || selectedProduct?.recvdPack || 0;
+      // Use only backend DTO properties - RecvdQty and AcceptQty
+      const totalAvailable = selectedProduct?.AcceptQty || selectedProduct?.RecvdQty || 0;
       setAvailableQuantity(totalAvailable);
 
       if (editData) {
@@ -77,8 +82,8 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
           deptID: 0,
           deptName: "",
           quantity: undefined,
-          productName: selectedProduct.productName || "",
-          productID: selectedProduct.productID || 0,
+          productName: selectedProduct.ProductName || "",
+          productID: selectedProduct.ProductID || 0,
         });
       }
     }
@@ -157,7 +162,7 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
           {selectedProduct && (
             <Alert severity="info" sx={{ mb: 2 }}>
               <Typography variant="body2">
-                <strong>Selected Product:</strong> {selectedProduct.productName}
+                <strong>Selected Product:</strong> {selectedProduct.ProductName}
                 <br />
                 <strong>Total Quantity Available:</strong> {availableQuantity}
               </Typography>

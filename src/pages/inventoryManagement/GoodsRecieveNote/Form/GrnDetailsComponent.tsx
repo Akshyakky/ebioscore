@@ -1,6 +1,6 @@
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { GRNDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { GrnDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
@@ -44,8 +44,8 @@ import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/Produc
 import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 
 interface UpdatedGrnDetailsComponentProps {
-  grnDetails: GRNDetailDto[];
-  onGrnDetailsChange: (details: GRNDetailDto[]) => void;
+  grnDetails: GrnDetailDto[];
+  onGrnDetailsChange: (details: GrnDetailDto[]) => void;
   disabled?: boolean;
   grnApproved?: boolean;
   expanded: boolean;
@@ -55,7 +55,7 @@ interface UpdatedGrnDetailsComponentProps {
   onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
 }
 
-interface GRNDetailRow extends GRNDetailDto {
+interface GRNDetailRow extends GrnDetailDto {
   id: string | number;
   _serialNo: number;
   _pastReceivedPack: number;
@@ -84,7 +84,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
 
   // Issue Department Dialog state
   const [isIssueDeptDialogOpen, setIsIssueDeptDialogOpen] = useState(false);
-  const [selectedProductForIssue, setSelectedProductForIssue] = useState<GRNDetailDto | null>(null);
+  const [selectedProductForIssue, setSelectedProductForIssue] = useState<GrnDetailDto | null>(null);
   const [editingIssueDepartment, setEditingIssueDepartment] = useState<IssueDepartmentData | null>(null);
 
   // Convert GRN details to rows with proper IDs
@@ -97,7 +97,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         ...detail,
         id: detail.grnDetID || `temp-${index}`,
         _serialNo: index + 1,
-        _pastReceivedPack: detail._pastReceivedPack || 0,
+        _pastReceivedPack: 0,
         _issueDepartment: associatedIssueDept,
       };
     });
@@ -116,94 +116,76 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
       setIsAddingProduct(true);
       try {
         const productData = await productListService.getById(product.productID);
-        const nextSerialNo = grnDetails.length > 0 ? Math.max(...grnDetails.map((d) => d.serialNo)) + 1 : 1;
 
-        const newDetail: GRNDetailDto = {
+        const newDetail: GrnDetailDto = {
           grnDetID: 0,
           grnID: 0,
-          serialNo: nextSerialNo,
-          productID: productData.data.productID,
-          productCode: productData.data.productCode,
-          productName: productData.data.productName,
-          catValue: "",
-          catDesc: "",
-          mfID: productData.data.manufacturerID,
-          mfName: productData.data.manufacturerName,
-          manufacturerID: productData.data.manufacturerID,
-          manufacturerCode: productData.data.manufacturerCode,
-          manufacturerName: productData.data.manufacturerName,
           pGrpID: productData.data.pGrpID,
           pGrpName: productData.data.productGroupName,
-          psGrpID: productData.data.psGrpID,
-          psGrpName: productData.data.psGroupName,
+          productID: productData.data.productID,
+          productCode: productData.data.productCode,
+          catValue: "",
+          mfID: productData.data.manufacturerID,
           pUnitID: productData.data.pUnitID,
           pUnitName: productData.data.pUnitName,
           pUnitsPerPack: productData.data.unitPack || 1,
-          pkgID: productData.data.pkgID,
-          pkgName: productData.data.pkgName,
-          hsnCode: productData.data.hsnCODE,
-          requiredPack: 0,
-          requiredQty: 0,
-          recvdPack: 0,
+          PkgID: productData.data.pkgID,
+          batchNo: "",
+          expiryDate: "",
+          unitPrice: productData.data.defaultPrice || 0,
+          tax: 0,
+          sellUnitPrice: 0,
           recvdQty: 0,
           acceptQty: 0,
           freeItems: 0,
-          rejectedQty: 0,
-          unitPrice: productData.data.defaultPrice || 0,
-          sellingPrice: productData.data.defaultPrice || 0,
-          packPrice: productData.data.defaultPrice || 0,
-          sellUnitPrice: 0,
-          defaultPrice: productData.data.defaultPrice || 0,
-          mrp: 0,
-          mrpAbated: 0,
+          productValue: 0,
+          productNotes: "",
+          psGrpID: productData.data.psGrpID,
+          chargeablePercent: 0,
           discAmt: 0,
           discPercentage: 0,
-          gstPercentage: (productData.data.cgstPerValue || 0) + (productData.data.sgstPerValue || 0),
+          expiryYN: productData.data.expiry === "Y" ? "Y" : "N",
+          isFreeItemYN: "N",
+          itemMrpValue: 0,
+          itemTotalProfit: 0,
+          itemTotalVat: 0,
+          manufacturerCode: productData.data.manufacturerCode,
+          manufacturerID: productData.data.manufacturerID,
+          manufacturerName: productData.data.manufacturerName,
+          mrpAbated: 0,
+          mrp: 0,
+          poDetID: 0,
+          requiredUnitQty: 0,
+          taxAfterDiscOnMrpYN: "N",
+          taxAfterDiscYN: "N",
+          taxCode: "",
+          taxID: 0,
+          taxModeCode: "",
+          taxModeDescription: "",
+          taxModeID: "",
+          taxName: "",
+          taxOnfreeItemsYN: "N",
+          taxOnMrpYN: "N",
+          taxOnunitPriceYN: "N",
+          catDesc: "",
+          mfName: productData.data.manufacturerName,
+          pkgName: productData.data.pkgName,
+          productName: productData.data.productName,
+          psGrpName: productData.data.psGroupName,
+          refNo: "",
+          hsnCode: productData.data.hsnCODE,
           cgstPerValue: productData.data.cgstPerValue || 0,
           cgstTaxAmt: 0,
           sgstPerValue: productData.data.sgstPerValue || 0,
           sgstTaxAmt: 0,
-          igstPerValue: 0,
-          igstTaxAmt: 0,
           taxableAmt: 0,
-          totalTaxAmt: 0,
-          taxAfterDiscYN: "N",
-          taxAfterDiscOnMrpYN: "N",
-          includeTaxYN: "N",
-          taxOnFreeItemsYN: "N",
-          taxOnMrpYN: "N",
-          taxOnUnitPriceYN: "N",
-          batchNo: "",
-          referenceNo: "",
-          expiryDate: "",
-          lotNo: "",
-          vendorBatchNo: "",
-          shelfLife: 0,
-          storageCondition: "",
-          productNotes: "",
-          expiryYN: productData.data.expiry === "Y" ? "Y" : "N",
-          isFreeItemYN: "N",
-          prescriptionYN: "N",
-          qualityCheckYN: "N",
-          qualityStatus: "",
-          qualityRemarks: "",
-          productValue: 0,
-          itemMrpValue: 0,
-          itemTotalProfit: 0,
-          itemTotalVat: 0,
-          _recievedQty: 0,
-          _serialNo: nextSerialNo,
-          _pastReceivedPack: 0,
-          _unitPrice: productData.data.defaultPrice || 0,
-          _sellingUnitPrice: 0,
-          _calculatedValue: 0,
-          _totalWithTax: 0,
+          defaultPrice: productData.data.defaultPrice || 0,
+          // BaseDto properties
           rActiveYN: "Y",
-          isDeleted: false,
-          createdBy: "",
-          createdAt: "",
-          updatedBy: "",
-          updatedAt: "",
+          rCreatedBy: "",
+          rCreatedDate: "",
+          rUpdatedBy: "",
+          rUpdatedDate: "",
         };
 
         onGrnDetailsChange([...grnDetails, newDetail]);
@@ -237,19 +219,13 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
       updatedDetails.splice(originalIndex, 1);
     }
 
-    // Re-sequence serial numbers
-    const resequencedDetails = updatedDetails.map((detail, index) => ({
-      ...detail,
-      serialNo: index + 1,
-    }));
-
-    onGrnDetailsChange(resequencedDetails);
+    onGrnDetailsChange(updatedDetails);
     setDeleteConfirmation({ open: false, index: null });
     showAlert("Success", "Product removed successfully.", "success");
   };
 
   const handleCellValueChange = useCallback(
-    (id: string | number, field: keyof GRNDetailDto, value: any) => {
+    (id: string | number, field: keyof GrnDetailDto, value: any) => {
       const updatedDetails = [...grnDetails];
       const index = updatedDetails.findIndex((item) => (item.grnDetID || `temp-${grnDetails.indexOf(item)}`) === id);
 
@@ -260,10 +236,11 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
 
       // --- Field-Specific Preparations ---
       if (field === "unitPrice" || field === "pUnitsPerPack") {
-        currentRow.packPrice = parseFloat(((currentRow.unitPrice || 0) * (currentRow.pUnitsPerPack || 1)).toFixed(2));
+        const packPrice = parseFloat(((currentRow.unitPrice || 0) * (currentRow.pUnitsPerPack || 1)).toFixed(2));
+        // Store pack price in productValue temporarily for calculation
+        currentRow.productValue = packPrice;
       }
-      if (field === "recvdPack" || field === "pUnitsPerPack") {
-        currentRow.recvdQty = parseFloat(((currentRow.recvdPack || 0) * (currentRow.pUnitsPerPack || 1)).toFixed(2));
+      if (field === "recvdQty" || field === "pUnitsPerPack") {
         currentRow.acceptQty = currentRow.recvdQty;
       }
       if (field === "gstPercentage") {
@@ -273,12 +250,13 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
       }
 
       // --- Core Calculation Logic based on Rules ---
-      const receivedPack = currentRow.recvdPack || 0;
-      const packPrice = currentRow.packPrice || 0;
+      const receivedQty = currentRow.recvdQty || 0;
+      const unitPrice = currentRow.unitPrice || 0;
       const discPercentage = currentRow.discPercentage || 0;
-      const gstPercentage = currentRow.gstPercentage || 0;
+      const cgstRate = currentRow.cgstPerValue || 0;
+      const sgstRate = currentRow.sgstPerValue || 0;
+      const gstPercentage = cgstRate + sgstRate;
       const isTaxAfterDisc = currentRow.taxAfterDiscYN === "Y";
-      const isTaxInclusive = currentRow.includeTaxYN === "Y";
 
       let baseAmount = 0,
         discountAmount = 0,
@@ -287,43 +265,20 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         finalValue = 0;
 
       // Rule 1: Base Amount (Always first)
-      baseAmount = receivedPack * packPrice;
+      baseAmount = receivedQty * unitPrice;
 
-      if (isTaxInclusive) {
-        // Rule 7: Final Value (Inclusive) is set to Base Amount
-        finalValue = baseAmount;
-
-        // Recalculate other values based on the final value (as per rule's note)
-        if (isTaxAfterDisc) {
-          // When tax is applied *after* discount.
-          // finalValue = taxableAmount * (1 + gstPercentage / 100)
-          taxableAmount = baseAmount / (1 + gstPercentage / 100);
-          totalTaxAmount = taxableAmount * (gstPercentage / 100);
-          // Recalculate discount based on the derived taxable amount
-          discountAmount = baseAmount - taxableAmount;
-        } else {
-          // When tax is applied on base amount (before discount).
-          // finalValue = (baseAmount - discountAmount) + (baseAmount * gstPercentage / 100)
-          // Since finalValue = baseAmount, discountAmount must equal the tax amount.
-          totalTaxAmount = baseAmount * (gstPercentage / 100);
-          discountAmount = totalTaxAmount;
-          taxableAmount = baseAmount - discountAmount;
-        }
+      // Rule 2: Discount Amount
+      discountAmount = baseAmount * (discPercentage / 100);
+      // Rule 3: Taxable Amount
+      taxableAmount = baseAmount - discountAmount;
+      // Rule 4 & 5: Total Tax Amount
+      if (isTaxAfterDisc) {
+        totalTaxAmount = taxableAmount * (gstPercentage / 100);
       } else {
-        // --- EXCLUSIVE TAX SCENARIO ---
-        // Rule 2: Discount Amount
-        discountAmount = baseAmount * (discPercentage / 100);
-        // Rule 3: Taxable Amount
-        taxableAmount = baseAmount - discountAmount;
-        // Rule 4 & 5: Total Tax Amount
-        if (isTaxAfterDisc) {
-          totalTaxAmount = taxableAmount * (gstPercentage / 100);
-        } else {
-          totalTaxAmount = baseAmount * (gstPercentage / 100);
-        }
-        // Rule 6: Final Value
-        finalValue = taxableAmount + totalTaxAmount;
+        totalTaxAmount = baseAmount * (gstPercentage / 100);
       }
+      // Rule 6: Final Value
+      finalValue = taxableAmount + totalTaxAmount;
 
       // Update the current row with all the calculated values
       currentRow.discAmt = parseFloat(discountAmount.toFixed(2));
@@ -339,13 +294,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         currentRow.sgstTaxAmt = 0;
       }
 
-      currentRow.totalTaxAmt = parseFloat(totalTaxAmount.toFixed(2));
       currentRow.productValue = parseFloat(finalValue.toFixed(2));
-
-      // Update other dependent fields
-      currentRow._calculatedValue = currentRow.productValue;
-      currentRow._totalWithTax = currentRow.productValue;
-      currentRow._recievedQty = currentRow.recvdQty;
 
       onGrnDetailsChange(updatedDetails);
     },
@@ -404,7 +353,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
 
   // Render functions for different cell types
   const renderNumberField = useCallback(
-    (params: GridRenderCellParams, field: keyof GRNDetailDto, precision: number = 2) => (
+    (params: GridRenderCellParams, field: keyof GrnDetailDto, precision: number = 2) => (
       <TextField
         size="small"
         type="number"
@@ -426,7 +375,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
   );
 
   const renderTextField = useCallback(
-    (params: GridRenderCellParams, field: keyof GRNDetailDto) => (
+    (params: GridRenderCellParams, field: keyof GrnDetailDto) => (
       <TextField
         size="small"
         type="text"
@@ -443,7 +392,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
   );
 
   const renderDateField = useCallback(
-    (params: GridRenderCellParams, field: keyof GRNDetailDto) => (
+    (params: GridRenderCellParams, field: keyof GrnDetailDto) => (
       <TextField
         size="small"
         type="date"
@@ -463,7 +412,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
   );
 
   const renderCheckbox = useCallback(
-    (params: GridRenderCellParams, field: keyof GRNDetailDto) => (
+    (params: GridRenderCellParams, field: keyof GrnDetailDto) => (
       <Checkbox
         checked={params.row[field] === "Y"}
         onChange={(e) => {
@@ -480,7 +429,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
     (params: GridRenderCellParams) => (
       <Select
         size="small"
-        value={params.row.gstPercentage || ""}
+        value={(params.row.cgstPerValue || 0) + (params.row.sgstPerValue || 0) || ""}
         onChange={(e) => {
           const value = Number(e.target.value);
           handleDropdownChange(value, params.id);
@@ -537,7 +486,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
     showAlert("Success", "All products removed successfully.", "success");
   }, [onGrnDetailsChange, showAlert]);
 
-  // Define columns for DataGrid - Same as PurchaseOrderSection but updated for manual products
+  // Define columns for DataGrid
   const columns: GridColDef[] = useMemo(
     () => [
       {
@@ -556,27 +505,27 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         sortable: false,
       },
       {
-        field: "requiredPack",
-        headerName: "Required Pack",
+        field: "requiredUnitQty",
+        headerName: "Required Qty",
         width: 120,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "requiredPack", 0),
-      },
-      {
-        field: "recvdPack",
-        headerName: "Received Pack",
-        width: 130,
-        sortable: false,
-        renderCell: (params) => renderNumberField(params, "recvdPack", 0),
+        renderCell: (params) => renderNumberField(params, "requiredUnitQty", 0),
       },
       {
         field: "recvdQty",
         headerName: "Received Qty",
+        width: 130,
+        sortable: false,
+        renderCell: (params) => renderNumberField(params, "recvdQty", 0),
+      },
+      {
+        field: "acceptQty",
+        headerName: "Accept Qty",
         width: 120,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => params.row.recvdQty || 0,
+        renderCell: (params) => renderNumberField(params, "acceptQty", 0),
       },
       {
         field: "freeItems",
@@ -599,13 +548,6 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         renderCell: (params) => renderNumberField(params, "pUnitsPerPack", 0),
       },
       {
-        field: "serialNo",
-        headerName: "Serial No.",
-        width: 100,
-        sortable: false,
-        renderCell: (params) => renderTextField(params, "serialNo"),
-      },
-      {
         field: "batchNo",
         headerName: "Batch No",
         width: 120,
@@ -613,11 +555,11 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         renderCell: (params) => renderTextField(params, "batchNo"),
       },
       {
-        field: "referenceNo",
+        field: "refNo",
         headerName: "Reference No",
         width: 120,
         sortable: false,
-        renderCell: (params) => renderTextField(params, "referenceNo"),
+        renderCell: (params) => renderTextField(params, "refNo"),
       },
       {
         field: "expiryDate",
@@ -627,20 +569,11 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         renderCell: (params) => renderDateField(params, "expiryDate"),
       },
       {
-        field: "sellingPrice",
+        field: "SellunitPrice",
         headerName: "Selling Price",
         width: 120,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "sellingPrice"),
-      },
-      {
-        field: "packPrice",
-        headerName: "Pack Price",
-        width: 120,
-        sortable: false,
-        align: "right",
-        headerAlign: "right",
-        renderCell: (params) => (params.row.packPrice || 0).toFixed(2),
+        renderCell: (params) => renderNumberField(params, "SellunitPrice"),
       },
       {
         field: "gstPercentage",
@@ -662,22 +595,6 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         width: 130,
         sortable: false,
         renderCell: (params) => renderCheckbox(params, "taxAfterDiscYN"),
-      },
-      {
-        field: "includeTaxYN",
-        headerName: "Inc.Tax",
-        width: 80,
-        sortable: false,
-        renderCell: (params) => renderCheckbox(params, "includeTaxYN"),
-      },
-      {
-        field: "totalTaxAmt",
-        headerName: "GST Amt",
-        width: 100,
-        sortable: false,
-        align: "right",
-        headerAlign: "right",
-        renderCell: (params) => (params.row.totalTaxAmt || 0).toFixed(2),
       },
       {
         field: "cgstPerValue",
@@ -731,15 +648,6 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         sortable: false,
       },
       {
-        field: "_pastReceivedPack",
-        headerName: "Past Received Pack",
-        width: 150,
-        sortable: false,
-        align: "right",
-        headerAlign: "right",
-        renderCell: (params) => params.row._pastReceivedPack || 0,
-      },
-      {
         field: "discAmt",
         headerName: "Disc",
         width: 100,
@@ -754,13 +662,6 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
         width: 120,
         sortable: false,
         renderCell: (params) => renderNumberField(params, "unitPrice"),
-      },
-      {
-        field: "sellUnitPrice",
-        headerName: "Selling Unit Price",
-        width: 150,
-        sortable: false,
-        renderCell: (params) => renderNumberField(params, "sellUnitPrice"),
       },
       {
         field: "issueDepartment",

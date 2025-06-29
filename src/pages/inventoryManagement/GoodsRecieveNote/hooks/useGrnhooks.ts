@@ -1,955 +1,272 @@
 import { useLoading } from "@/hooks/Common/useLoading";
-import { GRNDepartmentTransfer, GRNHelpers, GRNHistoryDto, GRNQualityCheck, GRNSearchRequest, GRNWithAllDetailsDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { GrnMastDto, GrnSearchRequest } from "@/interfaces/InventoryManagement/GRNDto";
 import { useAlert } from "@/providers/AlertProvider";
-import { bGrnMastService, bGrnService } from "@/services/InventoryManagementService/GRNService/GRNService";
+import { OperationResult } from "@/services/GenericEntityService/GenericEntityService";
+import { grnMastServices } from "@/services/InventoryManagementService/GRNService/GRNService";
+import { useCallback, useState } from "react";
 
-import { useCallback, useRef, useState } from "react";
-
-interface UseEnhancedGRNState {
-  grns: GRNWithAllDetailsDto[];
-  loading: boolean;
-  error: string | null;
-  statistics: {
-    total: number;
-    approved: number;
-    pending: number;
-    overdue: number;
-    hidden: number;
-    totalValue: number;
-    avgValue: number;
-  };
-}
-
-interface UseEnhancedGRNReturn extends UseEnhancedGRNState {
-  // Basic CRUD Operations
-  refreshGrns: () => Promise<void>;
-  saveGrn: (grnData: GRNWithAllDetailsDto) => Promise<void>;
-  deleteGrn: (grnId: number) => Promise<void>;
-  generateGrnCode: (departmentId: number) => Promise<string>;
-  getGrnById: (grnId: number) => Promise<GRNWithAllDetailsDto | null>;
-
-  // Approval Operations
-  approveGrn: (grnId: number) => Promise<void>;
-  bulkApproveGrns: (grnIds: number[]) => Promise<void>;
-  updateProductStock: (grnId: number) => Promise<void>;
-
-  // Advanced Operations
-  hideGrn: (grnId: number) => Promise<void>;
-  unhideGrn: (grnId: number) => Promise<void>;
-  bulkHideGrns: (grnIds: number[]) => Promise<void>;
-  bulkDeleteGrns: (grnIds: number[]) => Promise<void>;
-
-  // Excel Operations
-  // uploadFromExcel: (file: File, departmentId: number) => Promise<GRNExcelUploadResult | null>;
-  downloadExcelTemplate: () => Promise<void>;
-  exportGrnToExcel: (grnId: number) => Promise<void>;
-  exportMultipleGrnsToExcel: (grnIds: number[]) => Promise<void>;
-
-  // History Operations
-  getGrnHistory: (grnId: number) => Promise<GRNHistoryDto[]>;
-
-  // Department Transfer
-  transferGrnToDepartment: (transferData: GRNDepartmentTransfer) => Promise<void>;
-  createNewIssueDepartment: (grnId: number, departmentId: number, issueItems: number[]) => Promise<void>;
-
-  // Quality Check
-  performQualityCheck: (qualityCheck: GRNQualityCheck) => Promise<void>;
-  getQualityCheckHistory: (grnId: number) => Promise<GRNQualityCheck[]>;
-
-  // Reporting
-  getGrnSummaryReport: (dateFrom: string, dateTo: string, departmentId?: number) => Promise<any>;
-  getSupplierWiseReport: (dateFrom: string, dateTo: string) => Promise<any>;
-  getDepartmentWiseReport: (dateFrom: string, dateTo: string) => Promise<any>;
-  getProductWiseReport: (dateFrom: string, dateTo: string, productId?: number) => Promise<any>;
-
-  // Dashboard
-  getDashboardData: (dateFrom: string, dateTo: string) => Promise<any>;
-  getRecentActivity: (limit?: number) => Promise<any[]>;
-
-  // Utility
-  validateGrn: (grnData: GRNWithAllDetailsDto) => Promise<boolean>;
-  recalculateGrnTotals: (grnId: number) => Promise<void>;
-  clearState: () => void;
-}
-
-export const useEnhancedGRN = (): UseEnhancedGRNReturn => {
-  const [state, setState] = useState<UseEnhancedGRNState>({
-    grns: [],
-    loading: false,
-    error: null,
-    statistics: {
-      total: 0,
-      approved: 0,
-      pending: 0,
-      overdue: 0,
-      hidden: 0,
-      totalValue: 0,
-      avgValue: 0,
-    },
-  });
-
+/**
+ * Custom hook for managing Goods Receipt Note (GRN) operations.
+ * It provides state and functions for fetching, creating, approving, and deleting GRNs.
+ */
+export const useGrn = () => {
+  const { setLoading } = useLoading();
   const { showAlert } = useAlert();
-  const lastFetchTime = useRef<number>(0);
-  const cacheTimeout = 30000;
-
-  const updateState = useCallback((updates: Partial<UseEnhancedGRNState>) => {
-    setState((prevState) => ({
-      ...prevState,
-      ...updates,
-    }));
-  }, []);
-
-  const handleError = useCallback(
-    (error: unknown, operation: string) => {
-      const errorMessage = error instanceof Error ? error.message : `Failed to ${operation}`;
-      updateState({
-        error: errorMessage,
-        loading: false,
-      });
-
-      showAlert("Error", errorMessage, "error");
-      return errorMessage;
-    },
-    [updateState, showAlert]
-  );
-
-  // Calculate statistics from GRN data
-  const calculateStatistics = useCallback((grns: GRNWithAllDetailsDto[]) => {
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const statistics = {
-      total: grns.length,
-      approved: grns.filter((g) => g.grnApprovedYN === "Y").length,
-      pending: grns.filter((g) => g.grnApprovedYN !== "Y").length,
-      overdue: grns.filter((g) => g.grnApprovedYN !== "Y" && new Date(g.grnDate) < sevenDaysAgo).length,
-      hidden: grns.filter((g) => g.hideYN === "Y").length,
-      totalValue: grns.reduce((sum, grn) => sum + (grn.netTot || grn.tot || 0), 0),
-      avgValue: 0,
-    };
-
-    statistics.avgValue = statistics.total > 0 ? statistics.totalValue / statistics.total : 0;
-
-    return statistics;
-  }, []);
-
-  // Basic CRUD Operations
-  const refreshGrns = useCallback(async (): Promise<void> => {
-    const now = Date.now();
-    if (now - lastFetchTime.current < cacheTimeout && state.grns.length > 0) {
-      return;
-    }
-
-    try {
-      updateState({ loading: true, error: null });
-      const result = await bGrnService.getAllGrnsWithDetails();
-
-      if (result.success && result.data) {
-        const grnsWithDetails: GRNWithAllDetailsDto[] = result.data.map((grn: any) => ({
-          ...grn,
-          grnDetails: grn.grnDetails ?? [],
-        }));
-
-        const statistics = calculateStatistics(grnsWithDetails);
-
-        updateState({
-          grns: grnsWithDetails,
-          statistics,
-          loading: false,
-          error: null,
-        });
-        lastFetchTime.current = now;
-      } else {
-        throw new Error(result.errorMessage || "Failed to fetch GRNs");
-      }
-    } catch (error) {
-      handleError(error, "fetch GRNs");
-    }
-  }, [state.grns.length, updateState, handleError, calculateStatistics]);
-
-  const saveGrn = useCallback(
-    async (grnData: GRNWithAllDetailsDto): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-
-        // Client-side validation using helpers
-        const validationResult = GRNHelpers.validateCompleteGRN(grnData);
-        if (!validationResult.isValid) {
-          throw new Error(`Validation failed: ${validationResult.errors.join(", ")}`);
-        }
-
-        const result = await bGrnService.saveGrnWithAllDetails(grnData);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", `GRN ${grnData.grnID ? "updated" : "created"} successfully`, "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to save GRN");
-        }
-      } catch (error) {
-        handleError(error, "save GRN");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const deleteGrn = useCallback(
-    async (grnId: number): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        if (grnId <= 0) {
-          throw new Error("Invalid GRN ID");
-        }
-        const result = await bGrnService.delete(grnId);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "GRN deleted successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to delete GRN");
-        }
-      } catch (error) {
-        handleError(error, "delete GRN");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const generateGrnCode = useCallback(
-    async (departmentId: number): Promise<string> => {
-      try {
-        if (departmentId <= 0) {
-          throw new Error("Department ID is required for code generation");
-        }
-        const result = await bGrnService.generateGrnCode(departmentId);
-        if (result.success && result.data) {
-          return result.data as string;
-        } else {
-          throw new Error(result.errorMessage || "Failed to generate GRN code");
-        }
-      } catch (error) {
-        handleError(error, "generate GRN code");
-        const fallbackCode = `GRN${departmentId}${Date.now().toString().slice(-4)}`;
-        showAlert("Warning", `Using fallback GRN code: ${fallbackCode}`, "warning");
-        return fallbackCode;
-      }
-    },
-    [handleError, showAlert]
-  );
-
-  const getGrnById = useCallback(
-    async (grnId: number): Promise<GRNWithAllDetailsDto | null> => {
-      try {
-        updateState({ loading: true, error: null });
-        if (grnId <= 0) {
-          throw new Error("Invalid GRN ID");
-        }
-        const result = await bGrnService.getAllGrnsWithDetailsByID(grnId);
-        updateState({ loading: false, error: null });
-        if (result.success && result.data) {
-          return {
-            ...result.data,
-            grnDetails: result.data.grnDetails ?? [],
-          };
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch GRN details");
-        }
-      } catch (error) {
-        handleError(error, "fetch GRN details");
-        return null;
-      }
-    },
-    [updateState, handleError]
-  );
-
-  // Approval Operations
-  const approveGrn = useCallback(
-    async (grnId: number): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        if (grnId <= 0) {
-          throw new Error("Invalid GRN ID");
-        }
-        const result = await bGrnService.approveGrn(grnId);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "GRN approved successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to approve GRN");
-        }
-      } catch (error) {
-        handleError(error, "approve GRN");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const bulkApproveGrns = useCallback(
-    async (grnIds: number[]): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        if (!grnIds.length) {
-          throw new Error("No GRNs selected for approval");
-        }
-        const result = await bGrnService.bulkApprove(grnIds);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", `${grnIds.length} GRNs approved successfully`, "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to approve GRNs");
-        }
-      } catch (error) {
-        handleError(error, "bulk approve GRNs");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const updateProductStock = useCallback(
-    async (grnId: number): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        if (grnId <= 0) {
-          throw new Error("Invalid GRN ID");
-        }
-        const result = await bGrnMastService.updateProductStock(grnId);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "Product stock updated successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to update product stock");
-        }
-      } catch (error) {
-        handleError(error, "update product stock");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  // Advanced Operations
-  const hideGrn = useCallback(
-    async (grnId: number): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnMastService.hideGrn(grnId);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "GRN hidden successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to hide GRN");
-        }
-      } catch (error) {
-        handleError(error, "hide GRN");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const unhideGrn = useCallback(
-    async (grnId: number): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnMastService.unhideGrn(grnId);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "GRN unhidden successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to unhide GRN");
-        }
-      } catch (error) {
-        handleError(error, "unhide GRN");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const bulkHideGrns = useCallback(
-    async (grnIds: number[]): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnService.bulkHide(grnIds);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", `${grnIds.length} GRNs hidden successfully`, "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to hide GRNs");
-        }
-      } catch (error) {
-        handleError(error, "bulk hide GRNs");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const bulkDeleteGrns = useCallback(
-    async (grnIds: number[]): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnService.bulkDelete(grnIds);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", `${grnIds.length} GRNs deleted successfully`, "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to delete GRNs");
-        }
-      } catch (error) {
-        handleError(error, "bulk delete GRNs");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  // Excel Operations
-  // const uploadFromExcel = useCallback(
-  //   async (file: File, departmentId: number): Promise<GRNExcelUploadResult | null> => {
-  //     try {
-  //       updateState({ loading: true, error: null });
-  //       const result = await bGrnService.uploadFromExcel(file, departmentId);
-  //       updateState({ loading: false, error: null });
-
-  //       if (result.success && result.data) {
-  //         showAlert("Success", `Excel uploaded successfully. ${result.data.validRows} out of ${result.data.totalRows} rows processed.`, "success");
-  //         if (result.data.errors.length > 0) {
-  //           console.warn("Excel upload errors:", result.data.errors);
-  //         }
-  //         await refreshGrns();
-  //         return result.data;
-  //       } else {
-  //         throw new Error(result.errorMessage || "Failed to upload Excel file");
-  //       }
-  //     } catch (error) {
-  //       handleError(error, "upload Excel file");
-  //       return null;
-  //     }
-  //   },
-  //   [updateState, handleError, showAlert, refreshGrns]
-  // );
-
-  const downloadExcelTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await bGrnService.downloadExcelTemplate();
-      if (result.success && result.data) {
-        // Create download link
-        const blob = result.data as Blob;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "GRN_Template.xlsx";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        showAlert("Success", "Excel template downloaded successfully", "success");
-      } else {
-        throw new Error(result.errorMessage || "Failed to download template");
-      }
-    } catch (error) {
-      handleError(error, "download Excel template");
-    }
-  }, [handleError, showAlert]);
-
-  const exportGrnToExcel = useCallback(
-    async (grnId: number): Promise<void> => {
-      try {
-        const result = await bGrnService.exportGrnToExcel(grnId);
-        if (result.success && result.data) {
-          const blob = result.data as Blob;
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `GRN_${grnId}.xlsx`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          showAlert("Success", "GRN exported to Excel successfully", "success");
-        } else {
-          throw new Error(result.errorMessage || "Failed to export GRN");
-        }
-      } catch (error) {
-        handleError(error, "export GRN to Excel");
-      }
-    },
-    [handleError, showAlert]
-  );
-
-  const exportMultipleGrnsToExcel = useCallback(
-    async (grnIds: number[]): Promise<void> => {
-      try {
-        const result = await bGrnService.exportMultipleGrnsToExcel(grnIds);
-        if (result.success && result.data) {
-          const blob = result.data as Blob;
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `GRNs_${new Date().toISOString().split("T")[0]}.xlsx`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          showAlert("Success", `${grnIds.length} GRNs exported to Excel successfully`, "success");
-        } else {
-          throw new Error(result.errorMessage || "Failed to export GRNs");
-        }
-      } catch (error) {
-        handleError(error, "export GRNs to Excel");
-      }
-    },
-    [handleError, showAlert]
-  );
-
-  // History Operations
-  const getGrnHistory = useCallback(
-    async (grnId: number): Promise<GRNHistoryDto[]> => {
-      try {
-        const result = await bGrnService.getGrnHistory(grnId);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch GRN history");
-        }
-      } catch (error) {
-        handleError(error, "fetch GRN history");
-        return [];
-      }
-    },
-    [handleError]
-  );
-
-  // Department Transfer
-  const transferGrnToDepartment = useCallback(
-    async (transferData: GRNDepartmentTransfer): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnService.transferGrnToDepartment(transferData);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "GRN transferred to department successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to transfer GRN");
-        }
-      } catch (error) {
-        handleError(error, "transfer GRN to department");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const createNewIssueDepartment = useCallback(
-    async (grnId: number, departmentId: number, issueItems: number[]): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnService.createNewIssueDepartment(grnId, departmentId, issueItems);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "New issue department created successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to create issue department");
-        }
-      } catch (error) {
-        handleError(error, "create issue department");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  // Quality Check
-  const performQualityCheck = useCallback(
-    async (qualityCheck: GRNQualityCheck): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnService.performQualityCheck(qualityCheck);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "Quality check completed successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to perform quality check");
-        }
-      } catch (error) {
-        handleError(error, "perform quality check");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const getQualityCheckHistory = useCallback(
-    async (grnId: number): Promise<GRNQualityCheck[]> => {
-      try {
-        const result = await bGrnService.getQualityCheckHistory(grnId);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch quality check history");
-        }
-      } catch (error) {
-        handleError(error, "fetch quality check history");
-        return [];
-      }
-    },
-    [handleError]
-  );
-
-  // Reporting
-  const getGrnSummaryReport = useCallback(
-    async (dateFrom: string, dateTo: string, departmentId?: number): Promise<any> => {
-      try {
-        const result = await bGrnService.getGrnSummaryReport(dateFrom, dateTo, departmentId);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch summary report");
-        }
-      } catch (error) {
-        handleError(error, "fetch summary report");
-        return null;
-      }
-    },
-    [handleError]
-  );
-
-  const getSupplierWiseReport = useCallback(
-    async (dateFrom: string, dateTo: string): Promise<any> => {
-      try {
-        const result = await bGrnService.getSupplierWiseReport(dateFrom, dateTo);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch supplier-wise report");
-        }
-      } catch (error) {
-        handleError(error, "fetch supplier-wise report");
-        return null;
-      }
-    },
-    [handleError]
-  );
-
-  const getDepartmentWiseReport = useCallback(
-    async (dateFrom: string, dateTo: string): Promise<any> => {
-      try {
-        const result = await bGrnService.getDepartmentWiseReport(dateFrom, dateTo);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch department-wise report");
-        }
-      } catch (error) {
-        handleError(error, "fetch department-wise report");
-        return null;
-      }
-    },
-    [handleError]
-  );
-
-  const getProductWiseReport = useCallback(
-    async (dateFrom: string, dateTo: string, productId?: number): Promise<any> => {
-      try {
-        const result = await bGrnService.getProductWiseReport(dateFrom, dateTo, productId);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch product-wise report");
-        }
-      } catch (error) {
-        handleError(error, "fetch product-wise report");
-        return null;
-      }
-    },
-    [handleError]
-  );
-
-  // Dashboard
-  const getDashboardData = useCallback(
-    async (dateFrom: string, dateTo: string): Promise<any> => {
-      try {
-        const result = await bGrnService.getDashboardData(dateFrom, dateTo);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch dashboard data");
-        }
-      } catch (error) {
-        handleError(error, "fetch dashboard data");
-        return null;
-      }
-    },
-    [handleError]
-  );
-
-  const getRecentActivity = useCallback(
-    async (limit: number = 10): Promise<any[]> => {
-      try {
-        const result = await bGrnService.getRecentActivity(limit);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to fetch recent activity");
-        }
-      } catch (error) {
-        handleError(error, "fetch recent activity");
-        return [];
-      }
-    },
-    [handleError]
-  );
-
-  // Utility
-  const validateGrn = useCallback(
-    async (grnData: GRNWithAllDetailsDto): Promise<boolean> => {
-      try {
-        const result = await bGrnService.validateGrn(grnData);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          throw new Error(result.errorMessage || "Failed to validate GRN");
-        }
-      } catch (error) {
-        handleError(error, "validate GRN");
-        return false;
-      }
-    },
-    [handleError]
-  );
-
-  const recalculateGrnTotals = useCallback(
-    async (grnId: number): Promise<void> => {
-      try {
-        updateState({ loading: true, error: null });
-        const result = await bGrnService.recalculateGrnTotals(grnId);
-        if (result.success) {
-          updateState({ loading: false, error: null });
-          showAlert("Success", "GRN totals recalculated successfully", "success");
-          await refreshGrns();
-        } else {
-          throw new Error(result.errorMessage || "Failed to recalculate totals");
-        }
-      } catch (error) {
-        handleError(error, "recalculate GRN totals");
-        throw error;
-      }
-    },
-    [updateState, handleError, showAlert, refreshGrns]
-  );
-
-  const clearState = useCallback(() => {
-    setState({
-      grns: [],
-      loading: false,
-      error: null,
-      statistics: {
-        total: 0,
-        approved: 0,
-        pending: 0,
-        overdue: 0,
-        hidden: 0,
-        totalValue: 0,
-        avgValue: 0,
-      },
-    });
-    lastFetchTime.current = 0;
-  }, []);
-
-  return {
-    ...state,
-    // Basic CRUD
-    refreshGrns,
-    saveGrn,
-    deleteGrn,
-    generateGrnCode,
-    getGrnById,
-    // Approval
-    approveGrn,
-    bulkApproveGrns,
-    updateProductStock,
-    // Advanced
-    hideGrn,
-    unhideGrn,
-    bulkHideGrns,
-    bulkDeleteGrns,
-    // Excel
-    // uploadFromExcel,
-    downloadExcelTemplate,
-    exportGrnToExcel,
-    exportMultipleGrnsToExcel,
-    // History
-    getGrnHistory,
-    // Transfer
-    transferGrnToDepartment,
-    createNewIssueDepartment,
-    // Quality
-    performQualityCheck,
-    getQualityCheckHistory,
-    // Reports
-    getGrnSummaryReport,
-    getSupplierWiseReport,
-    getDepartmentWiseReport,
-    getProductWiseReport,
-    // Dashboard
-    getDashboardData,
-    getRecentActivity,
-    // Utility
-    validateGrn,
-    recalculateGrnTotals,
-    clearState,
-  };
-};
-
-// Enhanced Search Hook
-export const useEnhancedGRNSearch = () => {
-  const { isLoading, setLoading } = useLoading();
+  const [grnList, setGrnList] = useState<GrnMastDto[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { showAlert } = useAlert();
+  // Stores the last used search request to enable easy refreshing
+  const [lastSearchRequest, setLastSearchRequest] = useState<GrnSearchRequest | null>(null);
 
-  const searchGrns = useCallback(
-    async (searchTerm: string): Promise<GRNWithAllDetailsDto[]> => {
+  /**
+   * Fetches a list of GRNs based on search criteria.
+   */
+  const fetchGrnList = useCallback(
+    async (searchRequest?: Partial<GrnSearchRequest>) => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         setError(null);
-        const result = await bGrnService.getAllGrnsWithDetails();
-        if (result.success && result.data) {
-          setLoading(false);
-          if (!searchTerm.trim()) {
-            return result.data.map((grn: any) => ({
-              ...grn,
-              grnDetails: grn.grnDetails ?? [],
-            }));
-          }
-          const searchLower = searchTerm.toLowerCase();
-          return result.data
-            .filter(
-              (grn) =>
-                grn.grnCode?.toLowerCase().includes(searchLower) ||
-                grn.invoiceNo?.toLowerCase().includes(searchLower) ||
-                grn.supplrName?.toLowerCase().includes(searchLower) ||
-                grn.deptName?.toLowerCase().includes(searchLower) ||
-                grn.grnStatus?.toLowerCase().includes(searchLower) ||
-                grn.dcNo?.toLowerCase().includes(searchLower) ||
-                grn.poNo?.toLowerCase().includes(searchLower)
-            )
-            .map((grn: any) => ({
-              ...grn,
-              grnDetails: grn.grnDetails ?? [],
-            }));
+
+        // Define default search parameters, which can be overridden
+        const defaultRequest: GrnSearchRequest = {
+          pageIndex: 1,
+          pageSize: 100,
+          sortBy: "GrnDate",
+          sortAscending: false,
+          ...searchRequest,
+        };
+
+        setLastSearchRequest(defaultRequest);
+
+        const response = await grnMastServices.getAll();
+
+        if (response.success && response.data) {
+          setGrnList(response.data);
+          return response.data;
         } else {
-          throw new Error(result.errorMessage || "Failed to search GRNs");
+          throw new Error(response.errorMessage || "Failed to fetch GRN list");
         }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to search GRNs";
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred while fetching GRNs.";
         setError(errorMessage);
-        setLoading(false);
         showAlert("Error", errorMessage, "error");
         return [];
+      } finally {
+        setIsLoading(false);
       }
     },
-    [showAlert, setLoading]
+    [showAlert]
   );
 
-  const advancedSearch = useCallback(
-    async (searchRequest: GRNSearchRequest): Promise<GRNWithAllDetailsDto[]> => {
+  /**
+   * Refreshes the GRN list using the last successful search criteria.
+   */
+  const refreshGrnList = useCallback(async () => {
+    if (lastSearchRequest) {
+      return await fetchGrnList(lastSearchRequest);
+    }
+    showAlert("Info", "No previous search to refresh.", "info");
+    return [];
+  }, [lastSearchRequest, fetchGrnList, showAlert]);
+
+  /**
+   * Fetches a single GRN with its details by its ID.
+   */
+  const getGrnById = useCallback(
+    async (grnId: number): Promise<GrnMastDto | null> => {
       try {
         setLoading(true);
-        setError(null);
-        const result = await bGrnService.searchGrns(searchRequest);
-        setLoading(false);
-        if (result.success && result.data) {
-          return result.data.map((grn: any) => ({
-            ...grn,
-            grnDetails: grn.grnDetails ?? [],
-          }));
+        const response = await grnMastServices.getGrnWithDetailsById(grnId);
+
+        if (response.success && response.data) {
+          return response.data;
         } else {
-          throw new Error(result.errorMessage || "Failed to search GRNs");
+          // The backend returns a specific error for approved GRNs
+          const message = response.errorMessage?.includes("approved")
+            ? "Cannot fetch for editing: This GRN is already approved."
+            : response.errorMessage || "Failed to fetch GRN details.";
+          throw new Error(message);
         }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to search GRNs";
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
         setError(errorMessage);
-        setLoading(false);
         showAlert("Error", errorMessage, "error");
-        return [];
+        return null;
+      } finally {
+        setLoading(false);
       }
     },
     [showAlert, setLoading]
   );
 
-  const validateGrnCode = useCallback(
-    async (grnCode: string, excludeGrnId?: number): Promise<boolean> => {
+  /**
+   * Creates a new GRN with its details.
+   */
+  const createGrn = useCallback(
+    async (grnData: GrnMastDto): Promise<OperationResult<GrnMastDto>> => {
       try {
         setLoading(true);
-        setError(null);
-        const result = await bGrnService.getAllGrnsWithDetails();
-        setLoading(false);
-        if (result.success && result.data) {
-          const existingGrn = result.data.find((grn) => grn.grnCode?.toLowerCase() === grnCode.toLowerCase() && grn.grnID !== excludeGrnId);
-          return !existingGrn;
+        const response = await grnMastServices.createGrnWithDetails(grnData);
+        if (response.success) {
+          showAlert("Success", "GRN created successfully!", "success");
+          await refreshGrnList(); // Refresh the list to show the new GRN
+          return response;
         } else {
-          throw new Error(result.errorMessage || "Failed to validate GRN code");
+          throw new Error(response.errorMessage || "Failed to create GRN.");
         }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to validate GRN code";
-        setError(errorMessage);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+        showAlert("Error", errorMessage, "error");
+        return { success: false, errorMessage, data: undefined };
+      } finally {
         setLoading(false);
+      }
+    },
+    [showAlert, setLoading, refreshGrnList]
+  );
+
+  /**
+   * Deletes a GRN. This is based on the generic delete functionality.
+   */
+  const deleteGrn = useCallback(
+    async (grnId: number): Promise<boolean> => {
+      try {
+        setLoading(true);
+        const response = await grnMastServices.delete(grnId);
+        if (response.success) {
+          // Optimistically remove from local state for a faster UI update
+          setGrnList((prev) => prev.filter((grn) => grn.GrnID !== grnId));
+          showAlert("Success", "GRN deleted successfully.", "success");
+          return true;
+        } else {
+          throw new Error(response.errorMessage || "Failed to delete GRN.");
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
         showAlert("Error", errorMessage, "error");
         return false;
+      } finally {
+        setLoading(false);
       }
     },
     [showAlert, setLoading]
   );
 
-  const validateDuplicateInvoice = useCallback(
-    async (invoiceNo: string, supplierId: number, excludeGrnId?: number): Promise<boolean> => {
+  /**
+   * Approves a GRN, which updates its status and triggers stock updates on the backend.
+   */
+  const approveGrn = useCallback(
+    async (grnId: number): Promise<boolean> => {
       try {
         setLoading(true);
-        setError(null);
-        const result = await bGrnService.validateDuplicateInvoice(invoiceNo, supplierId, excludeGrnId);
-        setLoading(false);
-        if (result.success) {
-          return result.data as boolean;
+        const response = await grnMastServices.approveGrn(grnId);
+        if (response.success) {
+          // Optimistically update the local state to reflect the approval
+          setGrnList((prev) => prev.map((grn) => (grn.GrnID === grnId ? { ...grn, ...response.data, GrnApprovedYN: "Y", GrnStatusCode: "APPROVED", GrnStatus: "Approved" } : grn)));
+          showAlert("Success", "GRN approved successfully!", "success");
+          return true;
         } else {
-          throw new Error(result.errorMessage || "Failed to validate invoice");
+          throw new Error(response.errorMessage || "Failed to approve GRN.");
         }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to validate invoice";
-        setError(errorMessage);
-        setLoading(false);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
         showAlert("Error", errorMessage, "error");
         return false;
+      } finally {
+        setLoading(false);
       }
     },
     [showAlert, setLoading]
   );
+
+  /**
+   * Generates a unique GRN code for a specific department.
+   */
+  const generateGrnCode = useCallback(
+    async (departmentId: number): Promise<string | null> => {
+      try {
+        setLoading(true);
+        const response = await grnMastServices.generateGrnCode(departmentId);
+        if (response.success && response.data) {
+          return response.data;
+        } else {
+          throw new Error(response.errorMessage || "Failed to generate GRN code.");
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+        showAlert("Error", errorMessage, "error");
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [showAlert, setLoading]
+  );
+
+  /**
+   * Calculates key statistics from the current list of GRNs.
+   */
+  const getGrnStatistics = useCallback(
+    (deptId?: number) => {
+      const list = deptId ? grnList.filter((grn) => grn.DeptID === deptId) : grnList;
+      const totalGrns = list.length;
+      const approvedGrns = list.filter((grn) => grn.GrnApprovedYN === "Y").length;
+      const pendingGrns = list.filter((grn) => grn.GrnStatusCode === "PENDING").length;
+      return { totalGrns, approvedGrns, pendingGrns };
+    },
+    [grnList]
+  );
+
+  /**
+   * Gets a user-friendly display name for a GRN status code.
+   */
+  const getStatusDisplayName = useCallback((grn: GrnMastDto): string => {
+    return grn.GrnStatus || grn.GrnStatusCode || "Unknown";
+  }, []);
+
+  /**
+   * Determines if a GRN can be edited based on its status.
+   */
+  const canEditGrn = useCallback((grn: GrnMastDto): boolean => {
+    return grn.GrnApprovedYN !== "Y";
+  }, []);
+
+  /**
+   * Determines if a GRN can be deleted based on its status.
+   */
+  const canDeleteGrn = useCallback((grn: GrnMastDto): boolean => {
+    // A GRN can typically be deleted only if it hasn't been approved.
+    return grn.GrnApprovedYN !== "Y";
+  }, []);
+
+  /**
+   * Returns a color code for a GRN status, useful for UI badges.
+   */
+  const getGrnStatusColor = useCallback((grn: GrnMastDto): "success" | "warning" | "error" | "default" => {
+    if (grn.GrnApprovedYN === "Y") return "success";
+    if (grn.GrnStatusCode === "PENDING") return "warning";
+    if (grn.GrnStatusCode === "REJECTED") return "error";
+    return "default";
+  }, []);
 
   return {
-    searchGrns,
-    advancedSearch,
-    validateGrnCode,
-    validateDuplicateInvoice,
+    // State
+    grnList,
     isLoading,
     error,
+    // Core Functions
+    fetchGrnList,
+    refreshGrnList,
+    getGrnById,
+    createGrn,
+    deleteGrn,
+    approveGrn,
+    generateGrnCode,
+    // Utility Functions
+    getGrnStatistics,
+    getStatusDisplayName,
+    getGrnStatusColor,
+    canEditGrn,
+    canDeleteGrn,
   };
 };
-
-export default useEnhancedGRN;

@@ -1,6 +1,6 @@
 import CustomButton from "@/components/Button/CustomButton";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { GRNDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { GrnDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { Check as ApplyIcon, DeleteSweep as DeleteAllIcon, History as HistoryIcon, AddBusiness as NewDeptIcon } from "@mui/icons-material";
 import { Box, FormControlLabel, Grid, Paper, Stack, Switch, Typography, useTheme } from "@mui/material";
@@ -9,7 +9,7 @@ import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 
 interface GRNTotalsAndActionsSectionProps {
-  grnDetails: GRNDetailDto[];
+  grnDetails: GrnDetailDto[];
   control: Control<any>;
   setValue: UseFormSetValue<any>;
   watch: UseFormWatch<any>;
@@ -19,11 +19,10 @@ interface GRNTotalsAndActionsSectionProps {
   onApplyDiscount: () => void;
   disabled?: boolean;
   isApproved?: boolean;
-  // New props for issue department management
   issueDepartments?: IssueDepartmentData[];
   onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
-  selectedProductForIssue?: GRNDetailDto | null;
-  onSelectedProductForIssueChange?: (product: GRNDetailDto | null) => void;
+  selectedProductForIssue?: GrnDetailDto | null;
+  onSelectedProductForIssueChange?: (product: GrnDetailDto | null) => void;
 }
 
 interface CalculatedTotals {
@@ -75,22 +74,18 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
 }) => {
   const theme = useTheme();
   const { showAlert } = useAlert();
-  const [isDiscountInPercentage, setIsDiscountInPercentage] = useState(watch("discPercentageYN") === "Y");
+  const [isDiscountInPercentage, setIsDiscountInPercentage] = useState(watch("DiscPercentageYN") === "Y");
   const [isIssueDeptDialogOpen, setIsIssueDeptDialogOpen] = useState(false);
   const [editingIssueDepartment, setEditingIssueDepartment] = useState<IssueDepartmentData | null>(null);
-
-  // Watch form values for calculations
-  const watchedDiscountType = watch("discPercentageYN");
-  const watchedDiscount = watch("disc") || 0;
-  const watchedOtherAmount = watch("otherAmt") || 0;
-  const watchedCoinAdjustment = watch("coinAdj") || 0;
-  const watchedRoundingAdjustment = watch("roundingAdjustment") || 0;
+  const watchedDiscountType = watch("DiscPercentageYN");
+  const watchedDiscount = watch("Disc") || 0;
+  const watchedOtherAmount = watch("OtherAmt") || 0;
+  const watchedCoinAdjustment = watch("CoinAdj") || 0;
 
   useEffect(() => {
     setIsDiscountInPercentage(watchedDiscountType === "Y");
   }, [watchedDiscountType]);
 
-  // Main calculation function
   const calculateTotals = useCallback((): CalculatedTotals => {
     if (!grnDetails || grnDetails.length === 0) {
       return {
@@ -106,115 +101,70 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
     }
 
     let itemsTotal = 0;
-    let totalDiscountAmount = 0;
+    let totalLineDiscountAmount = 0;
     let totalTaxAmount = 0;
     let totalCGSTAmount = 0;
     let totalSGSTAmount = 0;
     let totalTaxableAmount = 0;
 
-    // Calculate totals for each line item
     grnDetails.forEach((detail) => {
-      const receivedPack = detail.recvdPack || 0;
-      const packPrice = detail.packPrice || 0;
+      const receivedQty = detail.recvdQty || 0;
+      const unitPrice = detail.unitPrice || 0;
       const discPercentage = detail.discPercentage || 0;
-      const gstPercentage = detail.gstPercentage || 0;
       const cgstPerValue = detail.cgstPerValue || 0;
       const sgstPerValue = detail.sgstPerValue || 0;
-
-      // Flags for tax calculation logic
       const isTaxAfterDisc = detail.taxAfterDiscYN === "Y";
-      const isTaxInclusive = detail.includeTaxYN === "Y";
-
-      // 1. Base Amount (Items Total for this line)
-      const lineItemsTotal = receivedPack * packPrice;
+      const totalTaxPercentage = cgstPerValue + sgstPerValue;
+      const lineItemsTotal = receivedQty * unitPrice;
       itemsTotal += lineItemsTotal;
-
-      let lineDiscountAmount = 0;
-      let lineTaxableAmount = 0;
+      const lineDiscountAmount = lineItemsTotal * (discPercentage / 100);
+      totalLineDiscountAmount += lineDiscountAmount;
+      const lineTaxableAmount = lineItemsTotal - lineDiscountAmount;
+      totalTaxableAmount += lineTaxableAmount;
       let lineTotalTaxAmount = 0;
+      if (isTaxAfterDisc) {
+        lineTotalTaxAmount = lineTaxableAmount * (totalTaxPercentage / 100);
+      } else {
+        lineTotalTaxAmount = lineItemsTotal * (totalTaxPercentage / 100);
+      }
+      totalTaxAmount += lineTotalTaxAmount;
       let lineCGSTAmount = 0;
       let lineSGSTAmount = 0;
-
-      if (isTaxInclusive) {
-        // Tax Inclusive Logic
-        const finalValue = lineItemsTotal;
-
-        if (isTaxAfterDisc) {
-          // When tax is applied after discount in inclusive mode
-          lineTaxableAmount = finalValue / (1 + gstPercentage / 100);
-          lineTotalTaxAmount = lineTaxableAmount * (gstPercentage / 100);
-          lineDiscountAmount = finalValue - lineTaxableAmount;
-        } else {
-          // When tax is applied on base amount in inclusive mode
-          lineTotalTaxAmount = finalValue * (gstPercentage / 100);
-          lineDiscountAmount = lineTotalTaxAmount;
-          lineTaxableAmount = finalValue - lineDiscountAmount;
-        }
-      } else {
-        // Tax Exclusive Logic (Standard)
-        // 2. Discount Amount
-        lineDiscountAmount = lineItemsTotal * (discPercentage / 100);
-
-        // 3. Taxable Amount
-        lineTaxableAmount = lineItemsTotal - lineDiscountAmount;
-
-        // 4. Tax Amount calculation based on "Tax after Disc" flag
-        if (isTaxAfterDisc) {
-          // Tax calculated on amount after discount
-          lineTotalTaxAmount = lineTaxableAmount * (gstPercentage / 100);
-        } else {
-          // Tax calculated on gross amount (before discount)
-          lineTotalTaxAmount = lineItemsTotal * (gstPercentage / 100);
-        }
+      if (totalTaxPercentage > 0) {
+        lineCGSTAmount = lineTotalTaxAmount * (cgstPerValue / totalTaxPercentage);
+        lineSGSTAmount = lineTotalTaxAmount * (sgstPerValue / totalTaxPercentage);
       }
-
-      // Split tax into CGST and SGST
-      const totalGstPercentage = cgstPerValue + sgstPerValue;
-      if (totalGstPercentage > 0) {
-        lineCGSTAmount = lineTotalTaxAmount * (cgstPerValue / totalGstPercentage);
-        lineSGSTAmount = lineTotalTaxAmount * (sgstPerValue / totalGstPercentage);
-      }
-
-      // Add to totals
-      totalDiscountAmount += lineDiscountAmount;
-      totalTaxableAmount += lineTaxableAmount;
-      totalTaxAmount += lineTotalTaxAmount;
       totalCGSTAmount += lineCGSTAmount;
       totalSGSTAmount += lineSGSTAmount;
     });
-
-    // Apply global discount if specified
     let globalDiscountAmount = 0;
     if (watchedDiscount > 0) {
       if (isDiscountInPercentage) {
-        globalDiscountAmount = itemsTotal * (watchedDiscount / 100);
+        globalDiscountAmount = totalTaxableAmount * (watchedDiscount / 100);
       } else {
         globalDiscountAmount = watchedDiscount;
       }
     }
 
-    // Calculate final totals
-    const adjustedTaxableAmount = totalTaxableAmount - globalDiscountAmount;
-    const netTotal = adjustedTaxableAmount;
-    const grandTotal = netTotal + totalTaxAmount + watchedOtherAmount + watchedCoinAdjustment + watchedRoundingAdjustment;
+    const finalTaxableAmount = totalTaxableAmount - globalDiscountAmount;
+    const netTotal = finalTaxableAmount;
+    const grandTotal = netTotal + totalTaxAmount + watchedOtherAmount + watchedCoinAdjustment;
+    const totalDiscount = totalLineDiscountAmount + globalDiscountAmount;
 
     return {
       itemsTotal: parseFloat(itemsTotal.toFixed(2)),
-      totalDiscountAmount: parseFloat((totalDiscountAmount + globalDiscountAmount).toFixed(2)),
+      totalDiscountAmount: parseFloat(totalDiscount.toFixed(2)),
       totalTaxAmount: parseFloat(totalTaxAmount.toFixed(2)),
       totalCGSTAmount: parseFloat(totalCGSTAmount.toFixed(2)),
       totalSGSTAmount: parseFloat(totalSGSTAmount.toFixed(2)),
-      totalTaxableAmount: parseFloat(adjustedTaxableAmount.toFixed(2)),
+      totalTaxableAmount: parseFloat(finalTaxableAmount.toFixed(2)),
       netTotal: parseFloat(netTotal.toFixed(2)),
       grandTotal: parseFloat(grandTotal.toFixed(2)),
     };
-  }, [grnDetails, watchedDiscount, isDiscountInPercentage, watchedOtherAmount, watchedCoinAdjustment, watchedRoundingAdjustment]);
+  }, [grnDetails, watchedDiscount, isDiscountInPercentage, watchedOtherAmount, watchedCoinAdjustment]);
 
-  // Update form values when calculations change
   useEffect(() => {
     const totals = calculateTotals();
-
-    // Update form fields with calculated values
     setValue("tot", totals.itemsTotal, { shouldDirty: false });
     setValue("taxAmt", totals.totalTaxAmount, { shouldDirty: false });
     setValue("poDiscAmt", totals.totalDiscountAmount, { shouldDirty: false });
@@ -223,7 +173,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
     setValue("netSGSTTaxAmt", totals.totalSGSTAmount, { shouldDirty: false });
     setValue("netTot", totals.netTotal, { shouldDirty: false });
     setValue("balanceAmt", totals.grandTotal, { shouldDirty: false });
-  }, [grnDetails, watchedDiscount, isDiscountInPercentage, watchedOtherAmount, watchedCoinAdjustment, watchedRoundingAdjustment, setValue, calculateTotals]);
+  }, [grnDetails, watchedDiscount, isDiscountInPercentage, watchedOtherAmount, watchedCoinAdjustment, setValue, calculateTotals]);
 
   const handleDiscountToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const isChecked = event.target.checked;
@@ -232,10 +182,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
   };
 
   const handleApplyDiscountClick = () => {
-    // Trigger recalculation by calling the parent's apply discount handler
     onApplyDiscount();
-
-    // Also trigger our own recalculation
     const totals = calculateTotals();
     setValue("tot", totals.itemsTotal, { shouldDirty: true });
     setValue("taxAmt", totals.totalTaxAmount, { shouldDirty: true });
@@ -245,44 +192,35 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
   };
 
   const handleNewIssueDepartmentClick = () => {
-    // Check if there are any products in the grid
     if (!grnDetails || grnDetails.length === 0) {
-      showAlert("Warning", "Please add products to GRN before creating issue departments.", "warning");
+      showAlert("Warning", "Please add products to the GRN before creating issue departments.", "warning");
       return;
     }
 
-    // For simplicity, we'll use the first product or let user select in dialog
-    // You can modify this logic to show a product selection step if needed
     const firstProduct = grnDetails[0];
     if (onSelectedProductForIssueChange) {
       onSelectedProductForIssueChange(firstProduct);
     }
-
     setEditingIssueDepartment(null);
     setIsIssueDeptDialogOpen(true);
-    onNewIssueDepartment(); // Call the original handler if needed
+    onNewIssueDepartment();
   };
 
   const handleIssueDepartmentSubmit = (data: IssueDepartmentData) => {
     if (onIssueDepartmentChange) {
-      let updatedDepartments = [...issueDepartments];
-
+      const updatedDepartments = [...issueDepartments];
       if (editingIssueDepartment) {
-        // Update existing
         const index = updatedDepartments.findIndex((dept) => dept.id === editingIssueDepartment.id);
         if (index !== -1) {
           updatedDepartments[index] = data;
           showAlert("Success", "Issue department updated successfully.", "success");
         }
       } else {
-        // Add new
-        updatedDepartments.push(data);
+        updatedDepartments.push({ ...data, id: Date.now().toString() }); // Add a temporary ID
         showAlert("Success", "Issue department added successfully.", "success");
       }
-
       onIssueDepartmentChange(updatedDepartments);
     }
-
     setIsIssueDeptDialogOpen(false);
     setEditingIssueDepartment(null);
     if (onSelectedProductForIssueChange) {
@@ -353,13 +291,8 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
             </TotalDisplayField>
           </Grid>
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-            <TotalDisplayField label="PO Disc. Amt">
+            <TotalDisplayField label="Total Disc. Amt">
               <EnhancedFormField name="poDiscAmt" control={control} type="number" disabled fullWidth variant="outlined" />
-            </TotalDisplayField>
-          </Grid>
-          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
-            <TotalDisplayField label="Rounding Adjustment">
-              <EnhancedFormField name="roundingAdjustment" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
             </TotalDisplayField>
           </Grid>
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
@@ -367,7 +300,6 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
               <EnhancedFormField name="netTot" control={control} type="number" disabled fullWidth variant="outlined" />
             </TotalDisplayField>
           </Grid>
-
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="Others">
               <EnhancedFormField name="otherAmt" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
@@ -388,27 +320,14 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
               <EnhancedFormField name="coinAdj" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
             </TotalDisplayField>
           </Grid>
-          <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
+          <Grid size={{ xs: 12, md: 4.8, sm: 6 }}>
             <TotalDisplayField label="Balance">
               <EnhancedFormField name="balanceAmt" control={control} type="number" disabled fullWidth variant="outlined" />
             </TotalDisplayField>
           </Grid>
         </Grid>
-
-        <Box mt={2.5}>
-          <EnhancedFormField
-            name="rNotes"
-            control={control}
-            type="textarea"
-            label="Remarks"
-            fullWidth
-            disabled={allDisabled}
-            placeholder="Enter any additional remarks or notes for this GRN..."
-          />
-        </Box>
       </Paper>
 
-      {/* Issue Department Dialog */}
       <IssueDepartmentDialog
         open={isIssueDeptDialogOpen}
         onClose={handleIssueDepartmentDialogClose}
