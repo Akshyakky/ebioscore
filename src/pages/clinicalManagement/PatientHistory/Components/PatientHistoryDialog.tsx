@@ -9,6 +9,7 @@ import {
   FamilyRestroom as FamilyIcon,
   MedicalServices as MedicalIcon,
   Medication as MedicationIcon,
+  PregnantWoman as ObstetricsIcon,
   LocalHospital as PastMedicalIcon,
   Psychology as ReviewIcon,
   Assignment as SocialIcon,
@@ -465,7 +466,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
               />
               <Tab
                 label="Obs Hx"
-                icon={<MedicationIcon fontSize="small" />}
+                icon={<ObstetricsIcon fontSize="small" />}
                 iconPosition="start"
                 id="obs-history-tab-7"
                 aria-controls="patient-history-tabpanel-7"
