@@ -2,15 +2,15 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { RichTextEditor } from "@/components/RichTextEditor/RichTextEditor";
 import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { OPIPHistObstetricsDto } from "@/interfaces/ClinicalManagement/OPIPHistObstetricsDto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel as CancelIcon, PregnantWoman as ObstetricsIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Box, Card, CardContent, Paper, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import React, { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 const obstetricsHistorySchema = z.object({
@@ -72,7 +72,16 @@ export const ObstetricsHistoryForm: React.FC<ObstetricsHistoryFormProps> = ({ op
     resolver: zodResolver(obstetricsHistorySchema),
     mode: "onChange",
   });
-
+  const { pregnancyOutcome, pregInfoSource, pregDeliveryMethod, birthStatus, labourOnset, anesthesiaType, feeding, gender } = useDropdownValues([
+    "pregnancyOutcome",
+    "pregInfoSource",
+    "pregDeliveryMethod",
+    "birthStatus",
+    "labourOnset",
+    "anesthesiaType",
+    "feeding",
+    "gender",
+  ]);
   useEffect(() => {
     if (open && admission) {
       const initialData: ObstetricsHistoryFormData = existingHistory
@@ -232,7 +241,26 @@ export const ObstetricsHistoryForm: React.FC<ObstetricsHistoryFormProps> = ({ op
                       <EnhancedFormField name="obDate" control={control} type="datepicker" label="Obstetric Date" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="pOTName" control={control} type="text" label="OT Name" disabled={viewOnly} size="small" />
+                      <EnhancedFormField
+                        name="pOTName"
+                        control={control}
+                        type="select"
+                        label="Pregnancy Outcome"
+                        disabled={viewOnly}
+                        size="small"
+                        options={pregnancyOutcome || []}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <EnhancedFormField
+                        name="pSRoucename"
+                        control={control}
+                        type="select"
+                        label="Pregnancy information source"
+                        disabled={viewOnly}
+                        size="small"
+                        options={pregInfoSource || []}
+                      />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                       <EnhancedFormField name="obDesc" control={control} type="textarea" label="Description" disabled={viewOnly} rows={3} />
@@ -260,7 +288,15 @@ export const ObstetricsHistoryForm: React.FC<ObstetricsHistoryFormProps> = ({ op
                       <EnhancedFormField name="pSRoucename" control={control} type="text" label="Route Name" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <EnhancedFormField name="deliveryName" control={control} type="text" label="Delivery Type" disabled={viewOnly} size="small" />
+                      <EnhancedFormField
+                        name="deliveryName"
+                        control={control}
+                        type="select"
+                        label="Delivery Type"
+                        disabled={viewOnly}
+                        size="small"
+                        options={pregDeliveryMethod || []}
+                      />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -276,28 +312,16 @@ export const ObstetricsHistoryForm: React.FC<ObstetricsHistoryFormProps> = ({ op
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <EnhancedFormField name="bStatusName" control={control} type="text" label="Baby Status" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="bStatusName" control={control} type="select" label="Birth Status" disabled={viewOnly} size="small" options={birthStatus || []} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <EnhancedFormField
-                        name="bGender"
-                        control={control}
-                        type="select"
-                        label="Baby Gender"
-                        options={[
-                          { value: "Male", label: "Male" },
-                          { value: "Female", label: "Female" },
-                          { value: "Other", label: "Other" },
-                        ]}
-                        disabled={viewOnly}
-                        size="small"
-                      />
+                      <EnhancedFormField name="bGender" control={control} type="select" label="Sex of Baby" options={gender || []} disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <EnhancedFormField name="bBirthWeight" control={control} type="number" label="Birth Weight (grams)" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <EnhancedFormField name="feedName" control={control} type="text" label="Feeding Type" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="feedName" control={control} type="select" label="Feeding Type" disabled={viewOnly} size="small" options={feeding || []} />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -316,13 +340,13 @@ export const ObstetricsHistoryForm: React.FC<ObstetricsHistoryFormProps> = ({ op
                       <EnhancedFormField name="labHours" control={control} type="number" label="Labor Hours" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <EnhancedFormField name="labourName" control={control} type="text" label="Labor Type" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="labourName" control={control} type="select" label="Labor Onset" disabled={viewOnly} size="small" options={labourOnset || []} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <EnhancedFormField name="paediatricianName" control={control} type="text" label="Paediatrician Name" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <EnhancedFormField name="aTName" control={control} type="text" label="Anesthesia Type" disabled={viewOnly} size="small" />
+                      <EnhancedFormField name="aTName" control={control} type="select" label="Anesthesia Type" disabled={viewOnly} size="small" options={anesthesiaType || []} />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -338,34 +362,10 @@ export const ObstetricsHistoryForm: React.FC<ObstetricsHistoryFormProps> = ({ op
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
-                      <Controller
-                        name="complication"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <RichTextEditor
-                            value={field.value || ""}
-                            onChange={field.onChange}
-                            disabled={viewOnly}
-                            error={!!fieldState.error}
-                            helperText={fieldState.error?.message}
-                          />
-                        )}
-                      />
+                      <EnhancedFormField name="complication" control={control} type="textarea" label="Complications" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <Controller
-                        name="presentCondition"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <RichTextEditor
-                            value={field.value || ""}
-                            onChange={field.onChange}
-                            disabled={viewOnly}
-                            error={!!fieldState.error}
-                            helperText={fieldState.error?.message}
-                          />
-                        )}
-                      />
+                      <EnhancedFormField name="presentCondition" control={control} type="textarea" label="Present Condition" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                       <EnhancedFormField name="bComments" control={control} type="textarea" label="Additional Comments" disabled={viewOnly} rows={3} />

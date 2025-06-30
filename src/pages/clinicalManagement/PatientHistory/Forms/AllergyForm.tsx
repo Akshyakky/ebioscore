@@ -137,7 +137,7 @@ export const AllergyForm: React.FC<AllergyFormProps> = ({ open, onClose, onSubmi
       const initialData: AllergyFormData = existingAllergy
         ? {
             allergyMastDto: {
-              opipDate: new Date(existingAllergy.allergyMastDto.opipDate),
+              opipDate: existingAllergy.allergyMastDto.opipDate ? new Date(existingAllergy.allergyMastDto.opipDate) : serverDate,
               opipAlgId: existingAllergy.allergyMastDto.opipAlgId || 0,
               opipNo: existingAllergy.allergyMastDto.opipNo || admission.ipAdmissionDto.admitID,
               pChartID: existingAllergy.allergyMastDto.pChartID || admission.ipAdmissionDto.pChartID,

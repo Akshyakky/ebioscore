@@ -170,25 +170,25 @@ export const PastMedicationForm: React.FC<PastMedicationFormProps> = ({ open, on
     if (open && admission) {
       const initialData: PastMedicationFormData = existingMedication
         ? {
-            ...existingMedication,
             pastMedicationMastDto: {
-              opipPastMedID: existingMedication.pastMedicationMastDto?.opipPastMedID,
-              opipDate: new Date(existingMedication.pastMedicationMastDto?.opipDate),
-              rActiveYN: existingMedication.pastMedicationMastDto?.rActiveYN,
-              pChartID: existingMedication.pastMedicationMastDto?.pChartID,
-              opipNo: existingMedication.pastMedicationMastDto?.opipNo,
-              opipCaseNo: existingMedication.pastMedicationMastDto?.opipCaseNo,
-              patOpip: existingMedication.pastMedicationMastDto?.patOpip,
-              transferYN: existingMedication.pastMedicationMastDto?.transferYN,
-              opvID: existingMedication.pastMedicationMastDto?.opvID,
-              oldPChartID: existingMedication.pastMedicationMastDto?.oldPChartID,
+              opipPastMedID: existingMedication.pastMedicationMastDto?.opipPastMedID || 0,
+              opipDate: existingMedication.pastMedicationMastDto?.opipDate ? new Date(existingMedication.pastMedicationMastDto.opipDate) : serverDate,
+              rActiveYN: existingMedication.pastMedicationMastDto?.rActiveYN || "Y",
+              pChartID: existingMedication.pastMedicationMastDto?.pChartID || admission.ipAdmissionDto.pChartID,
+              opipNo: existingMedication.pastMedicationMastDto?.opipNo || admission.ipAdmissionDto.admitID,
+              opipCaseNo: existingMedication.pastMedicationMastDto?.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
+              patOpip: existingMedication.pastMedicationMastDto?.patOpip || admission.ipAdmissionDto.patOpip || "I",
+              transferYN: existingMedication.pastMedicationMastDto?.transferYN || "N",
+              opvID: existingMedication.pastMedicationMastDto?.opvID || 0,
+              oldPChartID: existingMedication.pastMedicationMastDto?.oldPChartID || 0,
               rNotes: existingMedication.pastMedicationMastDto?.rNotes || null,
             },
-            details: existingMedication.details?.map((d) => ({
-              ...d,
-              fromDate: new Date(d.fromDate),
-              toDate: new Date(d.toDate),
-            })),
+            details:
+              existingMedication.details?.map((d) => ({
+                ...d,
+                fromDate: new Date(d.fromDate),
+                toDate: new Date(d.toDate),
+              })) || [],
           }
         : {
             pastMedicationMastDto: {

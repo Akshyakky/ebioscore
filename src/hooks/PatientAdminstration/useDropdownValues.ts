@@ -110,7 +110,14 @@ export type DropdownType =
   | "componentUnit"
   | "indentStatus"
   | "faculties"
-  | "cmTemplateType";
+  | "cmTemplateType"
+  | "birthStatus"
+  | "pregInfoSource"
+  | "pregDeliveryMethod"
+  | "labourOnset"
+  | "anesthesiaType"
+  | "feeding"
+  | "pregnancyOutcome";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -582,6 +589,62 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       cmTemplateType: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CMTEMPLATETYPE");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      pregnancyOutcome: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CPREGOUTCOME");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      pregInfoSource: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CINFOSOURCE");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      pregDeliveryMethod: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CDELIVERYMETHOD");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      birthStatus: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CBIRTHSTATUS");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      labourOnset: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CLABOURONSET");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      anesthesiaType: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ANESTHESIATYPE");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      feeding: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CFEEDING");
         return (response || []).map((item: any) => ({
           value: item.code || "",
           label: item.value || "",
