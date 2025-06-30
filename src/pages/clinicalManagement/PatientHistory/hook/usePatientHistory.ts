@@ -134,7 +134,7 @@ export const useObstetrics = () => {
   const hook = createEntityHook<OPIPHistObstetricsDto>(ObstetricsService, "opipOBID")();
 
   return {
-    ObstetricsList: hook.entityList,
+    obstetricsList: hook.entityList,
     isLoading: hook.isLoading,
     error: hook.error,
     fetchObstetricsList: hook.fetchEntityList,

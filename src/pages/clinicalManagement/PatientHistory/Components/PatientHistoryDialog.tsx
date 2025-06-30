@@ -16,16 +16,18 @@ import {
 } from "@mui/icons-material";
 import { Avatar, Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
+import { ObstetricsHistoryForm } from "../Forms/ObstetricsHistoryForm";
 import { PastMedicalHistoryForm } from "../Forms/PastMedicalHistoryForm";
 import { PastMedicationForm } from "../Forms/PastMedicationForm";
 import { PastSurgicalHistoryForm } from "../Forms/PastSurgicalHistoryForm";
 import { ReviewOfSystemForm } from "../Forms/ReviewOfSystemForm";
 import { SocialHistoryForm } from "../Forms/SocialHistoryForm";
-import { useAllergy, useFamilyHistory, usePastMedication, usePMHHistory, usePSHHistory, useROSHistory, useSocialHistory } from "../hook/usePatientHistory";
+import { useAllergy, useFamilyHistory, useObstetrics, usePastMedication, usePMHHistory, usePSHHistory, useROSHistory, useSocialHistory } from "../hook/usePatientHistory";
 import { AllergyForm } from "./../Forms/AllergyForm";
 import { FamilyHistoryForm } from "./../Forms/FamilyHistoryForm";
 import { AllergyHistory } from "./AllergyHistory";
 import { FamilyHistory } from "./FamilyHistory";
+import { ObstetricsHistory } from "./ObstetricsHistory";
 import PastMedicalHistory from "./PastMedicalHistory";
 import { PastMedicationHistory } from "./PastMedicationHistory";
 import PastSurgicalHistory from "./PastSurgicalHistory";
@@ -55,6 +57,8 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
 const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClose, admission }) => {
   const { familyHistoryList, fetchFamilyHistoryList, saveFamilyHistory, deleteFamilyHistory } = useFamilyHistory();
   const { socialHistoryList, fetchSocialHistoryList, saveSocialHistory, deleteSocialHistory } = useSocialHistory();
+  const { obstetricsList, fetchObstetricsList, saveObstetrics, deleteObstetrics } = useObstetrics();
+
   const { rosHistoryList, fetchRosHistoryList, saveRosHistory, deleteRosHistory } = useROSHistory();
   const { pmhHistoryList, fetchPMHHistoryList, savePMHHistory, deletePMHHistory } = usePMHHistory();
   const { pshHistoryList, fetchPSHHistoryList, savePSHHistory, deletePSHHistory } = usePSHHistory();
@@ -66,7 +70,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
   const [isViewMode, setIsViewMode] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [historyToDelete, setHistoryToDelete] = useState<any>(null);
-  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social" | "pmh" | "psh" | "ros" | "allergy" | "pastMedication">("family");
+  const [currentHistoryType, setCurrentHistoryType] = useState<"family" | "social" | "pmh" | "psh" | "ros" | "allergy" | "pastMedication" | "obstetrics">("family");
   const { setLoading } = useLoading();
   const [tabValue, setTabValue] = useState(0);
 
@@ -89,6 +93,8 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
       fetchAllergyList();
     } else if (tabValue === 6) {
       fetchPastMedicationList();
+    } else if (tabValue === 7) {
+      fetchObstetricsList();
     }
   }, [open, admission, tabValue]);
 
@@ -116,6 +122,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         break;
       case 6:
         setCurrentHistoryType("pastMedication");
+        break;
+      case 7:
+        setCurrentHistoryType("obstetrics");
         break;
       default:
         setCurrentHistoryType("family");
@@ -151,6 +160,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         case "pastMedication":
           result = await deletePastMedication(historyToDelete.pastMedicationMastDto.opipPastMedID);
           break;
+        case "obstetrics":
+          result = await deleteObstetrics(historyToDelete.opipOBID);
+          break;
       }
 
       if (result) {
@@ -183,6 +195,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
           case "pastMedication":
             await fetchPastMedicationList();
             break;
+          case "obstetrics":
+            await fetchObstetricsList();
+            break;
         }
       } else {
         throw new Error(`Failed to delete ${currentHistoryType} history`);
@@ -203,6 +218,7 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
     deleteRosHistory,
     deleteAllergy,
     deletePastMedication,
+    deleteObstetrics,
     showAlert,
   ]);
 
@@ -233,6 +249,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
             break;
           case "pastMedication":
             result = await savePastMedication(data);
+            break;
+          case "obstetrics":
+            result = await saveObstetrics(data);
             break;
         }
 
@@ -266,6 +285,9 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
             case "pastMedication":
               await fetchPastMedicationList();
               break;
+            case "obstetrics":
+              await fetchObstetricsList();
+              break;
           }
         } else {
           throw new Error(`Failed to save ${currentHistoryType} history`);
@@ -277,7 +299,19 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
         setLoading(false);
       }
     },
-    [currentHistoryType, saveFamilyHistory, saveSocialHistory, savePMHHistory, savePSHHistory, saveRosHistory, saveAllergy, savePastMedication, showAlert, setLoading]
+    [
+      currentHistoryType,
+      saveFamilyHistory,
+      saveSocialHistory,
+      savePMHHistory,
+      savePSHHistory,
+      saveRosHistory,
+      saveAllergy,
+      savePastMedication,
+      saveObstetrics,
+      showAlert,
+      setLoading,
+    ]
   );
 
   const handleFormClose = useCallback(() => {
@@ -429,6 +463,14 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
                 aria-controls="patient-history-tabpanel-6"
                 sx={{ minHeight: 48, textTransform: "none" }}
               />
+              <Tab
+                label="Obs Hx"
+                icon={<MedicationIcon fontSize="small" />}
+                iconPosition="start"
+                id="obs-history-tab-7"
+                aria-controls="patient-history-tabpanel-7"
+                sx={{ minHeight: 48, textTransform: "none" }}
+              />
             </Tabs>
           </Box>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -515,6 +557,18 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
                 onDelete={handleDeleteClick}
               />
             </TabPanel>
+
+            <TabPanel value={tabValue} index={7}>
+              <ObstetricsHistory
+                admission={admission}
+                historyList={obstetricsList}
+                fetchHistoryList={fetchObstetricsList}
+                onAddNew={handleAddNew}
+                onEdit={handleEdit}
+                onView={handleView}
+                onDelete={handleDeleteClick}
+              />
+            </TabPanel>
           </Box>
         </Box>
       </GenericDialog>
@@ -571,6 +625,17 @@ const PatientHistoryDialog: React.FC<PatientHistoryDialogProps> = ({ open, onClo
           onSubmit={handleFormSubmit}
           admission={admission}
           existingMedication={selectedHistory}
+          viewOnly={isViewMode}
+        />
+      )}
+      {/* Obstetrics History Form */}
+      {isFormOpen && currentHistoryType === "obstetrics" && (
+        <ObstetricsHistoryForm
+          open={isFormOpen}
+          onClose={handleFormClose}
+          onSubmit={handleFormSubmit}
+          admission={admission}
+          existingHistory={selectedHistory}
           viewOnly={isViewMode}
         />
       )}

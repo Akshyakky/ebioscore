@@ -9,7 +9,7 @@ export interface OPIPHistObstetricsDto extends RecordFields {
   pChartID: number;
   opipCaseNo: number;
   patOPIP: string;
-  opipDate: string;
+  opipDate: Date;
 
   pOTName?: string;
   obDesc?: string;
