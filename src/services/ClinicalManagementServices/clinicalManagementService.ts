@@ -9,6 +9,7 @@ import { MedicationInstructionDto } from "@/interfaces/ClinicalManagement/Medica
 import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 import { MedicationRouteDto } from "@/interfaces/ClinicalManagement/MedicationRouteDto";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistObstetricsDto } from "@/interfaces/ClinicalManagement/OPIPHistObstetricsDto";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
 import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
@@ -36,3 +37,4 @@ export const pshService = createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "cl
 export const icdDetailService = createEntityService<DiagnosisDetailDto>("IcdDetail", "clinicalManagementURL");
 export const templateMastService = createEntityService<TemplateMastDto>("TemplateMast", "clinicalManagementURL");
 export const templateDetailService = createEntityService<TemplateDetailDto>("TemplateDetail", "clinicalManagementURL");
+export const ObstetricsService = createEntityService<OPIPHistObstetricsDto>("OPIPHistObstetrics", "clinicalManagementURL");
