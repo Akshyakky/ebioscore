@@ -2,6 +2,7 @@
 import { Column } from "@/components/CustomGrid/CustomGrid";
 import { OPIPHistObstetricsDto } from "@/interfaces/ClinicalManagement/OPIPHistObstetricsDto";
 import { formatDt } from "@/utils/Common/dateUtils";
+import { stripHtml } from "@/utils/Common/formatText";
 import { Delete as DeleteIcon, Edit as EditIcon, PregnantWoman as ObstetricsIcon, Visibility as ViewIcon } from "@mui/icons-material";
 import { Box, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { GenericHistoryList } from "./GenericHistoryList";
@@ -74,7 +75,7 @@ export const ObstetricsHistory = (props: any) => {
             textOverflow: "ellipsis",
           }}
         >
-          {history.complication || "None reported"}
+          {stripHtml(history.complication) || "None reported"}
         </Typography>
       ),
     },
