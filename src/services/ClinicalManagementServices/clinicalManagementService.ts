@@ -14,6 +14,7 @@ import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
 import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
+import { OPIPLifestyleDto } from "@/interfaces/ClinicalManagement/OPIPLifestyleDto";
 import { OTProcedureListDto } from "@/interfaces/ClinicalManagement/ProcedureListDto";
 import { TemplateDetailDto, TemplateMastDto } from "@/interfaces/ClinicalManagement/TemplateDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
@@ -38,3 +39,4 @@ export const icdDetailService = createEntityService<DiagnosisDetailDto>("IcdDeta
 export const templateMastService = createEntityService<TemplateMastDto>("TemplateMast", "clinicalManagementURL");
 export const templateDetailService = createEntityService<TemplateDetailDto>("TemplateDetail", "clinicalManagementURL");
 export const ObstetricsService = createEntityService<OPIPHistObstetricsDto>("OPIPHistObstetrics", "clinicalManagementURL");
+export const lifestyleService = createEntityService<OPIPLifestyleDto>("OPIPLifestyle", "clinicalManagementURL");
