@@ -321,6 +321,12 @@ export const ObstetricsHistoryForm: React.FC<ObstetricsHistoryFormProps> = ({ op
                       <EnhancedFormField name="bBirthWeight" control={control} type="number" label="Birth Weight (grams)" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
+                      <EnhancedFormField name="foetalAgeWeek" control={control} type="number" label="Foetal Age Week" disabled={viewOnly} size="small" />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <EnhancedFormField name="foetalAgeDay" control={control} type="number" label="Foetal Age Day" disabled={viewOnly} size="small" />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <EnhancedFormField name="feedName" control={control} type="select" label="Feeding Type" disabled={viewOnly} size="small" options={feeding || []} />
                     </Grid>
                   </Grid>
