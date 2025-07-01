@@ -11,15 +11,11 @@ export const useLifestyle = () => {
     lifestyleList: hook.entityList,
     isLoading: hook.isLoading,
     error: hook.error,
-    fetchLifestyleList: hook.fetchEntityList,
     getLifestyleById: async (pChartId: number) => {
       return lifestyleService.getById(pChartId);
     },
     saveLifestyle: async (lifestyleDto: OPIPLifestyleDto) => {
       return lifestyleService.save(lifestyleDto);
     },
-    deleteLifestyle: hook.deleteEntity,
-    updateLifestyleStatus: hook.updateEntityStatus,
-    getNextCode: hook.getNextCode,
   };
 };
