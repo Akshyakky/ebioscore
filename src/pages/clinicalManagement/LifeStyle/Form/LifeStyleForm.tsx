@@ -3,13 +3,14 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { OPIPLifestyleDto } from "@/interfaces/ClinicalManagement/OPIPLifestyleDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel, Save } from "@mui/icons-material";
 import { Alert, Box, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useLifestyle } from "../hook/useLifeStyle";
 
@@ -37,46 +38,6 @@ const schema = z.object({
 
 type LifeStyleFormData = z.infer<typeof schema>;
 
-const dietTypeOptions = [
-  { value: "vegetarian", label: "Vegetarian" },
-  { value: "non-vegetarian", label: "Non-Vegetarian" },
-  { value: "vegan", label: "Vegan" },
-  { value: "balanced", label: "Balanced" },
-  { value: "keto", label: "Keto" },
-  { value: "paleo", label: "Paleo" },
-  { value: "mediterranean", label: "Mediterranean" },
-  { value: "other", label: "Other" },
-];
-
-const smokingStatusOptions = [
-  { value: "never", label: "Never Smoked" },
-  { value: "former", label: "Former Smoker" },
-  { value: "current", label: "Current Smoker" },
-  { value: "occasional", label: "Occasional Smoker" },
-  { value: "passive", label: "Passive Smoker" },
-];
-
-const alcoholStatusOptions = [
-  { value: "never", label: "Never Drinks" },
-  { value: "occasional", label: "Occasional Drinker" },
-  { value: "moderate", label: "Moderate Drinker" },
-  { value: "heavy", label: "Heavy Drinker" },
-  { value: "former", label: "Former Drinker" },
-];
-
-const exerciseFrequencyOptions = [
-  { value: "none", label: "No Exercise" },
-  { value: "rare", label: "Rarely (< 1 time/week)" },
-  { value: "weekly", label: "Weekly (1-3 times/week)" },
-  { value: "regular", label: "Regular (3-5 times/week)" },
-  { value: "daily", label: "Daily (5+ times/week)" },
-];
-
-const patientTypeOptions = [
-  { value: "O", label: "Outpatient (OP)" },
-  { value: "I", label: "Inpatient (IP)" },
-];
-
 const LifeStyleForm: React.FC<LifeStyleFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { saveLifestyle } = useLifestyle();
@@ -85,6 +46,8 @@ const LifeStyleForm: React.FC<LifeStyleFormProps> = ({ open, onClose, initialDat
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const { showAlert } = useAlert();
+
+  const { dietType, smokingStatus, exerciseFrequency, alcoholStatus } = useDropdownValues(["dietType", "smokingStatus", "exerciseFrequency", "alcoholStatus"]);
   const isAddMode = !initialData;
 
   const defaultValues: LifeStyleFormData = {
@@ -106,16 +69,12 @@ const LifeStyleForm: React.FC<LifeStyleFormProps> = ({ open, onClose, initialDat
     control,
     handleSubmit,
     reset,
-    setValue,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
   } = useForm<LifeStyleFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
-
-  const rActiveYN = useWatch({ control, name: "rActiveYN" });
-  const patOpip = useWatch({ control, name: "patOpip" });
 
   useEffect(() => {
     if (initialData) {
@@ -275,7 +234,7 @@ const LifeStyleForm: React.FC<LifeStyleFormProps> = ({ open, onClose, initialDat
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="dietType" control={control} label="Diet Type" type="select" required disabled={viewOnly} size="small" options={dietTypeOptions} fullWidth />
+                      <FormField name="dietType" control={control} label="Diet Type" type="select" required disabled={viewOnly} size="small" options={dietType} fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
@@ -287,7 +246,7 @@ const LifeStyleForm: React.FC<LifeStyleFormProps> = ({ open, onClose, initialDat
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={smokingStatusOptions}
+                        options={smokingStatus}
                         fullWidth
                       />
                     </Grid>
@@ -301,7 +260,7 @@ const LifeStyleForm: React.FC<LifeStyleFormProps> = ({ open, onClose, initialDat
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={alcoholStatusOptions}
+                        options={alcoholStatus}
                         fullWidth
                       />
                     </Grid>
@@ -315,7 +274,7 @@ const LifeStyleForm: React.FC<LifeStyleFormProps> = ({ open, onClose, initialDat
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={exerciseFrequencyOptions}
+                        options={exerciseFrequency}
                         fullWidth
                       />
                     </Grid>

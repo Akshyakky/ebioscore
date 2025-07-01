@@ -117,7 +117,11 @@ export type DropdownType =
   | "labourOnset"
   | "anesthesiaType"
   | "feeding"
-  | "pregnancyOutcome";
+  | "pregnancyOutcome"
+  | "dietType"
+  | "smokingStatus"
+  | "exerciseFrequency"
+  | "alcoholStatus";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -645,6 +649,38 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       feeding: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CFEEDING");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      dietType: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DIETTYPE");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      smokingStatus: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SMOKINGSTATUS");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      exerciseFrequency: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EXERCISEFREQUENCY");
+        return (response || []).map((item: any) => ({
+          value: item.code || "",
+          label: item.value || "",
+          ...item,
+        }));
+      },
+      alcoholStatus: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ALCOHOLSTATUS");
         return (response || []).map((item: any) => ({
           value: item.code || "",
           label: item.value || "",
