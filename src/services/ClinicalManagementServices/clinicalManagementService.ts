@@ -39,4 +39,5 @@ export const icdDetailService = createEntityService<DiagnosisDetailDto>("IcdDeta
 export const templateMastService = createEntityService<TemplateMastDto>("TemplateMast", "clinicalManagementURL");
 export const templateDetailService = createEntityService<TemplateDetailDto>("TemplateDetail", "clinicalManagementURL");
 export const ObstetricsService = createEntityService<OPIPHistObstetricsDto>("OPIPHistObstetrics", "clinicalManagementURL");
-export const lifestyleService = createEntityService<OPIPLifestyleDto>("OPIPLifestyle", "clinicalManagementURL");
+export const OPIPLifestyleService = createEntityService<OPIPLifestyleDto>("OPIPLifestyle", "clinicalManagementURL");
+export const lifestyleService = createEntityService<OPIPLifestyleDto>("Lifestyle", "clinicalManagementURL");

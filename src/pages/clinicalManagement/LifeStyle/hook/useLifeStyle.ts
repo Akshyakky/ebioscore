@@ -1,9 +1,11 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
 import { OPIPLifestyleDto } from "@/interfaces/ClinicalManagement/OPIPLifestyleDto";
-import { ObstetricsService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+import { lifestyleService, OPIPLifestyleService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
-export const useObstetrics = () => {
-  const hook = createEntityHook<OPIPLifestyleDto>(ObstetricsService, "opipOBID")();
+const useGenericLifestyle = createEntityHook<OPIPLifestyleDto>(OPIPLifestyleService, "opipLSID");
+
+export const useLifestyle = () => {
+  const hook = useGenericLifestyle();
 
   return {
     lifestyleList: hook.entityList,
@@ -11,8 +13,11 @@ export const useObstetrics = () => {
     error: hook.error,
     fetchLifestyleList: hook.fetchEntityList,
     getLifestyleById: hook.getEntityById,
-    saveLifestyle: hook.saveEntity,
+    saveLifestyle: async (lifestyleDto: OPIPLifestyleDto) => {
+      return lifestyleService.save(lifestyleDto);
+    },
     deleteLifestyle: hook.deleteEntity,
     updateLifestyleStatus: hook.updateEntityStatus,
+    getNextCode: hook.getNextCode,
   };
 };
