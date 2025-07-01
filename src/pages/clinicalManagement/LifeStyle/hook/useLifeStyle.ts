@@ -12,7 +12,9 @@ export const useLifestyle = () => {
     isLoading: hook.isLoading,
     error: hook.error,
     fetchLifestyleList: hook.fetchEntityList,
-    getLifestyleById: hook.getEntityById,
+    getLifestyleById: async (pChartId: number) => {
+      return lifestyleService.getById(pChartId);
+    },
     saveLifestyle: async (lifestyleDto: OPIPLifestyleDto) => {
       return lifestyleService.save(lifestyleDto);
     },

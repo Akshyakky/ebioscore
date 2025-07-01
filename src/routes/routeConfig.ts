@@ -1,4 +1,3 @@
-import LifeStyle from "@/pages/clinicalManagement/LifeStyle/MainPage/LifeStyle";
 import TemplateListPage from "@/pages/clinicalManagement/TemplateList/MainPage/TemplateListPage";
 import { AlertProvider } from "@/providers/AlertProvider";
 import React, { lazy, Suspense } from "react";
@@ -564,16 +563,7 @@ const routeConfig: RouteConfig[] = [
       category: "inventory",
     },
   },
-  {
-    path: "/LifeStyle",
-    component: wrapWithSuspense(LifeStyle),
-    protected: true,
-    providers: [AlertProvider],
-    metadata: {
-      title: "LifeStyle",
-      category: "clinical",
-    },
-  },
+
   // 404 Not Found route - must be placed last to catch all unmatched routes
   {
     path: "*",
