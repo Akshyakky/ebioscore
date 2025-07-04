@@ -50,7 +50,8 @@ interface UpdatedGrnDetailsComponentProps {
   grnApproved?: boolean;
   expanded: boolean;
   onToggle: () => void;
-  // New props for issue department management
+  grnID?: number;
+  catValue?: string;
   issueDepartments?: IssueDepartmentData[];
   onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
 }
@@ -69,6 +70,8 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
   grnApproved = false,
   expanded,
   onToggle,
+  grnID,
+  catValue,
   issueDepartments = [],
   onIssueDepartmentChange,
 }) => {
@@ -119,26 +122,27 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
 
         const newDetail: GrnDetailDto = {
           grnDetID: 0,
-          grnID: 0,
+          // Don't set grnID here for new records - let the backend handle it during save
+          grnID: grnID && grnID > 0 ? grnID : 0, // Only set if we have a valid existing grnID
           pGrpID: productData.data.pGrpID,
           pGrpName: productData.data.productGroupName,
           productID: productData.data.productID,
           productCode: productData.data.productCode,
-          catValue: "",
+          catValue: catValue || "MEDI",
           mfID: productData.data.manufacturerID,
           pUnitID: productData.data.pUnitID,
           pUnitName: productData.data.pUnitName,
           pUnitsPerPack: productData.data.unitPack || 1,
-          PkgID: productData.data.pkgID,
+          pkgID: productData.data.pkgID,
           batchNo: "",
           expiryDate: "",
           unitPrice: productData.data.defaultPrice || 0,
           tax: 0,
           sellUnitPrice: 0,
-          recvdQty: 0,
-          acceptQty: 0,
+          recvdQty: 1,
+          acceptQty: 1,
           freeItems: 0,
-          productValue: 0,
+          productValue: productData.data.defaultPrice || 0,
           productNotes: "",
           psGrpID: productData.data.psGrpID,
           chargeablePercent: 0,
@@ -155,7 +159,7 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
           mrpAbated: 0,
           mrp: 0,
           poDetID: 0,
-          requiredUnitQty: 0,
+          requiredUnitQty: 1,
           taxAfterDiscOnMrpYN: "N",
           taxAfterDiscYN: "N",
           taxCode: "",
@@ -164,10 +168,10 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
           taxModeDescription: "",
           taxModeID: "",
           taxName: "",
-          taxOnfreeItemsYN: "N",
+          taxOnFreeItemsYN: "N",
           taxOnMrpYN: "N",
-          taxOnunitPriceYN: "N",
-          catDesc: "",
+          taxOnUnitPriceYN: "N",
+          catDesc: "REVENUE",
           mfName: productData.data.manufacturerName,
           pkgName: productData.data.pkgName,
           productName: productData.data.productName,
@@ -178,26 +182,21 @@ const GrnDetailsComponent: React.FC<UpdatedGrnDetailsComponentProps> = ({
           cgstTaxAmt: 0,
           sgstPerValue: productData.data.sgstPerValue || 0,
           sgstTaxAmt: 0,
-          taxableAmt: 0,
+          taxableAmt: productData.data.defaultPrice || 0,
           defaultPrice: productData.data.defaultPrice || 0,
-          // BaseDto properties
-          rActiveYN: "Y",
-          rCreatedBy: "",
-          rCreatedDate: "",
-          rUpdatedBy: "",
-          rUpdatedDate: "",
         };
 
         onGrnDetailsChange([...grnDetails, newDetail]);
         showAlert("Success", `Product "${productData.data.productName}" added.`, "success");
       } catch (error) {
+        console.error("Error adding product:", error);
         showAlert("Error", "Failed to add product. Please check if the product exists.", "error");
       } finally {
         setIsAddingProduct(false);
         productSearchRef.current?.clearSelection();
       }
     },
-    [grnDetails, onGrnDetailsChange, showAlert]
+    [grnDetails, onGrnDetailsChange, showAlert, grnID, catValue]
   );
 
   const handleDeleteClick = useCallback(

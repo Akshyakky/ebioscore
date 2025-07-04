@@ -41,7 +41,7 @@ import {
 } from "@mui/material";
 import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import dayjs from "dayjs";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 import POSearchDialog from "./POSearchDailogue";
@@ -54,9 +54,9 @@ interface PurchaseOrderSectionProps {
   watchedDeptName: string;
   onPoDataFetched: (mast: PurchaseOrderMastDto | null, details: PurchaseOrderDetailDto[]) => void;
   onGRNDataFetched?: (grnDetails: GrnDetailDto[]) => void;
-  // New props for issue department management
   issueDepartments?: IssueDepartmentData[];
   onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
+  existingGrnDetails?: GrnDetailDto[]; // FIXED: New prop to pass existing GRN details
 }
 
 interface PurchaseOrderGRNDetailRow extends GrnDetailDto {
@@ -75,8 +75,9 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
   onGRNDataFetched,
   issueDepartments = [],
   onIssueDepartmentChange,
+  existingGrnDetails = [], // FIXED: Default to empty array
 }) => {
-  const { control, setValue, resetField } = useForm();
+  const { control, setValue, resetField, watch } = useForm();
   const theme = useTheme();
   const { showAlert } = useAlert();
   const dropdownValues = useDropdownValues(["taxType"]);
@@ -90,12 +91,56 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
     index: number | null;
   }>({ open: false, index: null });
 
-  // Issue Department Dialog state
   const [isIssueDeptDialogOpen, setIsIssueDeptDialogOpen] = useState(false);
   const [selectedProductForIssue, setSelectedProductForIssue] = useState<GrnDetailDto | null>(null);
   const [editingIssueDepartment, setEditingIssueDepartment] = useState<IssueDepartmentData | null>(null);
 
   const { getPurchaseOrderById, isLoading: isPoDetailsLoading } = usePurchaseOrder();
+
+  // FIXED: Watch for PO-related fields to detect existing PO data
+  const watchedPoID = watch("poID");
+  const watchedPoCode = watch("poCode");
+  const watchedPoNo = watch("PoNo");
+
+  // FIXED: Initialize GRN details with existing data when component mounts
+  useEffect(() => {
+    if (existingGrnDetails && existingGrnDetails.length > 0) {
+      setGrnDetails(existingGrnDetails);
+
+      // If there's existing GRN data with PO information, set the PO as selected
+      const firstDetail = existingGrnDetails[0];
+      if (firstDetail.poDetID && firstDetail.poDetID > 0) {
+        // Create a mock PO master for display purposes
+        const mockPOMaster: PurchaseOrderMastDto = {
+          pOID: watchedPoID || 0,
+          pOCode: watchedPoCode || watchedPoNo || "",
+          supplierID: 0,
+          supplierName: "",
+          pODate: "",
+          totalAmt: 0,
+          discAmt: 0,
+          pOApprovedYN: "Y",
+          deptID: watchedDeptID || 0,
+          deptName: watchedDeptName || "",
+          // Add other required fields with default values
+          pOStatusCode: "APPROVED",
+          pOStatus: "Approved",
+          auGrpID: 18,
+          catValue: "MEDI",
+          catDesc: "REVENUE",
+          rActiveYN: "Y",
+          rCreatedBy: "",
+          rCreatedDate: "",
+          rUpdatedBy: "",
+          rUpdatedDate: "",
+          rNotes: "",
+          fromDeptID: 0, // Added missing property
+          transferYN: "N", // Added missing property
+        };
+        setSelectedPO(mockPOMaster);
+      }
+    }
+  }, [existingGrnDetails, watchedPoID, watchedPoCode, watchedPoNo, watchedDeptID, watchedDeptName]);
 
   const handlePoSelection = useCallback(
     async (po: PurchaseOrderMastDto) => {
@@ -118,7 +163,7 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
         setValue("PoDiscAmt", mast.discAmt || 0, { shouldDirty: true });
 
         setPoDetails(details);
-        setGrnDetails([]);
+        setGrnDetails([]); // Clear existing GRN details when selecting new PO
         onPoDataFetched(mast, details);
       } else {
         setPoDetails([]);
@@ -145,102 +190,119 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
     }
   }, [resetField, onPoDataFetched, onGRNDataFetched]);
 
-  // Convert purchase order details to GRN detail rows
+  // FIXED: Enhanced gridRows logic to properly handle existing GRN details
   const gridRows: PurchaseOrderGRNDetailRow[] = useMemo(() => {
-    return poDetails
-      .filter((poDetail) => poDetail.rActiveYN !== "N")
-      .map((poDetail, index) => {
-        const existingGRNDetail = grnDetails.find((grn) => grn.PoDetID === poDetail.pODetID);
+    // If we have existing GRN details (editing mode), use them directly
+    if (existingGrnDetails && existingGrnDetails.length > 0) {
+      return existingGrnDetails.map((grnDetail, index) => {
+        const associatedIssueDept = issueDepartments.find((dept) => dept.productID === grnDetail.productID);
 
-        // Find associated issue department
-        const associatedIssueDept = issueDepartments.find((dept) => dept.productID === poDetail.productID);
-
-        if (existingGRNDetail) {
-          return {
-            ...existingGRNDetail,
-            id: existingGRNDetail.GrnDetID || `temp-${index}`,
-            _serialNo: index + 1,
-            _issueDepartment: associatedIssueDept,
-          };
-        }
-
-        const newGRNDetail: PurchaseOrderGRNDetailRow = {
-          grnDetID: 0,
-          grnID: 0,
-          poDetID: poDetail.pODetID,
-          productID: poDetail.productID,
-          productCode: poDetail.productCode || "",
-          productName: poDetail.productName || "",
-          catValue: poDetail.catValue || "",
-          catDesc: poDetail.catDesc || "",
-          mfID: poDetail.manufacturerID,
-          mfName: poDetail.manufacturerName || "",
-          manufacturerID: poDetail.manufacturerID,
-          manufacturerCode: poDetail.manufacturerCode,
-          manufacturerName: poDetail.manufacturerName || "",
-          pGrpID: poDetail.pGrpID,
-          pGrpName: poDetail.pGrpName || "",
-          psGrpID: poDetail.pSGrpID,
-          psGrpName: poDetail.pSGrpName || "",
-          pUnitID: poDetail.pUnitID,
-          pUnitName: poDetail.pUnitName || "",
-          pUnitsPerPack: poDetail.unitPack || 1,
-          pkgID: poDetail.pPkgID,
-          pkgName: poDetail.pPkgName || "",
-          hsnCode: poDetail.hsnCode || "",
-          requiredUnitQty: poDetail.requiredUnitQty || 0,
-          recvdQty: 0,
-          acceptQty: 0,
-          freeItems: poDetail.freeQty || 0,
-          unitPrice: poDetail.unitPrice || 0,
-          sellUnitPrice: 0,
-          defaultPrice: poDetail.unitPrice || 0,
-          mrp: 0,
-          mrpAbated: 0,
-          discAmt: poDetail.discAmt || 0,
-          discPercentage: poDetail.discPercentageAmt || 0,
-          cgstPerValue: poDetail.cgstPerValue || 0,
-          cgstTaxAmt: poDetail.cgstTaxAmt || 0,
-          sgstPerValue: poDetail.sgstPerValue || 0,
-          sgstTaxAmt: poDetail.sgstTaxAmt || 0,
-          taxableAmt: poDetail.taxableAmt || 0,
-          taxAfterDiscYN: poDetail.taxAfterDiscYN || "N",
-          taxAfterDiscOnMrpYN: poDetail.taxAfterDiscOnMrp || "N",
-          taxOnFreeItemsYN: poDetail.taxOnFreeItemYN || "N",
-          taxOnMrpYN: poDetail.taxOnMrpYN || "N",
-          taxOnUnitPriceYN: poDetail.taxOnUnitPrice || "N",
-          batchNo: "",
-          refNo: "",
-          expiryDate: "",
-          productNotes: "",
-          expiryYN: "N",
-          isFreeItemYN: poDetail.isFreeItemYN || "N",
-          productValue: 0,
-          itemMrpValue: 0,
-          itemTotalProfit: 0,
-          itemTotalVat: 0,
-          tax: 0,
-          chargeablePercent: 0,
-          taxCode: "",
-          taxID: 0,
-          taxModeCode: "",
-          taxModeDescription: "",
-          taxModeID: "",
-          taxName: "",
+        return {
+          ...grnDetail,
+          id: grnDetail.grnDetID || `existing-${index}`,
           _serialNo: index + 1,
           _issueDepartment: associatedIssueDept,
-
-          id: `temp-${index}`,
-          rActiveYN: "Y",
-          rCreatedBy: "",
-          rCreatedDate: "",
-          rUpdatedBy: "",
-          rUpdatedDate: "",
         };
-
-        return newGRNDetail;
       });
-  }, [poDetails, grnDetails, issueDepartments]);
+    }
+
+    // If we have PO details selected, create new GRN details from PO
+    if (poDetails && poDetails.length > 0) {
+      return poDetails
+        .filter((poDetail) => poDetail.rActiveYN !== "N")
+        .map((poDetail, index) => {
+          const existingGRNDetail = grnDetails.find((grn) => grn.poDetID === poDetail.pODetID);
+          const associatedIssueDept = issueDepartments.find((dept) => dept.productID === poDetail.productID);
+
+          if (existingGRNDetail) {
+            return {
+              ...existingGRNDetail,
+              id: existingGRNDetail.grnDetID || `temp-${index}`,
+              _serialNo: index + 1,
+              _issueDepartment: associatedIssueDept,
+            };
+          }
+
+          // Create new GRN detail from PO detail
+          const newGRNDetail: PurchaseOrderGRNDetailRow = {
+            grnDetID: 0,
+            grnID: 0,
+            poDetID: poDetail.pODetID,
+            productID: poDetail.productID,
+            productCode: poDetail.productCode || "",
+            productName: poDetail.productName || "",
+            catValue: poDetail.catValue || "",
+            catDesc: poDetail.catDesc || "",
+            mfID: poDetail.manufacturerID,
+            mfName: poDetail.manufacturerName || "",
+            manufacturerID: poDetail.manufacturerID,
+            manufacturerCode: poDetail.manufacturerCode,
+            manufacturerName: poDetail.manufacturerName || "",
+            pGrpID: poDetail.pGrpID,
+            pGrpName: poDetail.pGrpName || "",
+            psGrpID: poDetail.pSGrpID,
+            psGrpName: poDetail.pSGrpName || "",
+            pUnitID: poDetail.pUnitID,
+            pUnitName: poDetail.pUnitName || "",
+            pUnitsPerPack: poDetail.unitPack || 1,
+            pkgID: poDetail.pPkgID,
+            pkgName: poDetail.pPkgName || "",
+            hsnCode: poDetail.hsnCode || "",
+            requiredUnitQty: poDetail.requiredUnitQty || 0,
+            recvdQty: 0,
+            acceptQty: 0,
+            freeItems: poDetail.freeQty || 0,
+            unitPrice: poDetail.unitPrice || 0,
+            sellUnitPrice: 0,
+            defaultPrice: poDetail.unitPrice || 0,
+            mrp: 0,
+            mrpAbated: 0,
+            discAmt: poDetail.discAmt || 0,
+            discPercentage: poDetail.discPercentageAmt || 0,
+            cgstPerValue: poDetail.cgstPerValue || 0,
+            cgstTaxAmt: poDetail.cgstTaxAmt || 0,
+            sgstPerValue: poDetail.sgstPerValue || 0,
+            sgstTaxAmt: poDetail.sgstTaxAmt || 0,
+            taxableAmt: poDetail.taxableAmt || 0,
+            taxAfterDiscYN: poDetail.taxAfterDiscYN || "N",
+            taxAfterDiscOnMrpYN: poDetail.taxAfterDiscOnMrp || "N",
+            taxOnFreeItemsYN: poDetail.taxOnFreeItemYN || "N",
+            taxOnMrpYN: poDetail.taxOnMrpYN || "N",
+            taxOnUnitPriceYN: poDetail.taxOnUnitPrice || "N",
+            batchNo: "",
+            refNo: "",
+            expiryDate: "",
+            productNotes: "",
+            expiryYN: "N",
+            isFreeItemYN: poDetail.isFreeItemYN || "N",
+            productValue: 0,
+            itemMrpValue: 0,
+            itemTotalProfit: 0,
+            itemTotalVat: 0,
+            tax: 0,
+            chargeablePercent: 0,
+            taxCode: "",
+            taxID: 0,
+            taxModeCode: "",
+            taxModeDescription: "",
+            taxModeID: "",
+            taxName: "",
+            _serialNo: index + 1,
+            _issueDepartment: associatedIssueDept,
+            id: `temp-${index}`,
+            rActiveYN: "Y",
+            rCreatedBy: "",
+            rCreatedDate: "",
+            rUpdatedBy: "",
+            rUpdatedDate: "",
+          };
+
+          return newGRNDetail;
+        });
+    }
+
+    return [];
+  }, [poDetails, grnDetails, issueDepartments, existingGrnDetails]);
 
   const handleDeleteClick = useCallback(
     (id: string | number) => {
@@ -255,7 +317,7 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
 
     const updatedDetails = [...grnDetails];
     const rowToDelete = gridRows[deleteConfirmation.index];
-    const originalIndex = grnDetails.findIndex((item) => item.ProductID === rowToDelete.ProductID);
+    const originalIndex = grnDetails.findIndex((item) => item.productID === rowToDelete.productID);
 
     if (originalIndex !== -1) {
       updatedDetails.splice(originalIndex, 1);
@@ -271,12 +333,16 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
   const handleCellValueChange = useCallback(
     (id: string | number, field: keyof GrnDetailDto, value: any) => {
       const updatedDetails = [...grnDetails];
-      let index = updatedDetails.findIndex((item) => (item.GrnDetID || `temp-${grnDetails.indexOf(item)}`) === id);
+      let index = updatedDetails.findIndex((item) => (item.grnDetID || `temp-${grnDetails.indexOf(item)}`) === id);
 
       if (index === -1) {
         const rowData = gridRows.find((row) => row.id === id);
         if (rowData) {
-          updatedDetails.push({ ...rowData });
+          // Create a new GRN detail from the row data
+          const newGrnDetail = { ...rowData };
+          delete (newGrnDetail as any)._serialNo;
+          delete (newGrnDetail as any)._issueDepartment;
+          updatedDetails.push(newGrnDetail);
           index = updatedDetails.length - 1;
         }
       }
@@ -286,66 +352,49 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
       const currentRow = updatedDetails[index];
       (currentRow as any)[field] = value;
 
-      // --- Field-Specific Preparations ---
-      if (field === "UnitPrice" || field === "PUnitsPerPack") {
-        // Calculate based on unit price and units per pack
-        const unitPrice = currentRow.UnitPrice || 0;
-        const unitsPerPack = currentRow.PUnitsPerPack || 1;
-        // Store calculated pack equivalent in ProductValue for calculation
-        currentRow.ProductValue = unitPrice * unitsPerPack;
+      // Field-specific calculations
+      if (field === "unitPrice" || field === "pUnitsPerPack") {
+        const unitPrice = currentRow.unitPrice || 0;
+        const unitsPerPack = currentRow.pUnitsPerPack || 1;
+        currentRow.productValue = unitPrice * unitsPerPack;
       }
-      if (field === "RecvdQty" || field === "PUnitsPerPack") {
-        currentRow.AcceptQty = currentRow.RecvdQty;
+      if (field === "recvdQty" || field === "pUnitsPerPack") {
+        currentRow.acceptQty = currentRow.recvdQty;
       }
       if (field === "gstPercentage") {
         const gstValue = Number(value) || 0;
-        currentRow.CgstPerValue = parseFloat((gstValue / 2).toFixed(2));
-        currentRow.SgstPerValue = parseFloat((gstValue / 2).toFixed(2));
+        currentRow.cgstPerValue = parseFloat((gstValue / 2).toFixed(2));
+        currentRow.sgstPerValue = parseFloat((gstValue / 2).toFixed(2));
       }
 
-      // --- Core Calculation Logic based on Rules ---
-      const receivedQty = currentRow.RecvdQty || 0;
-      const unitPrice = currentRow.UnitPrice || 0;
-      const discPercentage = currentRow.DiscPercentage || 0;
-      const cgstRate = currentRow.CgstPerValue || 0;
-      const sgstRate = currentRow.SgstPerValue || 0;
+      // Core calculation logic
+      const receivedQty = currentRow.recvdQty || 0;
+      const unitPrice = currentRow.unitPrice || 0;
+      const discPercentage = currentRow.discPercentage || 0;
+      const cgstRate = currentRow.cgstPerValue || 0;
+      const sgstRate = currentRow.sgstPerValue || 0;
       const gstPercentage = cgstRate + sgstRate;
-      const isTaxAfterDisc = currentRow.TaxAfterDiscYN === "Y";
+      const isTaxAfterDisc = currentRow.taxAfterDiscYN === "Y";
 
-      let baseAmount = 0,
-        discountAmount = 0,
-        taxableAmount = 0,
-        totalTaxAmount = 0,
-        finalValue = 0;
+      let baseAmount = receivedQty * unitPrice;
+      let discountAmount = baseAmount * (discPercentage / 100);
+      let taxableAmount = baseAmount - discountAmount;
+      let totalTaxAmount = isTaxAfterDisc ? taxableAmount * (gstPercentage / 100) : baseAmount * (gstPercentage / 100);
+      let finalValue = taxableAmount + totalTaxAmount;
 
-      baseAmount = receivedQty * unitPrice;
+      currentRow.discAmt = parseFloat(discountAmount.toFixed(2));
+      currentRow.taxableAmt = parseFloat(taxableAmount.toFixed(2));
 
-      // Rule 2: Discount Amount
-      discountAmount = baseAmount * (discPercentage / 100);
-      // Rule 3: Taxable Amount
-      taxableAmount = baseAmount - discountAmount;
-      // Rule 4 & 5: Total Tax Amount
-      if (isTaxAfterDisc) {
-        totalTaxAmount = taxableAmount * (gstPercentage / 100);
-      } else {
-        totalTaxAmount = baseAmount * (gstPercentage / 100);
-      }
-      // Rule 6: Final Value
-      finalValue = taxableAmount + totalTaxAmount;
-
-      currentRow.DiscAmt = parseFloat(discountAmount.toFixed(2));
-      currentRow.TaxableAmt = parseFloat(taxableAmount.toFixed(2));
-
-      const totalGstPercentage = (currentRow.CgstPerValue || 0) + (currentRow.SgstPerValue || 0);
+      const totalGstPercentage = (currentRow.cgstPerValue || 0) + (currentRow.sgstPerValue || 0);
       if (totalGstPercentage > 0) {
-        currentRow.CgstTaxAmt = parseFloat((totalTaxAmount * ((currentRow.CgstPerValue || 0) / totalGstPercentage)).toFixed(2));
-        currentRow.SgstTaxAmt = parseFloat((totalTaxAmount * ((currentRow.SgstPerValue || 0) / totalGstPercentage)).toFixed(2));
+        currentRow.cgstTaxAmt = parseFloat((totalTaxAmount * ((currentRow.cgstPerValue || 0) / totalGstPercentage)).toFixed(2));
+        currentRow.sgstTaxAmt = parseFloat((totalTaxAmount * ((currentRow.sgstPerValue || 0) / totalGstPercentage)).toFixed(2));
       } else {
-        currentRow.CgstTaxAmt = 0;
-        currentRow.SgstTaxAmt = 0;
+        currentRow.cgstTaxAmt = 0;
+        currentRow.sgstTaxAmt = 0;
       }
 
-      currentRow.ProductValue = parseFloat(finalValue.toFixed(2));
+      currentRow.productValue = parseFloat(finalValue.toFixed(2));
 
       setGrnDetails(updatedDetails);
       if (onGRNDataFetched) {
@@ -364,7 +413,6 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
     [dropdownValues.taxType, handleCellValueChange]
   );
 
-  // Issue Department handlers
   const handleIssueDepartmentClick = useCallback((row: PurchaseOrderGRNDetailRow) => {
     setSelectedProductForIssue(row);
     setEditingIssueDepartment(row._issueDepartment || null);
@@ -377,14 +425,12 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
         let updatedDepartments = [...issueDepartments];
 
         if (editingIssueDepartment) {
-          // Update existing
           const index = updatedDepartments.findIndex((dept) => dept.id === editingIssueDepartment.id);
           if (index !== -1) {
             updatedDepartments[index] = data;
             showAlert("Success", "Issue department updated successfully.", "success");
           }
         } else {
-          // Add new
           updatedDepartments.push(data);
           showAlert("Success", "Issue department added successfully.", "success");
         }
@@ -482,7 +528,7 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
     (params: GridRenderCellParams) => (
       <Select
         size="small"
-        value={(params.row.CgstPerValue || 0) + (params.row.SgstPerValue || 0) || ""}
+        value={(params.row.cgstPerValue || 0) + (params.row.sgstPerValue || 0) || ""}
         onChange={(e) => {
           const value = Number(e.target.value);
           handleDropdownChange(value, params.id);
@@ -546,83 +592,83 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
         renderCell: (params) => params.row._serialNo,
       },
       {
-        field: "ProductName",
+        field: "productName",
         headerName: "Product Name",
         width: 200,
         sortable: false,
       },
       {
-        field: "RequiredUnitQty",
+        field: "requiredUnitQty",
         headerName: "Required Qty",
         width: 120,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => params.row.RequiredUnitQty || 0,
+        renderCell: (params) => params.row.requiredUnitQty || 0,
       },
       {
-        field: "RecvdQty",
+        field: "recvdQty",
         headerName: "Received Qty",
         width: 130,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "RecvdQty", 0),
+        renderCell: (params) => renderNumberField(params, "recvdQty", 0),
       },
       {
-        field: "AcceptQty",
+        field: "acceptQty",
         headerName: "Accept Qty",
         width: 120,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => renderNumberField(params, "AcceptQty", 0),
+        renderCell: (params) => renderNumberField(params, "acceptQty", 0),
       },
       {
-        field: "FreeItems",
+        field: "freeItems",
         headerName: "Free Items",
         width: 100,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "FreeItems", 0),
+        renderCell: (params) => renderNumberField(params, "freeItems", 0),
       },
       {
-        field: "PUnitName",
+        field: "pUnitName",
         headerName: "UOM",
         width: 80,
         sortable: false,
       },
       {
-        field: "PUnitsPerPack",
+        field: "pUnitsPerPack",
         headerName: "Units/Pack",
         width: 100,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "PUnitsPerPack", 0),
+        renderCell: (params) => renderNumberField(params, "pUnitsPerPack", 0),
       },
       {
-        field: "BatchNo",
+        field: "batchNo",
         headerName: "Batch No",
         width: 120,
         sortable: false,
-        renderCell: (params) => renderTextField(params, "BatchNo"),
+        renderCell: (params) => renderTextField(params, "batchNo"),
       },
       {
-        field: "RefNo",
+        field: "refNo",
         headerName: "Reference No",
         width: 120,
         sortable: false,
-        renderCell: (params) => renderTextField(params, "RefNo"),
+        renderCell: (params) => renderTextField(params, "refNo"),
       },
       {
-        field: "ExpiryDate",
+        field: "expiryDate",
         headerName: "Expiry Date",
         width: 130,
         sortable: false,
-        renderCell: (params) => renderDateField(params, "ExpiryDate"),
+        renderCell: (params) => renderDateField(params, "expiryDate"),
       },
       {
-        field: "SellUnitPrice",
+        field: "sellUnitPrice",
         headerName: "Selling Price",
         width: 120,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "SellUnitPrice"),
+        renderCell: (params) => renderNumberField(params, "sellUnitPrice"),
       },
       {
         field: "gstPercentage",
@@ -632,87 +678,87 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
         renderCell: renderGSTSelect,
       },
       {
-        field: "DiscPercentage",
+        field: "discPercentage",
         headerName: "Disc[%]",
         width: 100,
         sortable: false,
-        renderCell: (params) => renderNumberField(params, "DiscPercentage"),
+        renderCell: (params) => renderNumberField(params, "discPercentage"),
       },
       {
-        field: "TaxAfterDiscYN",
+        field: "taxAfterDiscYN",
         headerName: "Tax after Disc[%]",
         width: 130,
         sortable: false,
-        renderCell: (params) => renderCheckbox(params, "TaxAfterDiscYN"),
+        renderCell: (params) => renderCheckbox(params, "taxAfterDiscYN"),
       },
       {
-        field: "CgstPerValue",
+        field: "cgstPerValue",
         headerName: "CGST%",
         width: 80,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => `${params.row.CgstPerValue || 0}%`,
+        renderCell: (params) => `${params.row.cgstPerValue || 0}%`,
       },
       {
-        field: "CgstTaxAmt",
+        field: "cgstTaxAmt",
         headerName: "CGST Tax Amt",
         width: 120,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => (params.row.CgstTaxAmt || 0).toFixed(2),
+        renderCell: (params) => (params.row.cgstTaxAmt || 0).toFixed(2),
       },
       {
-        field: "SgstPerValue",
+        field: "sgstPerValue",
         headerName: "SGST%",
         width: 80,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => `${params.row.SgstPerValue || 0}%`,
+        renderCell: (params) => `${params.row.sgstPerValue || 0}%`,
       },
       {
-        field: "SgstTaxAmt",
+        field: "sgstTaxAmt",
         headerName: "SGST Tax Amt",
         width: 120,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => (params.row.SgstTaxAmt || 0).toFixed(2),
+        renderCell: (params) => (params.row.sgstTaxAmt || 0).toFixed(2),
       },
       {
-        field: "ProductValue",
+        field: "productValue",
         headerName: "Value",
         width: 100,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => (params.row.ProductValue || 0).toFixed(2),
+        renderCell: (params) => (params.row.productValue || 0).toFixed(2),
       },
       {
-        field: "ManufacturerName",
+        field: "manufacturerName",
         headerName: "Manufacturer",
         width: 150,
         sortable: false,
       },
       {
-        field: "DiscAmt",
+        field: "discAmt",
         headerName: "Disc",
         width: 100,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => (params.row.DiscAmt || 0).toFixed(2),
+        renderCell: (params) => (params.row.discAmt || 0).toFixed(2),
       },
       {
-        field: "UnitPrice",
+        field: "unitPrice",
         headerName: "Unit Price",
         width: 120,
         sortable: false,
         align: "right",
         headerAlign: "right",
-        renderCell: (params) => (params.row.UnitPrice || 0).toFixed(4),
+        renderCell: (params) => (params.row.unitPrice || 0).toFixed(4),
       },
       {
         field: "issueDepartment",
@@ -967,7 +1013,6 @@ const PurchaseOrderSection: React.FC<PurchaseOrderSectionProps> = ({
         type="warning"
       />
 
-      {/* Issue Department Dialog */}
       <IssueDepartmentDialog
         open={isIssueDeptDialogOpen}
         onClose={handleIssueDepartmentDialogClose}

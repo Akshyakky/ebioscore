@@ -21,8 +21,8 @@ export interface GrnMastDto extends BaseDto {
   coinAdj?: number;
   dcNo?: string;
   discPercentageYN?: string;
-  grnApprovedBy?: string | null;
-  grnApprovedID?: number | null;
+  grnApprovedBy?: string;
+  grnApprovedID?: number;
   grnApprovedYN: string;
   grnStatusCode?: string;
   grnStatus?: string;
@@ -34,17 +34,13 @@ export interface GrnMastDto extends BaseDto {
   poNo?: string;
   poTotalAmt?: number;
   taxAmt?: number;
-  transDeptID?: number | null;
-  transDeptName?: string | null;
+  transDeptID?: number;
+  transDeptName?: string;
   grnCode?: string;
   grnType?: string;
-  totalTaxableAmt?: number | null;
-  netCGSTTaxAmt?: number | null;
-  netSGSTTaxAmt?: number | null;
-  grnDetails?: GrnDetailDto[] | null;
-  rActiveYN?: string;
-  rNotes?: string | null;
-  transferYN?: string;
+  totalTaxableAmt?: number;
+  netCGSTTaxAmt?: number;
+  netSGSTTaxAmt?: number;
 }
 
 export interface GrnDetailDto extends BaseDto {
@@ -110,6 +106,17 @@ export interface GrnDetailDto extends BaseDto {
   sgstTaxAmt?: number;
   taxableAmt?: number;
   defaultPrice: number;
+}
+
+export interface GrnGridItemDto extends GrnDetailDto {
+  rol?: number;
+  currentStock?: number;
+  stockValue?: number;
+}
+
+export interface GrnDto {
+  grnMastDto: GrnMastDto;
+  grnDetailDto: GrnDetailDto[];
 }
 
 export interface GrnSearchRequest {

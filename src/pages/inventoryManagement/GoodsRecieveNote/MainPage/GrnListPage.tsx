@@ -4,17 +4,17 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import useContactMastByCategory from "@/hooks/hospitalAdministration/useContactMastByCategory";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { GrnMastDto, GrnSearchRequest } from "@/interfaces/InventoryManagement/GRNDto";
+import { GrnDto, GrnSearchRequest } from "@/interfaces/InventoryManagement/GRNDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { formatCurrency } from "@/utils/Common/formatUtils";
 import {
   Add as AddIcon,
   CheckCircle as ApproveIcon,
+  Block as BlockIcon,
   ContentCopy as CopyIcon,
   Dashboard as DashboardIcon,
   Delete as DeleteIcon,
   Group as DeptIcon,
-  Download as DownloadIcon,
   Edit as EditIcon,
   GetApp as ExportIcon,
   FilterList as FilterIcon,
@@ -63,23 +63,9 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
-import GrnDetailsDialog from "../Form/GrnDetailsDialog";
 import ComprehensiveGrnFormDialog from "../Form/GrnFormDailogue";
+import GrnViewDetailsDialog from "../Form/GrnViewDetailsDialog";
 import { useGrn } from "../hooks/useGrnhooks";
-
-// Enhanced DTO combining properties for a richer UI
-// interface GrnMastDto extends GrnMastDto {
-//   totalItems: number;
-//   totalValue: string;
-//   totalValueNumeric: number;
-//   supplierDisplay: string;
-//   departmentDisplay: string;
-//   statusColor: "success" | "warning" | "error" | "info" | "default";
-//   daysOld: number;
-//   isOverdue: boolean;
-//   formattedGrnDate: string;
-//   formattedInvDate: string;
-// }
 
 // Comprehensive state for the filter drawer
 interface FilterState {
@@ -97,9 +83,8 @@ interface FilterState {
 }
 
 const ComprehensiveGRNManagementPage: React.FC = () => {
-  // --- STATE MANAGEMENT ---
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGrn, setSelectedGrn] = useState<GrnMastDto | null>(null);
+  const [selectedGrn, setSelectedGrn] = useState<GrnDto | null>(null);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [isGrnFormOpen, setIsGrnFormOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
@@ -118,23 +103,20 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     grnStatus: "all",
     approvedStatus: "all",
     grnType: "all",
-    hideStatus: "show",
+    hideStatus: "all",
     amountFrom: "",
     amountTo: "",
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- HOOKS ---
   const { showAlert } = useAlert();
   const { deptId, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
   const { department: departments } = useDropdownValues(["department"]);
   const { contacts: suppliers } = useContactMastByCategory({ consValue: "SUP" });
 
-  // Use the existing useGrn hook
-  const { grnList, isLoading, error, fetchGrnList, getGrnById, createGrn, approveGrn, deleteGrn, refreshGrnList, canEditGrn, canDeleteGrn, getGrnStatusColor } = useGrn();
+  const { grnList, isLoading, error, fetchGrnList, getGrnById, approveGrn, deleteGrn, refreshGrnList, canEditGrn, canDeleteGrn, getGrnStatusColor } = useGrn();
 
-  // --- DATA FETCHING & DERIVED STATE ---
   useEffect(() => {
     if (isDepartmentSelected && deptId) {
       fetchGrnList({ departmentID: deptId });
@@ -147,59 +129,57 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     }
   }, [isDepartmentSelected, isDialogOpen, openDialog]);
 
-  const enhancedGrns = useMemo((): GrnMastDto[] => {
+  const enhancedGrns = useMemo((): GrnDto[] => {
     return grnList.map((grn) => {
-      const pendingApproval = grn.grnApprovedYN !== "Y";
-      const grnDate = dayjs(grn.grnDate);
+      const pendingApproval = grn.grnMastDto.grnApprovedYN !== "Y";
+      const grnDate = dayjs(grn.grnMastDto.grnDate);
       const daysOld = dayjs().diff(grnDate, "days");
-      const totalValue = grn.netTot || 0;
-
+      const totalValue = grn.grnMastDto.netTot || 0;
       return {
         ...grn,
-        totalItems: grn.grnDetails?.length || 0,
+        totalItems: 0,
         totalValue: formatCurrency(totalValue, "INR", "en-IN"),
         totalValueNumeric: totalValue,
-        supplierDisplay: grn.supplrName || `Supplier #${grn.supplrID}`,
-        departmentDisplay: grn.deptName || `Dept #${grn.deptID}`,
+        supplierDisplay: grn.grnMastDto.supplrName || `Supplier #${grn.grnMastDto.supplrID}`,
+        departmentDisplay: grn.grnMastDto.deptName || `Dept #${grn.grnMastDto.deptID}`,
         statusColor: getGrnStatusColor(grn),
         daysOld,
         isOverdue: daysOld > 7 && pendingApproval,
         formattedGrnDate: grnDate.format("DD/MM/YYYY"),
-        formattedInvDate: dayjs(grn.InvDate).format("DD/MM/YYYY"),
+        formattedInvDate: grn.grnMastDto.invDate ? dayjs(grn.grnMastDto.invDate).format("DD/MM/YYYY") : "",
       };
     });
   }, [grnList, getGrnStatusColor]);
 
-  // Combine server-side base query with client-side filtering
   const filteredAndSearchedGrns = useMemo(() => {
     let filtered = [...enhancedGrns];
 
-    // Client-side search term filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (grn) =>
-          grn.grnCode?.toLowerCase().includes(searchLower) ||
-          grn.invoiceNo?.toLowerCase().includes(searchLower) ||
-          grn.supplrName?.toLowerCase().includes(searchLower) ||
-          grn.deptName?.toLowerCase().includes(searchLower)
+          grn.grnMastDto.grnCode?.toLowerCase().includes(searchLower) ||
+          grn.grnMastDto.invoiceNo?.toLowerCase().includes(searchLower) ||
+          grn.grnMastDto.supplrName?.toLowerCase().includes(searchLower) ||
+          grn.grnMastDto.deptName?.toLowerCase().includes(searchLower)
       );
     }
 
-    // Client-side filters for criteria not supported by the backend search
     if (filters.grnType !== "all") {
-      filtered = filtered.filter((grn) => grn.GrnType === filters.grnType);
+      filtered = filtered.filter((grn) => grn.grnMastDto.grnType === filters.grnType);
     }
+
     if (filters.hideStatus === "hidden") {
-      filtered = filtered.filter((grn) => grn.HideYN === "Y");
+      filtered = filtered.filter((grn) => grn.grnMastDto.rActiveYN === "N");
     } else if (filters.hideStatus === "show") {
-      filtered = filtered.filter((grn) => grn.HideYN !== "Y");
+      filtered = filtered.filter((grn) => grn.grnMastDto.rActiveYN !== "N");
     }
+
     if (filters.amountFrom) {
-      filtered = filtered.filter((grn) => grn.totalValueNumeric >= Number(filters.amountFrom));
+      filtered = filtered.filter((grn) => grn.grnMastDto.totalValueNumeric >= Number(filters.amountFrom));
     }
     if (filters.amountTo) {
-      filtered = filtered.filter((grn) => grn.totalValueNumeric <= Number(filters.amountTo));
+      filtered = filtered.filter((grn) => grn.grnMastDto.totalValueNumeric <= Number(filters.amountTo));
     }
 
     return filtered;
@@ -207,16 +187,14 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
 
   useEffect(() => {
     const total = enhancedGrns.length;
-    const approved = enhancedGrns.filter((g) => g.GrnApprovedYN === "Y").length;
+    const approved = enhancedGrns.filter((g) => g.grnMastDto.grnApprovedYN === "Y").length;
     const pending = total - approved;
-    const overdue = enhancedGrns.filter((g) => g.isOverdue).length;
-    const hidden = enhancedGrns.filter((g) => g.HideYN === "Y").length;
-    const totalValue = enhancedGrns.reduce((sum, g) => sum + g.totalValueNumeric, 0);
+    const overdue = enhancedGrns.filter((g) => g.grnMastDto.isOverdue).length;
+    const hidden = enhancedGrns.filter((g) => g.grnMastDto.rActiveYN === "N").length;
+    const totalValue = enhancedGrns.reduce((sum, g) => sum + g.grnMastDto.totalValueNumeric, 0);
 
     setStatistics({ total, approved, pending, overdue, hidden, totalValue });
   }, [enhancedGrns]);
-
-  // --- EVENT HANDLERS ---
 
   const handleApplyFilters = useCallback(() => {
     const searchRequest: GrnSearchRequest = {
@@ -242,11 +220,10 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       grnStatus: "all",
       approvedStatus: "all",
       grnType: "all",
-      hideStatus: "show",
+      hideStatus: "all",
       amountFrom: "",
       amountTo: "",
     });
-    // Refetch with only the department filter
     if (deptId) fetchGrnList({ departmentID: deptId });
     setIsFilterDrawerOpen(false);
   }, [deptId, fetchGrnList]);
@@ -263,24 +240,34 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     setIsGrnFormOpen(true);
   }, []);
 
+  // Helper function to check if GRN actions should be disabled
+  const isGrnActionsDisabled = useCallback((grn: GrnDto) => {
+    return grn.grnMastDto.rActiveYN === "N";
+  }, []);
+
   const handleEditGrn = useCallback(
-    async (grn: GrnMastDto) => {
+    async (grn: GrnDto) => {
+      if (isGrnActionsDisabled(grn)) {
+        showAlert("Warning", "This GRN is inactive and cannot be edited.", "warning");
+        return;
+      }
+
       if (!canEditGrn(grn)) {
         showAlert("Warning", "This GRN is approved and cannot be edited.", "warning");
         return;
       }
-      const fullGrnDetails = await getGrnById(grn.grnID);
+      const fullGrnDetails = await getGrnById(grn.grnMastDto.grnID);
       if (fullGrnDetails) {
         setSelectedGrn(fullGrnDetails);
         setIsGrnFormOpen(true);
       }
     },
-    [getGrnById, canEditGrn, showAlert]
+    [getGrnById, canEditGrn, showAlert, isGrnActionsDisabled]
   );
 
   const handleViewDetails = useCallback(
-    async (grn: GrnMastDto) => {
-      const fullGrnDetails = await getGrnById(grn.grnID);
+    async (grnToView: GrnDto) => {
+      const fullGrnDetails = await getGrnById(grnToView.grnMastDto.grnID);
       if (fullGrnDetails) {
         setSelectedGrn(fullGrnDetails);
         setIsDetailsDialogOpen(true);
@@ -290,53 +277,63 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
   );
 
   const handleCopyGrn = useCallback(
-    async (grnToCopy: GrnMastDto) => {
-      const fullGrnDetails = await getGrnById(grnToCopy.grnID);
+    async (grnToCopy: GrnDto) => {
+      if (isGrnActionsDisabled(grnToCopy)) {
+        showAlert("Warning", "This GRN is inactive and cannot be copied.", "warning");
+        return;
+      }
+
+      const fullGrnDetails = await getGrnById(grnToCopy.grnMastDto.grnID);
       if (!fullGrnDetails) return;
 
-      const copiedGrn: GrnMastDto = {
-        ...fullGrnDetails,
-        grnID: 0,
-        grnCode: "", // Will be generated on save
-        InvoiceNo: `${fullGrnDetails.InvoiceNo} (Copy)`,
-        GrnApprovedYN: "N",
-        GrnStatus: "Pending",
-        GrnStatusCode: "PENDING",
-        HideYN: "N",
-        GrnDetails: fullGrnDetails.GrnDetails?.map((d) => ({ ...d, GrnDetID: 0, grnID: 0 })) || [],
+      const copiedGrn: GrnDto = {
+        grnMastDto: {
+          ...fullGrnDetails.grnMastDto,
+          grnID: 0,
+          grnCode: "",
+          invoiceNo: `${fullGrnDetails.grnMastDto.invoiceNo} (Copy)`,
+          grnApprovedYN: "N",
+          grnStatus: "Pending",
+          grnStatusCode: "PENDING",
+          rActiveYN: "Y",
+        },
+        grnDetailDto: fullGrnDetails.grnDetailDto?.map((d) => ({ ...d, grnDetID: 0, grnID: 0 })) || [],
       };
       setSelectedGrn(copiedGrn);
       setIsGrnFormOpen(true);
     },
-    [getGrnById]
-  );
-
-  const handleGrnSubmit = useCallback(
-    async (grnData: GrnMastDto) => {
-      const result = await createGrn(grnData);
-      if (result.success) {
-        setIsGrnFormOpen(false);
-        setSelectedGrn(null);
-        await refreshGrnList();
-      }
-    },
-    [createGrn, refreshGrnList]
+    [getGrnById, showAlert, isGrnActionsDisabled]
   );
 
   const handleApproveGrn = useCallback(
     async (grnID: number) => {
-      await approveGrn(grnID);
-      await refreshGrnList();
+      try {
+        showAlert("Info", "Approving GRN and updating stock...", "info");
+        const success = await approveGrn(grnID);
+        if (success) {
+          await refreshGrnList();
+        }
+      } catch (error) {
+        console.error("Error approving GRN:", error);
+        showAlert("Error", "Failed to approve GRN. Please try again.", "error");
+      }
     },
-    [approveGrn, refreshGrnList]
+    [approveGrn, refreshGrnList, showAlert]
   );
 
   const handleDeleteClick = (grnID: number) => {
-    const grn = grnList.find((g) => g.grnID === grnID);
-    if (grn && canDeleteGrn(grn)) {
-      setDeleteConfirmation({ open: true, grnID });
-    } else {
-      showAlert("Warning", "Approved or processed GRNs cannot be deleted.", "warning");
+    const grn = grnList.find((g) => g.grnMastDto.grnID === grnID);
+    if (grn) {
+      if (isGrnActionsDisabled(grn)) {
+        showAlert("Warning", "This GRN is inactive and cannot be deleted.", "warning");
+        return;
+      }
+
+      if (canDeleteGrn(grn)) {
+        setDeleteConfirmation({ open: true, grnID });
+      } else {
+        showAlert("Warning", "Approved or processed GRNs cannot be deleted.", "warning");
+      }
     }
   };
 
@@ -344,17 +341,15 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     if (deleteConfirmation.grnID) {
       await deleteGrn(deleteConfirmation.grnID);
       setDeleteConfirmation({ open: false, grnID: null });
-      // The hook handles optimistic updates, no extra refresh needed unless desired
     }
   };
 
-  // --- BULK ACTION HANDLERS ---
   const handleBulkApprove = async () => {
     if (selectedRows.length === 0) return;
     showAlert("Info", `Approving ${selectedRows.length} GRNs...`, "info");
     const unapprovedRows = selectedRows.filter((id) => {
-      const grn = grnList.find((g) => g.grnID === id);
-      return grn && grn.GrnApprovedYN !== "Y";
+      const grn = grnList.find((g) => g.grnMastDto.grnID === id);
+      return grn && grn.grnMastDto.grnApprovedYN !== "Y";
     });
 
     await Promise.all(unapprovedRows.map((id) => approveGrn(id)));
@@ -367,11 +362,11 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     if (selectedRows.length === 0) return;
     if (window.confirm(`Are you sure you want to delete ${selectedRows.length} selected GRNs? This action cannot be undone.`)) {
       const deletableRows = selectedRows.filter((id) => {
-        const grn = grnList.find((g) => g.grnID === id);
-        return grn && canDeleteGrn(grn);
+        const grn = grnList.find((g) => g.grnMastDto.grnID === id);
+        return grn && canDeleteGrn(grn) && !isGrnActionsDisabled(grn);
       });
       if (deletableRows.length < selectedRows.length) {
-        showAlert("Warning", `${selectedRows.length - deletableRows.length} GRNs are approved and cannot be deleted.`, "warning");
+        showAlert("Warning", `${selectedRows.length - deletableRows.length} GRNs are approved, inactive, or cannot be deleted.`, "warning");
       }
       await Promise.all(deletableRows.map((id) => deleteGrn(id)));
       setSelectedRows([]);
@@ -389,20 +384,20 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const columns: Column<GrnMastDto>[] = [
+  const columns: Column<GrnDto>[] = [
     {
       key: "select",
       header: "",
       visible: true,
       sortable: false,
       width: 50,
-      render: (grn: GrnMastDto) => (
+      render: (grn: GrnDto) => (
         <input
           type="checkbox"
-          checked={selectedRows.includes(grn.grnID)}
+          checked={selectedRows.includes(grn.grnMastDto.grnID)}
           onChange={(e) => {
             e.stopPropagation();
-            setSelectedRows((prev) => (e.target.checked ? [...prev, grn.grnID] : prev.filter((id) => id !== grn.grnID)));
+            setSelectedRows((prev) => (e.target.checked ? [...prev, grn.grnMastDto.grnID] : prev.filter((id) => id !== grn.grnMastDto.grnID)));
           }}
         />
       ),
@@ -412,17 +407,34 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       header: "GRN Information",
       visible: true,
       sortable: true,
-      width: 220,
-      render: (grn: GrnMastDto) => (
+      width: 240,
+      render: (grn: GrnDto) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium" color="primary">
-            {grn.grnCode || "Pending"}
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Type: {grn.GrnType} | {grn.formattedGrnDate}
+          <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+            <Typography variant="body2" fontWeight="600" color="primary.main">
+              {grn.grnMastDto.grnCode || "Pending"}
+            </Typography>
+            {grn.grnMastDto.rActiveYN === "N" && (
+              <Chip
+                label="Hidden"
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontSize: "0.7rem",
+                  height: "20px",
+                  borderColor: "grey.400",
+                  color: "grey.600",
+                  "& .MuiChip-icon": { fontSize: "12px" },
+                }}
+                icon={<BlockIcon />}
+              />
+            )}
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.875rem" }}>
+            <strong>Type:</strong> {grn.grnMastDto.grnType} • <strong>Date:</strong> {grn.grnMastDto.formattedGrnDate}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Created: {grn.RCreatedBy}
+            Created by: {grn.grnMastDto.rCreatedBy}
           </Typography>
         </Box>
       ),
@@ -432,14 +444,14 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       header: "Invoice Details",
       visible: true,
       sortable: true,
-      width: 180,
-      render: (grn: GrnMastDto) => (
+      width: 200,
+      render: (grn: GrnDto) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium">
-            {grn.invoiceNo}
+          <Typography variant="body2" fontWeight="600" color="text.primary" sx={{ mb: 0.5 }}>
+            {grn.grnMastDto.invoiceNo}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Date: {grn.formattedInvDate}
+            {grn.grnMastDto.formattedInvDate || "Date not specified"}
           </Typography>
         </Box>
       ),
@@ -449,12 +461,19 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       header: "Supplier",
       visible: true,
       sortable: true,
-      width: 200,
-      render: (grn: GrnMastDto) => (
-        <Typography variant="body2" fontWeight="medium">
-          <SupplierIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-          {grn.supplrName}
-        </Typography>
+      width: 220,
+      render: (grn: GrnDto) => (
+        <Box display="flex" alignItems="center" gap={1}>
+          <SupplierIcon sx={{ fontSize: 20, color: "primary.main" }} />
+          <Box>
+            <Typography variant="body2" fontWeight="500">
+              {grn.grnMastDto.supplrName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              ID: {grn.grnMastDto.supplrID}
+            </Typography>
+          </Box>
+        </Box>
       ),
     },
     {
@@ -462,24 +481,36 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       header: "Department",
       visible: true,
       sortable: true,
-      width: 180,
-      render: (grn) => (
-        <Typography variant="body2">
-          <DeptIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-          {grn.deptName}
-        </Typography>
+      width: 200,
+      render: (grn: GrnDto) => (
+        <Box display="flex" alignItems="center" gap={1}>
+          <DeptIcon sx={{ fontSize: 20, color: "secondary.main" }} />
+          <Box>
+            <Typography variant="body2" fontWeight="500">
+              {grn.grnMastDto.deptName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              ID: {grn.grnMastDto.deptID}
+            </Typography>
+          </Box>
+        </Box>
       ),
     },
     {
       key: "financial",
-      header: "Value",
+      header: "Amount",
       visible: true,
       sortable: true,
       width: 150,
-      render: (grn) => (
-        <Typography variant="body2" fontWeight="medium" color="success.main">
-          {grn.tot}
-        </Typography>
+      render: (grn: GrnDto) => (
+        <Box>
+          <Typography variant="body2" fontWeight="600" color="success.main" sx={{ fontSize: "1rem" }}>
+            ₹{Number(grn.grnMastDto.tot || 0).toLocaleString("en-IN")}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Net Total
+          </Typography>
+        </Box>
       ),
     },
     {
@@ -487,18 +518,26 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      width: 140,
-      render: (grn) => (
-        <Stack spacing={0.5}>
-          <Chip
-            label={grn.GrnApprovedYN === "Y" ? "Approved" : "Pending"}
-            size="small"
-            color={getGrnStatusColor(grn)}
-            variant="filled"
-            icon={grn.GrnApprovedYN === "Y" ? <ApproveIcon /> : <WarningIcon />}
-          />
-          {grn.isOverdue && <Chip label="Overdue" size="small" color="error" variant="outlined" />}
-          {grn.HideYN === "Y" && <Chip label="Hidden" size="small" color="default" variant="outlined" />}
+      width: 160,
+      render: (grn: GrnDto) => (
+        <Stack spacing={1}>
+          {grn.grnMastDto.grnApprovedYN === "Y" ? (
+            <Chip label="Approved" size="small" variant="filled" color="success" icon={<ApproveIcon />} sx={{ fontWeight: 500 }} />
+          ) : (
+            <Chip
+              label="Pending"
+              size="small"
+              variant="filled"
+              icon={<WarningIcon />}
+              sx={{
+                backgroundColor: "#ff9800",
+                color: "white",
+                fontWeight: 500,
+                "& .MuiChip-icon": { color: "white" },
+              }}
+            />
+          )}
+          {grn.grnMastDto.isOverdue && <Chip label="Overdue" size="small" color="error" variant="outlined" sx={{ fontWeight: 500 }} />}
         </Stack>
       ),
     },
@@ -508,91 +547,110 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: false,
       width: 200,
-      render: (grn: GrnMastDto) => (
-        <Stack direction="row" spacing={0.5}>
-          <Tooltip title="View Details">
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewDetails(grn);
-              }}
-            >
-              <ViewIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {canEditGrn(grn) && (
-            <Tooltip title="Edit GRN">
+      render: (grn: GrnDto) => {
+        const isDisabled = isGrnActionsDisabled(grn);
+        return (
+          <Stack direction="row" spacing={0.5}>
+            <Tooltip title="View Details">
               <IconButton
                 size="small"
-                color="secondary"
+                color="primary"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleEditGrn(grn);
+                  handleViewDetails(grn);
+                }}
+                sx={{
+                  "&:hover": {
+                    backgroundColor: "primary.main",
+                    color: "white",
+                  },
                 }}
               >
-                <EditIcon fontSize="small" />
+                <ViewIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
-          <Tooltip title="Copy GRN">
-            <IconButton
-              size="small"
-              color="info"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopyGrn(grn);
-              }}
-            >
-              <CopyIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {grn.GrnApprovedYN !== "Y" && (
-            <Tooltip title="Approve GRN">
-              <IconButton
-                size="small"
-                color="success"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleApproveGrn(grn.grnID);
-                }}
-              >
-                <ApproveIcon fontSize="small" />
-              </IconButton>
+
+            {canEditGrn(grn) && (
+              <Tooltip title={isDisabled ? "Cannot edit inactive GRN" : "Edit GRN"}>
+                <span>
+                  <IconButton
+                    size="small"
+                    color="secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditGrn(grn);
+                    }}
+                    disabled={isDisabled}
+                    sx={{
+                      "&:hover:not(:disabled)": {
+                        backgroundColor: "secondary.main",
+                        color: "white",
+                      },
+                      "&:disabled": {
+                        color: "grey.400",
+                      },
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+
+            <Tooltip title={isDisabled ? "Cannot copy inactive GRN" : "Copy GRN"}>
+              <span>
+                <IconButton
+                  size="small"
+                  color="info"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCopyGrn(grn);
+                  }}
+                  disabled={isDisabled}
+                  sx={{
+                    "&:hover:not(:disabled)": {
+                      backgroundColor: "info.main",
+                      color: "white",
+                    },
+                    "&:disabled": {
+                      color: "grey.400",
+                    },
+                  }}
+                >
+                  <CopyIcon fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
-          )}
-          <Tooltip title={grn.HideYN === "Y" ? "Unhide (Not Implemented)" : "Hide (Not Implemented)"}>
-            <span>
-              <IconButton
-                size="small"
-                color="warning"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  showAlert("Info", "Hide/Unhide feature not implemented.", "info");
-                }}
-                disabled
-              >
-                {grn.HideYN === "Y" ? <ViewIcon fontSize="small" /> : <HideIcon fontSize="small" />}
-              </IconButton>
-            </span>
-          </Tooltip>
-          {canDeleteGrn(grn) && (
-            <Tooltip title="Delete GRN">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteClick(grn.grnID);
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Stack>
-      ),
+
+            {canDeleteGrn(grn) && (
+              <Tooltip title={isDisabled ? "Cannot delete inactive GRN" : "Delete GRN"}>
+                <span>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(grn.grnMastDto.grnID);
+                    }}
+                    disabled={isDisabled}
+                    sx={{
+                      "&:hover:not(:disabled)": {
+                        backgroundColor: "error.main",
+                        color: "white",
+                      },
+                      "&:disabled": {
+                        color: "grey.400",
+                      },
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+          </Stack>
+        );
+      },
     },
   ];
 
@@ -600,36 +658,51 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     <Box sx={{ p: 3 }}>
       {isDepartmentSelected && (
         <>
-          {/* Header */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
-              <GrnIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-              Goods Received Notes Management
-            </Typography>
-            <Stack direction="row" spacing={1}>
-              <CustomButton variant="contained" icon={AddIcon} text="New GRN" onClick={handleNewGrn} />
-              <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous />
-            </Stack>
-          </Box>
+          <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box display="flex" alignItems="center" gap={2}>
+                <GrnIcon sx={{ fontSize: 32, color: "primary.main" }} />
+                <Box>
+                  <Typography variant="h4" component="h1" fontWeight="700" color="primary.main">
+                    Goods Received Notes Management
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Manage and track all your GRN records efficiently
+                  </Typography>
+                </Box>
+              </Box>
+              <Stack direction="row" spacing={2}>
+                <CustomButton variant="contained" icon={AddIcon} text="New GRN" onClick={handleNewGrn} />
+                <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous />
+              </Stack>
+            </Box>
+          </Paper>
 
-          {/* Enhanced Statistics Dashboard */}
-          <Grid container spacing={2} mb={3}>
+          <Grid container spacing={3} mb={3}>
             {[
               { title: "Total GRNs", value: statistics.total, icon: <DashboardIcon />, color: "#1976d2" },
               { title: "Approved", value: statistics.approved, icon: <ApproveIcon />, color: "#4caf50" },
               { title: "Pending", value: statistics.pending, icon: <ScheduleIcon />, color: "#ff9800" },
               { title: "Overdue", value: statistics.overdue, icon: <WarningIcon />, color: "#f44336" },
-              { title: "Hidden", value: statistics.hidden, icon: <HideIcon />, color: "#9e9e9e" },
+              { title: "Hidden", value: statistics.hidden, icon: <BlockIcon />, color: "#757575" },
               { title: "Total Value", value: formatCurrency(statistics.totalValue, "INR", "en-IN"), icon: <TrendingIcon />, color: "#9c27b0" },
             ].map((stat) => (
-              <Grid size={{ xs: 12, sm: 4, md: 2 }} key={stat.title}>
-                <Card sx={{ borderLeft: `4px solid ${stat.color}`, height: "100%" }}>
-                  <CardContent sx={{ textAlign: "center", p: 2, "&:last-child": { pb: 2 }, "& .MuiSvgIcon-root": { fontSize: 32, color: stat.color, mb: 1 } }}>
-                    {stat.icon}
-                    <Typography variant="h5" color={stat.color} fontWeight="bold">
+              <Grid size={{ xs: 12, sm: 6, md: 2 }} key={stat.title}>
+                <Card
+                  elevation={2}
+                  sx={{
+                    height: "100%",
+                    borderLeft: `4px solid ${stat.color}`,
+                    transition: "box-shadow 0.2s",
+                    "&:hover": { elevation: 4 },
+                  }}
+                >
+                  <CardContent sx={{ textAlign: "center", p: 2.5 }}>
+                    <Box sx={{ color: stat.color, mb: 1 }}>{React.cloneElement(stat.icon, { sx: { fontSize: 32 } })}</Box>
+                    <Typography variant="h5" fontWeight="700" sx={{ color: stat.color, mb: 0.5 }}>
                       {stat.value}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" fontWeight="500">
                       {stat.title}
                     </Typography>
                   </CardContent>
@@ -638,25 +711,31 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
             ))}
           </Grid>
 
-          {/* Advanced Toolbar */}
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid size={{ xs: 12, md: 4 }}>
+          <Paper elevation={2} sx={{ p: 2.5, mb: 3 }}>
+            <Grid container spacing={3} alignItems="center">
+              <Grid size={{ xs: 12, md: 5 }}>
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Search by Code, Invoice, or Supplier..."
+                  placeholder="Search by Code, Invoice, Supplier, or Department..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} /> }}
+                  InputProps={{
+                    startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "primary.main",
+                      },
+                    },
+                  }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 8 }}>
+              <Grid size={{ xs: 12, md: 7 }}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap">
                   <ToggleButtonGroup value={viewMode} exclusive onChange={(_, newMode) => newMode && setViewMode(newMode)} size="small" sx={{ mr: 1 }}>
-                    <ToggleButton value="grid" disabled>
-                      Grid
-                    </ToggleButton>
+                    <ToggleButton value="grid">Grid</ToggleButton>
                     <ToggleButton value="cards" disabled>
                       Cards
                     </ToggleButton>
@@ -664,6 +743,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
                       Detailed
                     </ToggleButton>
                   </ToggleButtonGroup>
+
                   <CustomButton variant="outlined" icon={FilterIcon} text="Advanced Filter" onClick={() => setIsFilterDrawerOpen(true)} size="small" />
                   <CustomButton
                     variant="outlined"
@@ -674,21 +754,20 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
                     disabled={selectedRows.length === 0}
                   />
                   <CustomButton variant="outlined" icon={UploadIcon} text="Upload" onClick={() => fileInputRef.current?.click()} size="small" />
-                  <CustomButton variant="outlined" icon={DownloadIcon} text="Template" onClick={() => handleUnsupportedBulkAction("Download Template")} size="small" disabled />
                   <CustomButton variant="outlined" icon={ReportIcon} text="Reports" onClick={() => handleUnsupportedBulkAction("Reports")} size="small" disabled />
                 </Stack>
               </Grid>
             </Grid>
           </Paper>
 
-          {/* Results Summary */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="body2" color="text.secondary">
-              Showing {filteredAndSearchedGrns.length} of {statistics.total} GRNs {selectedRows.length > 0 && ` (${selectedRows.length} selected)`}
+            <Typography variant="body2" color="text.secondary" fontWeight="500">
+              Showing <strong>{filteredAndSearchedGrns.length}</strong> of <strong>{statistics.total}</strong> GRNs
+              {selectedRows.length > 0 && ` (${selectedRows.length} selected)`}
             </Typography>
             {selectedRows.length > 0 && (
               <Stack direction="row" spacing={1}>
-                <Button size="small" onClick={() => setSelectedRows(filteredAndSearchedGrns.map((g) => g.grnID))}>
+                <Button size="small" onClick={() => setSelectedRows(filteredAndSearchedGrns.map((g) => g.grnMastDto.grnID))}>
                   Select All Visible
                 </Button>
                 <Button size="small" onClick={() => setSelectedRows([])}>
@@ -699,45 +778,37 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
           </Box>
 
           {error && (
-            <Typography color="error" mb={2}>
-              Error: {error}
-            </Typography>
+            <Paper elevation={1} sx={{ p: 2, mb: 2, border: "1px solid", borderColor: "error.main" }}>
+              <Typography color="error" fontWeight="500">
+                Error: {error}
+              </Typography>
+            </Paper>
           )}
 
-          <Paper sx={{ p: 2 }}>
+          <Paper elevation={2} sx={{ overflow: "hidden" }}>
             <CustomGrid
               columns={columns}
               data={filteredAndSearchedGrns}
               loading={isLoading}
               maxHeight="600px"
               emptyStateMessage="No GRNs found matching your criteria."
-              rowKeyField="grnID"
+              rowKeyField="grnMastDto"
               onRowClick={handleViewDetails}
             />
           </Paper>
         </>
       )}
 
-      {/* --- DIALOGS AND DRAWERS --- */}
-
       <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} requireSelection />
 
-      <ComprehensiveGrnFormDialog
-        open={isGrnFormOpen}
-        onClose={() => setIsGrnFormOpen(false)}
-        // onSubmit={handleGrnSubmit}
-        grn={selectedGrn}
-        departments={departments}
-        suppliers={suppliers}
-        products={[]}
-      />
-      <GrnDetailsDialog open={isDetailsDialogOpen} onClose={() => setIsDetailsDialogOpen(false)} grn={selectedGrn} departments={departments} suppliers={suppliers} products={[]} />
+      <ComprehensiveGrnFormDialog open={isGrnFormOpen} onClose={() => setIsGrnFormOpen(false)} grn={selectedGrn} departments={departments} suppliers={suppliers} products={[]} />
+      <GrnViewDetailsDialog open={isDetailsDialogOpen} onClose={() => setIsDetailsDialogOpen(false)} grn={selectedGrn} />
 
       <Drawer anchor="right" open={isFilterDrawerOpen} onClose={() => setIsFilterDrawerOpen(false)} sx={{ "& .MuiDrawer-paper": { width: 400, p: 3 } }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom color="primary" fontWeight="600">
           Advanced Filters
         </Typography>
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ mb: 3 }} />
         <Stack spacing={3}>
           <FormControl fullWidth size="small">
             <InputLabel>Approval Status</InputLabel>
@@ -745,6 +816,14 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="Y">Approved</MenuItem>
               <MenuItem value="N">Pending</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Visibility Status</InputLabel>
+            <Select value={filters.hideStatus} onChange={(e) => setFilters((p) => ({ ...p, hideStatus: e.target.value }))} label="Visibility Status">
+              <MenuItem value="all">All Records</MenuItem>
+              <MenuItem value="show">Active Only</MenuItem>
+              <MenuItem value="hidden">Hidden Only</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth size="small">
@@ -794,9 +873,9 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               />
             </Grid>
           </Grid>
-          <Box>
-            <CustomButton variant="contained" text="Apply Server Filters" onClick={handleApplyFilters} />
-            <CustomButton variant="text" text="Clear" onClick={handleClearFilters} sx={{ ml: 1 }} />
+          <Box display="flex" gap={1}>
+            <CustomButton variant="contained" text="Apply Filters" onClick={handleApplyFilters} sx={{ flex: 1 }} />
+            <CustomButton variant="outlined" text="Clear" onClick={handleClearFilters} />
           </Box>
         </Stack>
       </Drawer>

@@ -1,11 +1,12 @@
 import { APIConfig } from "@/apiConfig";
-import { GrnMastDto, GrnSearchRequest } from "@/interfaces/InventoryManagement/GRNDto";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { PaginatedList } from "@/interfaces/Common/PaginatedList";
+import { GrnDto, GrnMastDto, GrnSearchRequest } from "@/interfaces/InventoryManagement/GRNDto";
 import { CommonApiService } from "@/services/CommonApiService";
-import { GenericEntityService, OperationResult, PaginatedList } from "@/services/GenericEntityService/GenericEntityService";
+import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 
-class GrnMastServices extends GenericEntityService<GrnMastDto> {
+class GrnService extends GenericEntityService<GrnMastDto> {
   constructor() {
-    // Initialize the service with the specific API endpoint for GRN
     super(
       new CommonApiService({
         baseURL: APIConfig.inventoryManagementURL,
@@ -14,25 +15,29 @@ class GrnMastServices extends GenericEntityService<GrnMastDto> {
     );
   }
 
-  async createGrnWithDetails(grnMastDto: GrnMastDto): Promise<OperationResult<GrnMastDto>> {
-    return this.apiService.post<OperationResult<GrnMastDto>>(`${this.baseEndpoint}/CreateWithDetails`, grnMastDto, this.getToken());
+  async generateGrnCode(departmentId: number): Promise<OperationResult<string>> {
+    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GenerateGrnCode?departmentId=${departmentId}`, this.getToken());
   }
 
-  async approveGrn(grnId: number): Promise<OperationResult<GrnMastDto>> {
-    return this.apiService.put<OperationResult<GrnMastDto>>(`${this.baseEndpoint}/Approve/${grnId}`, null, this.getToken());
+  async createGrnWithDetails(grnDto: GrnDto): Promise<OperationResult<GrnDto>> {
+    return this.apiService.post<OperationResult<GrnDto>>(`${this.baseEndpoint}/CreateWithDetails`, grnDto, this.getToken());
+  }
+
+  async getGrnWithDetailsById(grnId: number): Promise<OperationResult<GrnDto>> {
+    return this.apiService.get<OperationResult<GrnDto>>(`${this.baseEndpoint}/GetGrnWithDetailsById?grnId=${grnId}`, this.getToken());
   }
 
   async grnSearch(searchRequest: GrnSearchRequest): Promise<OperationResult<PaginatedList<GrnMastDto>>> {
     return this.apiService.post<OperationResult<PaginatedList<GrnMastDto>>>(`${this.baseEndpoint}/GrnSearch`, searchRequest, this.getToken());
   }
 
-  async getGrnWithDetailsById(grnId: number): Promise<OperationResult<GrnMastDto>> {
-    return this.apiService.get<OperationResult<GrnMastDto>>(`${this.baseEndpoint}/GetGrnWithDetailsById/${grnId}`, this.getToken());
+  async updateProductStock(grnId: number): Promise<OperationResult<boolean>> {
+    return this.apiService.put<OperationResult<boolean>>(`${this.baseEndpoint}/UpdateProductStock/${grnId}`, {}, this.getToken());
   }
 
-  async generateGrnCode(departmentId: number): Promise<OperationResult<string>> {
-    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GenerateGrnCode/${departmentId}`, this.getToken());
+  async approveGrn(grnId: number): Promise<OperationResult<boolean>> {
+    return this.apiService.put<OperationResult<boolean>>(`${this.baseEndpoint}/Approve/${grnId}`, {}, this.getToken());
   }
 }
 
-export const grnMastServices = new GrnMastServices();
+export const grnService = new GrnService();
