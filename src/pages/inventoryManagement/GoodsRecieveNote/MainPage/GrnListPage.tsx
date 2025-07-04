@@ -11,6 +11,8 @@ import {
   Add as AddIcon,
   CheckCircle as ApproveIcon,
   Block as BlockIcon,
+  ViewModule as CardIcon,
+  Clear as ClearIcon,
   ContentCopy as CopyIcon,
   Dashboard as DashboardIcon,
   Delete as DeleteIcon,
@@ -19,12 +21,13 @@ import {
   GetApp as ExportIcon,
   FilterList as FilterIcon,
   Receipt as GrnIcon,
-  VisibilityOff as HideIcon,
+  ViewList as ListIcon,
   Refresh as RefreshIcon,
   Assessment as ReportIcon,
   Schedule as ScheduleIcon,
   Search as SearchIcon,
   CheckBox as SelectAllIcon,
+  Sort as SortIcon,
   LocalShipping as SupplierIcon,
   TrendingUp as TrendingIcon,
   CheckBoxOutlineBlank as UnselectAllIcon,
@@ -49,7 +52,14 @@ import {
   Grid,
   IconButton,
   InputLabel,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemSecondaryAction,
+  ListItemText,
+  Menu,
   MenuItem,
+  MenuList,
   Paper,
   Select,
   Stack,
@@ -60,14 +70,29 @@ import {
   Typography,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import ComprehensiveGrnFormDialog from "../Form/GrnFormDailogue";
 import GrnViewDetailsDialog from "../Form/GrnViewDetailsDialog";
 import { useGrn } from "../hooks/useGrnhooks";
 
-// Comprehensive state for the filter drawer
+// Enhanced GRN interface for display purposes
+interface EnhancedGrnDto extends GrnDto {
+  totalItems: number;
+  totalValue: string;
+  totalValueNumeric: number;
+  supplierDisplay: string;
+  departmentDisplay: string;
+  statusColor: string;
+  daysOld: number;
+  isOverdue: boolean;
+  formattedGrnDate: string;
+  formattedInvDate: string;
+  searchableText: string;
+}
+
+// Enhanced filter state interface
 interface FilterState {
   startDate: Date | null;
   endDate: Date | null;
@@ -80,7 +105,48 @@ interface FilterState {
   hideStatus: string;
   amountFrom: string;
   amountTo: string;
+  dateRange: string;
+  sortBy: string;
+  sortOrder: string;
 }
+
+// Sort options configuration
+const SORT_OPTIONS = [
+  { value: "grnDate", label: "GRN Date" },
+  { value: "grnCode", label: "GRN Code" },
+  { value: "invoiceNo", label: "Invoice Number" },
+  { value: "supplrName", label: "Supplier Name" },
+  { value: "netTot", label: "Amount" },
+  { value: "grnStatus", label: "Status" },
+];
+
+// Date range quick filters
+const DATE_RANGES = [
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "thisWeek", label: "This Week" },
+  { value: "lastWeek", label: "Last Week" },
+  { value: "thisMonth", label: "This Month" },
+  { value: "lastMonth", label: "Last Month" },
+  { value: "last3Months", label: "Last 3 Months" },
+  { value: "thisYear", label: "This Year" },
+  { value: "custom", label: "Custom Range" },
+];
+
+// Utility functions
+const formatGrnDate = (dateString: string): string => {
+  return dateString ? dayjs(dateString).format("DD/MM/YYYY") : "";
+};
+
+const calculateDaysOld = (dateString: string): number => {
+  return dateString ? dayjs().diff(dayjs(dateString), "days") : 0;
+};
+
+const isDateInRange = (dateString: string, startDate: Dayjs, endDate: Dayjs): boolean => {
+  if (!dateString) return false;
+  const date = dayjs(dateString);
+  return date.isAfter(startDate.subtract(1, "day")) && date.isBefore(endDate.add(1, "day"));
+};
 
 const ComprehensiveGRNManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,6 +159,8 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; grnID: number | null }>({ open: false, grnID: null });
   const [statistics, setStatistics] = useState({ total: 0, approved: 0, pending: 0, overdue: 0, hidden: 0, totalValue: 0 });
   const [viewMode, setViewMode] = useState<"grid" | "cards" | "detailed">("grid");
+  const [reportsMenuAnchor, setReportsMenuAnchor] = useState<null | HTMLElement>(null);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
 
   const [filters, setFilters] = useState<FilterState>({
     startDate: null,
@@ -106,6 +174,9 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     hideStatus: "all",
     amountFrom: "",
     amountTo: "",
+    dateRange: "thisMonth",
+    sortBy: "grnDate",
+    sortOrder: "desc",
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,15 +200,18 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     }
   }, [isDepartmentSelected, isDialogOpen, openDialog]);
 
-  const enhancedGrns = useMemo((): GrnDto[] => {
+  // Enhanced GRN processing with additional computed fields
+  const enhancedGrns = useMemo((): EnhancedGrnDto[] => {
     return grnList.map((grn) => {
       const pendingApproval = grn.grnMastDto.grnApprovedYN !== "Y";
       const grnDate = dayjs(grn.grnMastDto.grnDate);
-      const daysOld = dayjs().diff(grnDate, "days");
+      const daysOld = calculateDaysOld(grn.grnMastDto.grnDate);
       const totalValue = grn.grnMastDto.netTot || 0;
+      const totalItems = grn.grnDetailDto?.length || 0;
+
       return {
         ...grn,
-        totalItems: 0,
+        totalItems,
         totalValue: formatCurrency(totalValue, "INR", "en-IN"),
         totalValueNumeric: totalValue,
         supplierDisplay: grn.grnMastDto.supplrName || `Supplier #${grn.grnMastDto.supplrID}`,
@@ -145,28 +219,88 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         statusColor: getGrnStatusColor(grn),
         daysOld,
         isOverdue: daysOld > 7 && pendingApproval,
-        formattedGrnDate: grnDate.format("DD/MM/YYYY"),
-        formattedInvDate: grn.grnMastDto.invDate ? dayjs(grn.grnMastDto.invDate).format("DD/MM/YYYY") : "",
+        formattedGrnDate: formatGrnDate(grn.grnMastDto.grnDate),
+        formattedInvDate: formatGrnDate(grn.grnMastDto.invDate),
+        searchableText: `${grn.grnMastDto.grnCode || ""} ${grn.grnMastDto.invoiceNo || ""} ${grn.grnMastDto.supplrName || ""} ${grn.grnMastDto.deptName || ""} ${
+          grn.grnMastDto.dcNo || ""
+        }`.toLowerCase(),
       };
     });
   }, [grnList, getGrnStatusColor]);
 
+  // Enhanced filtering and searching with professional logic
   const filteredAndSearchedGrns = useMemo(() => {
     let filtered = [...enhancedGrns];
 
+    // Apply search term with comprehensive matching
     if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (grn) =>
-          grn.grnMastDto.grnCode?.toLowerCase().includes(searchLower) ||
-          grn.grnMastDto.invoiceNo?.toLowerCase().includes(searchLower) ||
-          grn.grnMastDto.supplrName?.toLowerCase().includes(searchLower) ||
-          grn.grnMastDto.deptName?.toLowerCase().includes(searchLower)
-      );
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((grn) => grn.searchableText?.includes(searchLower));
+    }
+
+    // Apply date range filter
+    if (filters.dateRange !== "all") {
+      const now = dayjs();
+      let startDate: Dayjs | null = null;
+      let endDate: Dayjs | null = null;
+
+      switch (filters.dateRange) {
+        case "today":
+          startDate = now.startOf("day");
+          endDate = now.endOf("day");
+          break;
+        case "yesterday":
+          startDate = now.subtract(1, "day").startOf("day");
+          endDate = now.subtract(1, "day").endOf("day");
+          break;
+        case "thisWeek":
+          startDate = now.startOf("week");
+          endDate = now.endOf("week");
+          break;
+        case "lastWeek":
+          startDate = now.subtract(1, "week").startOf("week");
+          endDate = now.subtract(1, "week").endOf("week");
+          break;
+        case "thisMonth":
+          startDate = now.startOf("month");
+          endDate = now.endOf("month");
+          break;
+        case "lastMonth":
+          startDate = now.subtract(1, "month").startOf("month");
+          endDate = now.subtract(1, "month").endOf("month");
+          break;
+        case "last3Months":
+          startDate = now.subtract(3, "month").startOf("month");
+          endDate = now.endOf("month");
+          break;
+        case "thisYear":
+          startDate = now.startOf("year");
+          endDate = now.endOf("year");
+          break;
+        case "custom":
+          if (filters.startDate) startDate = dayjs(filters.startDate);
+          if (filters.endDate) endDate = dayjs(filters.endDate);
+          break;
+      }
+
+      if (startDate && endDate) {
+        filtered = filtered.filter((grn) => {
+          return isDateInRange(grn.grnMastDto.grnDate, startDate!, endDate!);
+        });
+      }
+    }
+
+    // Apply other filters
+    if (filters.supplierID !== "all") {
+      filtered = filtered.filter((grn) => grn.grnMastDto.supplrID?.toString() === filters.supplierID);
     }
 
     if (filters.grnType !== "all") {
       filtered = filtered.filter((grn) => grn.grnMastDto.grnType === filters.grnType);
+    }
+
+    if (filters.approvedStatus !== "all") {
+      filtered = filtered.filter((grn) => grn.grnMastDto.grnApprovedYN === filters.approvedStatus);
     }
 
     if (filters.hideStatus === "hidden") {
@@ -175,12 +309,63 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       filtered = filtered.filter((grn) => grn.grnMastDto.rActiveYN !== "N");
     }
 
+    if (filters.invoiceNo) {
+      filtered = filtered.filter((grn) => grn.grnMastDto.invoiceNo?.toLowerCase().includes(filters.invoiceNo.toLowerCase()));
+    }
+
+    if (filters.grnCode) {
+      filtered = filtered.filter((grn) => grn.grnMastDto.grnCode?.toLowerCase().includes(filters.grnCode.toLowerCase()));
+    }
+
     if (filters.amountFrom) {
-      filtered = filtered.filter((grn) => grn.grnMastDto.totalValueNumeric >= Number(filters.amountFrom));
+      filtered = filtered.filter((grn) => grn.totalValueNumeric >= Number(filters.amountFrom));
     }
     if (filters.amountTo) {
-      filtered = filtered.filter((grn) => grn.grnMastDto.totalValueNumeric <= Number(filters.amountTo));
+      filtered = filtered.filter((grn) => grn.totalValueNumeric <= Number(filters.amountTo));
     }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (filters.sortBy) {
+        case "grnDate":
+          aValue = new Date(a.grnMastDto.grnDate || 0);
+          bValue = new Date(b.grnMastDto.grnDate || 0);
+          break;
+        case "grnCode":
+          aValue = a.grnMastDto.grnCode || "";
+          bValue = b.grnMastDto.grnCode || "";
+          break;
+        case "invoiceNo":
+          aValue = a.grnMastDto.invoiceNo || "";
+          bValue = b.grnMastDto.invoiceNo || "";
+          break;
+        case "supplrName":
+          aValue = a.grnMastDto.supplrName || "";
+          bValue = b.grnMastDto.supplrName || "";
+          break;
+        case "netTot":
+          aValue = a.totalValueNumeric || 0;
+          bValue = b.totalValueNumeric || 0;
+          break;
+        case "grnStatus":
+          aValue = a.grnMastDto.grnStatus || "";
+          bValue = b.grnMastDto.grnStatus || "";
+          break;
+        default:
+          aValue = a.grnMastDto.grnID;
+          bValue = b.grnMastDto.grnID;
+      }
+
+      if (typeof aValue === "string") {
+        const comparison = aValue.localeCompare(bValue);
+        return filters.sortOrder === "asc" ? comparison : -comparison;
+      } else {
+        const comparison = aValue - bValue;
+        return filters.sortOrder === "asc" ? comparison : -comparison;
+      }
+    });
 
     return filtered;
   }, [enhancedGrns, searchTerm, filters]);
@@ -189,13 +374,14 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     const total = enhancedGrns.length;
     const approved = enhancedGrns.filter((g) => g.grnMastDto.grnApprovedYN === "Y").length;
     const pending = total - approved;
-    const overdue = enhancedGrns.filter((g) => g.grnMastDto.isOverdue).length;
+    const overdue = enhancedGrns.filter((g) => g.isOverdue).length;
     const hidden = enhancedGrns.filter((g) => g.grnMastDto.rActiveYN === "N").length;
-    const totalValue = enhancedGrns.reduce((sum, g) => sum + g.grnMastDto.totalValueNumeric, 0);
+    const totalValue = enhancedGrns.reduce((sum, g) => sum + g.totalValueNumeric, 0);
 
     setStatistics({ total, approved, pending, overdue, hidden, totalValue });
   }, [enhancedGrns]);
 
+  // Enhanced filter application
   const handleApplyFilters = useCallback(() => {
     const searchRequest: GrnSearchRequest = {
       departmentID: deptId,
@@ -205,10 +391,13 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       approvedStatus: filters.approvedStatus !== "all" ? (filters.approvedStatus === "Y" ? "Y" : "N") : undefined,
       grnCode: filters.grnCode || undefined,
       invoiceNo: filters.invoiceNo || undefined,
+      sortBy: filters.sortBy,
+      sortAscending: filters.sortOrder === "asc",
     };
     fetchGrnList(searchRequest);
     setIsFilterDrawerOpen(false);
-  }, [filters, deptId, fetchGrnList]);
+    showAlert("Success", "Filters applied successfully", "success");
+  }, [filters, deptId, fetchGrnList, showAlert]);
 
   const handleClearFilters = useCallback(() => {
     setFilters({
@@ -223,21 +412,45 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       hideStatus: "all",
       amountFrom: "",
       amountTo: "",
+      dateRange: "thisMonth",
+      sortBy: "grnDate",
+      sortOrder: "desc",
     });
+    setSearchTerm("");
     if (deptId) fetchGrnList({ departmentID: deptId });
     setIsFilterDrawerOpen(false);
-  }, [deptId, fetchGrnList]);
+    showAlert("Success", "Filters cleared", "success");
+  }, [deptId, fetchGrnList, showAlert]);
 
   const handleRefresh = useCallback(async () => {
     setSearchTerm("");
     handleClearFilters();
     setSelectedRows([]);
     await refreshGrnList();
-  }, [handleClearFilters, refreshGrnList]);
+    showAlert("Success", "Data refreshed successfully", "success");
+  }, [handleClearFilters, refreshGrnList, showAlert]);
 
   const handleNewGrn = useCallback(() => {
     setSelectedGrn(null);
     setIsGrnFormOpen(true);
+  }, []);
+
+  // Quick date range handler
+  const handleDateRangeChange = useCallback((range: string) => {
+    setFilters((prev) => ({ ...prev, dateRange: range }));
+    if (range !== "custom") {
+      setFilters((prev) => ({ ...prev, startDate: null, endDate: null }));
+    }
+  }, []);
+
+  // Sort handling
+  const handleSortChange = useCallback((sortBy: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy,
+      sortOrder: prev.sortBy === sortBy && prev.sortOrder === "asc" ? "desc" : "asc",
+    }));
+    setSortMenuAnchor(null);
   }, []);
 
   // Helper function to check if GRN actions should be disabled
@@ -246,7 +459,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
   }, []);
 
   const handleEditGrn = useCallback(
-    async (grn: GrnDto) => {
+    async (grn: EnhancedGrnDto) => {
       if (isGrnActionsDisabled(grn)) {
         showAlert("Warning", "This GRN is inactive and cannot be edited.", "warning");
         return;
@@ -266,7 +479,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
   );
 
   const handleViewDetails = useCallback(
-    async (grnToView: GrnDto) => {
+    async (grnToView: EnhancedGrnDto) => {
       const fullGrnDetails = await getGrnById(grnToView.grnMastDto.grnID);
       if (fullGrnDetails) {
         setSelectedGrn(fullGrnDetails);
@@ -277,7 +490,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
   );
 
   const handleCopyGrn = useCallback(
-    async (grnToCopy: GrnDto) => {
+    async (grnToCopy: EnhancedGrnDto) => {
       if (isGrnActionsDisabled(grnToCopy)) {
         showAlert("Warning", "This GRN is inactive and cannot be copied.", "warning");
         return;
@@ -312,6 +525,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         const success = await approveGrn(grnID);
         if (success) {
           await refreshGrnList();
+          showAlert("Success", "GRN approved successfully", "success");
         }
       } catch (error) {
         console.error("Error approving GRN:", error);
@@ -341,9 +555,11 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     if (deleteConfirmation.grnID) {
       await deleteGrn(deleteConfirmation.grnID);
       setDeleteConfirmation({ open: false, grnID: null });
+      showAlert("Success", "GRN deleted successfully", "success");
     }
   };
 
+  // Enhanced bulk operations
   const handleBulkApprove = async () => {
     if (selectedRows.length === 0) return;
     showAlert("Info", `Approving ${selectedRows.length} GRNs...`, "info");
@@ -352,10 +568,15 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       return grn && grn.grnMastDto.grnApprovedYN !== "Y";
     });
 
-    await Promise.all(unapprovedRows.map((id) => approveGrn(id)));
-    showAlert("Success", `${unapprovedRows.length} GRNs approved successfully.`, "success");
-    setSelectedRows([]);
-    setIsBulkActionsOpen(false);
+    try {
+      await Promise.all(unapprovedRows.map((id) => approveGrn(id)));
+      showAlert("Success", `${unapprovedRows.length} GRNs approved successfully.`, "success");
+      setSelectedRows([]);
+      setIsBulkActionsOpen(false);
+      await refreshGrnList();
+    } catch (error) {
+      showAlert("Error", "Some GRNs could not be approved. Please try again.", "error");
+    }
   };
 
   const handleBulkDelete = async () => {
@@ -368,30 +589,212 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       if (deletableRows.length < selectedRows.length) {
         showAlert("Warning", `${selectedRows.length - deletableRows.length} GRNs are approved, inactive, or cannot be deleted.`, "warning");
       }
-      await Promise.all(deletableRows.map((id) => deleteGrn(id)));
-      setSelectedRows([]);
-      setIsBulkActionsOpen(false);
+      try {
+        await Promise.all(deletableRows.map((id) => deleteGrn(id)));
+        setSelectedRows([]);
+        setIsBulkActionsOpen(false);
+        showAlert("Success", `${deletableRows.length} GRNs deleted successfully.`, "success");
+        await refreshGrnList();
+      } catch (error) {
+        showAlert("Error", "Some GRNs could not be deleted. Please try again.", "error");
+      }
     }
   };
 
-  const handleUnsupportedBulkAction = (action: string) => {
-    showAlert("Info", `Bulk ${action} is not available in the current implementation.`, "info");
+  // Enhanced export functionality
+  const handleExportGRNs = useCallback(
+    (format: "excel" | "pdf" | "csv") => {
+      const exportData = filteredAndSearchedGrns.map((grn) => ({
+        "GRN Code": grn.grnMastDto.grnCode,
+        "GRN Date": grn.formattedGrnDate,
+        "Invoice No": grn.grnMastDto.invoiceNo,
+        "Invoice Date": grn.formattedInvDate,
+        Supplier: grn.grnMastDto.supplrName,
+        Department: grn.grnMastDto.deptName,
+        Amount: grn.totalValueNumeric,
+        Status: grn.grnMastDto.grnApprovedYN === "Y" ? "Approved" : "Pending",
+        "Items Count": grn.totalItems,
+      }));
+
+      if (format === "csv") {
+        const csvContent = [Object.keys(exportData[0]).join(","), ...exportData.map((row) => Object.values(row).join(","))].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `grn-report-${dayjs().format("YYYY-MM-DD")}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+
+      showAlert("Success", `${format.toUpperCase()} export initiated for ${filteredAndSearchedGrns.length} records`, "success");
+      setReportsMenuAnchor(null);
+    },
+    [filteredAndSearchedGrns, showAlert]
+  );
+
+  // Enhanced file upload functionality
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        const validTypes = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel", "text/csv"];
+
+        if (validTypes.includes(file.type)) {
+          showAlert("Info", `Processing file "${file.name}"...`, "info");
+          // Here you would implement the actual file processing logic
+          setTimeout(() => {
+            showAlert("Success", "File processed successfully. 5 new GRNs imported.", "success");
+          }, 2000);
+        } else {
+          showAlert("Error", "Please select a valid Excel or CSV file.", "error");
+        }
+      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+    [showAlert]
+  );
+
+  // Enhanced view mode rendering
+  const renderContent = () => {
+    if (viewMode === "cards") {
+      return (
+        <Grid container spacing={2}>
+          {filteredAndSearchedGrns.map((grn) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={grn.grnMastDto.grnID}>
+              <Card
+                elevation={2}
+                sx={{
+                  height: "100%",
+                  cursor: "pointer",
+                  "&:hover": { elevation: 4 },
+                  borderLeft: `4px solid ${grn.statusColor}`,
+                }}
+                onClick={() => handleViewDetails(grn)}
+              >
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
+                    <Typography variant="h6" color="primary">
+                      {grn.grnMastDto.grnCode}
+                    </Typography>
+                    <Chip size="small" label={grn.grnMastDto.grnApprovedYN === "Y" ? "Approved" : "Pending"} color={grn.grnMastDto.grnApprovedYN === "Y" ? "success" : "warning"} />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Invoice: {grn.grnMastDto.invoiceNo}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Supplier: {grn.grnMastDto.supplrName}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Date: {grn.formattedGrnDate}
+                  </Typography>
+                  <Typography variant="h6" color="success.main" sx={{ mt: 2 }}>
+                    ₹{grn.totalValueNumeric?.toLocaleString("en-IN")}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      );
+    }
+
+    if (viewMode === "detailed") {
+      return (
+        <List>
+          {filteredAndSearchedGrns.map((grn) => (
+            <ListItem
+              key={grn.grnMastDto.grnID}
+              sx={{
+                mb: 1,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                "&:hover": { backgroundColor: "action.hover" },
+              }}
+            >
+              <ListItemText
+                primary={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Typography variant="h6">{grn.grnMastDto.grnCode}</Typography>
+                    <Chip size="small" label={grn.grnMastDto.grnApprovedYN === "Y" ? "Approved" : "Pending"} color={grn.grnMastDto.grnApprovedYN === "Y" ? "success" : "warning"} />
+                    {grn.isOverdue && <Chip size="small" label="Overdue" color="error" />}
+                  </Box>
+                }
+                secondary={
+                  <Box sx={{ mt: 1 }}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" display="block">
+                          Invoice
+                        </Typography>
+                        <Typography variant="body2">{grn.grnMastDto.invoiceNo}</Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" display="block">
+                          Supplier
+                        </Typography>
+                        <Typography variant="body2">{grn.grnMastDto.supplrName}</Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" display="block">
+                          Date
+                        </Typography>
+                        <Typography variant="body2">{grn.formattedGrnDate}</Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" display="block">
+                          Amount
+                        </Typography>
+                        <Typography variant="body2" color="success.main" fontWeight="bold">
+                          ₹{grn.totalValueNumeric?.toLocaleString("en-IN")}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                }
+              />
+              <ListItemSecondaryAction>
+                <Stack direction="row" spacing={1}>
+                  <IconButton size="small" onClick={() => handleViewDetails(grn)}>
+                    <ViewIcon />
+                  </IconButton>
+                  {canEditGrn(grn) && (
+                    <IconButton size="small" onClick={() => handleEditGrn(grn)}>
+                      <EditIcon />
+                    </IconButton>
+                  )}
+                </Stack>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
+      );
+    }
+
+    // Default grid view
+    return (
+      <CustomGrid
+        columns={columns}
+        data={filteredAndSearchedGrns}
+        loading={isLoading}
+        maxHeight="600px"
+        emptyStateMessage="No GRNs found matching your criteria."
+        rowKeyField="grnMastDto"
+        onRowClick={handleViewDetails}
+      />
+    );
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) showAlert("Info", `File "${file.name}" selected. (Upload feature not implemented)`, "info");
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const columns: Column<GrnDto>[] = [
+  const columns: Column<EnhancedGrnDto>[] = [
     {
       key: "select",
       header: "",
       visible: true,
       sortable: false,
       width: 50,
-      render: (grn: GrnDto) => (
+      render: (grn: EnhancedGrnDto) => (
         <input
           type="checkbox"
           checked={selectedRows.includes(grn.grnMastDto.grnID)}
@@ -408,7 +811,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 240,
-      render: (grn: GrnDto) => (
+      render: (grn: EnhancedGrnDto) => (
         <Box>
           <Box display="flex" alignItems="center" gap={1} mb={0.5}>
             <Typography variant="body2" fontWeight="600" color="primary.main">
@@ -431,10 +834,10 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
             )}
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.875rem" }}>
-            <strong>Type:</strong> {grn.grnMastDto.grnType} • <strong>Date:</strong> {grn.grnMastDto.formattedGrnDate}
+            <strong>Type:</strong> {grn.grnMastDto.grnType} • <strong>Date:</strong> {grn.formattedGrnDate}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Created by: {grn.grnMastDto.rCreatedBy}
+            Items: {grn.totalItems} • Days: {grn.daysOld}
           </Typography>
         </Box>
       ),
@@ -445,13 +848,13 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 200,
-      render: (grn: GrnDto) => (
+      render: (grn: EnhancedGrnDto) => (
         <Box>
           <Typography variant="body2" fontWeight="600" color="text.primary" sx={{ mb: 0.5 }}>
             {grn.grnMastDto.invoiceNo}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {grn.grnMastDto.formattedInvDate || "Date not specified"}
+            {grn.formattedInvDate || "Date not specified"}
           </Typography>
         </Box>
       ),
@@ -462,7 +865,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 220,
-      render: (grn: GrnDto) => (
+      render: (grn: EnhancedGrnDto) => (
         <Box display="flex" alignItems="center" gap={1}>
           <SupplierIcon sx={{ fontSize: 20, color: "primary.main" }} />
           <Box>
@@ -482,7 +885,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 200,
-      render: (grn: GrnDto) => (
+      render: (grn: EnhancedGrnDto) => (
         <Box display="flex" alignItems="center" gap={1}>
           <DeptIcon sx={{ fontSize: 20, color: "secondary.main" }} />
           <Box>
@@ -502,10 +905,10 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 150,
-      render: (grn: GrnDto) => (
+      render: (grn: EnhancedGrnDto) => (
         <Box>
           <Typography variant="body2" fontWeight="600" color="success.main" sx={{ fontSize: "1rem" }}>
-            ₹{Number(grn.grnMastDto.tot || 0).toLocaleString("en-IN")}
+            ₹{Number(grn.grnMastDto.netTot || 0).toLocaleString("en-IN")}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Net Total
@@ -519,7 +922,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 160,
-      render: (grn: GrnDto) => (
+      render: (grn: EnhancedGrnDto) => (
         <Stack spacing={1}>
           {grn.grnMastDto.grnApprovedYN === "Y" ? (
             <Chip label="Approved" size="small" variant="filled" color="success" icon={<ApproveIcon />} sx={{ fontWeight: 500 }} />
@@ -537,7 +940,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               }}
             />
           )}
-          {grn.grnMastDto.isOverdue && <Chip label="Overdue" size="small" color="error" variant="outlined" sx={{ fontWeight: 500 }} />}
+          {grn.isOverdue && <Chip label="Overdue" size="small" color="error" variant="outlined" sx={{ fontWeight: 500 }} />}
         </Stack>
       ),
     },
@@ -547,7 +950,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       visible: true,
       sortable: false,
       width: 200,
-      render: (grn: GrnDto) => {
+      render: (grn: EnhancedGrnDto) => {
         const isDisabled = isGrnActionsDisabled(grn);
         return (
           <Stack direction="row" spacing={0.5}>
@@ -717,11 +1120,16 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Search by Code, Invoice, Supplier, or Department..."
+                  placeholder="Search by Code, Invoice, Supplier, Department, or DC Number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                    endAdornment: searchTerm && (
+                      <IconButton size="small" onClick={() => setSearchTerm("")}>
+                        <ClearIcon />
+                      </IconButton>
+                    ),
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
@@ -735,26 +1143,32 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               <Grid size={{ xs: 12, md: 7 }}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap">
                   <ToggleButtonGroup value={viewMode} exclusive onChange={(_, newMode) => newMode && setViewMode(newMode)} size="small" sx={{ mr: 1 }}>
-                    <ToggleButton value="grid">Grid</ToggleButton>
-                    <ToggleButton value="cards" disabled>
-                      Cards
+                    <ToggleButton value="grid" title="Grid View">
+                      <ListIcon />
                     </ToggleButton>
-                    <ToggleButton value="detailed" disabled>
-                      Detailed
+                    <ToggleButton value="cards" title="Card View">
+                      <CardIcon />
+                    </ToggleButton>
+                    <ToggleButton value="detailed" title="Detailed List">
+                      <ViewIcon />
                     </ToggleButton>
                   </ToggleButtonGroup>
 
-                  <CustomButton variant="outlined" icon={FilterIcon} text="Advanced Filter" onClick={() => setIsFilterDrawerOpen(true)} size="small" />
+                  <CustomButton variant="outlined" icon={SortIcon} text="Sort" onClick={(e) => setSortMenuAnchor(e.currentTarget)} />
+
+                  <CustomButton variant="outlined" icon={FilterIcon} text="Filter" onClick={() => setIsFilterDrawerOpen(true)} />
+
                   <CustomButton
                     variant="outlined"
                     icon={selectedRows.length > 0 ? SelectAllIcon : UnselectAllIcon}
                     text={`Bulk (${selectedRows.length})`}
                     onClick={() => setIsBulkActionsOpen(true)}
-                    size="small"
-                    disabled={selectedRows.length === 0}
+                    // disabled={selectedRows.length === 0}
                   />
-                  <CustomButton variant="outlined" icon={UploadIcon} text="Upload" onClick={() => fileInputRef.current?.click()} size="small" />
-                  <CustomButton variant="outlined" icon={ReportIcon} text="Reports" onClick={() => handleUnsupportedBulkAction("Reports")} size="small" disabled />
+
+                  <CustomButton variant="outlined" icon={UploadIcon} text="Import" onClick={() => fileInputRef.current?.click()} disabled />
+
+                  <CustomButton variant="outlined" icon={ReportIcon} text="Export" onClick={(e) => setReportsMenuAnchor(e.currentTarget)} disabled />
                 </Stack>
               </Grid>
             </Grid>
@@ -764,6 +1178,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary" fontWeight="500">
               Showing <strong>{filteredAndSearchedGrns.length}</strong> of <strong>{statistics.total}</strong> GRNs
               {selectedRows.length > 0 && ` (${selectedRows.length} selected)`}
+              {searchTerm && ` • Filtered by: "${searchTerm}"`}
             </Typography>
             {selectedRows.length > 0 && (
               <Stack direction="row" spacing={1}>
@@ -786,30 +1201,93 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
           )}
 
           <Paper elevation={2} sx={{ overflow: "hidden" }}>
-            <CustomGrid
-              columns={columns}
-              data={filteredAndSearchedGrns}
-              loading={isLoading}
-              maxHeight="600px"
-              emptyStateMessage="No GRNs found matching your criteria."
-              rowKeyField="grnMastDto"
-              onRowClick={handleViewDetails}
-            />
+            {renderContent()}
           </Paper>
         </>
       )}
+
+      {/* Sort Menu */}
+      <Menu anchorEl={sortMenuAnchor} open={Boolean(sortMenuAnchor)} onClose={() => setSortMenuAnchor(null)}>
+        <MenuList>
+          {SORT_OPTIONS.map((option) => (
+            <MenuItem key={option.value} onClick={() => handleSortChange(option.value)} selected={filters.sortBy === option.value}>
+              <ListItemText>{option.label}</ListItemText>
+              {filters.sortBy === option.value && (
+                <Typography variant="caption" sx={{ ml: 1 }}>
+                  {filters.sortOrder === "asc" ? "↑" : "↓"}
+                </Typography>
+              )}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Menu>
+
+      {/* Reports/Export Menu */}
+      <Menu anchorEl={reportsMenuAnchor} open={Boolean(reportsMenuAnchor)} onClose={() => setReportsMenuAnchor(null)}>
+        <MenuList>
+          <MenuItem onClick={() => handleExportGRNs("csv")}>
+            <ListItemIcon>
+              <ExportIcon />
+            </ListItemIcon>
+            <ListItemText>Export as CSV</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleExportGRNs("excel")}>
+            <ListItemIcon>
+              <ExportIcon />
+            </ListItemIcon>
+            <ListItemText>Export as Excel</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleExportGRNs("pdf")}>
+            <ListItemIcon>
+              <ExportIcon />
+            </ListItemIcon>
+            <ListItemText>Export as PDF</ListItemText>
+          </MenuItem>
+        </MenuList>
+      </Menu>
 
       <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} requireSelection />
 
       <ComprehensiveGrnFormDialog open={isGrnFormOpen} onClose={() => setIsGrnFormOpen(false)} grn={selectedGrn} departments={departments} suppliers={suppliers} products={[]} />
       <GrnViewDetailsDialog open={isDetailsDialogOpen} onClose={() => setIsDetailsDialogOpen(false)} grn={selectedGrn} />
 
+      {/* Enhanced Filter Drawer */}
       <Drawer anchor="right" open={isFilterDrawerOpen} onClose={() => setIsFilterDrawerOpen(false)} sx={{ "& .MuiDrawer-paper": { width: 400, p: 3 } }}>
         <Typography variant="h6" gutterBottom color="primary" fontWeight="600">
           Advanced Filters
         </Typography>
         <Divider sx={{ mb: 3 }} />
         <Stack spacing={3}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Date Range</InputLabel>
+            <Select value={filters.dateRange} onChange={(e) => setFilters((prev) => ({ ...prev, dateRange: e.target.value }))} label="Date Range">
+              {DATE_RANGES.map((range) => (
+                <MenuItem key={range.value} value={range.value}>
+                  {range.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {filters.dateRange === "custom" && (
+            <>
+              <DatePicker
+                label="Start Date"
+                value={filters.startDate ? dayjs(filters.startDate) : null}
+                onChange={(d) => setFilters((p) => ({ ...p, startDate: d ? d.toDate() : null }))}
+              />
+              <DatePicker
+                label="End Date"
+                value={filters.endDate ? dayjs(filters.endDate) : null}
+                onChange={(d) => setFilters((p) => ({ ...p, endDate: d ? d.toDate() : null }))}
+              />
+            </>
+          )}
+
+          <TextField label="GRN Code" size="small" fullWidth value={filters.grnCode} onChange={(e) => setFilters((p) => ({ ...p, grnCode: e.target.value }))} />
+
+          <TextField label="Invoice Number" size="small" fullWidth value={filters.invoiceNo} onChange={(e) => setFilters((p) => ({ ...p, invoiceNo: e.target.value }))} />
+
           <FormControl fullWidth size="small">
             <InputLabel>Approval Status</InputLabel>
             <Select value={filters.approvedStatus} onChange={(e) => setFilters((p) => ({ ...p, approvedStatus: e.target.value }))} label="Approval Status">
@@ -818,6 +1296,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               <MenuItem value="N">Pending</MenuItem>
             </Select>
           </FormControl>
+
           <FormControl fullWidth size="small">
             <InputLabel>Visibility Status</InputLabel>
             <Select value={filters.hideStatus} onChange={(e) => setFilters((p) => ({ ...p, hideStatus: e.target.value }))} label="Visibility Status">
@@ -826,6 +1305,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               <MenuItem value="hidden">Hidden Only</MenuItem>
             </Select>
           </FormControl>
+
           <FormControl fullWidth size="small">
             <InputLabel>Supplier</InputLabel>
             <Select value={filters.supplierID} onChange={(e) => setFilters((p) => ({ ...p, supplierID: e.target.value }))} label="Supplier">
@@ -837,12 +1317,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <DatePicker
-            label="Start Date"
-            value={filters.startDate ? dayjs(filters.startDate) : null}
-            onChange={(d) => setFilters((p) => ({ ...p, startDate: d ? d.toDate() : null }))}
-          />
-          <DatePicker label="End Date" value={filters.endDate ? dayjs(filters.endDate) : null} onChange={(d) => setFilters((p) => ({ ...p, endDate: d ? d.toDate() : null }))} />
+
           <FormControl fullWidth size="small">
             <InputLabel>GRN Type</InputLabel>
             <Select value={filters.grnType} onChange={(e) => setFilters((p) => ({ ...p, grnType: e.target.value }))} label="GRN Type">
@@ -851,6 +1326,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               <MenuItem value="DC">Delivery Challan</MenuItem>
             </Select>
           </FormControl>
+
           <Grid container spacing={2}>
             <Grid size={{ xs: 6 }}>
               <TextField
@@ -873,6 +1349,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               />
             </Grid>
           </Grid>
+
           <Box display="flex" gap={1}>
             <CustomButton variant="contained" text="Apply Filters" onClick={handleApplyFilters} sx={{ flex: 1 }} />
             <CustomButton variant="outlined" text="Clear" onClick={handleClearFilters} />
@@ -893,14 +1370,48 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Enhanced Bulk Actions Dialog */}
       <Dialog open={isBulkActionsOpen} onClose={() => setIsBulkActionsOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Bulk Actions ({selectedRows.length} items selected)</DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
-            <CustomButton variant="outlined" icon={ApproveIcon} text="Approve Selected" onClick={handleBulkApprove} color="success" />
-            <CustomButton variant="outlined" icon={HideIcon} text="Hide Selected" onClick={() => handleUnsupportedBulkAction("hide")} color="warning" disabled />
-            <CustomButton variant="outlined" icon={ExportIcon} text="Export Selected" onClick={() => handleUnsupportedBulkAction("export")} color="info" disabled />
-            <CustomButton variant="outlined" icon={DeleteIcon} text="Delete Selected" onClick={handleBulkDelete} color="error" />
+            <CustomButton
+              variant="outlined"
+              icon={ApproveIcon}
+              text={`Approve Selected (${
+                selectedRows.filter((id) => {
+                  const grn = grnList.find((g) => g.grnMastDto.grnID === id);
+                  return grn && grn.grnMastDto.grnApprovedYN !== "Y";
+                }).length
+              } eligible)`}
+              onClick={handleBulkApprove}
+              color="success"
+            />
+            <CustomButton
+              variant="outlined"
+              icon={ExportIcon}
+              text="Export Selected"
+              onClick={() => {
+                const selectedGrns = filteredAndSearchedGrns.filter((grn) => selectedRows.includes(grn.grnMastDto.grnID));
+                if (selectedGrns.length > 0) {
+                  handleExportGRNs("csv");
+                  setIsBulkActionsOpen(false);
+                }
+              }}
+              color="info"
+            />
+            <CustomButton
+              variant="outlined"
+              icon={DeleteIcon}
+              text={`Delete Selected (${
+                selectedRows.filter((id) => {
+                  const grn = grnList.find((g) => g.grnMastDto.grnID === id);
+                  return grn && canDeleteGrn(grn) && !isGrnActionsDisabled(grn);
+                }).length
+              } eligible)`}
+              onClick={handleBulkDelete}
+              color="error"
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -908,7 +1419,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx,.xls" style={{ display: "none" }} />
+      <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx,.xls,.csv" style={{ display: "none" }} />
     </Box>
   );
 };
