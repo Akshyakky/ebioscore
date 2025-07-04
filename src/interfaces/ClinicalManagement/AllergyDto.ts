@@ -1,10 +1,11 @@
+// src/interfaces/ClinicalManagement/AllergyDto.ts
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { RecordFields } from "../Common/RecordFields";
 import { BaseHistoryDto } from "./BaseHistoryDto";
 
 export interface AllergyDto extends BaseDto {
-  opIPHistAllergyMastDto: OPIPHistAllergyMastDto;
-  allergyDetails?: OPIPHistAllergyDetailDto[];
+  allergyMastDto: OPIPHistAllergyMastDto;
+  details?: OPIPHistAllergyDetailDto[];
 }
 
 export interface OPIPHistAllergyMastDto extends BaseHistoryDto {
@@ -20,5 +21,6 @@ export interface OPIPHistAllergyDetailDto extends RecordFields {
   mlId: number;
   medText: string;
   mGenId: number;
+  mGenCode?: string;
   mGenName: string;
 }

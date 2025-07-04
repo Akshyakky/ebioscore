@@ -9,10 +9,12 @@ import { MedicationInstructionDto } from "@/interfaces/ClinicalManagement/Medica
 import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 import { MedicationRouteDto } from "@/interfaces/ClinicalManagement/MedicationRouteDto";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistObstetricsDto } from "@/interfaces/ClinicalManagement/OPIPHistObstetricsDto";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
 import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
+import { OPIPLifestyleDto } from "@/interfaces/ClinicalManagement/OPIPLifestyleDto";
 import { OTProcedureListDto } from "@/interfaces/ClinicalManagement/ProcedureListDto";
 import { TemplateDetailDto, TemplateMastDto } from "@/interfaces/ClinicalManagement/TemplateDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
@@ -36,3 +38,6 @@ export const pshService = createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "cl
 export const icdDetailService = createEntityService<DiagnosisDetailDto>("IcdDetail", "clinicalManagementURL");
 export const templateMastService = createEntityService<TemplateMastDto>("TemplateMast", "clinicalManagementURL");
 export const templateDetailService = createEntityService<TemplateDetailDto>("TemplateDetail", "clinicalManagementURL");
+export const ObstetricsService = createEntityService<OPIPHistObstetricsDto>("OPIPHistObstetrics", "clinicalManagementURL");
+export const OPIPLifestyleService = createEntityService<OPIPLifestyleDto>("OPIPLifestyle", "clinicalManagementURL");
+export const lifestyleService = createEntityService<OPIPLifestyleDto>("Lifestyle", "clinicalManagementURL");

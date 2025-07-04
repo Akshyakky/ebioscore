@@ -110,7 +110,18 @@ export type DropdownType =
   | "componentUnit"
   | "indentStatus"
   | "faculties"
-  | "cmTemplateType";
+  | "cmTemplateType"
+  | "birthStatus"
+  | "pregInfoSource"
+  | "pregDeliveryMethod"
+  | "labourOnset"
+  | "anesthesiaType"
+  | "feeding"
+  | "pregnancyOutcome"
+  | "dietType"
+  | "smokingStatus"
+  | "exerciseFrequency"
+  | "alcoholStatus";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -137,6 +148,199 @@ const DEFAULT_OPTIONS: UseDropdownValuesOptions = {
 // Type for the fetch functions registry
 type FetcherFunction = (compID?: number) => Promise<any>;
 
+// Helper function for standard AppModifyList fetchers
+const createAppModifyListFetcher = (fieldName: string): FetcherFunction => {
+  return async () => {
+    return await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", fieldName);
+  };
+};
+
+// Helper function for AppModifyList fetchers with custom mapping
+const createAppModifyListFetcherWithMapping = (fieldName: string, mapper: (item: any) => DropdownOption): FetcherFunction => {
+  return async () => {
+    const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", fieldName);
+    return (response || []).map(mapper);
+  };
+};
+
+// Mapping configurations for AppModifyList-based dropdowns
+const APP_MODIFY_LIST_CONFIGS: Record<string, string | { fieldName: string; mapper: (item: any) => DropdownOption }> = {
+  // Direct mappings (no transformation needed)
+  nationality: "NATIONALITY",
+  area: "AREA",
+  city: "CITY",
+  country: "COUNTRY",
+  company: "COMPANY",
+  title: "TITLE",
+  gender: "GENDER",
+  ageUnit: "AGEUNIT",
+  coverFor: "COVERFOR",
+  departmentTypes: "DEPARTMENTTYPES",
+  bloodGroup: "BLOODGROUP",
+  maritalStatus: "MARITALSTATUS",
+  employeeRoom: "EMPROOM",
+  category: "CONCATEGORY",
+  employeeStatus: "EMPLOYEESTATUS",
+  productCategory: "PRODUCTCATEGORY",
+  payment: "PAYMENT",
+  admissionType: "ADMISSIONTYPE",
+  caseType: "CASETYPE",
+  statusFilter: "STATUSFILTER",
+  indentStatus: "INDENTSTATUS",
+  faculties: "FACULTIES",
+  relation: "RELATION",
+  state: "STATE",
+  productBaseUnit: "PRODUCTBASEUNIT",
+  dischargeSituation: "SITUATION",
+  deliveryType: "DELIVERYTYPE",
+  investigationType: "INVESTIGATIONTYPE",
+  language: "LANGUAGE",
+  templateGroup: "TEMPLATEGROUP",
+  departmentIndent: "DEPARTMENTINDENT",
+  productLocation: "PRODUCTLOCATION",
+  grnType: "GRNTYPE",
+  dischargeType: "DISCHARGETYPE",
+  alertCategory: "ALERTCATEGORY",
+
+  // Mappings with custom transformations
+  floor: {
+    fieldName: "FLOOR",
+    mapper: (item: any) => ({
+      value: item.value || 0,
+      label: item.value || "",
+      id: item.id,
+    }),
+  },
+  mainGroup: {
+    fieldName: "INVMAINGROUP",
+    mapper: (item: any) => ({
+      value: item.id || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  subTitle: {
+    fieldName: "SUBTITLE",
+    mapper: (item: any) => ({
+      value: item.id || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  sampleType: {
+    fieldName: "SAMPLETYPE",
+    mapper: (item: any) => ({
+      value: item.id || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  componentUnit: {
+    fieldName: "COMPOUNIT",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  cmTemplateType: {
+    fieldName: "CMTEMPLATETYPE",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  pregnancyOutcome: {
+    fieldName: "CPREGOUTCOME",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  pregInfoSource: {
+    fieldName: "CINFOSOURCE",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  pregDeliveryMethod: {
+    fieldName: "CDELIVERYMETHOD",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  birthStatus: {
+    fieldName: "CBIRTHSTATUS",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  labourOnset: {
+    fieldName: "CLABOURONSET",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  anesthesiaType: {
+    fieldName: "ANESTHESIATYPE",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  feeding: {
+    fieldName: "CFEEDING",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  dietType: {
+    fieldName: "DIETTYPE",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  smokingStatus: {
+    fieldName: "SMOKINGSTATUS",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  exerciseFrequency: {
+    fieldName: "EXERCISEFREQUENCY",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+  alcoholStatus: {
+    fieldName: "ALCOHOLSTATUS",
+    mapper: (item: any) => ({
+      value: item.code || "",
+      label: item.value || "",
+      ...item,
+    }),
+  },
+};
+
 /**
  * Enhanced hook for fetching and managing dropdown values
  */
@@ -151,104 +355,26 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
   // State to track status of each dropdown
   const [dropdownStates, setDropdownStates] = useState<Record<DropdownType, DropdownState>>({} as Record<DropdownType, DropdownState>);
   const { showAlert } = useAlert();
+
   // Registry of dropdown fetcher functions
-  const fetcherRegistry = useMemo<Record<DropdownType, FetcherFunction>>(
-    () => ({
+  const fetcherRegistry = useMemo<Record<string, FetcherFunction>>(() => {
+    const registry: Record<string, FetcherFunction> = {};
+
+    // Add AppModifyList-based fetchers
+    Object.entries(APP_MODIFY_LIST_CONFIGS).forEach(([key, config]) => {
+      if (typeof config === "string") {
+        registry[key] = createAppModifyListFetcher(config);
+      } else {
+        registry[key] = createAppModifyListFetcherWithMapping(config.fieldName, config.mapper);
+      }
+    });
+
+    // Add custom fetchers
+    const customFetchers: Record<string, FetcherFunction> = {
       pic: async () => {
         const response = await BillingService.fetchPicValues("GetPICDropDownValues");
         return response;
       },
-      nationality: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "NATIONALITY");
-        return response;
-      },
-      area: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "AREA");
-        return response;
-      },
-      city: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CITY");
-        return response;
-      },
-      country: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COUNTRY");
-        return response;
-      },
-      company: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPANY");
-        return response;
-      },
-      title: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "TITLE");
-        return response;
-      },
-      gender: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "GENDER");
-        return response;
-      },
-      ageUnit: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "AGEUNIT");
-        return response;
-      },
-      coverFor: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COVERFOR");
-        return response;
-      },
-      departmentTypes: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTTYPES");
-        return response;
-      },
-      bloodGroup: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "BLOODGROUP");
-        return response;
-      },
-      maritalStatus: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "MARITALSTATUS");
-        return response;
-      },
-      employeeRoom: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPROOM");
-        return response;
-      },
-      category: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CONCATEGORY");
-        return response;
-      },
-      employeeStatus: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPLOYEESTATUS");
-        return response;
-      },
-      productCategory: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTCATEGORY");
-        return response;
-      },
-      payment: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PAYMENT");
-        return response;
-      },
-      admissionType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ADMISSIONTYPE");
-        return response;
-      },
-      caseType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CASETYPE");
-        return response;
-      },
-      statusFilter: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "STATUSFILTER");
-        return response;
-      },
-
-      indentStatus: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INDENTSTATUS");
-        return response;
-      },
-
-      faculties: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "FACULTIES");
-        return response;
-      },
-
       department: async () => {
         const response = await departmentListService.getAll();
         return (response.data || []).map((item: DepartmentDto) => ({
@@ -269,32 +395,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         const response = await BillingService.fetchMembershipScheme("GetActivePatMemberships", compID!);
         return response;
       },
-      relation: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "RELATION");
-        return response;
-      },
       insurance: async () => {
         const response = await InsuranceCarrierService.fetchInsuranceOptions("GetAllActiveForDropDown");
-        return response;
-      },
-      state: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "STATE");
         return response;
       },
       speciality: async (compID?: number) => {
         const response = await ContactListService.fetchActiveSpecialties(compID!);
         return response;
       },
-
-      floor: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "FLOOR");
-        return (response || []).map((item: any) => ({
-          value: item.value || 0,
-          label: item.value || "",
-          id: item.id,
-        }));
-      },
-
       unit: async () => {
         const response = await deptUnitListService.getAll();
         return (response.data || []).map((item: any) => ({
@@ -302,7 +410,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           label: item.unitDesc || "",
         }));
       },
-
       bedCategory: async () => {
         const response = await wardCategoryService.getAll();
         return (response.data || []).map((item: WardCategoryDto) => ({
@@ -330,10 +437,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           value: item.punitID || 0,
           label: item.punitName || "",
         }));
-      },
-      productBaseUnit: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTBASEUNIT");
-        return response;
       },
       medicationForm: async () => {
         const response = await medicationFormService.getAll();
@@ -414,32 +517,12 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           label: item.dsName || "",
         }));
       },
-      dischargeSituation: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SITUATION");
-        return response;
-      },
-      deliveryType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DELIVERYTYPE");
-        return response;
-      },
-      investigationType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVESTIGATIONTYPE");
-        return response;
-      },
-      language: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "LANGUAGE");
-        return response;
-      },
       entryType: async () => {
         const response = await componentEntryTypeService.getAll();
         return (response.data || []).map((item: any) => ({
           value: item.lCentID || 0,
           label: item.lCentName || "",
         }));
-      },
-      templateGroup: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "TEMPLATEGROUP");
-        return response;
       },
       mainModules: async () => {
         const response = await appUserModuleService.getAll();
@@ -456,30 +539,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           aUGrpID: item.aUGrpID || 0,
         }));
       },
-      mainGroup: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVMAINGROUP");
-        return (response || []).map((item: any) => ({
-          value: item.id || "",
-          label: item.value || "",
-          ...item,
-        }));
-      },
-      subTitle: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SUBTITLE");
-        return (response || []).map((item: any) => ({
-          value: item.id || "",
-          label: item.value || "",
-          ...item,
-        }));
-      },
-      sampleType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SAMPLETYPE");
-        return (response || []).map((item: any) => ({
-          value: item.id || "",
-          label: item.value || "",
-          ...item,
-        }));
-      },
       serviceType: async () => {
         const response = await serviceTypeService.getAll();
         return (response.data || []).map((item: ServiceTypeDto) => ({
@@ -488,18 +547,12 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           ...item,
         }));
       },
-
       serviceGroup: async () => {
         const response = await serviceGroupService.getAll();
         return (response.data || []).map((item: any) => ({
           value: item.sGrpID || 0,
           label: item.sGrpName || "",
         }));
-      },
-
-      departmentIndent: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTINDENT");
-        return response;
       },
       manufacturer: async () => {
         const contactService = new ContactService();
@@ -512,14 +565,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           }));
         }
         return [];
-      },
-      productLocation: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTLOCATION");
-        return response;
-      },
-      grnType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "GRNTYPE");
-        return response;
       },
       resourceList: async () => {
         const response = await resourceListService.getAll();
@@ -564,33 +609,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         }));
         return profilesDropdownOptions;
       },
-      dischargeType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DISCHARGETYPE");
-        return response;
-      },
-      alertCategory: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ALERTCATEGORY");
-        return response;
-      },
-      componentUnit: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPOUNIT");
-        return (response || []).map((item: any) => ({
-          value: item.code || "",
-          label: item.value || "",
-          ...item,
-        }));
-      },
-      cmTemplateType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CMTEMPLATETYPE");
-        return (response || []).map((item: any) => ({
-          value: item.code || "",
-          label: item.value || "",
-          ...item,
-        }));
-      },
-    }),
-    []
-  );
+    };
+
+    return { ...registry, ...customFetchers };
+  }, []);
 
   // Initialize state for required dropdowns
   useEffect(() => {

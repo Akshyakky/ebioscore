@@ -14,6 +14,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   AccountBalance as InsuranceIcon,
+  FitnessCenter as LifestyleIcon,
   People as NextOfKinIcon,
   PersonAdd as PersonAddIcon,
   Refresh as RefreshIcon,
@@ -21,6 +22,8 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
+
+import LifestyleManagement from "@/pages/clinicalManagement/LifeStyle/MainPage/LifestyleManagement";
 import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import NextOfKinManagement from "../Components/NextOfKinManagement";
@@ -65,7 +68,20 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
 
   const { showAlert } = useAlert();
   const { patientList, isLoading, error, fetchPatientList, getPatientById, savePatient, deletePatient, searchPatients } = usePatientRegistration();
+  // Lifestyle management state
+  const [isLifestyleOpen, setIsLifestyleOpen] = useState<boolean>(false);
+  const [selectedPatientForLifestyle, setSelectedPatientForLifestyle] = useState<PatientListData | null>(null);
 
+  // Lifestyle management handlers
+  const handleManageLifestyle = useCallback((patient: PatientListData) => {
+    setSelectedPatientForLifestyle(patient);
+    setIsLifestyleOpen(true);
+  }, []);
+
+  const handleCloseLifestyle = useCallback(() => {
+    setIsLifestyleOpen(false);
+    setSelectedPatientForLifestyle(null);
+  }, []);
   // Filter states
   const [filters, setFilters] = useState({
     status: "",
@@ -459,6 +475,17 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
             </IconButton>
           </Tooltip>
 
+          {/* Add Lifestyle button */}
+          <Tooltip title="Lifestyle">
+            <IconButton
+              size={gridDensity === "large" ? "medium" : "small"}
+              color="success"
+              onClick={() => handleManageLifestyle(item)}
+              sx={{ bgcolor: "rgba(46, 125, 50, 0.08)", "&:hover": { bgcolor: "rgba(46, 125, 50, 0.15)" } }}
+            >
+              <LifestyleIcon fontSize={gridDensity === "large" ? "medium" : "small"} />
+            </IconButton>
+          </Tooltip>
           {item.rActiveYN === "Y" && (
             <Tooltip title="Deactivate Patient">
               <IconButton
@@ -692,6 +719,16 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
           onClose={handleCloseInsurance}
           pChartID={selectedPatientForInsurance.pChartID}
           patientName={selectedPatientForInsurance.fullName}
+        />
+      )}
+
+      {/* Lifestyle Management Dialog */}
+      {selectedPatientForLifestyle && (
+        <LifestyleManagement
+          open={isLifestyleOpen}
+          onClose={handleCloseLifestyle}
+          pChartID={selectedPatientForLifestyle.pChartID}
+          patientName={selectedPatientForLifestyle.fullName}
         />
       )}
 

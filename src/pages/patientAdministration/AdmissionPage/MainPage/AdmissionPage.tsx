@@ -1,9 +1,9 @@
-// src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import LifestyleManagement from "@/pages/clinicalManagement/LifeStyle/MainPage/LifestyleManagement";
 import PatientHistoryDialog from "@/pages/clinicalManagement/PatientHistory/Components/PatientHistoryDialog";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
@@ -17,6 +17,7 @@ import {
   Edit as EditIcon,
   ExpandMore as ExpandIcon,
   History as HistoryIcon,
+  FitnessCenter as LifestyleIcon,
   ManageSearch as PatientIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
@@ -54,16 +55,31 @@ const AdmissionPage: React.FC = () => {
   const [isAdmissionFormOpen, setIsAdmissionFormOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [isLifestyleOpen, setIsLifestyleOpen] = useState<boolean>(false);
+  const [selectedAdmissionForLifestyle, setSelectedAdmissionForLifestyle] = useState<EnhancedAdmissionDto | null>(null);
 
   const { showAlert } = useAlert();
   const { admissions, loading, currentAdmissionStatus, refreshAdmissions, refreshPatientStatus, admitPatient, checkPatientAdmissionStatus } = useAdmission();
 
   const [isPatientHistoryOpen, setIsPatientHistoryOpen] = useState(false);
   const [selectedAdmissionForHistory, setSelectedAdmissionForHistory] = useState<EnhancedAdmissionDto | null>(null);
+
+  // Lifestyle management handlers
+  const handleManageLifestyle = useCallback((admission: EnhancedAdmissionDto) => {
+    setSelectedAdmissionForLifestyle(admission);
+    setIsLifestyleOpen(true);
+  }, []);
+
+  const handleCloseLifestyle = useCallback(() => {
+    setIsLifestyleOpen(false);
+    setSelectedAdmissionForLifestyle(null);
+  }, []);
+
   const handlePatientHistory = useCallback((admission: EnhancedAdmissionDto) => {
     setSelectedAdmissionForHistory(admission);
     setIsPatientHistoryOpen(true);
   }, []);
+
   // Load data on component mount
   useEffect(() => {
     refreshAdmissions();
@@ -329,7 +345,7 @@ const AdmissionPage: React.FC = () => {
       header: "Actions",
       visible: true,
       sortable: false,
-      width: 180, // Increased width to accommodate the new button
+      width: 220, // Increased width to accommodate the new Lifestyle button
       render: (admission) => (
         <Stack direction="row" spacing={0.5}>
           <IconButton
@@ -364,6 +380,18 @@ const AdmissionPage: React.FC = () => {
             title="Patient History"
           >
             <PatientIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="warning"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleManageLifestyle(admission);
+            }}
+            title="Lifestyle"
+            sx={{ bgcolor: "rgba(237, 108, 2, 0.08)", "&:hover": { bgcolor: "rgba(237, 108, 2, 0.15)" } }}
+          >
+            <LifestyleIcon fontSize="small" />
           </IconButton>
         </Stack>
       ),
@@ -505,6 +533,7 @@ const AdmissionPage: React.FC = () => {
       <AdmissionStatusDialog open={isStatusDialogOpen} onClose={() => setIsStatusDialogOpen(false)} patient={selectedPatient} admissionStatus={currentAdmissionStatus} />
 
       <AdmissionHistoryDialog open={isHistoryDialogOpen} onClose={() => setIsHistoryDialogOpen(false)} admission={selectedAdmission} />
+
       <PatientHistoryDialog
         open={isPatientHistoryOpen}
         onClose={() => {
@@ -513,6 +542,16 @@ const AdmissionPage: React.FC = () => {
         }}
         admission={selectedAdmissionForHistory}
       />
+
+      {/* Lifestyle Management Dialog */}
+      {selectedAdmissionForLifestyle && (
+        <LifestyleManagement
+          open={isLifestyleOpen}
+          onClose={handleCloseLifestyle}
+          pChartID={selectedAdmissionForLifestyle.ipAdmissionDto.pChartID}
+          patientName={selectedAdmissionForLifestyle.patientName || ""}
+        />
+      )}
     </Box>
   );
 };

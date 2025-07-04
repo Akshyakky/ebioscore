@@ -1,13 +1,14 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
 import { AllergyDto } from "@/interfaces/ClinicalManagement/AllergyDto";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistObstetricsDto } from "@/interfaces/ClinicalManagement/OPIPHistObstetricsDto";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
 import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
 import { PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
 import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
-import { fhService, pmhService, pshService, rosService, shService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+import { fhService, ObstetricsService, pmhService, pshService, rosService, shService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { pastMedicationService } from "@/services/ClinicalManagementServices/pastMedicationService";
 
 const useGenericFamilyHistory = createEntityHook<OPIPHistFHDto>(fhService, "opipFHID");
@@ -101,9 +102,7 @@ export const useAllergy = () => {
     error: hook.error,
     fetchAllergyList: hook.fetchEntityList,
     getAllergyById: hook.getEntityById,
-    saveAllergy: async (data: AllergyDto) => {
-      return allergyService.createOrUpdateAllergy(data);
-    },
+    saveAllergy: hook.saveEntity,
     deleteAllergy: hook.deleteEntity,
     updateAllergyStatus: hook.updateEntityStatus,
     getByKeyFields: async (pChartID: number, opipNo: number, opipCaseNo: number) => {
@@ -128,5 +127,20 @@ export const usePastMedication = () => {
     getByKeyFields: async (pChartID: number, opipNo: number, opipCaseNo: number) => {
       return pastMedicationService.getByKeyFields(pChartID, opipNo, opipCaseNo);
     },
+  };
+};
+// Obstetrics Hook
+export const useObstetrics = () => {
+  const hook = createEntityHook<OPIPHistObstetricsDto>(ObstetricsService, "opipOBID")();
+
+  return {
+    obstetricsList: hook.entityList,
+    isLoading: hook.isLoading,
+    error: hook.error,
+    fetchObstetricsList: hook.fetchEntityList,
+    getObstetricsById: hook.getEntityById,
+    saveObstetrics: hook.saveEntity,
+    deleteObstetrics: hook.deleteEntity,
+    updateObstetricsStatus: hook.updateEntityStatus,
   };
 };

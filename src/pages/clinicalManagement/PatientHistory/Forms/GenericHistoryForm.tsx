@@ -72,16 +72,42 @@ export const GenericHistoryForm = <T extends Record<string, any>>({
 
   useEffect(() => {
     if (open && admission) {
-      const initialData = existingHistory || {
-        [fields.dateField]: serverDate,
-        [fields.activeField]: "Y",
-        pChartID: admission.ipAdmissionDto.pChartID,
-        opipNo: admission.ipAdmissionDto.admitID,
-        patOpip: "I",
-        transferYN: "N",
-      };
+      let initialData: T;
 
-      reset(initialData as T);
+      if (existingHistory) {
+        // When editing, ensure all required fields are properly set
+        initialData = {
+          ...existingHistory,
+          // Ensure date field is a Date object
+          [fields.dateField]: existingHistory[fields.dateField] ? new Date(existingHistory[fields.dateField] as any) : serverDate,
+          // Ensure all required base fields are present
+          pChartID: existingHistory.pChartID || admission.ipAdmissionDto.pChartID,
+          opipNo: existingHistory.opipNo || admission.ipAdmissionDto.admitID,
+          opipCaseNo: existingHistory.opipCaseNo || admission.ipAdmissionDto.oPIPCaseNo || 0,
+          patOpip: existingHistory.patOpip || admission.ipAdmissionDto.patOpip || "I",
+          opvID: existingHistory.opvID || 0,
+          oldPChartID: existingHistory.oldPChartID || 0,
+          transferYN: existingHistory.transferYN || "N",
+          rActiveYN: existingHistory.rActiveYN || "Y",
+          rNotes: existingHistory.rNotes || null,
+        } as T;
+      } else {
+        // New record
+        initialData = {
+          [fields.dateField]: serverDate,
+          [fields.activeField]: "Y",
+          pChartID: admission.ipAdmissionDto.pChartID,
+          opipNo: admission.ipAdmissionDto.admitID,
+          opipCaseNo: admission.ipAdmissionDto.oPIPCaseNo || 0,
+          patOpip: admission.ipAdmissionDto.patOpip || "I",
+          opvID: 0,
+          oldPChartID: 0,
+          transferYN: "N",
+          rNotes: null,
+        } as unknown as T;
+      }
+
+      reset(initialData);
     }
   }, [open, admission, existingHistory, reset, serverDate, fields]);
 

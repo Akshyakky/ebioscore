@@ -563,6 +563,7 @@ const routeConfig: RouteConfig[] = [
       category: "inventory",
     },
   },
+
   // 404 Not Found route - must be placed last to catch all unmatched routes
   {
     path: "*",
