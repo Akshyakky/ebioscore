@@ -49,7 +49,6 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
   );
 
   type IssueDepartmentFormData = z.infer<typeof issueDepartmentSchema>;
-
   const { control, handleSubmit, reset, setValue, watch } = useForm<IssueDepartmentFormData>({
     resolver: zodResolver(issueDepartmentSchema),
     defaultValues: {
@@ -65,10 +64,8 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
 
   useEffect(() => {
     if (open) {
-      // Use only backend DTO properties - RecvdQty and AcceptQty
-      const totalAvailable = selectedProduct?.AcceptQty || selectedProduct?.RecvdQty || 0;
+      const totalAvailable = selectedProduct?.acceptQty || selectedProduct?.recvdQty || 0;
       setAvailableQuantity(totalAvailable);
-
       if (editData) {
         reset({
           deptID: editData.deptID,
@@ -82,8 +79,8 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
           deptID: 0,
           deptName: "",
           quantity: undefined,
-          productName: selectedProduct.ProductName || "",
-          productID: selectedProduct.ProductID || 0,
+          productName: selectedProduct.productName || "",
+          productID: selectedProduct.productID || 0,
         });
       }
     }
@@ -162,7 +159,7 @@ const IssueDepartmentDialog: React.FC<IssueDepartmentDialogProps> = ({ open, onC
           {selectedProduct && (
             <Alert severity="info" sx={{ mb: 2 }}>
               <Typography variant="body2">
-                <strong>Selected Product:</strong> {selectedProduct.ProductName}
+                <strong>Selected Product:</strong> {selectedProduct.productName}
                 <br />
                 <strong>Total Quantity Available:</strong> {availableQuantity}
               </Typography>

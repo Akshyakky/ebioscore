@@ -22,10 +22,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGrn } from "../hooks/useGrnhooks";
-import GrnDetailsComponent from "./GrnDetailsComponent";
+import UnifiedGrnDetailsComponent from "./GrnPoandProductDetails";
 import GRNTotalsAndActionsSection from "./GRNTotalsAndActionsSection";
 import { IssueDepartmentData } from "./NewIssueDepartmentDialog";
-import PurchaseOrderSection from "./purchaseOrderSection";
 
 const GRNHelpers = {
   calculateProductValue: (detail: Partial<GrnDetailDto>): number => {
@@ -156,6 +155,7 @@ const grnSchema = z.object({
   discPercentageYN: z.string().default("N"),
   rActiveYN: z.string().default("Y"),
   rNotes: z.string().optional().nullable(),
+  grnApprovedDate: z.string().optional().nullable(),
 });
 
 type GrnFormData = z.infer<typeof grnSchema>;
@@ -171,16 +171,13 @@ interface ComprehensiveGrnFormDialogProps {
 
 const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({ open, onClose, grn, departments, suppliers }) => {
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-  const [grnDetails, setGrnDetails] = useState<GrnDetailDto[]>([]);
-  const [poGrnDetails, setPOGrnDetails] = useState<GrnDetailDto[]>([]);
+  const [allGrnDetails, setAllGrnDetails] = useState<GrnDetailDto[]>([]);
   const [issueDepartments, setIssueDepartments] = useState<IssueDepartmentData[]>([]);
   const [selectedProductForIssue, setSelectedProductForIssue] = useState<GrnDetailDto | null>(null);
-  const [originalGrnID, setOriginalGrnID] = useState<number>(0); // Store original GRN ID
+  const [originalGrnID, setOriginalGrnID] = useState<number>(0);
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     invoice: true,
-    po: false,
-    manual: true,
     financial: false,
     configuration: false,
   });
@@ -203,11 +200,10 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     resolver: zodResolver(grnSchema),
     mode: "onChange",
   });
+
   const watcheddeptID = watch("deptID");
   const watchedgrnCode = watch("grnCode");
   const watcheddiscount = watch("disc");
-  const watcheddeptName = watch("deptName");
-  const allGrnDetails = useMemo(() => [...poGrnDetails, ...grnDetails], [poGrnDetails, grnDetails]);
 
   useEffect(() => {
     if (open) {
@@ -229,6 +225,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           grnApprovedYN: grn.grnMastDto.grnApprovedYN || "N",
           grnApprovedBy: grn.grnMastDto.grnApprovedBy || "",
           grnApprovedID: grn.grnMastDto.grnApprovedID || 0,
+          grnApprovedDate: grn.grnMastDto.grnApprovedDate || null,
           poNo: grn.grnMastDto.poNo || "",
           poID: grn.grnMastDto.poID || 0,
           poDate: grn.grnMastDto.poDate ? new Date(grn.grnMastDto.poDate) : null,
@@ -256,41 +253,18 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           rNotes: grn.grnMastDto.rNotes || "",
         };
         reset(formData);
+
         if (grn.grnMastDto.grnApprovedYN === "Y" || grn.grnMastDto.rActiveYN === "N") {
           setExpandedSections((prev) => ({ ...prev, configuration: true }));
         }
+
         const grnDetailsList = grn.grnDetailDto || [];
-        const poBasedDetails = grnDetailsList.filter((detail) => detail.poDetID && detail.poDetID > 0);
-        const manualDetails = grnDetailsList.filter((detail) => !detail.poDetID || detail.poDetID === 0);
-        const processedPODetails = poBasedDetails.map((detail) => {
-          console.log("Processing PO detail:", { grnDetID: detail.grnDetID, productID: detail.productID, productName: detail.productName });
-          return {
-            ...detail,
-            grnDetID: detail.grnDetID,
-            grnID: grn.grnMastDto.grnID,
-          };
-        });
-
-        const processedManualDetails = manualDetails.map((detail) => {
-          console.log("Processing manual detail:", { grnDetID: detail.grnDetID, productID: detail.productID, productName: detail.productName });
-          return {
-            ...detail,
-            grnDetID: detail.grnDetID,
-            grnID: grn.grnMastDto.grnID,
-          };
-        });
-
-        setPOGrnDetails(processedPODetails);
-        setGrnDetails(processedManualDetails);
+        setAllGrnDetails(grnDetailsList);
         setIssueDepartments([]);
-        if (poBasedDetails.length > 0) {
-          setExpandedSections((prev) => ({ ...prev, po: true }));
-        }
       } else {
         setOriginalGrnID(0);
         reset();
-        setGrnDetails([]);
-        setPOGrnDetails([]);
+        setAllGrnDetails([]);
         setIssueDepartments([]);
       }
     }
@@ -354,8 +328,8 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   );
 
   const calculateTotals = useCallback(
-    (allDetails: GrnDetailDto[]) => {
-      const itemsTotal = allDetails.reduce((sum, detail) => {
+    (details: GrnDetailDto[]) => {
+      const itemsTotal = details.reduce((sum, detail) => {
         const receivedQty = detail.recvdQty || 0;
         const unitPrice = detail.unitPrice || 0;
         return sum + receivedQty * unitPrice;
@@ -364,7 +338,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
       const discountValue = watcheddiscount || 0;
       const otherCharges = getValues("otherAmt") || 0;
       const coinAdjustment = getValues("coinAdj") || 0;
-      const totals = GRNHelpers.calculateGRNTotals(allDetails, discountValue, otherCharges, coinAdjustment);
+      const totals = GRNHelpers.calculateGRNTotals(details, discountValue, otherCharges, coinAdjustment);
       setValue("netTot", totals.netTotal);
       setValue("totalTaxableAmt", totals.totalTaxable);
       setValue("netCGSTTaxAmt", totals.totalCGST);
@@ -381,13 +355,14 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
       const stringValue = value ? "Y" : "N";
       setValue("grnApprovedYN", stringValue, { shouldValidate: true, shouldDirty: true });
 
-      // Update status when approval changes
       if (value) {
         setValue("grnStatus", "Approved", { shouldValidate: true, shouldDirty: true });
         setValue("grnStatusCode", "APPR", { shouldValidate: true, shouldDirty: true });
+        setValue("grnApprovedDate", new Date().toISOString(), { shouldValidate: true, shouldDirty: true });
       } else {
         setValue("grnStatus", "Pending", { shouldValidate: true, shouldDirty: true });
         setValue("grnStatusCode", "PEND", { shouldValidate: true, shouldDirty: true });
+        setValue("grnApprovedDate", null, { shouldValidate: true, shouldDirty: true });
       }
       trigger();
     },
@@ -412,34 +387,12 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     [setValue, trigger]
   );
 
-  const handleManualGrnDetailsChange = useCallback(
+  const handleUnifiedGrnDetailsChange = useCallback(
     (details: GrnDetailDto[]) => {
-      const processedDetails = details.map((detail) => {
-        return {
-          ...detail,
-          grnDetID: detail.grnDetID || 0,
-          grnID: originalGrnID || 0,
-        };
-      });
-      setGrnDetails(processedDetails);
-      calculateTotals([...poGrnDetails, ...processedDetails]);
+      setAllGrnDetails(details);
+      calculateTotals(details);
     },
-    [poGrnDetails, calculateTotals, originalGrnID, grnDetails.length]
-  );
-
-  const handlePOGrnDetailsChange = useCallback(
-    (details: GrnDetailDto[]) => {
-      const processedDetails = details.map((detail) => {
-        return {
-          ...detail,
-          grnDetID: detail.grnDetID || 0,
-          grnID: originalGrnID || 0,
-        };
-      });
-      setPOGrnDetails(processedDetails);
-      calculateTotals([...processedDetails, ...grnDetails]);
-    },
-    [grnDetails, calculateTotals, originalGrnID, poGrnDetails.length]
+    [calculateTotals]
   );
 
   const handlePoDataFetched = useCallback(
@@ -456,9 +409,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         setValue("poDiscAmt", mast.discAmt || 0);
       } else if (mast) {
         showAlert("Info", `PO ${mast.pOCode} selected, but it has no item details.`, "info");
-        setPOGrnDetails([]);
       } else {
-        setPOGrnDetails([]);
         showAlert("Info", "PO selection cleared.", "info");
       }
     },
@@ -470,8 +421,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   }, []);
 
   const handleDeleteAll = useCallback(() => {
-    setGrnDetails([]);
-    setPOGrnDetails([]);
+    setAllGrnDetails([]);
     setIssueDepartments([]);
     calculateTotals([]);
     showAlert("Success", "All products removed from GRN", "success");
@@ -490,7 +440,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
 
   const onSubmit = async (data: GrnFormData) => {
     try {
-      debugger;
       if (!data.deptID || data.deptID === 0) {
         showAlert("Validation Error", "Department is required", "error");
         return;
@@ -512,7 +461,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
       const selectedSupplier = suppliers.find((s) => Number(s.value) === Number(data.supplrID));
       const masterGrnID = isEditMode ? originalGrnID : 0;
 
-      // Fix: Properly handle approval status
       const isBeingApproved = data.grnApprovedYN === "Y";
       const currentTime = new Date().toISOString();
 
@@ -618,17 +566,12 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         coinAdj: data.coinAdj || 0,
         dcNo: data.dcNo || "",
         discPercentageYN: data.discPercentageYN || "N",
-
-        // Fix: Properly handle approval fields
         grnApprovedYN: data.grnApprovedYN || "N",
         grnApprovedBy: isBeingApproved ? data.grnApprovedBy || "" : data.grnApprovedBy || "",
         grnApprovedID: isBeingApproved ? data.grnApprovedID || null : data.grnApprovedID || null,
         grnApprovedDate: isBeingApproved ? currentTime : null,
-
-        // Fix: Update status based on approval
         grnStatusCode: isBeingApproved ? "APPR" : data.grnStatusCode || "PEND",
         grnStatus: isBeingApproved ? "Approved" : data.grnStatus || "Pending",
-
         otherAmt: data.otherAmt || 0,
         poCoinAdjAmt: data.poCoinAdjAmt || 0,
         poDate: data.poDate ? new Date(data.poDate).toISOString() : null,
@@ -676,8 +619,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
 
   const handleClear = () => {
     reset();
-    setGrnDetails([]);
-    setPOGrnDetails([]);
+    setAllGrnDetails([]);
     setIssueDepartments([]);
     setOriginalGrnID(0);
   };
@@ -728,6 +670,20 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         {isEditMode && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             Editing GRN {originalGrnID} - Changes will update existing records
+          </Alert>
+        )}
+
+        {issueDepartments.length > 0 && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Issue Departments Active:</strong> {issueDepartments.length} departments configured for this GRN
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
+              {issueDepartments.slice(0, 3).map((dept) => (
+                <Chip key={dept.id} label={`${dept.deptName}: ${dept.quantity}`} size="small" color="success" variant="outlined" />
+              ))}
+              {issueDepartments.length > 3 && <Chip label={`+${issueDepartments.length - 3} more`} size="small" color="default" variant="outlined" />}
+            </Stack>
           </Alert>
         )}
 
@@ -783,6 +739,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             </Grid>
           </AccordionDetails>
         </Accordion>
+
         <Accordion expanded={expandedSections.invoice} onChange={() => handleSectionToggle("invoice")}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box display="flex" alignItems="center" gap={1}>
@@ -803,31 +760,22 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             </Grid>
           </AccordionDetails>
         </Accordion>
-        <PurchaseOrderSection
-          expanded={expandedSections.po}
-          onChange={() => handleSectionToggle("po")}
-          isApproved={isApproved}
-          watchedDeptID={watcheddeptID}
-          watchedDeptName={watcheddeptName}
-          onPoDataFetched={handlePoDataFetched}
-          onGRNDataFetched={handlePOGrnDetailsChange}
-          issueDepartments={issueDepartments}
-          onIssueDepartmentChange={handleIssueDepartmentChange}
-          existingGrnDetails={poGrnDetails}
-        />
 
-        <GrnDetailsComponent
-          grnDetails={grnDetails}
-          onGrnDetailsChange={handleManualGrnDetailsChange}
+        <UnifiedGrnDetailsComponent
+          grnDetails={allGrnDetails}
+          onGrnDetailsChange={handleUnifiedGrnDetailsChange}
+          control={control}
+          setValue={setValue}
+          watch={watch}
           disabled={isSubmitting}
           grnApproved={isApproved}
-          expanded={expandedSections.manual}
-          onToggle={() => handleSectionToggle("manual")}
           grnID={originalGrnID}
           catValue={watch("catValue") || "MEDI"}
           issueDepartments={issueDepartments}
           onIssueDepartmentChange={handleIssueDepartmentChange}
+          onPoDataFetched={handlePoDataFetched}
         />
+
         <GRNTotalsAndActionsSection
           grnDetails={allGrnDetails}
           control={control}
@@ -866,7 +814,14 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
                   </Box>
                   <Box display="flex" alignItems="center" gap={0.5}>
                     {getValues("rActiveYN") === "Y" ? <ViewIcon color="warning" fontSize="small" /> : <HideIcon color="warning" fontSize="small" />}
-                    <EnhancedFormField name="rActiveYN" control={control} type="switch" color="warning" label={getValues("rActiveYN") === "Y" ? "Visible" : "Hidden"} />
+                    <EnhancedFormField
+                      name="rActiveYN"
+                      control={control}
+                      type="switch"
+                      color="warning"
+                      label={getValues("rActiveYN") === "Y" ? "Visible" : "Hidden"}
+                      onChange={handleActiveStatusChange}
+                    />
                   </Box>
                 </Stack>
               </Grid>
@@ -887,6 +842,24 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
                     </Stack>
                   </Box>
                 )}
+              </Grid>
+            </Grid>
+          </AccordionDetails>
+        </Accordion>
+
+        <Accordion expanded={expandedSections.financial} onChange={() => handleSectionToggle("financial")}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="h6" color="primary">
+                Notes & Comments
+              </Typography>
+              <Chip label="Optional" size="small" color="default" variant="outlined" />
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12 }}>
+                <EnhancedFormField name="rNotes" control={control} type="textarea" label="Notes" placeholder="Enter any additional notes or comments for this GRN..." fullWidth />
               </Grid>
             </Grid>
           </AccordionDetails>

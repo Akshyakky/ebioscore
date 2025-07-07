@@ -2,11 +2,13 @@ import CustomButton from "@/components/Button/CustomButton";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { GrnDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { useAlert } from "@/providers/AlertProvider";
-import { Check as ApplyIcon, DeleteSweep as DeleteAllIcon, History as HistoryIcon, AddBusiness as NewDeptIcon } from "@mui/icons-material";
-import { Box, FormControlLabel, Grid, Paper, Stack, Switch, Typography, useTheme } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import { Check as ApplyIcon, DeleteSweep as DeleteAllIcon, History as HistoryIcon, Info as InfoIcon, AddBusiness as NewDeptIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, FormControlLabel, Grid, Paper, Stack, Switch, Typography, useTheme } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
+import ProductHistoryDialog from "./ProductHistoryDailogue";
+import ProductSelectionDialog from "./ProductSelectionDailogue";
 
 interface GRNTotalsAndActionsSectionProps {
   grnDetails: GrnDetailDto[];
@@ -47,6 +49,7 @@ const TotalDisplayField: React.FC<{ label: string; children: React.ReactNode }> 
       borderRadius: 1,
       border: "1px solid",
       borderColor: "divider",
+      backgroundColor: "background.paper",
     }}
   >
     <Typography variant="subtitle2" component="div" sx={{ fontWeight: "bold", mr: 1, whiteSpace: "nowrap" }}>
@@ -62,7 +65,6 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
   setValue,
   watch,
   onDeleteAll,
-  onShowHistory,
   onNewIssueDepartment,
   onApplyDiscount,
   disabled = false,
@@ -74,13 +76,16 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
 }) => {
   const theme = useTheme();
   const { showAlert } = useAlert();
-  const [isDiscountInPercentage, setIsDiscountInPercentage] = useState(watch("DiscPercentageYN") === "Y");
+  const [isDiscountInPercentage, setIsDiscountInPercentage] = useState(watch("discPercentageYN") === "Y");
   const [isIssueDeptDialogOpen, setIsIssueDeptDialogOpen] = useState(false);
   const [editingIssueDepartment, setEditingIssueDepartment] = useState<IssueDepartmentData | null>(null);
-  const watchedDiscountType = watch("DiscPercentageYN");
-  const watchedDiscount = watch("Disc") || 0;
-  const watchedOtherAmount = watch("OtherAmt") || 0;
-  const watchedCoinAdjustment = watch("CoinAdj") || 0;
+  const [isProductSelectionOpen, setIsProductSelectionOpen] = useState(false);
+  const [isProductHistoryOpen, setIsProductHistoryOpen] = useState(false);
+  const [selectedProductForHistory, setSelectedProductForHistory] = useState<GrnDetailDto | null>(null);
+  const watchedDiscountType = watch("discPercentageYN");
+  const watchedDiscount = watch("disc") || 0;
+  const watchedOtherAmount = watch("otherAmt") || 0;
+  const watchedCoinAdjustment = watch("coinAdj") || 0;
 
   useEffect(() => {
     setIsDiscountInPercentage(watchedDiscountType === "Y");
@@ -115,12 +120,16 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
       const sgstPerValue = detail.sgstPerValue || 0;
       const isTaxAfterDisc = detail.taxAfterDiscYN === "Y";
       const totalTaxPercentage = cgstPerValue + sgstPerValue;
+
       const lineItemsTotal = receivedQty * unitPrice;
       itemsTotal += lineItemsTotal;
+
       const lineDiscountAmount = lineItemsTotal * (discPercentage / 100);
       totalLineDiscountAmount += lineDiscountAmount;
+
       const lineTaxableAmount = lineItemsTotal - lineDiscountAmount;
       totalTaxableAmount += lineTaxableAmount;
+
       let lineTotalTaxAmount = 0;
       if (isTaxAfterDisc) {
         lineTotalTaxAmount = lineTaxableAmount * (totalTaxPercentage / 100);
@@ -128,6 +137,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
         lineTotalTaxAmount = lineItemsTotal * (totalTaxPercentage / 100);
       }
       totalTaxAmount += lineTotalTaxAmount;
+
       let lineCGSTAmount = 0;
       let lineSGSTAmount = 0;
       if (totalTaxPercentage > 0) {
@@ -137,6 +147,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
       totalCGSTAmount += lineCGSTAmount;
       totalSGSTAmount += lineSGSTAmount;
     });
+
     let globalDiscountAmount = 0;
     if (watchedDiscount > 0) {
       if (isDiscountInPercentage) {
@@ -216,7 +227,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
           showAlert("Success", "Issue department updated successfully.", "success");
         }
       } else {
-        updatedDepartments.push({ ...data, id: Date.now().toString() }); // Add a temporary ID
+        updatedDepartments.push({ ...data, id: Date.now().toString() });
         showAlert("Success", "Issue department added successfully.", "success");
       }
       onIssueDepartmentChange(updatedDepartments);
@@ -236,7 +247,42 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
     }
   };
 
+  const handleShowHistoryClick = () => {
+    if (!grnDetails || grnDetails.length === 0) {
+      showAlert("Warning", "Please add products to the GRN before viewing history.", "warning");
+      return;
+    }
+    if (grnDetails.length === 1) {
+      setSelectedProductForHistory(grnDetails[0]);
+      setIsProductHistoryOpen(true);
+    } else {
+      setIsProductSelectionOpen(true);
+    }
+  };
+
+  const handleProductSelectionForHistory = (product: GrnDetailDto) => {
+    setSelectedProductForHistory(product);
+    setIsProductSelectionOpen(false);
+    setIsProductHistoryOpen(true);
+  };
+
+  const handleProductHistoryClose = () => {
+    setIsProductHistoryOpen(false);
+    setSelectedProductForHistory(null);
+  };
+
+  const handleProductSelectionClose = () => {
+    setIsProductSelectionOpen(false);
+  };
+
   const allDisabled = disabled || isApproved;
+  const issueDeptSummary = useMemo(() => {
+    const totalIssueDepts = issueDepartments.length;
+    const totalIssueQty = issueDepartments.reduce((sum, dept) => sum + dept.quantity, 0);
+    const uniqueProducts = new Set(issueDepartments.map((dept) => dept.productID)).size;
+
+    return { totalIssueDepts, totalIssueQty, uniqueProducts };
+  }, [issueDepartments]);
 
   return (
     <>
@@ -250,8 +296,8 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
         }}
       >
         <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems="center" mb={2.5}>
-          <CustomButton text="Delete All" icon={DeleteAllIcon} color="error" onClick={onDeleteAll} disabled={allDisabled} />
-          <CustomButton text="Show History" icon={HistoryIcon} color="warning" onClick={onShowHistory} />
+          <CustomButton text="Delete All" icon={DeleteAllIcon} color="error" onClick={onDeleteAll} disabled={allDisabled || grnDetails.length === 0} />
+          <CustomButton text="Show History" icon={HistoryIcon} color="warning" onClick={handleShowHistoryClick} disabled={!grnDetails || grnDetails.length === 0} />
           <CustomButton
             text="New Issue Department"
             icon={NewDeptIcon}
@@ -259,7 +305,9 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
             onClick={handleNewIssueDepartmentClick}
             disabled={allDisabled || !grnDetails || grnDetails.length === 0}
           />
+
           <Box sx={{ flexGrow: 1 }} />
+
           <Stack direction="row" spacing={1} alignItems="center">
             <FormControlLabel
               control={<Switch checked={isDiscountInPercentage} onChange={handleDiscountToggle} disabled={allDisabled} color="primary" />}
@@ -279,53 +327,97 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
           </Stack>
         </Stack>
 
+        {issueDepartments.length > 0 && (
+          <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Issue Department Summary:</strong> {issueDeptSummary.totalIssueDepts} departments,
+              {issueDeptSummary.uniqueProducts} products, Total Qty: {issueDeptSummary.totalIssueQty}
+            </Typography>
+            <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {issueDepartments.slice(0, 5).map((dept) => (
+                <Chip key={dept.id} label={`${dept.deptName}: ${dept.quantity}`} size="small" variant="outlined" color="primary" />
+              ))}
+              {issueDepartments.length > 5 && <Chip label={`+${issueDepartments.length - 5} more`} size="small" variant="outlined" color="default" />}
+            </Box>
+          </Alert>
+        )}
+
+        {/* Totals Grid */}
         <Grid container spacing={1}>
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="Items Total">
-              <EnhancedFormField name="tot" control={control} type="number" disabled fullWidth variant="outlined" />
+              <EnhancedFormField name="tot" control={control} type="number" disabled fullWidth variant="outlined" size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="Tax Amount">
-              <EnhancedFormField name="taxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+              <EnhancedFormField name="taxAmt" control={control} type="number" disabled fullWidth variant="outlined" size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="Total Disc. Amt">
-              <EnhancedFormField name="poDiscAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+              <EnhancedFormField name="poDiscAmt" control={control} type="number" disabled fullWidth variant="outlined" size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="Net Total">
-              <EnhancedFormField name="netTot" control={control} type="number" disabled fullWidth variant="outlined" />
+              <EnhancedFormField name="netTot" control={control} type="number" disabled fullWidth variant="outlined" size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="Others">
-              <EnhancedFormField name="otherAmt" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
+              <EnhancedFormField name="otherAmt" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="CGST Total">
-              <EnhancedFormField name="netCGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+              <EnhancedFormField name="netCGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="SGST Total">
-              <EnhancedFormField name="netSGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+              <EnhancedFormField name="netSGSTTaxAmt" control={control} type="number" disabled fullWidth variant="outlined" size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 2.4, sm: 6 }}>
             <TotalDisplayField label="Coin Adjustment">
-              <EnhancedFormField name="coinAdj" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} />
+              <EnhancedFormField name="coinAdj" control={control} type="number" fullWidth variant="outlined" disabled={allDisabled} size="small" />
             </TotalDisplayField>
           </Grid>
+
           <Grid size={{ xs: 12, md: 4.8, sm: 6 }}>
             <TotalDisplayField label="Balance">
-              <EnhancedFormField name="balanceAmt" control={control} type="number" disabled fullWidth variant="outlined" />
+              <EnhancedFormField name="balanceAmt" control={control} type="number" disabled fullWidth variant="outlined" size="small" />
             </TotalDisplayField>
           </Grid>
         </Grid>
+
+        <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Total Products:</strong> {grnDetails.length}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Total Received Qty:</strong> {grnDetails.reduce((sum, detail) => sum + (detail.recvdQty || 0), 0)}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Issue Departments:</strong> {issueDeptSummary.totalIssueDepts}
+              </Typography>
+            </Grid>
+          </Grid>
+        </Box>
       </Paper>
 
       <IssueDepartmentDialog
@@ -335,6 +427,22 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
         selectedProduct={selectedProductForIssue}
         editData={editingIssueDepartment}
         title={editingIssueDepartment ? "Edit Issue Department" : "New Issue Department"}
+      />
+
+      <ProductSelectionDialog
+        open={isProductSelectionOpen}
+        onClose={handleProductSelectionClose}
+        products={grnDetails}
+        onSelectProduct={handleProductSelectionForHistory}
+        title="Select Product for History"
+      />
+
+      <ProductHistoryDialog
+        open={isProductHistoryOpen}
+        onClose={handleProductHistoryClose}
+        productId={selectedProductForHistory?.productID || null}
+        productName={selectedProductForHistory?.productName}
+        productCode={selectedProductForHistory?.productCode}
       />
     </>
   );

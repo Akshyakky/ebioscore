@@ -44,7 +44,6 @@ const GrnViewDetailsDialog = ({ open, onClose, grn }) => {
   const isApproved = grn?.grnMastDto.grnApprovedYN === "Y";
   const isHidden = grn?.grnMastDto.rActiveYN === "N";
   const isOverdue = grn?.grnMastDto.isOverdue;
-
   const formattedDate = (dateString) => {
     if (!dateString) return "N/A";
     return dayjs(dateString).format("DD MMM YYYY");
@@ -76,7 +75,6 @@ const GrnViewDetailsDialog = ({ open, onClose, grn }) => {
     ];
   }, [grn]);
 
-  // No GRN data to display
   if (!grn) return null;
 
   return (
@@ -270,7 +268,6 @@ const GrnViewDetailsDialog = ({ open, onClose, grn }) => {
           </Grid>
         </Paper>
 
-        {/* Financial Summary */}
         <Paper elevation={0} sx={{ p: 2, mb: 3, border: "1px solid #e0e0e0", borderRadius: 1 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12 }}>
@@ -295,7 +292,6 @@ const GrnViewDetailsDialog = ({ open, onClose, grn }) => {
               </Grid>
             ))}
 
-            {/* Tax Summary */}
             <Grid size={{ xs: 12 }}>
               <Divider sx={{ my: 1 }} />
               <Typography variant="subtitle2" color="text.secondary" display="flex" alignItems="center">
@@ -328,7 +324,6 @@ const GrnViewDetailsDialog = ({ open, onClose, grn }) => {
           </Grid>
         </Paper>
 
-        {/* Products List */}
         <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box display="flex" alignItems="center">
@@ -366,7 +361,6 @@ const GrnViewDetailsDialog = ({ open, onClose, grn }) => {
                     const taxableAmount = productValue - discountValue;
                     const taxAmount = (detail.cgstTaxAmt || 0) + (detail.sgstTaxAmt || 0);
                     const totalWithTax = taxableAmount + taxAmount;
-
                     return (
                       <TableRow key={index} sx={{ "&:nth-of-type(odd)": { backgroundColor: "action.hover" } }}>
                         <TableCell>{index + 1}</TableCell>
