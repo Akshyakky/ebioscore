@@ -29,6 +29,7 @@ import {
   CheckBox as SelectAllIcon,
   Sort as SortIcon,
   LocalShipping as SupplierIcon,
+  Sync,
   TrendingUp as TrendingIcon,
   CheckBoxOutlineBlank as UnselectAllIcon,
   FileUpload as UploadIcon,
@@ -182,27 +183,77 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { showAlert } = useAlert();
-  const { deptId, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
+  const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
   const { department: departments } = useDropdownValues(["department"]);
   const { contacts: suppliers } = useContactMastByCategory({ consValue: "SUP" });
 
   const { grnList, isLoading, error, fetchGrnList, getGrnById, approveGrn, deleteGrn, refreshGrnList, canEditGrn, canDeleteGrn, getGrnStatusColor } = useGrn();
 
-  useEffect(() => {
-    if (isDepartmentSelected && deptId) {
-      fetchGrnList({ departmentID: deptId });
-    }
-  }, [isDepartmentSelected, deptId, fetchGrnList]);
+  // Function to fetch GRNs for specific department
+  const fetchGrnsForDepartment = useCallback(
+    async (departmentID: number) => {
+      if (!departmentID) return;
 
+      try {
+        const searchRequest: GrnSearchRequest = {
+          departmentID: departmentID,
+          sortBy: filters.sortBy || "grnDate",
+          sortAscending: filters.sortOrder === "asc",
+        };
+
+        await fetchGrnList(searchRequest);
+      } catch (error) {
+        console.error("Error fetching GRNs for department:", error);
+        showAlert("Error", "Failed to fetch GRN data for the selected department", "error");
+      }
+    },
+    [fetchGrnList, filters.sortBy, filters.sortOrder, showAlert]
+  );
+
+  // Handle department selection from dialog
+  const handleDepartmentSelectWithGrnFetch = useCallback(
+    async (selectedDeptId: number, selectedDeptName: string) => {
+      try {
+        // First select the department
+        await handleDepartmentSelect(selectedDeptId, selectedDeptName);
+
+        // Then fetch GRNs for this specific department
+        await fetchGrnsForDepartment(selectedDeptId);
+
+        showAlert("Success", `Loaded GRN data for ${selectedDeptName}`, "success");
+      } catch (error) {
+        console.error("Error in department selection:", error);
+        showAlert("Error", "Failed to load data for the selected department", "error");
+      }
+    },
+    [handleDepartmentSelect, fetchGrnsForDepartment, showAlert]
+  );
+
+  // Handle department change button click
+  const handleDepartmentChange = useCallback(() => {
+    openDialog();
+  }, [openDialog]);
+
+  // Initial effect - only open dialog if no department selected
   useEffect(() => {
     if (!isDepartmentSelected && !isDialogOpen) {
       openDialog();
     }
-  }, [isDepartmentSelected, isDialogOpen, openDialog]);
+  }, []);
 
-  // Enhanced GRN processing with additional computed fields
+  // Effect to fetch GRNs when department is selected
+  useEffect(() => {
+    if (isDepartmentSelected && deptId) {
+      fetchGrnsForDepartment(deptId);
+    }
+  }, [isDepartmentSelected, deptId, fetchGrnsForDepartment]);
+
+  // Enhanced GRN processing - only show GRNs for current department
   const enhancedGrns = useMemo((): EnhancedGrnDto[] => {
-    return grnList.map((grn) => {
+    // Filter GRNs to only include those from the selected department
+    const departmentFilteredGrns = grnList.filter((grn) => grn.grnMastDto.deptID === deptId);
+
+    return departmentFilteredGrns.map((grn) => {
       const pendingApproval = grn.grnMastDto.grnApprovedYN !== "Y";
       const grnDate = dayjs(grn.grnMastDto.grnDate);
       const daysOld = calculateDaysOld(grn.grnMastDto.grnDate);
@@ -226,7 +277,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         }`.toLowerCase(),
       };
     });
-  }, [grnList, getGrnStatusColor]);
+  }, [grnList, deptId, getGrnStatusColor]);
 
   // Enhanced filtering and searching with professional logic
   const filteredAndSearchedGrns = useMemo(() => {
@@ -370,6 +421,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     return filtered;
   }, [enhancedGrns, searchTerm, filters]);
 
+  // Calculate statistics
   useEffect(() => {
     const total = enhancedGrns.length;
     const approved = enhancedGrns.filter((g) => g.grnMastDto.grnApprovedYN === "Y").length;
@@ -381,10 +433,15 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     setStatistics({ total, approved, pending, overdue, hidden, totalValue });
   }, [enhancedGrns]);
 
-  // Enhanced filter application
+  // Enhanced filter application - always include department filter
   const handleApplyFilters = useCallback(() => {
+    if (!deptId) {
+      showAlert("Warning", "Please select a department first", "warning");
+      return;
+    }
+
     const searchRequest: GrnSearchRequest = {
-      departmentID: deptId,
+      departmentID: deptId, // Always filter by selected department
       startDate: filters.startDate ? filters.startDate.toISOString() : undefined,
       endDate: filters.endDate ? filters.endDate.toISOString() : undefined,
       supplierID: filters.supplierID !== "all" ? Number(filters.supplierID) : undefined,
@@ -394,6 +451,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       sortBy: filters.sortBy,
       sortAscending: filters.sortOrder === "asc",
     };
+
     fetchGrnList(searchRequest);
     setIsFilterDrawerOpen(false);
     showAlert("Success", "Filters applied successfully", "success");
@@ -417,18 +475,45 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       sortOrder: "desc",
     });
     setSearchTerm("");
-    if (deptId) fetchGrnList({ departmentID: deptId });
+
+    if (deptId) {
+      fetchGrnsForDepartment(deptId);
+    }
+
     setIsFilterDrawerOpen(false);
     showAlert("Success", "Filters cleared", "success");
-  }, [deptId, fetchGrnList, showAlert]);
+  }, [deptId, fetchGrnsForDepartment, showAlert]);
 
   const handleRefresh = useCallback(async () => {
+    if (!deptId) {
+      showAlert("Warning", "Please select a department first", "warning");
+      return;
+    }
+
     setSearchTerm("");
-    handleClearFilters();
     setSelectedRows([]);
-    await refreshGrnList();
+
+    // Reset filters to default
+    setFilters({
+      startDate: null,
+      endDate: null,
+      supplierID: "all",
+      invoiceNo: "",
+      grnCode: "",
+      grnStatus: "all",
+      approvedStatus: "all",
+      grnType: "all",
+      hideStatus: "all",
+      amountFrom: "",
+      amountTo: "",
+      dateRange: "thisMonth",
+      sortBy: "grnDate",
+      sortOrder: "desc",
+    });
+
+    await fetchGrnsForDepartment(deptId);
     showAlert("Success", "Data refreshed successfully", "success");
-  }, [handleClearFilters, refreshGrnList, showAlert]);
+  }, [deptId, fetchGrnsForDepartment, showAlert]);
 
   const handleNewGrn = useCallback(() => {
     setSelectedGrn(null);
@@ -524,7 +609,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         showAlert("Info", "Approving GRN and updating stock...", "info");
         const success = await approveGrn(grnID);
         if (success) {
-          await refreshGrnList();
+          await fetchGrnsForDepartment(deptId);
           showAlert("Success", "GRN approved successfully", "success");
         }
       } catch (error) {
@@ -532,7 +617,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         showAlert("Error", "Failed to approve GRN. Please try again.", "error");
       }
     },
-    [approveGrn, refreshGrnList, showAlert]
+    [approveGrn, deptId, fetchGrnsForDepartment, showAlert]
   );
 
   const handleDeleteClick = (grnID: number) => {
@@ -555,6 +640,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     if (deleteConfirmation.grnID) {
       await deleteGrn(deleteConfirmation.grnID);
       setDeleteConfirmation({ open: false, grnID: null });
+      await fetchGrnsForDepartment(deptId);
       showAlert("Success", "GRN deleted successfully", "success");
     }
   };
@@ -573,7 +659,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
       showAlert("Success", `${unapprovedRows.length} GRNs approved successfully.`, "success");
       setSelectedRows([]);
       setIsBulkActionsOpen(false);
-      await refreshGrnList();
+      await fetchGrnsForDepartment(deptId);
     } catch (error) {
       showAlert("Error", "Some GRNs could not be approved. Please try again.", "error");
     }
@@ -594,12 +680,19 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         setSelectedRows([]);
         setIsBulkActionsOpen(false);
         showAlert("Success", `${deletableRows.length} GRNs deleted successfully.`, "success");
-        await refreshGrnList();
+        await fetchGrnsForDepartment(deptId);
       } catch (error) {
         showAlert("Error", "Some GRNs could not be deleted. Please try again.", "error");
       }
     }
   };
+
+  // Callback to refresh data after GRN is saved
+  const handleGrnSaved = useCallback(async () => {
+    if (deptId) {
+      await fetchGrnsForDepartment(deptId);
+    }
+  }, [deptId, fetchGrnsForDepartment]);
 
   // Enhanced export functionality
   const handleExportGRNs = useCallback(
@@ -623,15 +716,15 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `grn-report-${dayjs().format("YYYY-MM-DD")}.csv`;
+        a.download = `grn-report-${deptName}-${dayjs().format("YYYY-MM-DD")}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
       }
 
-      showAlert("Success", `${format.toUpperCase()} export initiated for ${filteredAndSearchedGrns.length} records`, "success");
+      showAlert("Success", `${format.toUpperCase()} export initiated for ${filteredAndSearchedGrns.length} records from ${deptName}`, "success");
       setReportsMenuAnchor(null);
     },
-    [filteredAndSearchedGrns, showAlert]
+    [filteredAndSearchedGrns, deptName, showAlert]
   );
 
   // Enhanced file upload functionality
@@ -643,7 +736,6 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
 
         if (validTypes.includes(file.type)) {
           showAlert("Info", `Processing file "${file.name}"...`, "info");
-          // Here you would implement the actual file processing logic
           setTimeout(() => {
             showAlert("Success", "File processed successfully. 5 new GRNs imported.", "success");
           }, 2000);
@@ -780,7 +872,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         data={filteredAndSearchedGrns}
         loading={isLoading}
         maxHeight="600px"
-        emptyStateMessage="No GRNs found matching your criteria."
+        emptyStateMessage={`No GRNs found for ${deptName}. Click "New GRN" to create the first one.`}
         rowKeyField="grnMastDto"
         onRowClick={handleViewDetails}
       />
@@ -1066,17 +1158,15 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               <Box display="flex" alignItems="center" gap={2}>
                 <GrnIcon sx={{ fontSize: 32, color: "primary.main" }} />
                 <Box>
-                  <Typography variant="h4" component="h1" fontWeight="700" color="primary.main">
-                    Goods Received Notes Management
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Manage and track all your GRN records efficiently
+                  <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+                    Goods Received Notes Management - {deptName}
                   </Typography>
                 </Box>
               </Box>
               <Stack direction="row" spacing={2}>
-                <CustomButton variant="contained" icon={AddIcon} text="New GRN" onClick={handleNewGrn} />
-                <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous />
+                <SmartButton text={`${deptName}`} onClick={handleDepartmentChange} variant="contained" size="small" color="warning" icon={Sync} />
+                <CustomButton variant="contained" icon={AddIcon} text="New GRN" onClick={handleNewGrn} size="small" />
+                <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous size="small" />
               </Stack>
             </Box>
           </Paper>
@@ -1143,32 +1233,32 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
               <Grid size={{ xs: 12, md: 7 }}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap">
                   <ToggleButtonGroup value={viewMode} exclusive onChange={(_, newMode) => newMode && setViewMode(newMode)} size="small" sx={{ mr: 1 }}>
-                    <ToggleButton value="grid" title="Grid View">
+                    <ToggleButton value="grid" title="Grid View" size="small">
                       <ListIcon />
                     </ToggleButton>
-                    <ToggleButton value="cards" title="Card View">
+                    <ToggleButton value="cards" title="Card View" size="small">
                       <CardIcon />
                     </ToggleButton>
-                    <ToggleButton value="detailed" title="Detailed List">
+                    <ToggleButton value="detailed" title="Detailed List" size="small">
                       <ViewIcon />
                     </ToggleButton>
                   </ToggleButtonGroup>
 
-                  <CustomButton variant="outlined" icon={SortIcon} text="Sort" onClick={(e) => setSortMenuAnchor(e.currentTarget)} />
+                  <CustomButton variant="outlined" icon={SortIcon} text="Sort" onClick={(e) => setSortMenuAnchor(e.currentTarget)} size="small" />
 
-                  <CustomButton variant="outlined" icon={FilterIcon} text="Filter" onClick={() => setIsFilterDrawerOpen(true)} />
+                  <CustomButton variant="outlined" icon={FilterIcon} text="Filter" onClick={() => setIsFilterDrawerOpen(true)} size="small" />
 
                   <CustomButton
                     variant="outlined"
                     icon={selectedRows.length > 0 ? SelectAllIcon : UnselectAllIcon}
                     text={`Bulk (${selectedRows.length})`}
                     onClick={() => setIsBulkActionsOpen(true)}
-                    // disabled={selectedRows.length === 0}
+                    size="small"
                   />
 
-                  <CustomButton variant="outlined" icon={UploadIcon} text="Import" onClick={() => fileInputRef.current?.click()} disabled />
+                  <CustomButton variant="outlined" icon={UploadIcon} text="Import" onClick={() => fileInputRef.current?.click()} disabled size="small" />
 
-                  <CustomButton variant="outlined" icon={ReportIcon} text="Export" onClick={(e) => setReportsMenuAnchor(e.currentTarget)} disabled />
+                  <CustomButton variant="outlined" icon={ReportIcon} text="Export" onClick={(e) => setReportsMenuAnchor(e.currentTarget)} disabled size="small" />
                 </Stack>
               </Grid>
             </Grid>
@@ -1176,7 +1266,7 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="body2" color="text.secondary" fontWeight="500">
-              Showing <strong>{filteredAndSearchedGrns.length}</strong> of <strong>{statistics.total}</strong> GRNs
+              Showing <strong>{filteredAndSearchedGrns.length}</strong> of <strong>{statistics.total}</strong> GRNs for <strong>{deptName}</strong>
               {selectedRows.length > 0 && ` (${selectedRows.length} selected)`}
               {searchTerm && ` • Filtered by: "${searchTerm}"`}
             </Typography>
@@ -1246,15 +1336,26 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
         </MenuList>
       </Menu>
 
-      <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} requireSelection />
+      <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelectWithGrnFetch} requireSelection />
 
-      <ComprehensiveGrnFormDialog open={isGrnFormOpen} onClose={() => setIsGrnFormOpen(false)} grn={selectedGrn} departments={departments} suppliers={suppliers} products={[]} />
+      <ComprehensiveGrnFormDialog
+        open={isGrnFormOpen}
+        onClose={() => setIsGrnFormOpen(false)}
+        grn={selectedGrn}
+        departments={departments}
+        suppliers={suppliers}
+        products={[]}
+        selectedDepartmentId={deptId}
+        selectedDepartmentName={deptName}
+        onGrnSaved={handleGrnSaved}
+      />
+
       <GrnViewDetailsDialog open={isDetailsDialogOpen} onClose={() => setIsDetailsDialogOpen(false)} grn={selectedGrn} />
 
       {/* Enhanced Filter Drawer */}
       <Drawer anchor="right" open={isFilterDrawerOpen} onClose={() => setIsFilterDrawerOpen(false)} sx={{ "& .MuiDrawer-paper": { width: 400, p: 3 } }}>
         <Typography variant="h6" gutterBottom color="primary" fontWeight="600">
-          Advanced Filters
+          Advanced Filters for {deptName}
         </Typography>
         <Divider sx={{ mb: 3 }} />
         <Stack spacing={3}>
@@ -1372,7 +1473,9 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
 
       {/* Enhanced Bulk Actions Dialog */}
       <Dialog open={isBulkActionsOpen} onClose={() => setIsBulkActionsOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Bulk Actions ({selectedRows.length} items selected)</DialogTitle>
+        <DialogTitle>
+          Bulk Actions ({selectedRows.length} items selected from {deptName})
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <CustomButton

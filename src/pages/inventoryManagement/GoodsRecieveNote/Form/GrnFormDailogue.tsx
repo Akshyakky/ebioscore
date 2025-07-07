@@ -1,7 +1,8 @@
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { GrnDetailDto, GrnDto, GrnMastDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { PurchaseOrderDetailDto, PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { useAlert } from "@/providers/AlertProvider";
@@ -124,7 +125,7 @@ const grnSchema = z.object({
   grnDate: z.union([z.date(), z.any()]).optional().nullable(),
   invoiceNo: z.string().optional(),
   invDate: z.union([z.date(), z.any()]).optional().nullable(),
-  grnType: z.string().default("Invoice"),
+  grnType: z.string().default(""),
   grnStatus: z.string().default("Pending"),
   grnStatusCode: z.string().default("PEND"),
   grnApprovedYN: z.string().default("N"),
@@ -167,13 +168,26 @@ interface ComprehensiveGrnFormDialogProps {
   departments: { value: string; label: string }[];
   suppliers: { value: string; label: string }[];
   products: { value: string; label: string }[];
+  selectedDepartmentId?: number;
+  selectedDepartmentName?: string;
+  onGrnSaved?: () => void;
 }
 
-const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({ open, onClose, grn, departments, suppliers }) => {
+const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
+  open,
+  onClose,
+  grn,
+  departments,
+  suppliers,
+  selectedDepartmentId,
+  selectedDepartmentName,
+  onGrnSaved,
+}) => {
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [allGrnDetails, setAllGrnDetails] = useState<GrnDetailDto[]>([]);
   const [issueDepartments, setIssueDepartments] = useState<IssueDepartmentData[]>([]);
   const [selectedProductForIssue, setSelectedProductForIssue] = useState<GrnDetailDto | null>(null);
+  const { grnType } = useDropdownValues(["grnType"]);
   const [originalGrnID, setOriginalGrnID] = useState<number>(0);
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
@@ -204,10 +218,30 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   const watcheddeptID = watch("deptID");
   const watchedgrnCode = watch("grnCode");
   const watcheddiscount = watch("disc");
+  const watchedSupplierID = watch("supplrID");
+  const watchedInvoiceNo = watch("invoiceNo");
+  const watchedGrnType = watch("grnType");
 
+  // Form validation function to check if all required fields are filled
+  const isFormValid = useMemo(() => {
+    // Check required form fields
+    const isDeptIDValid = watcheddeptID && watcheddeptID > 0;
+    const isSupplierIDValid = watchedSupplierID && watchedSupplierID > 0;
+    const isInvoiceNoValid = watchedInvoiceNo && watchedInvoiceNo.trim().length > 0;
+    const isGrnTypeValid = watchedGrnType && watchedGrnType.trim().length > 0;
+
+    // Check if at least one product detail exists
+    const hasProductDetails = allGrnDetails.length > 0;
+
+    // All conditions must be true for form to be valid
+    return isDeptIDValid && isSupplierIDValid && isInvoiceNoValid && isGrnTypeValid && hasProductDetails;
+  }, [watcheddeptID, watchedSupplierID, watchedInvoiceNo, watchedGrnType, allGrnDetails.length]);
+
+  // Initialize form data with selected department or existing GRN data
   useEffect(() => {
     if (open) {
       if (grn) {
+        // Edit mode - populate with existing GRN data
         setOriginalGrnID(grn.grnMastDto.grnID);
         const formData: GrnFormData = {
           grnID: grn.grnMastDto.grnID || 0,
@@ -219,7 +253,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           grnDate: grn.grnMastDto.grnDate ? new Date(grn.grnMastDto.grnDate) : null,
           invoiceNo: grn.grnMastDto.invoiceNo || "",
           invDate: grn.grnMastDto.invDate ? new Date(grn.grnMastDto.invDate) : null,
-          grnType: grn.grnMastDto.grnType || "Invoice",
+          grnType: grn.grnMastDto.grnType || "",
           grnStatus: grn.grnMastDto.grnStatus || "Pending",
           grnStatusCode: grn.grnMastDto.grnStatusCode || "PEND",
           grnApprovedYN: grn.grnMastDto.grnApprovedYN || "N",
@@ -262,13 +296,35 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         setAllGrnDetails(grnDetailsList);
         setIssueDepartments([]);
       } else {
+        // New GRN mode - populate with selected department
         setOriginalGrnID(0);
-        reset();
+        const initialFormData: Partial<GrnFormData> = {
+          grnID: 0,
+          grnCode: "",
+          grnDate: new Date(),
+          grnType: "",
+          grnStatus: "Pending",
+          grnStatusCode: "PEND",
+          grnApprovedYN: "N",
+          catValue: "MEDI",
+          catDesc: "REVENUE",
+          auGrpID: 18,
+          discPercentageYN: "N",
+          rActiveYN: "Y",
+        };
+
+        // Set selected department if available
+        if (selectedDepartmentId && selectedDepartmentName) {
+          initialFormData.deptID = selectedDepartmentId;
+          initialFormData.deptName = selectedDepartmentName;
+        }
+
+        reset(initialFormData);
         setAllGrnDetails([]);
         setIssueDepartments([]);
       }
     }
-  }, [open, grn, reset]);
+  }, [open, grn, reset, selectedDepartmentId, selectedDepartmentName]);
 
   const handleGenerateCode = useCallback(async () => {
     if (!watcheddeptID) {
@@ -583,7 +639,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         transDeptID: data.transDeptID || null,
         transDeptName: data.transDeptName || "",
         grnCode: data.grnCode || "",
-        grnType: data.grnType || "Invoice",
+        grnType: data.grnType || "",
         totalTaxableAmt: data.totalTaxableAmt || 0,
         netCGSTTaxAmt: data.netCGSTTaxAmt || 0,
         netSGSTTaxAmt: data.netSGSTTaxAmt || 0,
@@ -607,6 +663,12 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           : `GRN created successfully with ${formattedData.grnDetailDto?.length || 0} product(s)${isBeingApproved ? " and approved. Stock has been updated." : "."}`;
 
         showAlert("Success", successMessage, "success");
+
+        // Call the callback to refresh the parent component's data
+        if (onGrnSaved) {
+          onGrnSaved();
+        }
+
         onClose();
       } else {
         throw new Error(response.errorMessage || "Failed to save GRN");
@@ -618,7 +680,28 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   };
 
   const handleClear = () => {
-    reset();
+    // Reset to initial state with selected department if in new mode
+    if (!isEditMode && selectedDepartmentId && selectedDepartmentName) {
+      const initialFormData: Partial<GrnFormData> = {
+        grnID: 0,
+        grnCode: "",
+        deptID: selectedDepartmentId,
+        deptName: selectedDepartmentName,
+        grnDate: new Date(),
+        grnType: "",
+        grnStatus: "Pending",
+        grnStatusCode: "PEND",
+        grnApprovedYN: "N",
+        catValue: "MEDI",
+        catDesc: "REVENUE",
+        auGrpID: 18,
+        discPercentageYN: "N",
+        rActiveYN: "Y",
+      };
+      reset(initialFormData);
+    } else {
+      reset();
+    }
     setAllGrnDetails([]);
     setIssueDepartments([]);
     setOriginalGrnID(0);
@@ -643,7 +726,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           showLoadingIndicator={true}
           loadingText={isEditMode ? "Updating..." : "Creating..."}
           successText={isEditMode ? "Updated!" : "Created!"}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isFormValid}
         />
       </Box>
     );
@@ -653,9 +736,10 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     <GenericDialog
       open={open}
       onClose={onClose}
-      title={`Goods Receive Note (GRN) ${isEditMode ? `- Edit GRN ${originalGrnID}` : "- New"}`}
-      maxWidth="xl"
+      title={`Goods Receive Note (GRN) ${isEditMode ? `- Edit GRN ${originalGrnID}` : `- New${selectedDepartmentName ? ` (${selectedDepartmentName})` : ""}`}`}
+      maxWidth="xxl"
       fullWidth
+      fullScreen
       disableBackdropClick={isSubmitting}
       disableEscapeKeyDown={isSubmitting}
       actions={dialogActions}
@@ -670,6 +754,12 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         {isEditMode && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             Editing GRN {originalGrnID} - Changes will update existing records
+          </Alert>
+        )}
+
+        {!isEditMode && selectedDepartmentName && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Creating new GRN for department: <strong>{selectedDepartmentName}</strong>
           </Alert>
         )}
 
@@ -699,7 +789,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           <AccordionDetails>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField
+                <FormField
                   name="grnCode"
                   control={control}
                   type="text"
@@ -713,7 +803,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField
+                <FormField
                   name="deptID"
                   control={control}
                   type="select"
@@ -725,16 +815,16 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="supplrID" control={control} type="select" label="Supplier" size="small" options={suppliers} onChange={handleSupplierChange} />
+                <FormField name="supplrID" control={control} type="select" label="Supplier" size="small" options={suppliers} onChange={handleSupplierChange} required />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="grnDate" control={control} type="datepicker" label="GRN Date" size="small" />
+                <FormField name="grnDate" control={control} type="datepicker" label="GRN Date" size="small" />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="grnType" control={control} type="select" label="GRN Type" size="small" options={[{ value: "Invoice", label: "Invoice" }]} />
+                <FormField name="grnType" control={control} type="select" options={grnType} label="GRN Type" size="small" required />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="dcNo" control={control} type="text" label="DC Number" size="small" />
+                <FormField name="dcNo" control={control} type="text" label="DC Number" size="small" />
               </Grid>
             </Grid>
           </AccordionDetails>
@@ -752,10 +842,10 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           <AccordionDetails>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="invoiceNo" control={control} type="text" label="Invoice Number" size="small" />
+                <FormField name="invoiceNo" control={control} type="text" label="Invoice Number" size="small" required />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="invDate" control={control} type="datepicker" label="Invoice Date" size="small" />
+                <FormField name="invDate" control={control} type="datepicker" label="Invoice Date" size="small" />
               </Grid>
             </Grid>
           </AccordionDetails>
@@ -807,14 +897,14 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack spacing={2}>
-                  <EnhancedFormField name="discPercentageYN" control={control} type="switch" label="Discount as Percentage" onChange={handleDiscountPercentageChange} />
+                  <FormField name="discPercentageYN" control={control} type="switch" label="Discount as Percentage" onChange={handleDiscountPercentageChange} />
                   <Box display="flex" alignItems="center" gap={0.5}>
                     <ApproveIcon color="success" fontSize="small" />
-                    <EnhancedFormField name="grnApprovedYN" control={control} type="switch" color="success" label="Approve GRN" onChange={handleApprovalChange} />
+                    <FormField name="grnApprovedYN" control={control} type="switch" color="success" label="Approve GRN" onChange={handleApprovalChange} />
                   </Box>
                   <Box display="flex" alignItems="center" gap={0.5}>
                     {getValues("rActiveYN") === "Y" ? <ViewIcon color="warning" fontSize="small" /> : <HideIcon color="warning" fontSize="small" />}
-                    <EnhancedFormField
+                    <FormField
                       name="rActiveYN"
                       control={control}
                       type="switch"
@@ -859,7 +949,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           <AccordionDetails>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12 }}>
-                <EnhancedFormField name="rNotes" control={control} type="textarea" label="Notes" placeholder="Enter any additional notes or comments for this GRN..." fullWidth />
+                <FormField name="rNotes" control={control} type="textarea" label="Notes" placeholder="Enter any additional notes or comments for this GRN..." fullWidth />
               </Grid>
             </Grid>
           </AccordionDetails>
