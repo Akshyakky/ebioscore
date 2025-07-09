@@ -18,9 +18,9 @@ export const useBilling = () => {
   );
 
   // Calculate discount based on percentage
-  const calculateDiscountFromPercent = useCallback((amount: number, percentage: number): number => {
+  const calculateDiscountFromPercent = (amount: number, percentage: number): number => {
     return (amount * percentage) / 100;
-  }, []);
+  };
 
   // Calculate total for all services
   const calculateServicesTotal = useCallback(
@@ -31,7 +31,32 @@ export const useBilling = () => {
     },
     [calculateServiceNetAmount]
   );
+  const calculateServiceTotals = (service: BillServicesDto) => {
+    const quantity = service.chUnits || 1;
+    const drAmt = service.dCValue || 0;
+    const hospAmt = service.hCValue || 0;
 
+    // Gross amount calculation
+    const grossAmount = quantity * (drAmt + hospAmt);
+
+    // Calculate discounts
+    const drDiscAmt = calculateDiscountFromPercent(drAmt * quantity, service.drPercShare || 0);
+    const hospDiscAmt = calculateDiscountFromPercent(hospAmt * quantity, service.hospPercShare || 0);
+
+    // Total discount
+    const totalDiscount = drDiscAmt + hospDiscAmt;
+
+    // Net amount
+    const netAmount = grossAmount - totalDiscount;
+
+    return {
+      grossAmount,
+      drDiscAmt,
+      hospDiscAmt,
+      totalDiscount,
+      netAmount,
+    };
+  };
   // Validate service amounts
   const validateServiceAmounts = useCallback((service: Partial<BillServicesDto>): boolean => {
     const grossAmt = service.cHValue || 0;
@@ -62,6 +87,7 @@ export const useBilling = () => {
     calculateServiceDiscountAmount,
     calculateServiceNetAmount,
     calculateDiscountFromPercent,
+    calculateServiceTotals,
     calculateServicesTotal,
     validateServiceAmounts,
     calculateDiscountValues,

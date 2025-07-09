@@ -38,6 +38,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { useBilling } from "../hooks/useBilling";
 
 // Schema definitions (keeping the same)
 const BillServicesDtoSchema = z.object({
@@ -179,6 +180,7 @@ const BillingPage: React.FC = () => {
   const [loadingServices, setLoadingServices] = useState(false);
   const [serviceSearchTerm, setServiceSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
+  const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
 
   const physicians = [
     { value: 1, label: "Dr. Ajeesh" },
@@ -258,6 +260,7 @@ const BillingPage: React.FC = () => {
     fields: serviceFields,
     append: appendService,
     remove: removeService,
+    update: updateService,
   } = useFieldArray({
     control,
     name: "billServices",
@@ -275,23 +278,45 @@ const BillingPage: React.FC = () => {
   const watchedBillServices = watch("billServices");
   const watchedBillProducts = watch("billProducts");
   const watchedVisitReference = watch("visitReferenceCode");
+  const watchedGroupDisc = watch("groupDisc");
 
-  // Calculate total amounts
+  // Calculate total amounts whenever services or products change
   useEffect(() => {
-    const servicesTotal = watchedBillServices.reduce((sum, service) => {
-      const amount = (service.cHValue || 0) * (service.chUnits || 1);
-      const discount = (amount * (service.chDisc || 0)) / 100;
-      return sum + (amount - discount);
-    }, 0);
+    let totalGrossAmount = 0;
+    let totalDiscountAmount = 0;
 
-    const productsTotal = watchedBillProducts.reduce((sum, product) => {
-      const amount = (product.cHValue || 0) * (product.chUnits || 1);
-      const discount = (amount * (product.chDisc || 0)) / 100;
-      return sum + (amount - discount);
-    }, 0);
+    // Calculate services totals
+    watchedBillServices.forEach((service) => {
+      const quantity = service.chUnits || 1;
+      const drAmt = service.dCValue || 0;
+      const hospAmt = service.hCValue || 0;
+      const drDiscAmt = service.dValDisc || 0;
+      const hospDiscAmt = service.hValDisc || 0;
 
-    const grossAmount = servicesTotal + productsTotal;
-    setValue("billGrossAmt", grossAmount);
+      const grossAmount = quantity * (drAmt + hospAmt);
+      const discountAmount = drDiscAmt + hospDiscAmt;
+
+      totalGrossAmount += grossAmount;
+      totalDiscountAmount += discountAmount;
+    });
+
+    // Calculate products totals (similar logic)
+    watchedBillProducts.forEach((product) => {
+      const quantity = product.chUnits || 1;
+      const drAmt = product.dCValue || 0;
+      const hospAmt = product.hCValue || 0;
+      const drDiscAmt = product.dValDisc || 0;
+      const hospDiscAmt = product.hValDisc || 0;
+
+      const grossAmount = quantity * (drAmt + hospAmt);
+      const discountAmount = drDiscAmt + hospDiscAmt;
+
+      totalGrossAmount += grossAmount;
+      totalDiscountAmount += discountAmount;
+    });
+
+    setValue("billGrossAmt", totalGrossAmount);
+    setValue("billDiscAmt", totalDiscountAmount);
   }, [watchedBillServices, watchedBillProducts, setValue]);
 
   useEffect(() => {
@@ -353,14 +378,47 @@ const BillingPage: React.FC = () => {
   const handleServiceSelect = useCallback(
     async (service: BChargeDto | null) => {
       if (service) {
-        const reponse = await billingService.getBillingServiceById(service.chargeID);
-        appendService(reponse.data);
+        const response = await billingService.getBillingServiceById(service.chargeID);
+        appendService(response.data);
         setSelectedService(null);
         setServiceSearchTerm("");
         showAlert("Success", `Service "${service.chargeDesc}" added`, "success");
       }
     },
     [appendService, showAlert]
+  );
+
+  // Handle field changes with automatic calculations
+  const handleServiceFieldChange = useCallback(
+    (index: number, field: string, value: any) => {
+      const currentService = watchedBillServices[index];
+      const updatedService = { ...currentService };
+
+      // Update the changed field
+      updatedService[field] = value;
+
+      // Recalculate based on what changed
+      const quantity = updatedService.chUnits || 1;
+      const drAmt = updatedService.dCValue || 0;
+      const hospAmt = updatedService.hCValue || 0;
+      const drDiscPerc = updatedService.drPercShare || 0;
+      const hospDiscPerc = updatedService.hospPercShare || 0;
+
+      // Calculate discount amounts based on percentages
+      if (field === "drPercShare" || field === "dCValue" || field === "chUnits") {
+        updatedService.dValDisc = calculateDiscountFromPercent(drAmt * quantity, drDiscPerc);
+      }
+
+      if (field === "hospPercShare" || field === "hCValue" || field === "chUnits") {
+        updatedService.hValDisc = calculateDiscountFromPercent(hospAmt * quantity, hospDiscPerc);
+      }
+
+      // Calculate gross amount
+      updatedService.cHValue = drAmt + hospAmt;
+
+      updateService(index, updatedService);
+    },
+    [watchedBillServices, updateService, calculateDiscountFromPercent]
   );
 
   const onSubmit = async (data: BillingFormData) => {
@@ -456,6 +514,19 @@ const BillingPage: React.FC = () => {
       setIsHistoryDialogOpen(true);
     }
   }, [selectedPChartID]);
+
+  // Calculate final bill amount
+  const calculateFinalBillAmount = useMemo(() => {
+    const grossAmount = watch("billGrossAmt");
+    const discountAmount = watch("billDiscAmt");
+    const groupDiscountPerc = watchedGroupDisc || 0;
+
+    // Apply group discount on the net amount after individual discounts
+    const netAfterDiscount = grossAmount - discountAmount;
+    const groupDiscountAmount = calculateDiscountFromPercent(netAfterDiscount, groupDiscountPerc);
+
+    return netAfterDiscount - groupDiscountAmount;
+  }, [watch("billGrossAmt"), watch("billDiscAmt"), watchedGroupDisc, calculateDiscountFromPercent]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -693,22 +764,22 @@ const BillingPage: React.FC = () => {
                             <TableCell sx={{ minWidth: 200 }}>Service Name</TableCell>
                             <TableCell sx={{ minWidth: 150 }}>Physician</TableCell>
                             <TableCell sx={{ minWidth: 130 }}>Effective Date</TableCell>
-                            <TableCell align="right" sx={{ minWidth: 80 }}>
+                            <TableCell align="center" sx={{ minWidth: 80 }}>
                               Quantity
                             </TableCell>
                             <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Dr Amt
+                              Dr Amt (₹)
                             </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
+                            <TableCell align="center" sx={{ minWidth: 90 }}>
                               Dr Disc %
                             </TableCell>
                             <TableCell align="right" sx={{ minWidth: 90 }}>
                               Dr Disc ₹
                             </TableCell>
                             <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Hosp Amt
+                              Hosp Amt (₹)
                             </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 100 }}>
+                            <TableCell align="center" sx={{ minWidth: 100 }}>
                               Hosp Disc %
                             </TableCell>
                             <TableCell align="right" sx={{ minWidth: 100 }}>
@@ -733,8 +804,16 @@ const BillingPage: React.FC = () => {
                         <TableBody>
                           {serviceFields.map((field, index) => {
                             const service = watchedBillServices[index];
-                            const discAmt = (service?.dValDisc || 0) + (service?.hValDisc || 0);
-                            const netAmt = (service?.cHValue || 0) - discAmt;
+                            const quantity = service?.chUnits || 1;
+                            const drAmt = service?.dCValue || 0;
+                            const hospAmt = service?.hCValue || 0;
+                            const drDiscAmt = service?.dValDisc || 0;
+                            const hospDiscAmt = service?.hValDisc || 0;
+
+                            // Calculate amounts
+                            const grossAmt = quantity * (drAmt + hospAmt);
+                            const totalDiscAmt = drDiscAmt + hospDiscAmt;
+                            const netAmt = grossAmt - totalDiscAmt;
 
                             return (
                               <TableRow key={field.id}>
@@ -755,7 +834,7 @@ const BillingPage: React.FC = () => {
                                       defaultText="Select"
                                       onChange={(data: any) => {
                                         if (data && typeof data === "object" && "value" in data) {
-                                          // setValue(`billServices.${index}.physicianName`, data.label || "", { shouldDirty: true });
+                                          setValue(`billServices.${index}.PhysicianName`, data.label || "", { shouldDirty: true });
                                         }
                                       }}
                                     />
@@ -769,35 +848,104 @@ const BillingPage: React.FC = () => {
                                   <FormField name={`billServices.${index}.chargeDt`} control={control} type="datepicker" size="small" fullWidth />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.chUnits`} control={control} type="number" size="small" fullWidth min={1} step={1} />
+                                  <FormField
+                                    name={`billServices.${index}.chUnits`}
+                                    control={control}
+                                    type="number"
+                                    size="small"
+                                    fullWidth
+                                    min={1}
+                                    step={1}
+                                    onChange={(value: any) => handleServiceFieldChange(index, "chUnits", value)}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.dCValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                  <FormField
+                                    name={`billServices.${index}.dCValue`}
+                                    control={control}
+                                    type="number"
+                                    size="small"
+                                    fullWidth
+                                    min={0}
+                                    step={0.01}
+                                    onChange={(value: any) => handleServiceFieldChange(index, "dCValue", value)}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.drPercShare`} control={control} type="number" size="small" fullWidth min={0} max={100} step={0.01} />
+                                  <FormField
+                                    name={`billServices.${index}.drPercShare`}
+                                    control={control}
+                                    type="number"
+                                    size="small"
+                                    fullWidth
+                                    min={0}
+                                    max={100}
+                                    step={0.01}
+                                    onChange={(value: any) => handleServiceFieldChange(index, "drPercShare", value)}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.dValDisc`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                  <TextField
+                                    value={drDiscAmt.toFixed(2)}
+                                    size="small"
+                                    fullWidth
+                                    disabled
+                                    InputProps={{
+                                      readOnly: true,
+                                      style: { textAlign: "right" },
+                                    }}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.hCValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                  <FormField
+                                    name={`billServices.${index}.hCValue`}
+                                    control={control}
+                                    type="number"
+                                    size="small"
+                                    fullWidth
+                                    min={0}
+                                    step={0.01}
+                                    onChange={(value: any) => handleServiceFieldChange(index, "hCValue", value)}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.hospPercShare`} control={control} type="number" size="small" fullWidth min={0} max={100} step={0.01} />
+                                  <FormField
+                                    name={`billServices.${index}.hospPercShare`}
+                                    control={control}
+                                    type="number"
+                                    size="small"
+                                    fullWidth
+                                    min={0}
+                                    max={100}
+                                    step={0.01}
+                                    onChange={(value: any) => handleServiceFieldChange(index, "hospPercShare", value)}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.hValDisc`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField name={`billServices.${index}.cHValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Typography variant="body2">{discAmt.toFixed(2)}</Typography>
+                                  <TextField
+                                    value={hospDiscAmt.toFixed(2)}
+                                    size="small"
+                                    fullWidth
+                                    disabled
+                                    InputProps={{
+                                      readOnly: true,
+                                      style: { textAlign: "right" },
+                                    }}
+                                  />
                                 </TableCell>
                                 <TableCell align="right">
                                   <Typography variant="body2" fontWeight="medium">
-                                    {netAmt.toFixed(2)}
+                                    ₹{grossAmt.toFixed(2)}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Typography variant="body2" color="error">
+                                    ₹{totalDiscAmt.toFixed(2)}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Typography variant="body2" fontWeight="bold" color="primary">
+                                    ₹{netAmt.toFixed(2)}
                                   </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -844,13 +992,11 @@ const BillingPage: React.FC = () => {
                       <Stack spacing={1}>
                         <Box display="flex" justifyContent="space-between">
                           <Typography>Gross Amount:</Typography>
-                          <Typography fontWeight="bold">{watch("billGrossAmt").toFixed(2)}</Typography>
+                          <Typography fontWeight="bold">₹{watch("billGrossAmt").toFixed(2)}</Typography>
                         </Box>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Typography>Discount Amount:</Typography>
-                          <Box sx={{ width: 120 }}>
-                            <FormField name="billDiscAmt" control={control} type="number" size="small" min={0} step={0.01} fullWidth />
-                          </Box>
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography>Item Discounts:</Typography>
+                          <Typography color="error">-₹{watch("billDiscAmt").toFixed(2)}</Typography>
                         </Box>
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                           <Typography>Group Discount %:</Typography>
@@ -858,11 +1004,15 @@ const BillingPage: React.FC = () => {
                             <FormField name="groupDisc" control={control} type="number" size="small" min={0} max={100} step={0.01} fullWidth />
                           </Box>
                         </Box>
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography>Group Discount Amount:</Typography>
+                          <Typography color="error">-₹{calculateDiscountFromPercent(watch("billGrossAmt") - watch("billDiscAmt"), watchedGroupDisc || 0).toFixed(2)}</Typography>
+                        </Box>
                         <Divider />
                         <Box display="flex" justifyContent="space-between">
-                          <Typography variant="h6">Net Amount:</Typography>
+                          <Typography variant="h6">Net Amount Payable:</Typography>
                           <Typography variant="h6" color="primary">
-                            {(watch("billGrossAmt") - watch("billDiscAmt") - (watch("billGrossAmt") * (watch("groupDisc") || 0)) / 100).toFixed(2)}
+                            ₹{calculateFinalBillAmount.toFixed(2)}
                           </Typography>
                         </Box>
                       </Stack>
