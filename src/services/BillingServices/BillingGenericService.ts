@@ -8,3 +8,4 @@ export const patientInvioceService = createEntityService<BPatTypeDto>("PatientIn
 export const serviceGroupService = createEntityService<BServiceGrpDto>("ServiceGroup", "billingURL");
 export const paymentTypeService = createEntityService<BPayTypeDto>("PaymentTypes", "billingURL");
 export const serviceTypeService = createEntityService<ServiceTypeDto>("ServiceType", "billingURL");
+export const billingService = createEntityService<ServiceTypeDto>("Billing", "billingURL");

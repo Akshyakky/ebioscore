@@ -1,6 +1,6 @@
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { DateFilterType, GetPatientVisitHistory, OPVisitDto } from "@/interfaces/PatientAdministration/revisitFormData";
+import { DateFilterType, GetPatientAllVisitHistory, GetPatientVisitHistory, OPVisitDto } from "@/interfaces/PatientAdministration/revisitFormData";
 import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 
@@ -47,6 +47,9 @@ export const getWaitingPatientDetails = async (
 
 export const cancelVisit = async (opVID: number, modifiedBy: string): Promise<OperationResult<void>> => {
   return apiService.post<OperationResult<void>>(`Revisit/CancelVisit/${opVID}`, { modifiedBy }, getToken());
+};
+export const getPatientAllVisitHistory = async (pChartID: number): Promise<{ data: GetPatientAllVisitHistory[]; success: boolean }> => {
+  return apiService.get<{ data: GetPatientAllVisitHistory[]; success: boolean }>(`Revisit/GetPatientAllVisitHistory/${pChartID}`, getToken());
 };
 
 export const RevisitService = {
