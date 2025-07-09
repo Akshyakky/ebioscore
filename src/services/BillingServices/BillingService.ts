@@ -1,6 +1,7 @@
 // src/services/BillingServices/billingService.ts
 
 import { APIConfig } from "@/apiConfig";
+import { BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
 import {
   BChargeAliasDto,
   BChargeDetailDto,
@@ -91,6 +92,14 @@ class ExtendedBChargeService extends GenericEntityService<BChargeDto> {
     return this.apiService.post<OperationResult<string>>(`${this.baseEndpoint}/GenerateChargeCode`, dto, this.getToken());
   }
 }
+class ExtendedBillingService extends GenericEntityService<BillsDto> {
+  constructor() {
+    super(new CommonApiService({ baseURL: APIConfig.billingURL }), "Billing");
+  }
+  async getBillingServiceById(chargeId: number): Promise<OperationResult<BillServicesDto[]>> {
+    return this.apiService.get<OperationResult<BillServicesDto[]>>(`${this.baseEndpoint}/GetBillingServiceById/${chargeId}`, this.getToken());
+  }
+}
 
 // Export basic services using factory pattern (for simple CRUD operations)
 export const chargeService = createEntityService<BChargeDto>("BCharge", "billingURL");
@@ -99,6 +108,7 @@ export const doctorSharePercShareService = createEntityService<BDoctorSharePercS
 export const chargeAliasService = createEntityService<BChargeAliasDto>("BChargeAlias", "billingURL");
 export const chargeFacultyService = createEntityService<BChargeFacultyDto>("BChargeFaculty", "billingURL");
 export const chargePackService = createEntityService<BChargePackDto>("BChargePack", "billingURL");
+export const billingGenericService = createEntityService<BillsDto>("Billing", "billingURL");
 
 // Export extended services with custom methods (for complex operations)
 export const bChargeService = new ExtendedBChargeService();
@@ -107,6 +117,8 @@ export const bDoctorSharePercShareService = new ExtendedBDoctorSharePercShareSer
 export const bChargeAliasService = new ExtendedBChargeAliasService();
 export const bChargeFacultyService = new ExtendedBChargeFacultyService();
 export const bChargePackService = new ExtendedBChargePackService();
+export const billingService = new ExtendedBillingService();
+//
 
 // Export types for convenience
 export type { BChargeAliasDto, BChargeDetailDto, BChargeDto, BChargeFacultyDto, BChargePackDto, BDoctorSharePercShareDto, ChargeCodeGenerationDto, ChargeWithAllDetailsDto };

@@ -9,15 +9,17 @@ import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Pa
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import PatientVisitDialog from "@/pages/patientAdministration/RevisitPage/SubPage/PatientVisitDialog";
 import { useAlert } from "@/providers/AlertProvider";
-import { bChargeService } from "@/services/BillingServices/BillingService";
+import { bChargeService, billingService } from "@/services/BillingServices/BillingService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Add as AddIcon, Cancel as CancelIcon, Delete as DeleteIcon, Edit as EditIcon, History as HistoryIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Cancel as CancelIcon, Delete as DeleteIcon, Edit as EditIcon, History as HistoryIcon, Save as SaveIcon } from "@mui/icons-material";
 import {
   Alert,
+  Autocomplete,
   Box,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Divider,
   Grid,
   IconButton,
@@ -29,10 +31,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -170,12 +173,13 @@ const BillingPage: React.FC = () => {
   const [isChangingVisit, setIsChangingVisit] = useState(false); // New state for changing visit
   const [formError, setFormError] = useState<string | null>(null);
   const dropdownValues = useDropdownValues(["pic"]);
-  const [services, setServices] = useState<BChargeDto[]>(null);
+  const [services, setServices] = useState<BChargeDto[]>([]);
   //   const { contacts: physicians } = useContactMastByCategory({ consValue: "PHY" });
   //   const { contacts: referals } = useContactMastByCategory({ consValue: "REF" });
-  useEffect(() => {
-    console.log("Services", services);
-  }, [services]);
+  const [loadingServices, setLoadingServices] = useState(false);
+  const [serviceSearchTerm, setServiceSearchTerm] = useState("");
+  const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
+
   const physicians = [
     { value: 1, label: "Dr. Ajeesh" },
     { value: 2, label: "Dr. Akash" },
@@ -289,13 +293,35 @@ const BillingPage: React.FC = () => {
     const grossAmount = servicesTotal + productsTotal;
     setValue("billGrossAmt", grossAmount);
   }, [watchedBillServices, watchedBillProducts, setValue]);
+
   useEffect(() => {
     const fetchServices = async () => {
-      const resonse = await bChargeService.getAll();
-      setServices(resonse.data as unknown as BChargeDto[]);
+      setLoadingServices(true);
+      try {
+        const response = await bChargeService.getAll();
+        setServices(response.data as unknown as BChargeDto[]);
+      } catch (error) {
+        showAlert("Error", "Failed to load services", "error");
+      } finally {
+        setLoadingServices(false);
+      }
     };
     fetchServices();
-  }, []);
+  }, [showAlert]);
+
+  // Filter services based on search term
+  const filteredServices = useMemo(() => {
+    if (!serviceSearchTerm || !services) return [];
+
+    const searchLower = serviceSearchTerm.toLowerCase();
+    return services.filter(
+      (service) =>
+        service.chargeCode.toLowerCase().includes(searchLower) ||
+        service.chargeDesc.toLowerCase().includes(searchLower) ||
+        (service.cShortName && service.cShortName.toLowerCase().includes(searchLower))
+    );
+  }, [serviceSearchTerm, services]);
+
   const handlePatientSelect = useCallback(
     (patientResult: PatientSearchResult) => {
       if (patientResult && patientResult.pChartID) {
@@ -318,30 +344,24 @@ const BillingPage: React.FC = () => {
     [setValue]
   );
 
-  const handleCloseHistoryDialog = useCallback((refreshData?: boolean) => {
+  const handleCloseHistoryDialog = useCallback(() => {
     setIsHistoryDialogOpen(false);
     setIsChangingVisit(false);
   }, []);
 
-  const handleAddService = useCallback(() => {
-    appendService({
-      billDetID: 0,
-      billID: 0,
-      chargeDt: new Date(),
-      chargeID: 0,
-      chargeCode: "",
-      chargeDesc: "",
-      cHValue: 0,
-      chUnits: 1,
-      chDisc: 0,
-      bCHID: 0,
-      bCHName: "",
-      physicianYN: "N",
-      chargeCost: 0,
-      rActiveYN: "Y",
-      transferYN: "N",
-    });
-  }, [appendService]);
+  // Handle service selection from autocomplete
+  const handleServiceSelect = useCallback(
+    async (service: BChargeDto | null) => {
+      if (service) {
+        const reponse = await billingService.getBillingServiceById(service.chargeID);
+        appendService(reponse.data);
+        setSelectedService(null);
+        setServiceSearchTerm("");
+        showAlert("Success", `Service "${service.chargeDesc}" added`, "success");
+      }
+    },
+    [appendService, showAlert]
+  );
 
   const onSubmit = async (data: BillingFormData) => {
     try {
@@ -412,6 +432,8 @@ const BillingPage: React.FC = () => {
     setSelectedPChartID(0);
     setSelectedPatient(null);
     setClearSearchTrigger((prev) => prev + 1);
+    setServiceSearchTerm("");
+    setSelectedService(null);
   };
 
   // Add this function in BillingPage
@@ -611,7 +633,55 @@ const BillingPage: React.FC = () => {
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h6">Services</Typography>
-                    <SmartButton text="Add Service" icon={AddIcon} onClick={handleAddService} variant="contained" size="small" />
+                    <Box display="flex" gap={2} alignItems="center">
+                      {/* Service Search Autocomplete */}
+                      <Autocomplete
+                        value={selectedService}
+                        onChange={(event, newValue) => {
+                          if (newValue) {
+                            handleServiceSelect(newValue);
+                          }
+                        }}
+                        inputValue={serviceSearchTerm}
+                        onInputChange={(event, newInputValue) => {
+                          setServiceSearchTerm(newInputValue);
+                        }}
+                        options={filteredServices}
+                        getOptionLabel={(option) => `${option.chargeCode} - ${option.chargeDesc}`}
+                        loading={loadingServices}
+                        sx={{ width: 400 }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Search and add service"
+                            size="small"
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {loadingServices ? <CircularProgress color="inherit" size={20} /> : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <Box component="li" {...props}>
+                            <Box>
+                              <Typography variant="body1">
+                                {option.chargeCode} - {option.chargeDesc}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {option.cShortName && `Short: ${option.cShortName} | `}
+                                Type: {option.chargeType} | Status: {option.chargeStatus}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                        noOptionsText="No services found"
+                      />
+                    </Box>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
 
@@ -638,10 +708,26 @@ const BillingPage: React.FC = () => {
                             return (
                               <TableRow key={field.id}>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.chargeCode`} control={control} type="text" size="small" fullWidth placeholder="Code" />
+                                  <FormField
+                                    name={`billServices.${index}.chargeCode`}
+                                    control={control}
+                                    type="text"
+                                    size="small"
+                                    fullWidth
+                                    placeholder="Code"
+                                    disabled={watchedBillServices[index]?.chargeID > 0}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.chargeDesc`} control={control} type="text" size="small" fullWidth placeholder="Description" />
+                                  <FormField
+                                    name={`billServices.${index}.chargeDesc`}
+                                    control={control}
+                                    type="text"
+                                    size="small"
+                                    fullWidth
+                                    placeholder="Description"
+                                    disabled={watchedBillServices[index]?.chargeID > 0}
+                                  />
                                 </TableCell>
                                 <TableCell>
                                   <FormField name={`billServices.${index}.cHValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
@@ -668,7 +754,7 @@ const BillingPage: React.FC = () => {
                     </TableContainer>
                   ) : (
                     <Typography color="text.secondary" align="center">
-                      No services added
+                      No services added. Use the search box above to add services.
                     </Typography>
                   )}
                 </CardContent>
@@ -696,16 +782,18 @@ const BillingPage: React.FC = () => {
                           <Box sx={{ width: 120 }}>
                             <FormField name="billDiscAmt" control={control} type="number" size="small" min={0} step={0.01} fullWidth />
                           </Box>
-                          <Box display="flex" justifyContent="space-between">
-                            <Typography>Group Discount:</Typography>
-                            <Typography> {(watch("billGrossAmt") - watch("billDiscAmt") - (watch("billGrossAmt") * (watch("groupDisc") || 0)) / 100).toFixed(2)}</Typography>
+                        </Box>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography>Group Discount %:</Typography>
+                          <Box sx={{ width: 120 }}>
+                            <FormField name="groupDisc" control={control} type="number" size="small" min={0} max={100} step={0.01} fullWidth />
                           </Box>
                         </Box>
                         <Divider />
                         <Box display="flex" justifyContent="space-between">
                           <Typography variant="h6">Net Amount:</Typography>
                           <Typography variant="h6" color="primary">
-                            {(watch("billGrossAmt") - watch("billDiscAmt")).toFixed(2)}
+                            {(watch("billGrossAmt") - watch("billDiscAmt") - (watch("billGrossAmt") * (watch("groupDisc") || 0)) / 100).toFixed(2)}
                           </Typography>
                         </Box>
                       </Stack>
