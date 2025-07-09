@@ -686,60 +686,129 @@ const BillingPage: React.FC = () => {
                   <Divider sx={{ mb: 2 }} />
 
                   {serviceFields.length > 0 ? (
-                    <TableContainer>
-                      <Table size="small">
+                    <TableContainer sx={{ overflowX: "auto" }}>
+                      <Table size="small" sx={{ minWidth: 1500 }}>
                         <TableHead>
                           <TableRow>
-                            <TableCell>Service Code</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell align="right">Amount</TableCell>
-                            <TableCell align="center">Units</TableCell>
-                            <TableCell align="right">Discount %</TableCell>
-                            <TableCell align="right">Total</TableCell>
-                            <TableCell align="center">Actions</TableCell>
+                            <TableCell sx={{ minWidth: 200 }}>Service Name</TableCell>
+                            <TableCell sx={{ minWidth: 150 }}>Physician</TableCell>
+                            <TableCell sx={{ minWidth: 130 }}>Effective Date</TableCell>
+                            <TableCell align="right" sx={{ minWidth: 80 }}>
+                              Quantity
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 90 }}>
+                              Dr Amt
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 90 }}>
+                              Dr Disc %
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 90 }}>
+                              Dr Disc ₹
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 90 }}>
+                              Hosp Amt
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 100 }}>
+                              Hosp Disc %
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 100 }}>
+                              Hosp Disc ₹
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 100 }}>
+                              Gross Amt
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 90 }}>
+                              Disc Amt
+                            </TableCell>
+                            <TableCell align="right" sx={{ minWidth: 90 }}>
+                              Net Amt
+                            </TableCell>
+                            <TableCell sx={{ minWidth: 120 }}>Service Group</TableCell>
+                            <TableCell sx={{ minWidth: 120 }}>Pack Name</TableCell>
+                            <TableCell align="center" sx={{ minWidth: 60 }}>
+                              Delete
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {serviceFields.map((field, index) => {
-                            const amount = (watchedBillServices[index]?.cHValue || 0) * (watchedBillServices[index]?.chUnits || 1);
-                            const discount = (amount * (watchedBillServices[index]?.chDisc || 0)) / 100;
-                            const total = amount - discount;
+                            const service = watchedBillServices[index];
+                            const discAmt = (service?.dValDisc || 0) + (service?.hValDisc || 0);
+                            const netAmt = (service?.cHValue || 0) - discAmt;
 
                             return (
                               <TableRow key={field.id}>
                                 <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.chargeCode`}
-                                    control={control}
-                                    type="text"
-                                    size="small"
-                                    fullWidth
-                                    placeholder="Code"
-                                    disabled={watchedBillServices[index]?.chargeID > 0}
-                                  />
+                                  <Typography variant="body2" noWrap>
+                                    {service?.chargeDesc || "-"}
+                                  </Typography>
                                 </TableCell>
                                 <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.chargeDesc`}
-                                    control={control}
-                                    type="text"
-                                    size="small"
-                                    fullWidth
-                                    placeholder="Description"
-                                    disabled={watchedBillServices[index]?.chargeID > 0}
-                                  />
+                                  {service?.physicianYN === "Y" ? (
+                                    <FormField
+                                      name={`billServices.${index}.physicianID`}
+                                      control={control}
+                                      type="select"
+                                      size="small"
+                                      fullWidth
+                                      options={physicians || []}
+                                      defaultText="Select"
+                                      onChange={(data: any) => {
+                                        if (data && typeof data === "object" && "value" in data) {
+                                          // setValue(`billServices.${index}.physicianName`, data.label || "", { shouldDirty: true });
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                      N/A
+                                    </Typography>
+                                  )}
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.cHValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                  <FormField name={`billServices.${index}.chargeDt`} control={control} type="datepicker" size="small" fullWidth />
                                 </TableCell>
                                 <TableCell>
                                   <FormField name={`billServices.${index}.chUnits`} control={control} type="number" size="small" fullWidth min={1} step={1} />
                                 </TableCell>
                                 <TableCell>
-                                  <FormField name={`billServices.${index}.chDisc`} control={control} type="number" size="small" fullWidth min={0} max={100} step={0.01} />
+                                  <FormField name={`billServices.${index}.dCValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                </TableCell>
+                                <TableCell>
+                                  <FormField name={`billServices.${index}.drPercShare`} control={control} type="number" size="small" fullWidth min={0} max={100} step={0.01} />
+                                </TableCell>
+                                <TableCell>
+                                  <FormField name={`billServices.${index}.dValDisc`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                </TableCell>
+                                <TableCell>
+                                  <FormField name={`billServices.${index}.hCValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                </TableCell>
+                                <TableCell>
+                                  <FormField name={`billServices.${index}.hospPercShare`} control={control} type="number" size="small" fullWidth min={0} max={100} step={0.01} />
+                                </TableCell>
+                                <TableCell>
+                                  <FormField name={`billServices.${index}.hValDisc`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
+                                </TableCell>
+                                <TableCell>
+                                  <FormField name={`billServices.${index}.cHValue`} control={control} type="number" size="small" fullWidth min={0} step={0.01} />
                                 </TableCell>
                                 <TableCell align="right">
-                                  <Typography>{total.toFixed(2)}</Typography>
+                                  <Typography variant="body2">{discAmt.toFixed(2)}</Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Typography variant="body2" fontWeight="medium">
+                                    {netAmt.toFixed(2)}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" noWrap>
+                                    {service?.sGRPName || "-"}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" noWrap>
+                                    {service?.packName || "-"}
+                                  </Typography>
                                 </TableCell>
                                 <TableCell align="center">
                                   <IconButton size="small" color="error" onClick={() => removeService(index)}>
