@@ -23,7 +23,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGrn } from "../hooks/useGrnhooks";
-import UnifiedGrnDetailsComponent from "./GrnPoandProductDetails";
+import UnifiedGrnDetailsComponent from "./GrnPOandProductDetails";
 import GRNTotalsAndActionsSection from "./GRNTotalsAndActionsSection";
 import { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 

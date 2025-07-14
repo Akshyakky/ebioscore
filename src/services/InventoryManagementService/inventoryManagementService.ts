@@ -1,5 +1,6 @@
 import { GrnDetailDto, GrnMastDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { ProductGroupDto, ProductSubGroupDto, ProductUnitDto } from "@/interfaces/InventoryManagement/ProductGroup-Unit-SubGroup";
+import { ProductIssualDetailDto, ProductIssualDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
@@ -16,3 +17,8 @@ export const purchaseOrderMastService = createEntityService<PurchaseOrderMastDto
 export const purchaseOrderService = createEntityService<purchaseOrderSaveDto>("PurchaseOrder", "inventoryManagementURL");
 export const grnMastService = createEntityService<GrnMastDto>("GrnMast", "inventoryManagementURL");
 export const grnDetailService = createEntityService<GrnDetailDto>("GrnDetail", "inventoryManagementURL");
+export const productIssualMastService = createEntityService<ProductIssualDto>("ProductIssual", "inventoryManagementURL");
+export const productIssualDetailService = createEntityService<ProductIssualDetailDto>("ProductIssualDetail", "inventoryManagementURL");
+
+// Enhanced ProductIssualService instance
+// export const productIssualService = new productIssualService();
