@@ -51,3 +51,13 @@ export enum DateFilterType {
   LastThreeMonths = "LastThreeMonths",
   Custom = "Custom",
 }
+
+export interface GetPatientAllVisitHistory {
+  opVID: number;
+  opNumber: string;
+  pVisitDate: string;
+  pVisitType: string;
+  patOPIP: string;
+  opipNo: number;
+  opipCaseNo: number;
+}

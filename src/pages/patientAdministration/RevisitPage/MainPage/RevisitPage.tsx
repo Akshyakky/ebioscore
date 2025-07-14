@@ -24,7 +24,7 @@ import {
   MedicalServices as VisitIcon,
   HourglassEmpty as WaitingIcon,
 } from "@mui/icons-material";
-import { Alert, Avatar, Box, Card, CardContent, Divider, Grid, Paper, SelectChangeEvent, Stack, Typography } from "@mui/material";
+import { Alert, Avatar, Box, Card, CardContent, Divider, Grid, Paper, Stack, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -34,6 +34,7 @@ import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSea
 import PatientInsuranceManagement from "../../RegistrationPage/Components/PatientInsuranceManagement";
 import PatientVisitHistoryDialog from "../Form/RevisitForm";
 import { useRevisit } from "../hooks/useRevisitForm";
+import VisitDetailsForm from "../SubPage/VisitDetailsForm";
 
 const schema = z.object({
   opVID: z.number().default(0),
@@ -85,7 +86,10 @@ const RevisitPage: React.FC = () => {
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [availableAttendingPhysicians, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
-  const [primaryIntroducingSource] = useState<DropdownOption[]>([]);
+  const [primaryIntroducingSource] = useState<DropdownOption[] | any[]>([
+    { value: 1, label: "Test 01" },
+    { value: 2, label: "Test 02" },
+  ]);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
   const [showStats, setShowStats] = useState(true);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
@@ -798,131 +802,19 @@ const RevisitPage: React.FC = () => {
             </Grid>
 
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Visit Details
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="pTypeID"
-                        control={control}
-                        label="Payment Source [PIC]"
-                        type="select"
-                        required
-                        size="small"
-                        fullWidth
-                        options={dropdownValues.pic || []}
-                        onChange={(event: SelectChangeEvent<string>) => {
-                          const selectedValue = Number(event.target.value);
-                          const selectedOption = dropdownValues.pic?.find((option) => Number(option.value) === selectedValue);
-
-                          handleDropdownChange("pTypeID", selectedValue, dropdownValues.pic, {
-                            pTypeName: selectedOption?.label || "",
-                            pTypeCode: selectedOption?.value?.toString() || "",
-                          });
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="pVisitDate" control={control} label="Visit Date" type="datepicker" required size="small" fullWidth />
-                    </Grid>
-
-                    <Grid size={{ sm: 12 }}>
-                      <FormField
-                        name="pVisitType"
-                        control={control}
-                        label="Visit To"
-                        type="radio"
-                        required
-                        options={[
-                          { value: "H", label: "Hospital" },
-                          { value: "P", label: "Physician" },
-                        ]}
-                        onChange={handleRadioButtonChange}
-                      />
-                    </Grid>
-
-                    {isHospitalVisit && (
-                      <Grid size={{ sm: 12, md: 6 }}>
-                        <FormField
-                          name="deptID"
-                          control={control}
-                          label="Department"
-                          type="select"
-                          required
-                          size="small"
-                          fullWidth
-                          options={DepartmentDropdownValues}
-                          onChange={(event: SelectChangeEvent<string>) => {
-                            const selectedValue = Number(event.target.value);
-                            const selectedOption = DepartmentDropdownValues?.find((option) => Number(option.value) === selectedValue);
-
-                            handleDropdownChange("deptID", selectedValue, DepartmentDropdownValues, {
-                              deptName: selectedOption?.label || "",
-                            });
-                          }}
-                        />
-                      </Grid>
-                    )}
-
-                    {isPhysicianVisit && (
-                      <Grid size={{ sm: 12, md: 6 }}>
-                        <FormField
-                          name="attendingPhysicianId"
-                          control={control}
-                          label="Attending Physician"
-                          type="select"
-                          required
-                          size="small"
-                          fullWidth
-                          options={availableAttendingPhysicians}
-                          onChange={handlePhysicianChange}
-                          helperText={errors.attendingPhysicianId?.message}
-                        />
-                      </Grid>
-                    )}
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="primaryReferralSourceId"
-                        control={control}
-                        label="Primary Introducing Source"
-                        type="select"
-                        required
-                        size="small"
-                        fullWidth
-                        options={primaryIntroducingSource}
-                        onChange={(event: SelectChangeEvent<string>) => {
-                          const selectedValue = Number(event.target.value);
-                          const selectedOption = primaryIntroducingSource?.find((option) => Number(option.value) === selectedValue);
-
-                          handleDropdownChange("primaryReferralSourceId", selectedValue, primaryIntroducingSource, {
-                            primaryReferralSourceName: selectedOption?.label || "",
-                          });
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12 }}>
-                      <FormField
-                        name="rNotes"
-                        control={control}
-                        label="Notes"
-                        type="textarea"
-                        size="small"
-                        fullWidth
-                        rows={3}
-                        placeholder="Enter any additional notes about this visit"
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
+              <VisitDetailsForm
+                control={control}
+                errors={errors}
+                watchedVisitType={watchedVisitType}
+                dropdownValues={dropdownValues}
+                DepartmentDropdownValues={DepartmentDropdownValues}
+                availableAttendingPhysicians={availableAttendingPhysicians}
+                primaryIntroducingSource={primaryIntroducingSource}
+                handleRadioButtonChange={handleRadioButtonChange}
+                handlePhysicianChange={handlePhysicianChange}
+                handleDropdownChange={handleDropdownChange}
+                showCard={true}
+              />
             </Grid>
 
             <Grid size={{ sm: 12 }}>
