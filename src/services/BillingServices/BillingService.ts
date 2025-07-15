@@ -1,7 +1,7 @@
 // src/services/BillingServices/billingService.ts
 
 import { APIConfig } from "@/apiConfig";
-import { BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
+import { BillSaveRequest, BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
 import {
   BChargeAliasDto,
   BChargeDetailDto,
@@ -108,7 +108,7 @@ export const doctorSharePercShareService = createEntityService<BDoctorSharePercS
 export const chargeAliasService = createEntityService<BChargeAliasDto>("BChargeAlias", "billingURL");
 export const chargeFacultyService = createEntityService<BChargeFacultyDto>("BChargeFaculty", "billingURL");
 export const chargePackService = createEntityService<BChargePackDto>("BChargePack", "billingURL");
-export const billingGenericService = createEntityService<BillsDto>("Billing", "billingURL");
+export const billingGenericService = createEntityService<BillSaveRequest>("Billing", "billingURL");
 
 // Export extended services with custom methods (for complex operations)
 export const bChargeService = new ExtendedBChargeService();

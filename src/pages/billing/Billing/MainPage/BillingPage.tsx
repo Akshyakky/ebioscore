@@ -3,13 +3,14 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
+import { BillSaveRequest } from "@/interfaces/Billing/BillingDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { GetPatientAllVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import PatientVisitDialog from "@/pages/patientAdministration/RevisitPage/SubPage/PatientVisitDialog";
 import { useAlert } from "@/providers/AlertProvider";
-import { bChargeService, billingService } from "@/services/BillingServices/BillingService";
+import { bChargeService, billingGenericService, billingService } from "@/services/BillingServices/BillingService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel as CancelIcon, Delete as DeleteIcon, Edit as EditIcon, History as HistoryIcon, Save as SaveIcon } from "@mui/icons-material";
 import {
@@ -25,16 +26,13 @@ import {
   IconButton,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
+  alpha,
+  useTheme,
 } from "@mui/material";
+import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -164,7 +162,13 @@ const schema = z.object({
 
 type BillingFormData = z.infer<typeof schema>;
 
+// Interface for DataGrid rows
+interface BillServiceRow extends z.infer<typeof BillServicesDtoSchema> {
+  id: string | number;
+}
+
 const BillingPage: React.FC = () => {
+  const theme = useTheme();
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
@@ -279,6 +283,14 @@ const BillingPage: React.FC = () => {
   const watchedBillProducts = watch("billProducts");
   const watchedVisitReference = watch("visitReferenceCode");
   const watchedGroupDisc = watch("groupDisc");
+
+  // Convert services to DataGrid rows
+  const serviceRows: BillServiceRow[] = useMemo(() => {
+    return watchedBillServices.map((service, index) => ({
+      ...service,
+      id: service.billDetID || `temp-${index}`,
+    }));
+  }, [watchedBillServices]);
 
   // Calculate total amounts whenever services or products change
   useEffect(() => {
@@ -421,6 +433,264 @@ const BillingPage: React.FC = () => {
     [watchedBillServices, updateService, calculateDiscountFromPercent]
   );
 
+  // Handle cell value change for DataGrid
+  const handleCellValueChange = useCallback(
+    (id: string | number, field: keyof z.infer<typeof BillServicesDtoSchema>, value: any) => {
+      const index = watchedBillServices.findIndex((service, idx) => (service.billDetID || `temp-${idx}`) === id);
+      if (index !== -1) {
+        handleServiceFieldChange(index, field, value);
+      }
+    },
+    [watchedBillServices, handleServiceFieldChange]
+  );
+
+  // Render functions for DataGrid cells
+  const renderNumberField = useCallback(
+    (params: GridRenderCellParams, field: keyof z.infer<typeof BillServicesDtoSchema>) => (
+      <TextField
+        size="small"
+        type="number"
+        value={params.row[field] || ""}
+        onChange={(e) => {
+          const value = parseFloat(e.target.value) || 0;
+          handleCellValueChange(params.id, field, value);
+        }}
+        sx={{ width: "100%" }}
+        inputProps={{ style: { textAlign: "right" } }}
+        fullWidth
+      />
+    ),
+    [handleCellValueChange]
+  );
+
+  const renderDateField = useCallback(
+    (params: GridRenderCellParams) => {
+      const index = serviceRows.findIndex((row) => row.id === params.id);
+      return <FormField name={`billServices.${index}.chargeDt`} control={control} type="datepicker" size="small" fullWidth />;
+    },
+    [control, serviceRows]
+  );
+
+  const renderPhysicianField = useCallback(
+    (params: GridRenderCellParams) => {
+      const index = serviceRows.findIndex((row) => row.id === params.id);
+      return params.row.physicianYN === "Y" ? (
+        <FormField
+          name={`billServices.${index}.physicianID`}
+          control={control}
+          type="select"
+          size="small"
+          fullWidth
+          options={physicians || []}
+          defaultText="Select"
+          onChange={(data: any) => {
+            if (data && typeof data === "object" && "value" in data) {
+              setValue(`billServices.${index}.PhysicianName`, data.label || "", { shouldDirty: true });
+            }
+          }}
+        />
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          N/A
+        </Typography>
+      );
+    },
+    [control, physicians, setValue, serviceRows]
+  );
+
+  // Define columns for DataGrid
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: "chargeDesc",
+        headerName: "Service Name",
+        width: 200,
+        sortable: false,
+      },
+      {
+        field: "physicianID",
+        headerName: "Physician",
+        width: 150,
+        sortable: false,
+        renderCell: renderPhysicianField,
+      },
+      {
+        field: "chargeDt",
+        headerName: "Effective Date",
+        width: 130,
+        sortable: false,
+        renderCell: renderDateField,
+      },
+      {
+        field: "chUnits",
+        headerName: "Quantity",
+        width: 80,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderNumberField(params, "chUnits"),
+      },
+      {
+        field: "dCValue",
+        headerName: "Dr Amt (₹)",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderNumberField(params, "dCValue"),
+      },
+      {
+        field: "drPercShare",
+        headerName: "Dr Disc %",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderNumberField(params, "drPercShare"),
+      },
+      {
+        field: "dValDisc",
+        headerName: "Dr Disc ₹",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.dValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "hCValue",
+        headerName: "Hosp Amt (₹)",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderNumberField(params, "hCValue"),
+      },
+      {
+        field: "hospPercShare",
+        headerName: "Hosp Disc %",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderNumberField(params, "hospPercShare"),
+      },
+      {
+        field: "hValDisc",
+        headerName: "Hosp Disc ₹",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.hValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "grossAmt",
+        headerName: "Gross Amt",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          return (
+            <Typography variant="body2" fontWeight="medium">
+              ₹{grossAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "discAmt",
+        headerName: "Disc Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          return (
+            <Typography variant="body2" color="error">
+              ₹{totalDiscAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "netAmt",
+        headerName: "Net Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          const netAmt = grossAmt - totalDiscAmt;
+          return (
+            <Typography variant="body2" fontWeight="bold" color="primary">
+              ₹{netAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "sGRPName",
+        headerName: "Service Group",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => (
+          <Typography variant="body2" noWrap>
+            {params.row.sGRPName || "-"}
+          </Typography>
+        ),
+      },
+      {
+        field: "packName",
+        headerName: "Pack Name",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => (
+          <Typography variant="body2" noWrap>
+            {params.row.packName || "-"}
+          </Typography>
+        ),
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Delete",
+        width: 60,
+        getActions: (params) => {
+          const index = serviceRows.findIndex((row) => row.id === params.id);
+          return [
+            <GridActionsCellItem
+              icon={
+                <Tooltip title="Remove Service">
+                  <DeleteIcon color="error" />
+                </Tooltip>
+              }
+              label="Remove"
+              onClick={() => removeService(index)}
+              showInMenu={false}
+            />,
+          ];
+        },
+      },
+    ],
+    [renderNumberField, renderDateField, renderPhysicianField, removeService, serviceRows]
+  );
+
   const onSubmit = async (data: BillingFormData) => {
     try {
       setLoading(true);
@@ -472,8 +742,12 @@ const BillingPage: React.FC = () => {
 
       // TODO: Call your billing service here
       console.log("Bill Save Request:", billSaveRequest);
-
-      showAlert("Success", "Bill saved successfully", "success");
+      const saveBillResponse = await billingGenericService.save(billSaveRequest as BillSaveRequest);
+      if (saveBillResponse.success) {
+        showAlert("Success", "Bill saved successfully", "success");
+      } else {
+        showAlert("Warning", "Bill not saved", "warning");
+      }
       performReset();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to save bill";
@@ -498,6 +772,8 @@ const BillingPage: React.FC = () => {
   const handleVisitSelect = useCallback(
     (visit: GetPatientAllVisitHistory) => {
       setValue("patOPIP", visit.patOPIP as "O" | "I", { shouldValidate: true });
+      setValue("opIPNo", visit.opipNo, { shouldValidate: true });
+      setValue("opipCaseNo", visit.opipCaseNo, { shouldValidate: true });
       setValue("visitReferenceCode", visit.opNumber || "", { shouldValidate: true });
       setValue("billMisc", `Visit Ref: ${visit.opNumber}`, { shouldValidate: true });
       trigger();
@@ -698,281 +974,143 @@ const BillingPage: React.FC = () => {
               </Card>
             </Grid>
 
-            {/* Services Section */}
+            {/* Services Section with DataGrid */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6">Services</Typography>
-                    <Box display="flex" gap={2} alignItems="center">
-                      {/* Service Search Autocomplete */}
-                      <Autocomplete
-                        value={selectedService}
-                        onChange={(event, newValue) => {
-                          if (newValue) {
-                            handleServiceSelect(newValue);
-                          }
-                        }}
-                        inputValue={serviceSearchTerm}
-                        onInputChange={(event, newInputValue) => {
-                          setServiceSearchTerm(newInputValue);
-                        }}
-                        options={filteredServices}
-                        getOptionLabel={(option) => `${option.chargeCode} - ${option.chargeDesc}`}
-                        loading={loadingServices}
-                        sx={{ width: 400 }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Search and add service"
-                            size="small"
-                            InputProps={{
-                              ...params.InputProps,
-                              endAdornment: (
-                                <>
-                                  {loadingServices ? <CircularProgress color="inherit" size={20} /> : null}
-                                  {params.InputProps.endAdornment}
-                                </>
-                              ),
-                            }}
-                          />
-                        )}
-                        renderOption={(props, option) => (
-                          <Box component="li" {...props}>
-                            <Box>
-                              <Typography variant="body1">
-                                {option.chargeCode} - {option.chargeDesc}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {option.cShortName && `Short: ${option.cShortName} | `}
-                                Type: {option.chargeType} | Status: {option.chargeStatus}
-                              </Typography>
-                            </Box>
+              <Card
+                variant="outlined"
+                sx={{
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                  transition: "box-shadow 0.3s ease",
+                  "&:hover": {
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  },
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: alpha(theme.palette.primary.main, 0.04),
+                    borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box display="flex" alignItems="center" gap={1.5}>
+                    <Typography variant="h6" fontWeight="600" color="primary.main">
+                      Services
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Add and manage billing services
+                    </Typography>
+                  </Box>
+                  <Box display="flex" gap={2} alignItems="center">
+                    {serviceRows.length > 0 && (
+                      <Chip
+                        label={`${serviceRows.length} ${serviceRows.length === 1 ? "Service" : "Services"}`}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        sx={{ fontWeight: "600", borderWidth: 2 }}
+                      />
+                    )}
+                    {/* Service Search Autocomplete */}
+                    <Autocomplete
+                      value={selectedService}
+                      onChange={(event, newValue) => {
+                        if (newValue) {
+                          handleServiceSelect(newValue);
+                        }
+                      }}
+                      inputValue={serviceSearchTerm}
+                      onInputChange={(event, newInputValue) => {
+                        setServiceSearchTerm(newInputValue);
+                      }}
+                      options={filteredServices}
+                      getOptionLabel={(option) => `${option.chargeCode} - ${option.chargeDesc}`}
+                      loading={loadingServices}
+                      sx={{ width: 400 }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Search and add service"
+                          size="small"
+                          InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                              <>
+                                {loadingServices ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <Box component="li" {...props}>
+                          <Box>
+                            <Typography variant="body1">
+                              {option.chargeCode} - {option.chargeDesc}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {option.cShortName && `Short: ${option.cShortName} | `}
+                              Type: {option.chargeType} | Status: {option.chargeStatus}
+                            </Typography>
                           </Box>
-                        )}
-                        noOptionsText="No services found"
+                        </Box>
+                      )}
+                      noOptionsText="No services found"
+                    />
+                  </Box>
+                </Box>
+
+                <CardContent sx={{ p: 0 }}>
+                  {serviceRows.length > 0 ? (
+                    <Box sx={{ height: 400, width: "100%" }}>
+                      <DataGrid
+                        rows={serviceRows}
+                        columns={columns}
+                        density="compact"
+                        disableRowSelectionOnClick
+                        hideFooterSelectedRowCount
+                        pageSizeOptions={[5, 10, 25, 50]}
+                        initialState={{
+                          pagination: {
+                            paginationModel: { pageSize: 10 },
+                          },
+                        }}
+                        sx={{
+                          border: "none",
+                          "& .MuiDataGrid-cell:focus": {
+                            outline: "none",
+                          },
+                          "& .MuiDataGrid-row:hover": {
+                            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                          },
+                          "& .MuiDataGrid-columnHeaders": {
+                            backgroundColor: alpha(theme.palette.primary.main, 0.06),
+                            borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                            fontWeight: "600",
+                          },
+                          "& .MuiDataGrid-cell": {
+                            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                          },
+                          "& .MuiDataGrid-columnHeader:focus": {
+                            outline: "none",
+                          },
+                          "& .MuiDataGrid-columnHeader:focus-within": {
+                            outline: "none",
+                          },
+                        }}
                       />
                     </Box>
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-
-                  {serviceFields.length > 0 ? (
-                    <TableContainer sx={{ overflowX: "auto" }}>
-                      <Table size="small" sx={{ minWidth: 1500 }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ minWidth: 200 }}>Service Name</TableCell>
-                            <TableCell sx={{ minWidth: 150 }}>Physician</TableCell>
-                            <TableCell sx={{ minWidth: 130 }}>Effective Date</TableCell>
-                            <TableCell align="center" sx={{ minWidth: 80 }}>
-                              Quantity
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Dr Amt (₹)
-                            </TableCell>
-                            <TableCell align="center" sx={{ minWidth: 90 }}>
-                              Dr Disc %
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Dr Disc ₹
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Hosp Amt (₹)
-                            </TableCell>
-                            <TableCell align="center" sx={{ minWidth: 100 }}>
-                              Hosp Disc %
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 100 }}>
-                              Hosp Disc ₹
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 100 }}>
-                              Gross Amt
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Disc Amt
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Net Amt
-                            </TableCell>
-                            <TableCell sx={{ minWidth: 120 }}>Service Group</TableCell>
-                            <TableCell sx={{ minWidth: 120 }}>Pack Name</TableCell>
-                            <TableCell align="center" sx={{ minWidth: 60 }}>
-                              Delete
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {serviceFields.map((field, index) => {
-                            const service = watchedBillServices[index];
-                            const quantity = service?.chUnits || 1;
-                            const drAmt = service?.dCValue || 0;
-                            const hospAmt = service?.hCValue || 0;
-                            const drDiscAmt = service?.dValDisc || 0;
-                            const hospDiscAmt = service?.hValDisc || 0;
-
-                            // Calculate amounts
-                            const grossAmt = quantity * (drAmt + hospAmt);
-                            const totalDiscAmt = drDiscAmt + hospDiscAmt;
-                            const netAmt = grossAmt - totalDiscAmt;
-
-                            return (
-                              <TableRow key={field.id}>
-                                <TableCell>
-                                  <Typography variant="body2" noWrap>
-                                    {service?.chargeDesc || "-"}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  {service?.physicianYN === "Y" ? (
-                                    <FormField
-                                      name={`billServices.${index}.physicianID`}
-                                      control={control}
-                                      type="select"
-                                      size="small"
-                                      fullWidth
-                                      options={physicians || []}
-                                      defaultText="Select"
-                                      onChange={(data: any) => {
-                                        if (data && typeof data === "object" && "value" in data) {
-                                          setValue(`billServices.${index}.PhysicianName`, data.label || "", { shouldDirty: true });
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    <Typography variant="body2" color="text.secondary">
-                                      N/A
-                                    </Typography>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  <FormField name={`billServices.${index}.chargeDt`} control={control} type="datepicker" size="small" fullWidth />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.chUnits`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={1}
-                                    step={1}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "chUnits", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.dCValue`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "dCValue", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.drPercShare`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    max={100}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "drPercShare", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <TextField
-                                    value={drDiscAmt.toFixed(2)}
-                                    size="small"
-                                    fullWidth
-                                    disabled
-                                    InputProps={{
-                                      readOnly: true,
-                                      style: { textAlign: "right" },
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.hCValue`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "hCValue", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.hospPercShare`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    max={100}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "hospPercShare", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <TextField
-                                    value={hospDiscAmt.toFixed(2)}
-                                    size="small"
-                                    fullWidth
-                                    disabled
-                                    InputProps={{
-                                      readOnly: true,
-                                      style: { textAlign: "right" },
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Typography variant="body2" fontWeight="medium">
-                                    ₹{grossAmt.toFixed(2)}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Typography variant="body2" color="error">
-                                    ₹{totalDiscAmt.toFixed(2)}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Typography variant="body2" fontWeight="bold" color="primary">
-                                    ₹{netAmt.toFixed(2)}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography variant="body2" noWrap>
-                                    {service?.sGRPName || "-"}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography variant="body2" noWrap>
-                                    {service?.packName || "-"}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="center">
-                                  <IconButton size="small" color="error" onClick={() => removeService(index)}>
-                                    <DeleteIcon fontSize="small" />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
                   ) : (
-                    <Typography color="text.secondary" align="center">
-                      No services added. Use the search box above to add services.
-                    </Typography>
+                    <Box sx={{ p: 6, textAlign: "center" }}>
+                      <Typography color="text.secondary">No services added. Use the search box above to add services.</Typography>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
