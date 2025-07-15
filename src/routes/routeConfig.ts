@@ -1,4 +1,3 @@
-import BillingPage from "@/pages/billing/Billing/MainPage/BillingPage";
 import TemplateListPage from "@/pages/clinicalManagement/TemplateList/MainPage/TemplateListPage";
 import { AlertProvider } from "@/providers/AlertProvider";
 import React, { lazy, Suspense } from "react";
@@ -53,6 +52,7 @@ const MedicationRoutePage = lazy(() => import("@/pages/clinicalManagement/Medica
 const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
 const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 const GRNManagementPage = lazy(() => import("@/pages/inventoryManagement/GoodsRecieveNote/MainPage/GrnListPage"));
+const ProductIssualPage = lazy(() => import("@/pages/inventoryManagement/ProductIssual/MainPage/ProductIssualPage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -565,13 +565,13 @@ const routeConfig: RouteConfig[] = [
     },
   },
   {
-    path: "/Billing",
-    component: wrapWithSuspense(BillingPage),
+    path: "/ProductIssualPage",
+    component: wrapWithSuspense(ProductIssualPage),
     protected: true,
     providers: [AlertProvider],
     metadata: {
-      title: "Billing",
-      category: "billing",
+      title: "  Department Product Issual",
+      category: "inventory",
     },
   },
 

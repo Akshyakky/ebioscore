@@ -92,7 +92,6 @@ const densityConfig = {
   },
 };
 
-// Component Implementation
 const CustomGrid = <T extends Record<string, any>>({
   columns: initialColumns,
   data,
