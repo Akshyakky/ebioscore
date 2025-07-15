@@ -12,7 +12,15 @@ import PatientVisitDialog from "@/pages/patientAdministration/RevisitPage/SubPag
 import { useAlert } from "@/providers/AlertProvider";
 import { bChargeService, billingGenericService, billingService } from "@/services/BillingServices/BillingService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Cancel as CancelIcon, Delete as DeleteIcon, Edit as EditIcon, History as HistoryIcon, Save as SaveIcon } from "@mui/icons-material";
+import {
+  Cancel as CancelIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  History as HistoryIcon,
+  MedicalServices as MedicalServicesIcon,
+  Save as SaveIcon,
+  ShoppingCart as ShoppingCartIcon,
+} from "@mui/icons-material";
 import {
   Alert,
   Autocomplete,
@@ -27,6 +35,8 @@ import {
   Paper,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
   alpha,
@@ -73,6 +83,8 @@ const BillServicesDtoSchema = z.object({
   procedureID: z.number().optional(),
   procedureName: z.string().optional(),
   chargeCost: z.number().default(0),
+  deptID: z.number().optional(),
+  deptName: z.string().optional(),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().default("N"),
   rNotes: z.string().optional(),
@@ -82,6 +94,8 @@ const BillProductsDtoSchema = z.object({
   billDetID: z.number().default(0),
   billID: z.number().default(0),
   productID: z.number(),
+  productCode: z.string().optional(),
+  productName: z.string().optional(),
   batchNo: z.string().optional(),
   expiryDate: z.union([z.date(), z.string()]).optional(),
   grnDetID: z.number().optional(),
@@ -167,6 +181,24 @@ interface BillServiceRow extends z.infer<typeof BillServicesDtoSchema> {
   id: string | number;
 }
 
+interface BillProductRow extends z.infer<typeof BillProductsDtoSchema> {
+  id: string | number;
+}
+
+// Mock product interface (replace with your actual product interface)
+interface ProductDto {
+  productID: number;
+  productCode: string;
+  productName: string;
+  unitPrice: number;
+  availableQuantity?: number;
+  batchNo?: string;
+  expiryDate?: string;
+  grnDetID?: number;
+  deptID?: number;
+  deptName?: string;
+}
+
 const BillingPage: React.FC = () => {
   const theme = useTheme();
   const { setLoading } = useLoading();
@@ -179,11 +211,16 @@ const BillingPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const dropdownValues = useDropdownValues(["pic"]);
   const [services, setServices] = useState<BChargeDto[]>([]);
+  const [products, setProducts] = useState<ProductDto[]>([]);
   //   const { contacts: physicians } = useContactMastByCategory({ consValue: "PHY" });
   //   const { contacts: referals } = useContactMastByCategory({ consValue: "REF" });
   const [loadingServices, setLoadingServices] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [serviceSearchTerm, setServiceSearchTerm] = useState("");
+  const [productSearchTerm, setProductSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductDto | null>(null);
+  const [itemMode, setItemMode] = useState<"service" | "product">("service");
   const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
 
   const physicians = [
@@ -274,6 +311,7 @@ const BillingPage: React.FC = () => {
     fields: productFields,
     append: appendProduct,
     remove: removeProduct,
+    update: updateProduct,
   } = useFieldArray({
     control,
     name: "billProducts",
@@ -288,9 +326,17 @@ const BillingPage: React.FC = () => {
   const serviceRows: BillServiceRow[] = useMemo(() => {
     return watchedBillServices.map((service, index) => ({
       ...service,
-      id: service.billDetID || `temp-${index}`,
+      id: service.billDetID || `temp-service-${index}`,
     }));
   }, [watchedBillServices]);
+
+  // Convert products to DataGrid rows
+  const productRows: BillProductRow[] = useMemo(() => {
+    return watchedBillProducts.map((product, index) => ({
+      ...product,
+      id: product.billDetID || `temp-product-${index}`,
+    }));
+  }, [watchedBillProducts]);
 
   // Calculate total amounts whenever services or products change
   useEffect(() => {
@@ -346,6 +392,29 @@ const BillingPage: React.FC = () => {
     fetchServices();
   }, [showAlert]);
 
+  // Mock fetch products - replace with your actual API call
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        // TODO: Replace with your actual product API call
+        // const response = await productService.getAll();
+        // setProducts(response.data);
+
+        // Mock data for now
+        setProducts([
+          { productID: 17, productCode: "PROD001", productName: "Paracetamol 500mg", unitPrice: 105, deptID: 1, deptName: "Test department" },
+          { productID: 18, productCode: "PROD002", productName: "Aspirin 100mg", unitPrice: 95, deptID: 1, deptName: "Test department" },
+        ]);
+      } catch (error) {
+        showAlert("Error", "Failed to load products", "error");
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    fetchProducts();
+  }, [showAlert]);
+
   // Filter services based on search term
   const filteredServices = useMemo(() => {
     if (!serviceSearchTerm || !services) return [];
@@ -358,6 +427,14 @@ const BillingPage: React.FC = () => {
         (service.cShortName && service.cShortName.toLowerCase().includes(searchLower))
     );
   }, [serviceSearchTerm, services]);
+
+  // Filter products based on search term
+  const filteredProducts = useMemo(() => {
+    if (!productSearchTerm || !products) return [];
+
+    const searchLower = productSearchTerm.toLowerCase();
+    return products.filter((product) => product.productCode.toLowerCase().includes(searchLower) || product.productName.toLowerCase().includes(searchLower));
+  }, [productSearchTerm, products]);
 
   const handlePatientSelect = useCallback(
     (patientResult: PatientSearchResult) => {
@@ -400,6 +477,52 @@ const BillingPage: React.FC = () => {
     [appendService, showAlert]
   );
 
+  // Handle product selection from autocomplete
+  const handleProductSelect = useCallback(
+    async (product: ProductDto | null) => {
+      if (product) {
+        // TODO: Replace with your actual product detail API call
+        const productData = {
+          billDetID: 0,
+          billID: 0,
+          productID: product.productID,
+          productCode: product.productCode,
+          productName: product.productName,
+          batchNo: product.batchNo || "",
+          expiryDate: product.expiryDate || new Date(),
+          grnDetID: product.grnDetID || 1,
+          deptID: product.deptID || 1,
+          deptName: product.deptName || "Test department",
+          cHValue: product.unitPrice,
+          chUnits: 1,
+          chDisc: 0,
+          actualDDValue: 0,
+          actualHCValue: product.unitPrice,
+          dCValue: 0,
+          drPercShare: 0,
+          dValDisc: 0,
+          hCValue: product.unitPrice,
+          hospPercShare: 0,
+          hValDisc: 0,
+          packID: 0,
+          packName: "",
+          opipNo: 0,
+          physicianYN: "N",
+          actualAmt: 0,
+          rActiveYN: "Y",
+          transferYN: "N",
+          rNotes: "",
+        };
+
+        appendProduct(productData);
+        setSelectedProduct(null);
+        setProductSearchTerm("");
+        showAlert("Success", `Product "${product.productName}" added`, "success");
+      }
+    },
+    [appendProduct, showAlert]
+  );
+
   // Handle field changes with automatic calculations
   const handleServiceFieldChange = useCallback(
     (index: number, field: string, value: any) => {
@@ -433,10 +556,43 @@ const BillingPage: React.FC = () => {
     [watchedBillServices, updateService, calculateDiscountFromPercent]
   );
 
-  // Handle cell value change for DataGrid
-  const handleCellValueChange = useCallback(
+  // Handle product field changes with automatic calculations
+  const handleProductFieldChange = useCallback(
+    (index: number, field: string, value: any) => {
+      const currentProduct = watchedBillProducts[index];
+      const updatedProduct = { ...currentProduct };
+
+      // Update the changed field
+      updatedProduct[field] = value;
+
+      // Recalculate based on what changed
+      const quantity = updatedProduct.chUnits || 1;
+      const drAmt = updatedProduct.dCValue || 0;
+      const hospAmt = updatedProduct.hCValue || 0;
+      const drDiscPerc = updatedProduct.drPercShare || 0;
+      const hospDiscPerc = updatedProduct.hospPercShare || 0;
+
+      // Calculate discount amounts based on percentages
+      if (field === "drPercShare" || field === "dCValue" || field === "chUnits") {
+        updatedProduct.dValDisc = calculateDiscountFromPercent(drAmt * quantity, drDiscPerc);
+      }
+
+      if (field === "hospPercShare" || field === "hCValue" || field === "chUnits") {
+        updatedProduct.hValDisc = calculateDiscountFromPercent(hospAmt * quantity, hospDiscPerc);
+      }
+
+      // Calculate gross amount
+      updatedProduct.cHValue = drAmt + hospAmt;
+
+      updateProduct(index, updatedProduct);
+    },
+    [watchedBillProducts, updateProduct, calculateDiscountFromPercent]
+  );
+
+  // Handle cell value change for Service DataGrid
+  const handleServiceCellValueChange = useCallback(
     (id: string | number, field: keyof z.infer<typeof BillServicesDtoSchema>, value: any) => {
-      const index = watchedBillServices.findIndex((service, idx) => (service.billDetID || `temp-${idx}`) === id);
+      const index = watchedBillServices.findIndex((service, idx) => (service.billDetID || `temp-service-${idx}`) === id);
       if (index !== -1) {
         handleServiceFieldChange(index, field, value);
       }
@@ -444,8 +600,19 @@ const BillingPage: React.FC = () => {
     [watchedBillServices, handleServiceFieldChange]
   );
 
-  // Render functions for DataGrid cells
-  const renderNumberField = useCallback(
+  // Handle cell value change for Product DataGrid
+  const handleProductCellValueChange = useCallback(
+    (id: string | number, field: keyof z.infer<typeof BillProductsDtoSchema>, value: any) => {
+      const index = watchedBillProducts.findIndex((product, idx) => (product.billDetID || `temp-product-${idx}`) === id);
+      if (index !== -1) {
+        handleProductFieldChange(index, field, value);
+      }
+    },
+    [watchedBillProducts, handleProductFieldChange]
+  );
+
+  // Render functions for Service DataGrid cells
+  const renderServiceNumberField = useCallback(
     (params: GridRenderCellParams, field: keyof z.infer<typeof BillServicesDtoSchema>) => (
       <TextField
         size="small"
@@ -453,17 +620,36 @@ const BillingPage: React.FC = () => {
         value={params.row[field] || ""}
         onChange={(e) => {
           const value = parseFloat(e.target.value) || 0;
-          handleCellValueChange(params.id, field, value);
+          handleServiceCellValueChange(params.id, field, value);
         }}
         sx={{ width: "100%" }}
         inputProps={{ style: { textAlign: "right" } }}
         fullWidth
       />
     ),
-    [handleCellValueChange]
+    [handleServiceCellValueChange]
   );
 
-  const renderDateField = useCallback(
+  // Render functions for Product DataGrid cells
+  const renderProductNumberField = useCallback(
+    (params: GridRenderCellParams, field: keyof z.infer<typeof BillProductsDtoSchema>) => (
+      <TextField
+        size="small"
+        type="number"
+        value={params.row[field] || ""}
+        onChange={(e) => {
+          const value = parseFloat(e.target.value) || 0;
+          handleProductCellValueChange(params.id, field, value);
+        }}
+        sx={{ width: "100%" }}
+        inputProps={{ style: { textAlign: "right" } }}
+        fullWidth
+      />
+    ),
+    [handleProductCellValueChange]
+  );
+
+  const renderServiceDateField = useCallback(
     (params: GridRenderCellParams) => {
       const index = serviceRows.findIndex((row) => row.id === params.id);
       return <FormField name={`billServices.${index}.chargeDt`} control={control} type="datepicker" size="small" fullWidth />;
@@ -498,8 +684,8 @@ const BillingPage: React.FC = () => {
     [control, physicians, setValue, serviceRows]
   );
 
-  // Define columns for DataGrid
-  const columns: GridColDef[] = useMemo(
+  // Define columns for Service DataGrid
+  const serviceColumns: GridColDef[] = useMemo(
     () => [
       {
         field: "chargeDesc",
@@ -519,7 +705,7 @@ const BillingPage: React.FC = () => {
         headerName: "Effective Date",
         width: 130,
         sortable: false,
-        renderCell: renderDateField,
+        renderCell: renderServiceDateField,
       },
       {
         field: "chUnits",
@@ -527,7 +713,7 @@ const BillingPage: React.FC = () => {
         width: 80,
         sortable: false,
         type: "number",
-        renderCell: (params) => renderNumberField(params, "chUnits"),
+        renderCell: (params) => renderServiceNumberField(params, "chUnits"),
       },
       {
         field: "dCValue",
@@ -535,7 +721,7 @@ const BillingPage: React.FC = () => {
         width: 90,
         sortable: false,
         type: "number",
-        renderCell: (params) => renderNumberField(params, "dCValue"),
+        renderCell: (params) => renderServiceNumberField(params, "dCValue"),
       },
       {
         field: "drPercShare",
@@ -543,7 +729,7 @@ const BillingPage: React.FC = () => {
         width: 90,
         sortable: false,
         type: "number",
-        renderCell: (params) => renderNumberField(params, "drPercShare"),
+        renderCell: (params) => renderServiceNumberField(params, "drPercShare"),
       },
       {
         field: "dValDisc",
@@ -563,7 +749,7 @@ const BillingPage: React.FC = () => {
         width: 100,
         sortable: false,
         type: "number",
-        renderCell: (params) => renderNumberField(params, "hCValue"),
+        renderCell: (params) => renderServiceNumberField(params, "hCValue"),
       },
       {
         field: "hospPercShare",
@@ -571,7 +757,7 @@ const BillingPage: React.FC = () => {
         width: 100,
         sortable: false,
         type: "number",
-        renderCell: (params) => renderNumberField(params, "hospPercShare"),
+        renderCell: (params) => renderServiceNumberField(params, "hospPercShare"),
       },
       {
         field: "hValDisc",
@@ -688,7 +874,193 @@ const BillingPage: React.FC = () => {
         },
       },
     ],
-    [renderNumberField, renderDateField, renderPhysicianField, removeService, serviceRows]
+    [renderServiceNumberField, renderServiceDateField, renderPhysicianField, removeService, serviceRows]
+  );
+
+  // Define columns for Product DataGrid
+  const productColumns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: "productName",
+        headerName: "Product Name",
+        width: 200,
+        sortable: false,
+      },
+      {
+        field: "batchNo",
+        headerName: "Batch No",
+        width: 120,
+        sortable: false,
+      },
+      {
+        field: "expiryDate",
+        headerName: "Expiry Date",
+        width: 130,
+        sortable: false,
+        renderCell: (params) => {
+          const date = params.row.expiryDate;
+          if (!date) return "-";
+          const formattedDate = new Date(date).toLocaleDateString();
+          return formattedDate;
+        },
+      },
+      {
+        field: "chUnits",
+        headerName: "Quantity",
+        width: 80,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "chUnits"),
+      },
+      {
+        field: "dCValue",
+        headerName: "Dr Amt (₹)",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "dCValue"),
+      },
+      {
+        field: "drPercShare",
+        headerName: "Dr Disc %",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "drPercShare"),
+      },
+      {
+        field: "dValDisc",
+        headerName: "Dr Disc ₹",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.dValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "hCValue",
+        headerName: "Hosp Amt (₹)",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "hCValue"),
+      },
+      {
+        field: "hospPercShare",
+        headerName: "Hosp Disc %",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "hospPercShare"),
+      },
+      {
+        field: "hValDisc",
+        headerName: "Hosp Disc ₹",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.hValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "grossAmt",
+        headerName: "Gross Amt",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          return (
+            <Typography variant="body2" fontWeight="medium">
+              ₹{grossAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "discAmt",
+        headerName: "Disc Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          return (
+            <Typography variant="body2" color="error">
+              ₹{totalDiscAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "netAmt",
+        headerName: "Net Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          const netAmt = grossAmt - totalDiscAmt;
+          return (
+            <Typography variant="body2" fontWeight="bold" color="primary">
+              ₹{netAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "deptName",
+        headerName: "Department",
+        width: 150,
+        sortable: false,
+        renderCell: (params) => (
+          <Typography variant="body2" noWrap>
+            {params.row.deptName || "-"}
+          </Typography>
+        ),
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Delete",
+        width: 60,
+        getActions: (params) => {
+          const index = productRows.findIndex((row) => row.id === params.id);
+          return [
+            <GridActionsCellItem
+              icon={
+                <Tooltip title="Remove Product">
+                  <DeleteIcon color="error" />
+                </Tooltip>
+              }
+              label="Remove"
+              onClick={() => removeProduct(index)}
+              showInMenu={false}
+            />,
+          ];
+        },
+      },
+    ],
+    [renderProductNumberField, removeProduct, productRows]
   );
 
   const onSubmit = async (data: BillingFormData) => {
@@ -765,7 +1137,10 @@ const BillingPage: React.FC = () => {
     setSelectedPatient(null);
     setClearSearchTrigger((prev) => prev + 1);
     setServiceSearchTerm("");
+    setProductSearchTerm("");
     setSelectedService(null);
+    setSelectedProduct(null);
+    setItemMode("service");
   };
 
   // Add this function in BillingPage
@@ -974,7 +1349,7 @@ const BillingPage: React.FC = () => {
               </Card>
             </Grid>
 
-            {/* Services Section with DataGrid */}
+            {/* Services/Products Section with DataGrid */}
             <Grid size={{ sm: 12 }}>
               <Card
                 variant="outlined"
@@ -1000,15 +1375,37 @@ const BillingPage: React.FC = () => {
                   }}
                 >
                   <Box display="flex" alignItems="center" gap={1.5}>
-                    <Typography variant="h6" fontWeight="600" color="primary.main">
-                      Services
-                    </Typography>
+                    <ToggleButtonGroup
+                      value={itemMode}
+                      exclusive
+                      onChange={(event, newMode) => {
+                        if (newMode !== null) {
+                          setItemMode(newMode);
+                        }
+                      }}
+                      size="small"
+                      sx={{
+                        "& .MuiToggleButton-root": {
+                          px: 2,
+                          py: 0.5,
+                        },
+                      }}
+                    >
+                      <ToggleButton value="service">
+                        <MedicalServicesIcon sx={{ mr: 1, fontSize: 18 }} />
+                        Services
+                      </ToggleButton>
+                      <ToggleButton value="product">
+                        <ShoppingCartIcon sx={{ mr: 1, fontSize: 18 }} />
+                        Products
+                      </ToggleButton>
+                    </ToggleButtonGroup>
                     <Typography variant="body2" color="text.secondary">
-                      Add and manage billing services
+                      Add and manage billing {itemMode === "service" ? "services" : "products"}
                     </Typography>
                   </Box>
                   <Box display="flex" gap={2} alignItems="center">
-                    {serviceRows.length > 0 && (
+                    {itemMode === "service" && serviceRows.length > 0 && (
                       <Chip
                         label={`${serviceRows.length} ${serviceRows.length === 1 ? "Service" : "Services"}`}
                         variant="outlined"
@@ -1017,62 +1414,166 @@ const BillingPage: React.FC = () => {
                         sx={{ fontWeight: "600", borderWidth: 2 }}
                       />
                     )}
+                    {itemMode === "product" && productRows.length > 0 && (
+                      <Chip
+                        label={`${productRows.length} ${productRows.length === 1 ? "Product" : "Products"}`}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        sx={{ fontWeight: "600", borderWidth: 2 }}
+                      />
+                    )}
                     {/* Service Search Autocomplete */}
-                    <Autocomplete
-                      value={selectedService}
-                      onChange={(event, newValue) => {
-                        if (newValue) {
-                          handleServiceSelect(newValue);
-                        }
-                      }}
-                      inputValue={serviceSearchTerm}
-                      onInputChange={(event, newInputValue) => {
-                        setServiceSearchTerm(newInputValue);
-                      }}
-                      options={filteredServices}
-                      getOptionLabel={(option) => `${option.chargeCode} - ${option.chargeDesc}`}
-                      loading={loadingServices}
-                      sx={{ width: 400 }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Search and add service"
-                          size="small"
-                          InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                              <>
-                                {loadingServices ? <CircularProgress color="inherit" size={20} /> : null}
-                                {params.InputProps.endAdornment}
-                              </>
-                            ),
-                          }}
-                        />
-                      )}
-                      renderOption={(props, option) => (
-                        <Box component="li" {...props}>
-                          <Box>
-                            <Typography variant="body1">
-                              {option.chargeCode} - {option.chargeDesc}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {option.cShortName && `Short: ${option.cShortName} | `}
-                              Type: {option.chargeType} | Status: {option.chargeStatus}
-                            </Typography>
+                    {itemMode === "service" && (
+                      <Autocomplete
+                        value={selectedService}
+                        onChange={(event, newValue) => {
+                          if (newValue) {
+                            handleServiceSelect(newValue);
+                          }
+                        }}
+                        inputValue={serviceSearchTerm}
+                        onInputChange={(event, newInputValue) => {
+                          setServiceSearchTerm(newInputValue);
+                        }}
+                        options={filteredServices}
+                        getOptionLabel={(option) => `${option.chargeCode} - ${option.chargeDesc}`}
+                        loading={loadingServices}
+                        sx={{ width: 400 }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Search and add service"
+                            size="small"
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {loadingServices ? <CircularProgress color="inherit" size={20} /> : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <Box component="li" {...props}>
+                            <Box>
+                              <Typography variant="body1">
+                                {option.chargeCode} - {option.chargeDesc}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {option.cShortName && `Short: ${option.cShortName} | `}
+                                Type: {option.chargeType} | Status: {option.chargeStatus}
+                              </Typography>
+                            </Box>
                           </Box>
-                        </Box>
-                      )}
-                      noOptionsText="No services found"
-                    />
+                        )}
+                        noOptionsText="No services found"
+                      />
+                    )}
+                    {/* Product Search Autocomplete */}
+                    {itemMode === "product" && (
+                      <Autocomplete
+                        value={selectedProduct}
+                        onChange={(event, newValue) => {
+                          if (newValue) {
+                            handleProductSelect(newValue);
+                          }
+                        }}
+                        inputValue={productSearchTerm}
+                        onInputChange={(event, newInputValue) => {
+                          setProductSearchTerm(newInputValue);
+                        }}
+                        options={filteredProducts}
+                        getOptionLabel={(option) => `${option.productCode} - ${option.productName}`}
+                        loading={loadingProducts}
+                        sx={{ width: 400 }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Search and add product"
+                            size="small"
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {loadingProducts ? <CircularProgress color="inherit" size={20} /> : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <Box component="li" {...props}>
+                            <Box>
+                              <Typography variant="body1">
+                                {option.productCode} - {option.productName}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Price: ₹{option.unitPrice} |{option.availableQuantity && ` Available: ${option.availableQuantity}`}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                        noOptionsText="No products found"
+                      />
+                    )}
                   </Box>
                 </Box>
 
                 <CardContent sx={{ p: 0 }}>
-                  {serviceRows.length > 0 ? (
+                  {itemMode === "service" ? (
+                    serviceRows.length > 0 ? (
+                      <Box sx={{ height: 400, width: "100%" }}>
+                        <DataGrid
+                          rows={serviceRows}
+                          columns={serviceColumns}
+                          density="compact"
+                          disableRowSelectionOnClick
+                          hideFooterSelectedRowCount
+                          pageSizeOptions={[5, 10, 25, 50]}
+                          initialState={{
+                            pagination: {
+                              paginationModel: { pageSize: 10 },
+                            },
+                          }}
+                          sx={{
+                            border: "none",
+                            "& .MuiDataGrid-cell:focus": {
+                              outline: "none",
+                            },
+                            "& .MuiDataGrid-row:hover": {
+                              backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                            },
+                            "& .MuiDataGrid-columnHeaders": {
+                              backgroundColor: alpha(theme.palette.primary.main, 0.06),
+                              borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                              fontWeight: "600",
+                            },
+                            "& .MuiDataGrid-cell": {
+                              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                            },
+                            "& .MuiDataGrid-columnHeader:focus": {
+                              outline: "none",
+                            },
+                            "& .MuiDataGrid-columnHeader:focus-within": {
+                              outline: "none",
+                            },
+                          }}
+                        />
+                      </Box>
+                    ) : (
+                      <Box sx={{ p: 6, textAlign: "center" }}>
+                        <Typography color="text.secondary">No services added. Use the search box above to add services.</Typography>
+                      </Box>
+                    )
+                  ) : productRows.length > 0 ? (
                     <Box sx={{ height: 400, width: "100%" }}>
                       <DataGrid
-                        rows={serviceRows}
-                        columns={columns}
+                        rows={productRows}
+                        columns={productColumns}
                         density="compact"
                         disableRowSelectionOnClick
                         hideFooterSelectedRowCount
@@ -1109,7 +1610,7 @@ const BillingPage: React.FC = () => {
                     </Box>
                   ) : (
                     <Box sx={{ p: 6, textAlign: "center" }}>
-                      <Typography color="text.secondary">No services added. Use the search box above to add services.</Typography>
+                      <Typography color="text.secondary">No products added. Use the search box above to add products.</Typography>
                     </Box>
                   )}
                 </CardContent>
@@ -1151,6 +1652,30 @@ const BillingPage: React.FC = () => {
                           <Typography variant="h6">Net Amount Payable:</Typography>
                           <Typography variant="h6" color="primary">
                             ₹{calculateFinalBillAmount.toFixed(2)}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <Stack spacing={1}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Summary Breakdown:
+                        </Typography>
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography variant="body2">Total Services:</Typography>
+                          <Typography variant="body2">{serviceRows.length}</Typography>
+                        </Box>
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography variant="body2">Total Products:</Typography>
+                          <Typography variant="body2">{productRows.length}</Typography>
+                        </Box>
+                        <Divider />
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography variant="body2" fontWeight="medium">
+                            Total Items:
+                          </Typography>
+                          <Typography variant="body2" fontWeight="medium">
+                            {serviceRows.length + productRows.length}
                           </Typography>
                         </Box>
                       </Stack>
