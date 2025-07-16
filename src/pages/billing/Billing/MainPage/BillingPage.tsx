@@ -2,19 +2,19 @@ import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
 import { BillSaveRequest } from "@/interfaces/Billing/BillingDto";
-import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { GetPatientAllVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
+import DepartmentSelectionDialog from "@/pages/inventoryManagement/CommonPage/DepartmentSelectionDialog";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import PatientVisitDialog from "@/pages/patientAdministration/RevisitPage/SubPage/PatientVisitDialog";
 import { useAlert } from "@/providers/AlertProvider";
 import { bChargeService, billingGenericService, billingService } from "@/services/BillingServices/BillingService";
-import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -36,14 +36,10 @@ import {
   Chip,
   CircularProgress,
   Divider,
-  FormControl,
   Grid,
   IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
   Radio,
-  Select,
   Stack,
   TextField,
   ToggleButton,
@@ -53,7 +49,6 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import { SelectChangeEvent } from "@mui/material/Select";
 import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -233,28 +228,20 @@ const BillingPage: React.FC = () => {
   const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductDto | ProductListDto | null>(null);
   const [itemMode, setItemMode] = useState<"service" | "product">("service");
-  const [departments, setDepartments] = useState<DepartmentDto[]>([]);
-  const [selectedProductDepartment, setSelectedProductDepartment] = useState<DepartmentDto | null>(null);
   const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
-  const [isDepartmentDialogOpen, setIsDepartmentDialogOpen] = useState(false);
   const [isBatchSelectionDialogOpen, setIsBatchSelectionDialogOpen] = useState(false);
   const [availableBatches, setAvailableBatches] = useState<z.infer<typeof BillProductsDtoSchema>[]>([]);
   const [selectedBatch, setSelectedBatch] = useState<z.infer<typeof BillProductsDtoSchema> | null>(null);
-  const handleOpenDepartmentDialog = () => {
-    setIsDepartmentDialogOpen(true);
-  };
+  const {
+    deptId: selectedDeptId,
+    deptName: selectedDeptName,
+    isDialogOpen: isDepartmentDialogOpen,
+    isDepartmentSelected,
+    openDialog: openDepartmentDialog,
+    closeDialog: closeDepartmentDialog,
+    handleDepartmentSelect: handleDeptSelect,
+  } = useDepartmentSelection();
 
-  const handleCloseDepartmentDialog = () => {
-    setIsDepartmentDialogOpen(false);
-    setSelectedProductDepartment(null); // Optional: Reset selection on close
-  };
-
-  const handleDepartmentSelect = (event: SelectChangeEvent<unknown>) => {
-    const deptID = event.target.value as number;
-    const selectedDept = departments.find((dept) => dept.deptID === deptID);
-    setSelectedProductDepartment(selectedDept || null);
-    setIsDepartmentDialogOpen(false);
-  };
   const physicians = [
     { value: 1, label: "Dr. Ajeesh" },
     { value: 2, label: "Dr. Akash" },
@@ -441,19 +428,6 @@ const BillingPage: React.FC = () => {
     fetchProducts();
   }, [showAlert]);
 
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const response = await departmentListService.getAll();
-        setDepartments(response.data as unknown as DepartmentDto[]);
-      } catch (error) {
-        showAlert("Error", "Failed to load Departments", "error");
-      } finally {
-      }
-    };
-    fetchDepartments();
-  }, []);
-  console.log("departments", departments);
   // Filter services based on search term
   const filteredServices = useMemo(() => {
     if (!serviceSearchTerm || !services) return [];
@@ -519,12 +493,11 @@ const BillingPage: React.FC = () => {
   // Handle product selection from autocomplete
   const handleProductSelect = useCallback(
     async (product: ProductDto | ProductListDto | null) => {
-      if (product && selectedProductDepartment) {
+      if (product && isDepartmentSelected && selectedDeptId) {
         try {
-          const response = await billingService.getBatchNoProduct(product.productID, selectedProductDepartment.deptID);
+          const response = await billingService.getBatchNoProduct(product.productID, selectedDeptId);
 
           if (response.success && response.data) {
-            // If response.data is an array, show batch selection dialog
             if (Array.isArray(response.data)) {
               if (response.data.length === 0) {
                 showAlert("Warning", "No batches available for this product", "warning");
@@ -549,9 +522,12 @@ const BillingPage: React.FC = () => {
         } catch (error) {
           showAlert("Error", "Failed to fetch product batches", "error");
         }
+      } else if (!isDepartmentSelected) {
+        showAlert("Warning", "Please select a department first", "warning");
+        openDepartmentDialog();
       }
     },
-    [appendProduct, showAlert, selectedProductDepartment]
+    [appendProduct, showAlert, isDepartmentSelected, selectedDeptId, openDepartmentDialog]
   );
   const handleBatchSelect = useCallback(() => {
     if (selectedBatch) {
@@ -1425,8 +1401,8 @@ const BillingPage: React.FC = () => {
                       exclusive
                       onChange={(event, newMode) => {
                         if (newMode !== null) {
-                          if (newMode === "product") {
-                            handleOpenDepartmentDialog(); // Open dialog when switching to products
+                          if (newMode === "product" && !isDepartmentSelected) {
+                            openDepartmentDialog();
                           }
                           setItemMode(newMode);
                         }
@@ -1448,6 +1424,16 @@ const BillingPage: React.FC = () => {
                         Products
                       </ToggleButton>
                     </ToggleButtonGroup>
+
+                    {itemMode === "product" && isDepartmentSelected && (
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="body2" color="text.secondary">
+                          Department:
+                        </Typography>
+                        <Chip label={selectedDeptName} size="small" color="primary" variant="outlined" onDelete={openDepartmentDialog} deleteIcon={<EditIcon fontSize="small" />} />
+                      </Box>
+                    )}
+
                     <Typography variant="body2" color="text.secondary">
                       Add and manage billing {itemMode === "service" ? "services" : "products"}
                     </Typography>
@@ -1763,32 +1749,13 @@ const BillingPage: React.FC = () => {
         pChartCode={selectedPatient?.pChartCode}
         onVisitSelect={handleVisitSelect}
       />
-      <GenericDialog
+      <DepartmentSelectionDialog
         open={isDepartmentDialogOpen}
-        onClose={handleCloseDepartmentDialog}
-        title="Select Department"
-        maxWidth="sm"
-        fullWidth={true}
-        showCloseButton={true}
-        disableEscapeKeyDown={false}
-        disableBackdropClick={false}
-        dialogContentSx={{ py: 2 }}
-        titleSx={{ fontWeight: "medium" }}
-        actionsSx={{ px: 2, py: 1 }}
-        closeButtonSx={{ color: theme.palette.text.secondary }}
-        actions={<SmartButton text="Cancel" onClick={handleCloseDepartmentDialog} variant="outlined" color="secondary" icon={Close} />}
-      >
-        <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel id="department-select-label">Department</InputLabel>
-          <Select labelId="department-select-label" value={selectedProductDepartment?.deptID} label="Department" onChange={handleDepartmentSelect}>
-            {departments.map((dept) => (
-              <MenuItem key={dept.deptID} value={dept.deptID}>
-                {dept.deptName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </GenericDialog>
+        onClose={closeDepartmentDialog}
+        onSelectDepartment={handleDeptSelect}
+        initialDeptId={selectedDeptId}
+        requireSelection={true}
+      />
       {/* Batch Selection Dialog */}
       <GenericDialog
         open={isBatchSelectionDialogOpen}
