@@ -1,5 +1,6 @@
 import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
@@ -18,6 +19,7 @@ import { productListService } from "@/services/InventoryManagementService/invent
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Cancel as CancelIcon,
+  Close,
   Delete as DeleteIcon,
   Edit as EditIcon,
   History as HistoryIcon,
@@ -34,9 +36,14 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  FormControl,
   Grid,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Radio,
+  Select,
   Stack,
   TextField,
   ToggleButton,
@@ -46,6 +53,7 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
+import { SelectChangeEvent } from "@mui/material/Select";
 import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -228,7 +236,25 @@ const BillingPage: React.FC = () => {
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [selectedProductDepartment, setSelectedProductDepartment] = useState<DepartmentDto | null>(null);
   const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
+  const [isDepartmentDialogOpen, setIsDepartmentDialogOpen] = useState(false);
+  const [isBatchSelectionDialogOpen, setIsBatchSelectionDialogOpen] = useState(false);
+  const [availableBatches, setAvailableBatches] = useState<z.infer<typeof BillProductsDtoSchema>[]>([]);
+  const [selectedBatch, setSelectedBatch] = useState<z.infer<typeof BillProductsDtoSchema> | null>(null);
+  const handleOpenDepartmentDialog = () => {
+    setIsDepartmentDialogOpen(true);
+  };
 
+  const handleCloseDepartmentDialog = () => {
+    setIsDepartmentDialogOpen(false);
+    setSelectedProductDepartment(null); // Optional: Reset selection on close
+  };
+
+  const handleDepartmentSelect = (event: SelectChangeEvent<unknown>) => {
+    const deptID = event.target.value as number;
+    const selectedDept = departments.find((dept) => dept.deptID === deptID);
+    setSelectedProductDepartment(selectedDept || null);
+    setIsDepartmentDialogOpen(false);
+  };
   const physicians = [
     { value: 1, label: "Dr. Ajeesh" },
     { value: 2, label: "Dr. Akash" },
@@ -493,50 +519,55 @@ const BillingPage: React.FC = () => {
   // Handle product selection from autocomplete
   const handleProductSelect = useCallback(
     async (product: ProductDto | ProductListDto | null) => {
-      if (product) {
-        console.log(product);
-        // TODO: Replace with your actual product detail API call
-        const productData = {
-          billDetID: 0,
-          billID: 0,
-          productID: product.productID,
-          productCode: product.productCode,
-          productName: product.productName,
-          batchNo: product.batchNo || "",
-          expiryDate: product.expiryDate || new Date(),
-          grnDetID: product.grnDetID || 1,
-          deptID: product.deptID || 1,
-          deptName: product.deptName || "Test department",
-          cHValue: product.unitPrice,
-          chUnits: 1,
-          chDisc: 0,
-          actualDDValue: 0,
-          actualHCValue: product.unitPrice,
-          dCValue: 0,
-          drPercShare: 0,
-          dValDisc: 0,
-          hCValue: product.unitPrice,
-          hospPercShare: 0,
-          hValDisc: 0,
-          packID: 0,
-          packName: "",
-          opipNo: 0,
-          physicianYN: "N",
-          actualAmt: 0,
-          rActiveYN: "Y",
-          transferYN: "N",
-          rNotes: "",
-        };
+      if (product && selectedProductDepartment) {
+        try {
+          const response = await billingService.getBatchNoProduct(product.productID, selectedProductDepartment.deptID);
 
-        appendProduct(productData);
-        setSelectedProduct(null);
-        setProductSearchTerm("");
-        showAlert("Success", `Product "${product.productName}" added`, "success");
+          if (response.success && response.data) {
+            // If response.data is an array, show batch selection dialog
+            if (Array.isArray(response.data)) {
+              if (response.data.length === 0) {
+                showAlert("Warning", "No batches available for this product", "warning");
+              } else if (response.data.length === 1) {
+                appendProduct(response.data[0]);
+                showAlert("Success", `Product "${product.productName}" added`, "success");
+              } else {
+                setAvailableBatches(response.data);
+                setIsBatchSelectionDialogOpen(true);
+              }
+            } else {
+              // Single batch response (backward compatibility)
+              appendProduct(response.data);
+              showAlert("Success", `Product "${product.productName}" added`, "success");
+            }
+          } else {
+            showAlert("Error", response.errorMessage || "Product not added", "warning");
+          }
+
+          setSelectedProduct(null);
+          setProductSearchTerm("");
+        } catch (error) {
+          showAlert("Error", "Failed to fetch product batches", "error");
+        }
       }
     },
-    [appendProduct, showAlert]
+    [appendProduct, showAlert, selectedProductDepartment]
   );
+  const handleBatchSelect = useCallback(() => {
+    if (selectedBatch) {
+      appendProduct(selectedBatch);
+      showAlert("Success", `Batch "${selectedBatch.batchNo}" added`, "success");
+      setIsBatchSelectionDialogOpen(false);
+      setSelectedBatch(null);
+      setAvailableBatches([]);
+    }
+  }, [selectedBatch, appendProduct, showAlert]);
 
+  const handleCloseBatchDialog = useCallback(() => {
+    setIsBatchSelectionDialogOpen(false);
+    setSelectedBatch(null);
+    setAvailableBatches([]);
+  }, []);
   // Handle field changes with automatic calculations
   const handleServiceFieldChange = useCallback(
     (index: number, field: string, value: any) => {
@@ -1394,6 +1425,9 @@ const BillingPage: React.FC = () => {
                       exclusive
                       onChange={(event, newMode) => {
                         if (newMode !== null) {
+                          if (newMode === "product") {
+                            handleOpenDepartmentDialog(); // Open dialog when switching to products
+                          }
                           setItemMode(newMode);
                         }
                       }}
@@ -1729,6 +1763,166 @@ const BillingPage: React.FC = () => {
         pChartCode={selectedPatient?.pChartCode}
         onVisitSelect={handleVisitSelect}
       />
+      <GenericDialog
+        open={isDepartmentDialogOpen}
+        onClose={handleCloseDepartmentDialog}
+        title="Select Department"
+        maxWidth="sm"
+        fullWidth={true}
+        showCloseButton={true}
+        disableEscapeKeyDown={false}
+        disableBackdropClick={false}
+        dialogContentSx={{ py: 2 }}
+        titleSx={{ fontWeight: "medium" }}
+        actionsSx={{ px: 2, py: 1 }}
+        closeButtonSx={{ color: theme.palette.text.secondary }}
+        actions={<SmartButton text="Cancel" onClick={handleCloseDepartmentDialog} variant="outlined" color="secondary" icon={Close} />}
+      >
+        <FormControl fullWidth sx={{ mt: 2 }}>
+          <InputLabel id="department-select-label">Department</InputLabel>
+          <Select labelId="department-select-label" value={selectedProductDepartment?.deptID} label="Department" onChange={handleDepartmentSelect}>
+            {departments.map((dept) => (
+              <MenuItem key={dept.deptID} value={dept.deptID}>
+                {dept.deptName}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </GenericDialog>
+      {/* Batch Selection Dialog */}
+      <GenericDialog
+        open={isBatchSelectionDialogOpen}
+        onClose={handleCloseBatchDialog}
+        title="Select Product Batch"
+        maxWidth="md"
+        fullWidth={true}
+        showCloseButton={true}
+        disableEscapeKeyDown={false}
+        disableBackdropClick={false}
+        dialogContentSx={{ py: 2 }}
+        titleSx={{ fontWeight: "medium" }}
+        actionsSx={{ px: 2, py: 1 }}
+        closeButtonSx={{ color: theme.palette.text.secondary }}
+        actions={
+          <>
+            <SmartButton text="Cancel" onClick={handleCloseBatchDialog} variant="outlined" color="secondary" icon={Close} />
+            <SmartButton text="Select Batch" onClick={handleBatchSelect} variant="contained" color="primary" icon={ShoppingCartIcon} disabled={!selectedBatch} />
+          </>
+        }
+      >
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select a batch from the available options below:
+          </Typography>
+
+          <DataGrid
+            rows={availableBatches.map((batch, index) => ({
+              ...batch,
+              id: `batch-${index}`,
+              formattedExpiryDate: batch.expiryDate
+                ? new Date(batch.expiryDate).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "-",
+              availableQty: batch.chUnits || 0,
+              unitPrice: batch.hCValue || 0,
+            }))}
+            columns={[
+              {
+                field: "selection",
+                headerName: "",
+                width: 50,
+                sortable: false,
+                renderCell: (params) => <Radio checked={selectedBatch?.grnDetID === params.row.grnDetID} onChange={() => setSelectedBatch(params.row)} size="small" />,
+              },
+              {
+                field: "batchNo",
+                headerName: "Batch No",
+                width: 150,
+                sortable: false,
+              },
+              {
+                field: "availableQty",
+                headerName: "Available Qty",
+                width: 120,
+                sortable: false,
+                type: "number",
+                renderCell: (params) => (
+                  <Chip label={params.value} size="small" color={params.value > 10 ? "success" : params.value > 0 ? "warning" : "error"} variant="outlined" />
+                ),
+              },
+              {
+                field: "formattedExpiryDate",
+                headerName: "Expiry Date",
+                width: 150,
+                sortable: false,
+                renderCell: (params) => {
+                  const expiryDate = params.row.expiryDate ? new Date(params.row.expiryDate) : null;
+                  const isExpiringSoon = expiryDate && (expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24) < 90;
+
+                  return (
+                    <Typography variant="body2" color={isExpiringSoon ? "warning.main" : "text.primary"} fontWeight={isExpiringSoon ? "medium" : "normal"}>
+                      {params.value}
+                    </Typography>
+                  );
+                },
+              },
+              {
+                field: "unitPrice",
+                headerName: "Unit Price",
+                width: 120,
+                sortable: false,
+                type: "number",
+                renderCell: (params) => (
+                  <Typography variant="body2" fontWeight="medium">
+                    ₹{params.value.toFixed(2)}
+                  </Typography>
+                ),
+              },
+              {
+                field: "deptName",
+                headerName: "Department",
+                width: 150,
+                sortable: false,
+              },
+            ]}
+            density="compact"
+            disableRowSelectionOnClick
+            hideFooterSelectedRowCount
+            hideFooter
+            autoHeight
+            sx={{
+              border: "none",
+              "& .MuiDataGrid-cell:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-row:hover": {
+                backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                cursor: "pointer",
+              },
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: alpha(theme.palette.primary.main, 0.06),
+                borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                fontWeight: "600",
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              },
+            }}
+            onRowClick={(params) => setSelectedBatch(params.row)}
+          />
+
+          {selectedBatch && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04), borderRadius: 1 }}>
+              <Typography variant="body2" color="primary" fontWeight="medium">
+                Selected: Batch {selectedBatch.batchNo} - {selectedBatch.chUnits} units available
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </GenericDialog>
     </Box>
   );
 };

@@ -1,7 +1,7 @@
 // src/services/BillingServices/billingService.ts
 
 import { APIConfig } from "@/apiConfig";
-import { BillSaveRequest, BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
+import { BillProductsDto, BillSaveRequest, BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
 import {
   BChargeAliasDto,
   BChargeDetailDto,
@@ -98,6 +98,9 @@ class ExtendedBillingService extends GenericEntityService<BillsDto> {
   }
   async getBillingServiceById(chargeId: number): Promise<OperationResult<BillServicesDto[]>> {
     return this.apiService.get<OperationResult<BillServicesDto[]>>(`${this.baseEndpoint}/GetBillingServiceById/${chargeId}`, this.getToken());
+  }
+  async getBatchNoProduct(productId: number, departmentId: number): Promise<OperationResult<BillProductsDto[]>> {
+    return this.apiService.get<OperationResult<BillProductsDto[]>>(`${this.baseEndpoint}/GetBatchNoProduct?productId=${productId}&departmentId=${departmentId}`, this.getToken());
   }
 }
 
