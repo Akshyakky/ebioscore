@@ -4,6 +4,8 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
 import { BillSaveRequest } from "@/interfaces/Billing/BillingDto";
+import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { GetPatientAllVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
@@ -11,6 +13,8 @@ import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/
 import PatientVisitDialog from "@/pages/patientAdministration/RevisitPage/SubPage/PatientVisitDialog";
 import { useAlert } from "@/providers/AlertProvider";
 import { bChargeService, billingGenericService, billingService } from "@/services/BillingServices/BillingService";
+import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
+import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Cancel as CancelIcon,
@@ -211,7 +215,7 @@ const BillingPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const dropdownValues = useDropdownValues(["pic"]);
   const [services, setServices] = useState<BChargeDto[]>([]);
-  const [products, setProducts] = useState<ProductDto[]>([]);
+  const [products, setProducts] = useState<ProductListDto[]>([]);
   //   const { contacts: physicians } = useContactMastByCategory({ consValue: "PHY" });
   //   const { contacts: referals } = useContactMastByCategory({ consValue: "REF" });
   const [loadingServices, setLoadingServices] = useState(false);
@@ -219,8 +223,10 @@ const BillingPage: React.FC = () => {
   const [serviceSearchTerm, setServiceSearchTerm] = useState("");
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<ProductDto | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductDto | ProductListDto | null>(null);
   const [itemMode, setItemMode] = useState<"service" | "product">("service");
+  const [departments, setDepartments] = useState<DepartmentDto[]>([]);
+  const [selectedProductDepartment, setSelectedProductDepartment] = useState<DepartmentDto | null>(null);
   const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
 
   const physicians = [
@@ -398,14 +404,8 @@ const BillingPage: React.FC = () => {
       setLoadingProducts(true);
       try {
         // TODO: Replace with your actual product API call
-        // const response = await productService.getAll();
-        // setProducts(response.data);
-
-        // Mock data for now
-        setProducts([
-          { productID: 17, productCode: "PROD001", productName: "Paracetamol 500mg", unitPrice: 105, deptID: 1, deptName: "Test department" },
-          { productID: 18, productCode: "PROD002", productName: "Aspirin 100mg", unitPrice: 95, deptID: 1, deptName: "Test department" },
-        ]);
+        const response = await productListService.getAll();
+        setProducts(response.data as unknown as ProductListDto[]);
       } catch (error) {
         showAlert("Error", "Failed to load products", "error");
       } finally {
@@ -415,6 +415,19 @@ const BillingPage: React.FC = () => {
     fetchProducts();
   }, [showAlert]);
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await departmentListService.getAll();
+        setDepartments(response.data as unknown as DepartmentDto[]);
+      } catch (error) {
+        showAlert("Error", "Failed to load Departments", "error");
+      } finally {
+      }
+    };
+    fetchDepartments();
+  }, []);
+  console.log("departments", departments);
   // Filter services based on search term
   const filteredServices = useMemo(() => {
     if (!serviceSearchTerm || !services) return [];
@@ -479,8 +492,9 @@ const BillingPage: React.FC = () => {
 
   // Handle product selection from autocomplete
   const handleProductSelect = useCallback(
-    async (product: ProductDto | null) => {
+    async (product: ProductDto | ProductListDto | null) => {
       if (product) {
+        console.log(product);
         // TODO: Replace with your actual product detail API call
         const productData = {
           billDetID: 0,
