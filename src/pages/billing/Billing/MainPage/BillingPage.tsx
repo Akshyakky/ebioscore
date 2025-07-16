@@ -1,17 +1,31 @@
 import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
+import { BillSaveRequest } from "@/interfaces/Billing/BillingDto";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { GetPatientAllVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
+import { BatchSelectionDialog, useBatchSelection } from "@/pages/inventoryManagement/CommonPage/BatchSelectionDialog";
+import DepartmentSelectionDialog from "@/pages/inventoryManagement/CommonPage/DepartmentSelectionDialog";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import PatientVisitDialog from "@/pages/patientAdministration/RevisitPage/SubPage/PatientVisitDialog";
 import { useAlert } from "@/providers/AlertProvider";
-import { bChargeService, billingService } from "@/services/BillingServices/BillingService";
+import { bChargeService, billingGenericService, billingService } from "@/services/BillingServices/BillingService";
+import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Cancel as CancelIcon, Delete as DeleteIcon, Edit as EditIcon, History as HistoryIcon, Save as SaveIcon } from "@mui/icons-material";
+import {
+  Cancel as CancelIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  History as HistoryIcon,
+  MedicalServices as MedicalServicesIcon,
+  Save as SaveIcon,
+  ShoppingCart as ShoppingCartIcon,
+} from "@mui/icons-material";
 import {
   Alert,
   Autocomplete,
@@ -25,16 +39,15 @@ import {
   IconButton,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
+  alpha,
+  useTheme,
 } from "@mui/material";
+import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -75,6 +88,8 @@ const BillServicesDtoSchema = z.object({
   procedureID: z.number().optional(),
   procedureName: z.string().optional(),
   chargeCost: z.number().default(0),
+  deptID: z.number().optional(),
+  deptName: z.string().optional(),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().default("N"),
   rNotes: z.string().optional(),
@@ -84,6 +99,8 @@ const BillProductsDtoSchema = z.object({
   billDetID: z.number().default(0),
   billID: z.number().default(0),
   productID: z.number(),
+  productCode: z.string().optional(),
+  productName: z.string().optional(),
   batchNo: z.string().optional(),
   expiryDate: z.union([z.date(), z.string()]).optional(),
   grnDetID: z.number().optional(),
@@ -164,7 +181,31 @@ const schema = z.object({
 
 type BillingFormData = z.infer<typeof schema>;
 
+// Interface for DataGrid rows
+interface BillServiceRow extends z.infer<typeof BillServicesDtoSchema> {
+  id: string | number;
+}
+
+interface BillProductRow extends z.infer<typeof BillProductsDtoSchema> {
+  id: string | number;
+}
+
+// Mock product interface (replace with your actual product interface)
+interface ProductDto {
+  productID: number;
+  productCode: string;
+  productName: string;
+  unitPrice: number;
+  availableQuantity?: number;
+  batchNo?: string;
+  expiryDate?: string;
+  grnDetID?: number;
+  deptID?: number;
+  deptName?: string;
+}
+
 const BillingPage: React.FC = () => {
+  const theme = useTheme();
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
@@ -175,13 +216,34 @@ const BillingPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const dropdownValues = useDropdownValues(["pic"]);
   const [services, setServices] = useState<BChargeDto[]>([]);
+  const [products, setProducts] = useState<ProductListDto[]>([]);
   //   const { contacts: physicians } = useContactMastByCategory({ consValue: "PHY" });
   //   const { contacts: referals } = useContactMastByCategory({ consValue: "REF" });
   const [loadingServices, setLoadingServices] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [serviceSearchTerm, setServiceSearchTerm] = useState("");
+  const [productSearchTerm, setProductSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductDto | ProductListDto | null>(null);
+  const [itemMode, setItemMode] = useState<"service" | "product">("service");
   const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
-
+  const {
+    deptId: selectedDeptId,
+    deptName: selectedDeptName,
+    isDialogOpen: isDepartmentDialogOpen,
+    isDepartmentSelected,
+    openDialog: openDepartmentDialog,
+    closeDialog: closeDepartmentDialog,
+    handleDepartmentSelect: handleDeptSelect,
+  } = useDepartmentSelection();
+  const {
+    isDialogOpen: isBatchSelectionDialogOpen,
+    availableBatches,
+    selectedBatch,
+    openDialog: openBatchDialog,
+    closeDialog: closeBatchDialog,
+    handleBatchSelect: handleBatchSelectInternal,
+  } = useBatchSelection();
   const physicians = [
     { value: 1, label: "Dr. Ajeesh" },
     { value: 2, label: "Dr. Akash" },
@@ -270,6 +332,7 @@ const BillingPage: React.FC = () => {
     fields: productFields,
     append: appendProduct,
     remove: removeProduct,
+    update: updateProduct,
   } = useFieldArray({
     control,
     name: "billProducts",
@@ -279,6 +342,22 @@ const BillingPage: React.FC = () => {
   const watchedBillProducts = watch("billProducts");
   const watchedVisitReference = watch("visitReferenceCode");
   const watchedGroupDisc = watch("groupDisc");
+
+  // Convert services to DataGrid rows
+  const serviceRows: BillServiceRow[] = useMemo(() => {
+    return watchedBillServices.map((service, index) => ({
+      ...service,
+      id: service.billDetID || `temp-service-${index}`,
+    }));
+  }, [watchedBillServices]);
+
+  // Convert products to DataGrid rows
+  const productRows: BillProductRow[] = useMemo(() => {
+    return watchedBillProducts.map((product, index) => ({
+      ...product,
+      id: product.billDetID || `temp-product-${index}`,
+    }));
+  }, [watchedBillProducts]);
 
   // Calculate total amounts whenever services or products change
   useEffect(() => {
@@ -334,6 +413,23 @@ const BillingPage: React.FC = () => {
     fetchServices();
   }, [showAlert]);
 
+  // Mock fetch products - replace with your actual API call
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        // TODO: Replace with your actual product API call
+        const response = await productListService.getAll();
+        setProducts(response.data as unknown as ProductListDto[]);
+      } catch (error) {
+        showAlert("Error", "Failed to load products", "error");
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    fetchProducts();
+  }, [showAlert]);
+
   // Filter services based on search term
   const filteredServices = useMemo(() => {
     if (!serviceSearchTerm || !services) return [];
@@ -346,6 +442,14 @@ const BillingPage: React.FC = () => {
         (service.cShortName && service.cShortName.toLowerCase().includes(searchLower))
     );
   }, [serviceSearchTerm, services]);
+
+  // Filter products based on search term
+  const filteredProducts = useMemo(() => {
+    if (!productSearchTerm || !products) return [];
+
+    const searchLower = productSearchTerm.toLowerCase();
+    return products.filter((product) => product.productCode.toLowerCase().includes(searchLower) || product.productName.toLowerCase().includes(searchLower));
+  }, [productSearchTerm, products]);
 
   const handlePatientSelect = useCallback(
     (patientResult: PatientSearchResult) => {
@@ -388,6 +492,54 @@ const BillingPage: React.FC = () => {
     [appendService, showAlert]
   );
 
+  // Handle product selection from autocomplete
+  const handleProductSelect = useCallback(
+    async (product: ProductDto | ProductListDto | null) => {
+      if (product && isDepartmentSelected && selectedDeptId) {
+        try {
+          const response = await billingService.getBatchNoProduct(product.productID, selectedDeptId);
+
+          if (response.success && response.data) {
+            if (Array.isArray(response.data)) {
+              if (response.data.length === 0) {
+                showAlert("Warning", "No batches available for this product", "warning");
+              } else if (response.data.length === 1) {
+                appendProduct(response.data[0]);
+                showAlert("Success", `Product "${product.productName}" added`, "success");
+              } else {
+                openBatchDialog(response.data);
+              }
+            } else {
+              // Single batch response (backward compatibility)
+              appendProduct(response.data);
+              showAlert("Success", `Product "${product.productName}" added`, "success");
+            }
+          } else {
+            showAlert("Error", response.errorMessage || "Product not added", "warning");
+          }
+
+          setSelectedProduct(null);
+          setProductSearchTerm("");
+        } catch (error) {
+          showAlert("Error", "Failed to fetch product batches", "error");
+        }
+      } else if (!isDepartmentSelected) {
+        showAlert("Warning", "Please select a department first", "warning");
+        openDepartmentDialog();
+      }
+    },
+    [appendProduct, showAlert, isDepartmentSelected, selectedDeptId, openDepartmentDialog, openBatchDialog]
+  );
+
+  const handleBatchSelect = useCallback(
+    (batch: any) => {
+      appendProduct(batch);
+      showAlert("Success", `Batch "${batch.batchNo}" added`, "success");
+      closeBatchDialog();
+    },
+    [appendProduct, showAlert, closeBatchDialog]
+  );
+
   // Handle field changes with automatic calculations
   const handleServiceFieldChange = useCallback(
     (index: number, field: string, value: any) => {
@@ -419,6 +571,513 @@ const BillingPage: React.FC = () => {
       updateService(index, updatedService);
     },
     [watchedBillServices, updateService, calculateDiscountFromPercent]
+  );
+
+  // Handle product field changes with automatic calculations
+  const handleProductFieldChange = useCallback(
+    (index: number, field: string, value: any) => {
+      const currentProduct = watchedBillProducts[index];
+      const updatedProduct = { ...currentProduct };
+
+      // Update the changed field
+      updatedProduct[field] = value;
+
+      // Recalculate based on what changed
+      const quantity = updatedProduct.chUnits || 1;
+      const drAmt = updatedProduct.dCValue || 0;
+      const hospAmt = updatedProduct.hCValue || 0;
+      const drDiscPerc = updatedProduct.drPercShare || 0;
+      const hospDiscPerc = updatedProduct.hospPercShare || 0;
+
+      // Calculate discount amounts based on percentages
+      if (field === "drPercShare" || field === "dCValue" || field === "chUnits") {
+        updatedProduct.dValDisc = calculateDiscountFromPercent(drAmt * quantity, drDiscPerc);
+      }
+
+      if (field === "hospPercShare" || field === "hCValue" || field === "chUnits") {
+        updatedProduct.hValDisc = calculateDiscountFromPercent(hospAmt * quantity, hospDiscPerc);
+      }
+
+      // Calculate gross amount
+      updatedProduct.cHValue = drAmt + hospAmt;
+
+      updateProduct(index, updatedProduct);
+    },
+    [watchedBillProducts, updateProduct, calculateDiscountFromPercent]
+  );
+
+  // Handle cell value change for Service DataGrid
+  const handleServiceCellValueChange = useCallback(
+    (id: string | number, field: keyof z.infer<typeof BillServicesDtoSchema>, value: any) => {
+      const index = watchedBillServices.findIndex((service, idx) => (service.billDetID || `temp-service-${idx}`) === id);
+      if (index !== -1) {
+        handleServiceFieldChange(index, field, value);
+      }
+    },
+    [watchedBillServices, handleServiceFieldChange]
+  );
+
+  // Handle cell value change for Product DataGrid
+  const handleProductCellValueChange = useCallback(
+    (id: string | number, field: keyof z.infer<typeof BillProductsDtoSchema>, value: any) => {
+      const index = watchedBillProducts.findIndex((product, idx) => (product.billDetID || `temp-product-${idx}`) === id);
+      if (index !== -1) {
+        handleProductFieldChange(index, field, value);
+      }
+    },
+    [watchedBillProducts, handleProductFieldChange]
+  );
+
+  // Render functions for Service DataGrid cells
+  const renderServiceNumberField = useCallback(
+    (params: GridRenderCellParams, field: keyof z.infer<typeof BillServicesDtoSchema>) => (
+      <TextField
+        size="small"
+        type="number"
+        value={params.row[field] || ""}
+        onChange={(e) => {
+          const value = parseFloat(e.target.value) || 0;
+          handleServiceCellValueChange(params.id, field, value);
+        }}
+        sx={{ width: "100%" }}
+        inputProps={{ style: { textAlign: "right" } }}
+        fullWidth
+      />
+    ),
+    [handleServiceCellValueChange]
+  );
+
+  // Render functions for Product DataGrid cells
+  const renderProductNumberField = useCallback(
+    (params: GridRenderCellParams, field: keyof z.infer<typeof BillProductsDtoSchema>) => (
+      <TextField
+        size="small"
+        type="number"
+        value={params.row[field] || ""}
+        onChange={(e) => {
+          const value = parseFloat(e.target.value) || 0;
+          handleProductCellValueChange(params.id, field, value);
+        }}
+        sx={{ width: "100%" }}
+        inputProps={{ style: { textAlign: "right" } }}
+        fullWidth
+      />
+    ),
+    [handleProductCellValueChange]
+  );
+
+  const renderServiceDateField = useCallback(
+    (params: GridRenderCellParams) => {
+      const index = serviceRows.findIndex((row) => row.id === params.id);
+      return <FormField name={`billServices.${index}.chargeDt`} control={control} type="datepicker" size="small" fullWidth />;
+    },
+    [control, serviceRows]
+  );
+
+  const renderPhysicianField = useCallback(
+    (params: GridRenderCellParams) => {
+      const index = serviceRows.findIndex((row) => row.id === params.id);
+      return params.row.physicianYN === "Y" ? (
+        <FormField
+          name={`billServices.${index}.physicianID`}
+          control={control}
+          type="select"
+          size="small"
+          fullWidth
+          options={physicians || []}
+          defaultText="Select"
+          onChange={(data: any) => {
+            if (data && typeof data === "object" && "value" in data) {
+              setValue(`billServices.${index}.PhysicianName`, data.label || "", { shouldDirty: true });
+            }
+          }}
+        />
+      ) : (
+        <Typography variant="body2" color="text.secondary">
+          N/A
+        </Typography>
+      );
+    },
+    [control, physicians, setValue, serviceRows]
+  );
+
+  // Define columns for Service DataGrid
+  const serviceColumns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: "chargeDesc",
+        headerName: "Service Name",
+        width: 200,
+        sortable: false,
+      },
+      {
+        field: "physicianID",
+        headerName: "Physician",
+        width: 150,
+        sortable: false,
+        renderCell: renderPhysicianField,
+      },
+      {
+        field: "chargeDt",
+        headerName: "Effective Date",
+        width: 130,
+        sortable: false,
+        renderCell: renderServiceDateField,
+      },
+      {
+        field: "chUnits",
+        headerName: "Quantity",
+        width: 80,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderServiceNumberField(params, "chUnits"),
+      },
+      {
+        field: "dCValue",
+        headerName: "Dr Amt (₹)",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderServiceNumberField(params, "dCValue"),
+      },
+      {
+        field: "drPercShare",
+        headerName: "Dr Disc %",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderServiceNumberField(params, "drPercShare"),
+      },
+      {
+        field: "dValDisc",
+        headerName: "Dr Disc ₹",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.dValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "hCValue",
+        headerName: "Hosp Amt (₹)",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderServiceNumberField(params, "hCValue"),
+      },
+      {
+        field: "hospPercShare",
+        headerName: "Hosp Disc %",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderServiceNumberField(params, "hospPercShare"),
+      },
+      {
+        field: "hValDisc",
+        headerName: "Hosp Disc ₹",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.hValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "grossAmt",
+        headerName: "Gross Amt",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          return (
+            <Typography variant="body2" fontWeight="medium">
+              ₹{grossAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "discAmt",
+        headerName: "Disc Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          return (
+            <Typography variant="body2" color="error">
+              ₹{totalDiscAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "netAmt",
+        headerName: "Net Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          const netAmt = grossAmt - totalDiscAmt;
+          return (
+            <Typography variant="body2" fontWeight="bold" color="primary">
+              ₹{netAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "sGRPName",
+        headerName: "Service Group",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => (
+          <Typography variant="body2" noWrap>
+            {params.row.sGRPName || "-"}
+          </Typography>
+        ),
+      },
+      {
+        field: "packName",
+        headerName: "Pack Name",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => (
+          <Typography variant="body2" noWrap>
+            {params.row.packName || "-"}
+          </Typography>
+        ),
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Delete",
+        width: 60,
+        getActions: (params) => {
+          const index = serviceRows.findIndex((row) => row.id === params.id);
+          return [
+            <GridActionsCellItem
+              icon={
+                <Tooltip title="Remove Service">
+                  <DeleteIcon color="error" />
+                </Tooltip>
+              }
+              label="Remove"
+              onClick={() => removeService(index)}
+              showInMenu={false}
+            />,
+          ];
+        },
+      },
+    ],
+    [renderServiceNumberField, renderServiceDateField, renderPhysicianField, removeService, serviceRows]
+  );
+
+  // Define columns for Product DataGrid
+  const productColumns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: "productName",
+        headerName: "Product Name",
+        width: 200,
+        sortable: false,
+      },
+      {
+        field: "batchNo",
+        headerName: "Batch No",
+        width: 120,
+        sortable: false,
+      },
+      {
+        field: "expiryDate",
+        headerName: "Expiry Date",
+        width: 130,
+        sortable: false,
+        renderCell: (params) => {
+          const date = params.row.expiryDate;
+          if (!date) return "-";
+          const formattedDate = new Date(date).toLocaleDateString();
+          return formattedDate;
+        },
+      },
+      {
+        field: "chUnits",
+        headerName: "Quantity",
+        width: 80,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "chUnits"),
+      },
+      {
+        field: "dCValue",
+        headerName: "Dr Amt (₹)",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "dCValue"),
+      },
+      {
+        field: "drPercShare",
+        headerName: "Dr Disc %",
+        width: 90,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "drPercShare"),
+      },
+      {
+        field: "dValDisc",
+        headerName: "Dr Disc ₹",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.dValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "hCValue",
+        headerName: "Hosp Amt (₹)",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "hCValue"),
+      },
+      {
+        field: "hospPercShare",
+        headerName: "Hosp Disc %",
+        width: 100,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "hospPercShare"),
+      },
+      {
+        field: "hValDisc",
+        headerName: "Hosp Disc ₹",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => (
+          <TextField value={params.row.hValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
+        ),
+      },
+      {
+        field: "grossAmt",
+        headerName: "Gross Amt",
+        width: 100,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          return (
+            <Typography variant="body2" fontWeight="medium">
+              ₹{grossAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "discAmt",
+        headerName: "Disc Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          return (
+            <Typography variant="body2" color="error">
+              ₹{totalDiscAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "netAmt",
+        headerName: "Net Amt",
+        width: 90,
+        sortable: false,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => {
+          const quantity = params.row.chUnits || 1;
+          const drAmt = params.row.dCValue || 0;
+          const hospAmt = params.row.hCValue || 0;
+          const grossAmt = quantity * (drAmt + hospAmt);
+          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          const netAmt = grossAmt - totalDiscAmt;
+          return (
+            <Typography variant="body2" fontWeight="bold" color="primary">
+              ₹{netAmt.toFixed(2)}
+            </Typography>
+          );
+        },
+      },
+      {
+        field: "deptName",
+        headerName: "Department",
+        width: 150,
+        sortable: false,
+        renderCell: (params) => (
+          <Typography variant="body2" noWrap>
+            {params.row.deptName || "-"}
+          </Typography>
+        ),
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Delete",
+        width: 60,
+        getActions: (params) => {
+          const index = productRows.findIndex((row) => row.id === params.id);
+          return [
+            <GridActionsCellItem
+              icon={
+                <Tooltip title="Remove Product">
+                  <DeleteIcon color="error" />
+                </Tooltip>
+              }
+              label="Remove"
+              onClick={() => removeProduct(index)}
+              showInMenu={false}
+            />,
+          ];
+        },
+      },
+    ],
+    [renderProductNumberField, removeProduct, productRows]
   );
 
   const onSubmit = async (data: BillingFormData) => {
@@ -472,8 +1131,12 @@ const BillingPage: React.FC = () => {
 
       // TODO: Call your billing service here
       console.log("Bill Save Request:", billSaveRequest);
-
-      showAlert("Success", "Bill saved successfully", "success");
+      const saveBillResponse = await billingGenericService.save(billSaveRequest as BillSaveRequest);
+      if (saveBillResponse.success) {
+        showAlert("Success", "Bill saved successfully", "success");
+      } else {
+        showAlert("Warning", "Bill not saved", "warning");
+      }
       performReset();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to save bill";
@@ -491,13 +1154,18 @@ const BillingPage: React.FC = () => {
     setSelectedPatient(null);
     setClearSearchTrigger((prev) => prev + 1);
     setServiceSearchTerm("");
+    setProductSearchTerm("");
     setSelectedService(null);
+    setSelectedProduct(null);
+    setItemMode("service");
   };
 
   // Add this function in BillingPage
   const handleVisitSelect = useCallback(
     (visit: GetPatientAllVisitHistory) => {
       setValue("patOPIP", visit.patOPIP as "O" | "I", { shouldValidate: true });
+      setValue("opIPNo", visit.opipNo, { shouldValidate: true });
+      setValue("opipCaseNo", visit.opipCaseNo, { shouldValidate: true });
       setValue("visitReferenceCode", visit.opNumber || "", { shouldValidate: true });
       setValue("billMisc", `Visit Ref: ${visit.opNumber}`, { shouldValidate: true });
       trigger();
@@ -698,14 +1366,95 @@ const BillingPage: React.FC = () => {
               </Card>
             </Grid>
 
-            {/* Services Section */}
+            {/* Services/Products Section with DataGrid */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6">Services</Typography>
-                    <Box display="flex" gap={2} alignItems="center">
-                      {/* Service Search Autocomplete */}
+              <Card
+                variant="outlined"
+                sx={{
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                  transition: "box-shadow 0.3s ease",
+                  "&:hover": {
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  },
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: alpha(theme.palette.primary.main, 0.04),
+                    borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box display="flex" alignItems="center" gap={1.5}>
+                    <ToggleButtonGroup
+                      value={itemMode}
+                      exclusive
+                      onChange={(event, newMode) => {
+                        if (newMode !== null) {
+                          if (newMode === "product" && !isDepartmentSelected) {
+                            openDepartmentDialog();
+                          }
+                          setItemMode(newMode);
+                        }
+                      }}
+                      size="small"
+                      sx={{
+                        "& .MuiToggleButton-root": {
+                          px: 2,
+                          py: 0.5,
+                        },
+                      }}
+                    >
+                      <ToggleButton value="service">
+                        <MedicalServicesIcon sx={{ mr: 1, fontSize: 18 }} />
+                        Services
+                      </ToggleButton>
+                      <ToggleButton value="product">
+                        <ShoppingCartIcon sx={{ mr: 1, fontSize: 18 }} />
+                        Products
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+
+                    {itemMode === "product" && isDepartmentSelected && (
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="body2" color="text.secondary">
+                          Department:
+                        </Typography>
+                        <Chip label={selectedDeptName} size="small" color="primary" variant="outlined" onDelete={openDepartmentDialog} deleteIcon={<EditIcon fontSize="small" />} />
+                      </Box>
+                    )}
+
+                    <Typography variant="body2" color="text.secondary">
+                      Add and manage billing {itemMode === "service" ? "services" : "products"}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" gap={2} alignItems="center">
+                    {itemMode === "service" && serviceRows.length > 0 && (
+                      <Chip
+                        label={`${serviceRows.length} ${serviceRows.length === 1 ? "Service" : "Services"}`}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        sx={{ fontWeight: "600", borderWidth: 2 }}
+                      />
+                    )}
+                    {itemMode === "product" && productRows.length > 0 && (
+                      <Chip
+                        label={`${productRows.length} ${productRows.length === 1 ? "Product" : "Products"}`}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        sx={{ fontWeight: "600", borderWidth: 2 }}
+                      />
+                    )}
+                    {/* Service Search Autocomplete */}
+                    {itemMode === "service" && (
                       <Autocomplete
                         value={selectedService}
                         onChange={(event, newValue) => {
@@ -752,227 +1501,147 @@ const BillingPage: React.FC = () => {
                         )}
                         noOptionsText="No services found"
                       />
-                    </Box>
+                    )}
+                    {/* Product Search Autocomplete */}
+                    {itemMode === "product" && (
+                      <Autocomplete
+                        value={selectedProduct}
+                        onChange={(event, newValue) => {
+                          if (newValue) {
+                            handleProductSelect(newValue);
+                          }
+                        }}
+                        inputValue={productSearchTerm}
+                        onInputChange={(event, newInputValue) => {
+                          setProductSearchTerm(newInputValue);
+                        }}
+                        options={filteredProducts}
+                        getOptionLabel={(option) => `${option.productCode} - ${option.productName}`}
+                        loading={loadingProducts}
+                        sx={{ width: 400 }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Search and add product"
+                            size="small"
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {loadingProducts ? <CircularProgress color="inherit" size={20} /> : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <Box component="li" {...props}>
+                            <Box>
+                              <Typography variant="body1">
+                                {option.productCode} - {option.productName}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Price: ₹{option.unitPrice} |{option.availableQuantity && ` Available: ${option.availableQuantity}`}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                        noOptionsText="No products found"
+                      />
+                    )}
                   </Box>
-                  <Divider sx={{ mb: 2 }} />
+                </Box>
 
-                  {serviceFields.length > 0 ? (
-                    <TableContainer sx={{ overflowX: "auto" }}>
-                      <Table size="small" sx={{ minWidth: 1500 }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ minWidth: 200 }}>Service Name</TableCell>
-                            <TableCell sx={{ minWidth: 150 }}>Physician</TableCell>
-                            <TableCell sx={{ minWidth: 130 }}>Effective Date</TableCell>
-                            <TableCell align="center" sx={{ minWidth: 80 }}>
-                              Quantity
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Dr Amt (₹)
-                            </TableCell>
-                            <TableCell align="center" sx={{ minWidth: 90 }}>
-                              Dr Disc %
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Dr Disc ₹
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Hosp Amt (₹)
-                            </TableCell>
-                            <TableCell align="center" sx={{ minWidth: 100 }}>
-                              Hosp Disc %
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 100 }}>
-                              Hosp Disc ₹
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 100 }}>
-                              Gross Amt
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Disc Amt
-                            </TableCell>
-                            <TableCell align="right" sx={{ minWidth: 90 }}>
-                              Net Amt
-                            </TableCell>
-                            <TableCell sx={{ minWidth: 120 }}>Service Group</TableCell>
-                            <TableCell sx={{ minWidth: 120 }}>Pack Name</TableCell>
-                            <TableCell align="center" sx={{ minWidth: 60 }}>
-                              Delete
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {serviceFields.map((field, index) => {
-                            const service = watchedBillServices[index];
-                            const quantity = service?.chUnits || 1;
-                            const drAmt = service?.dCValue || 0;
-                            const hospAmt = service?.hCValue || 0;
-                            const drDiscAmt = service?.dValDisc || 0;
-                            const hospDiscAmt = service?.hValDisc || 0;
-
-                            // Calculate amounts
-                            const grossAmt = quantity * (drAmt + hospAmt);
-                            const totalDiscAmt = drDiscAmt + hospDiscAmt;
-                            const netAmt = grossAmt - totalDiscAmt;
-
-                            return (
-                              <TableRow key={field.id}>
-                                <TableCell>
-                                  <Typography variant="body2" noWrap>
-                                    {service?.chargeDesc || "-"}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  {service?.physicianYN === "Y" ? (
-                                    <FormField
-                                      name={`billServices.${index}.physicianID`}
-                                      control={control}
-                                      type="select"
-                                      size="small"
-                                      fullWidth
-                                      options={physicians || []}
-                                      defaultText="Select"
-                                      onChange={(data: any) => {
-                                        if (data && typeof data === "object" && "value" in data) {
-                                          setValue(`billServices.${index}.PhysicianName`, data.label || "", { shouldDirty: true });
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    <Typography variant="body2" color="text.secondary">
-                                      N/A
-                                    </Typography>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  <FormField name={`billServices.${index}.chargeDt`} control={control} type="datepicker" size="small" fullWidth />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.chUnits`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={1}
-                                    step={1}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "chUnits", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.dCValue`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "dCValue", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.drPercShare`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    max={100}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "drPercShare", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <TextField
-                                    value={drDiscAmt.toFixed(2)}
-                                    size="small"
-                                    fullWidth
-                                    disabled
-                                    InputProps={{
-                                      readOnly: true,
-                                      style: { textAlign: "right" },
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.hCValue`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "hCValue", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`billServices.${index}.hospPercShare`}
-                                    control={control}
-                                    type="number"
-                                    size="small"
-                                    fullWidth
-                                    min={0}
-                                    max={100}
-                                    step={0.01}
-                                    onChange={(value: any) => handleServiceFieldChange(index, "hospPercShare", value)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <TextField
-                                    value={hospDiscAmt.toFixed(2)}
-                                    size="small"
-                                    fullWidth
-                                    disabled
-                                    InputProps={{
-                                      readOnly: true,
-                                      style: { textAlign: "right" },
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Typography variant="body2" fontWeight="medium">
-                                    ₹{grossAmt.toFixed(2)}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Typography variant="body2" color="error">
-                                    ₹{totalDiscAmt.toFixed(2)}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Typography variant="body2" fontWeight="bold" color="primary">
-                                    ₹{netAmt.toFixed(2)}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography variant="body2" noWrap>
-                                    {service?.sGRPName || "-"}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography variant="body2" noWrap>
-                                    {service?.packName || "-"}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="center">
-                                  <IconButton size="small" color="error" onClick={() => removeService(index)}>
-                                    <DeleteIcon fontSize="small" />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                <CardContent sx={{ p: 0 }}>
+                  {itemMode === "service" ? (
+                    serviceRows.length > 0 ? (
+                      <Box sx={{ height: 400, width: "100%" }}>
+                        <DataGrid
+                          rows={serviceRows}
+                          columns={serviceColumns}
+                          density="compact"
+                          disableRowSelectionOnClick
+                          hideFooterSelectedRowCount
+                          pageSizeOptions={[5, 10, 25, 50]}
+                          initialState={{
+                            pagination: {
+                              paginationModel: { pageSize: 10 },
+                            },
+                          }}
+                          sx={{
+                            border: "none",
+                            "& .MuiDataGrid-cell:focus": {
+                              outline: "none",
+                            },
+                            "& .MuiDataGrid-row:hover": {
+                              backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                            },
+                            "& .MuiDataGrid-columnHeaders": {
+                              backgroundColor: alpha(theme.palette.primary.main, 0.06),
+                              borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                              fontWeight: "600",
+                            },
+                            "& .MuiDataGrid-cell": {
+                              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                            },
+                            "& .MuiDataGrid-columnHeader:focus": {
+                              outline: "none",
+                            },
+                            "& .MuiDataGrid-columnHeader:focus-within": {
+                              outline: "none",
+                            },
+                          }}
+                        />
+                      </Box>
+                    ) : (
+                      <Box sx={{ p: 6, textAlign: "center" }}>
+                        <Typography color="text.secondary">No services added. Use the search box above to add services.</Typography>
+                      </Box>
+                    )
+                  ) : productRows.length > 0 ? (
+                    <Box sx={{ height: 400, width: "100%" }}>
+                      <DataGrid
+                        rows={productRows}
+                        columns={productColumns}
+                        density="compact"
+                        disableRowSelectionOnClick
+                        hideFooterSelectedRowCount
+                        pageSizeOptions={[5, 10, 25, 50]}
+                        initialState={{
+                          pagination: {
+                            paginationModel: { pageSize: 10 },
+                          },
+                        }}
+                        sx={{
+                          border: "none",
+                          "& .MuiDataGrid-cell:focus": {
+                            outline: "none",
+                          },
+                          "& .MuiDataGrid-row:hover": {
+                            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                          },
+                          "& .MuiDataGrid-columnHeaders": {
+                            backgroundColor: alpha(theme.palette.primary.main, 0.06),
+                            borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                            fontWeight: "600",
+                          },
+                          "& .MuiDataGrid-cell": {
+                            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                          },
+                          "& .MuiDataGrid-columnHeader:focus": {
+                            outline: "none",
+                          },
+                          "& .MuiDataGrid-columnHeader:focus-within": {
+                            outline: "none",
+                          },
+                        }}
+                      />
+                    </Box>
                   ) : (
-                    <Typography color="text.secondary" align="center">
-                      No services added. Use the search box above to add services.
-                    </Typography>
+                    <Box sx={{ p: 6, textAlign: "center" }}>
+                      <Typography color="text.secondary">No products added. Use the search box above to add products.</Typography>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
@@ -1017,6 +1686,30 @@ const BillingPage: React.FC = () => {
                         </Box>
                       </Stack>
                     </Grid>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <Stack spacing={1}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Summary Breakdown:
+                        </Typography>
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography variant="body2">Total Services:</Typography>
+                          <Typography variant="body2">{serviceRows.length}</Typography>
+                        </Box>
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography variant="body2">Total Products:</Typography>
+                          <Typography variant="body2">{productRows.length}</Typography>
+                        </Box>
+                        <Divider />
+                        <Box display="flex" justifyContent="space-between">
+                          <Typography variant="body2" fontWeight="medium">
+                            Total Items:
+                          </Typography>
+                          <Typography variant="body2" fontWeight="medium">
+                            {serviceRows.length + productRows.length}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Grid>
                   </Grid>
                 </CardContent>
               </Card>
@@ -1043,7 +1736,6 @@ const BillingPage: React.FC = () => {
           </Grid>
         </Box>
       </Paper>
-
       {/* Patient Visit History Dialog */}
       <PatientVisitDialog
         open={isHistoryDialogOpen}
@@ -1052,6 +1744,15 @@ const BillingPage: React.FC = () => {
         pChartCode={selectedPatient?.pChartCode}
         onVisitSelect={handleVisitSelect}
       />
+      <DepartmentSelectionDialog
+        open={isDepartmentDialogOpen}
+        onClose={closeDepartmentDialog}
+        onSelectDepartment={handleDeptSelect}
+        initialDeptId={selectedDeptId}
+        requireSelection={true}
+      />
+      {/* Batch Selection Dialog */}
+      <BatchSelectionDialog open={isBatchSelectionDialogOpen} onClose={closeBatchDialog} onSelect={handleBatchSelect} data={availableBatches} />
     </Box>
   );
 };

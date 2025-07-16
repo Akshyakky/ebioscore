@@ -1,7 +1,7 @@
 // src/services/BillingServices/billingService.ts
 
 import { APIConfig } from "@/apiConfig";
-import { BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
+import { BillProductsDto, BillSaveRequest, BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
 import {
   BChargeAliasDto,
   BChargeDetailDto,
@@ -99,6 +99,9 @@ class ExtendedBillingService extends GenericEntityService<BillsDto> {
   async getBillingServiceById(chargeId: number): Promise<OperationResult<BillServicesDto[]>> {
     return this.apiService.get<OperationResult<BillServicesDto[]>>(`${this.baseEndpoint}/GetBillingServiceById/${chargeId}`, this.getToken());
   }
+  async getBatchNoProduct(productId: number, departmentId: number): Promise<OperationResult<BillProductsDto[]>> {
+    return this.apiService.get<OperationResult<BillProductsDto[]>>(`${this.baseEndpoint}/GetBatchNoProduct?productId=${productId}&departmentId=${departmentId}`, this.getToken());
+  }
 }
 
 // Export basic services using factory pattern (for simple CRUD operations)
@@ -108,7 +111,7 @@ export const doctorSharePercShareService = createEntityService<BDoctorSharePercS
 export const chargeAliasService = createEntityService<BChargeAliasDto>("BChargeAlias", "billingURL");
 export const chargeFacultyService = createEntityService<BChargeFacultyDto>("BChargeFaculty", "billingURL");
 export const chargePackService = createEntityService<BChargePackDto>("BChargePack", "billingURL");
-export const billingGenericService = createEntityService<BillsDto>("Billing", "billingURL");
+export const billingGenericService = createEntityService<BillSaveRequest>("Billing", "billingURL");
 
 // Export extended services with custom methods (for complex operations)
 export const bChargeService = new ExtendedBChargeService();
