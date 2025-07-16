@@ -4,26 +4,22 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import {
-  ProductIssualDto,
-  ProductIssualSearchRequest,
-  calculateTotalIssuedQty,
-  calculateTotalItems,
-  calculateTotalRequestedQty,
-  eDateFilterType,
-  formatCurrency,
-} from "@/interfaces/InventoryManagement/ProductIssualDto";
+import { ProductIssualDto, eDateFilterType, formatCurrency } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { useAlert } from "@/providers/AlertProvider";
+import { productIssualMastService } from "@/services/InventoryManagementService/inventoryManagementService";
 import {
   Add as AddIcon,
   CheckCircle as ApproveIcon,
   Assignment as AssignmentIcon,
   ViewModule as CardIcon,
   Clear as ClearIcon,
+  ContentCopy as ContentCopyIcon,
   Dashboard as DashboardIcon,
   Delete as DeleteIcon,
   Group as DeptIcon,
   Edit as EditIcon,
+  ExpandLess as ExpandLessIcon,
+  ExpandMore as ExpandMoreIcon,
   GetApp as ExportIcon,
   FilterList as FilterIcon,
   Inventory as InventoryIcon,
@@ -35,6 +31,7 @@ import {
   Search as SearchIcon,
   CheckBox as SelectAllIcon,
   Sort as SortIcon,
+  BarChart as StatisticsIcon,
   Sync,
   TaskAlt as TaskAltIcon,
   SwapHoriz as TransferIcon,
@@ -49,6 +46,8 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -83,80 +82,6 @@ import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialo
 import CompleteProductIssualForm from "../Form/ProductIssualForm";
 import { useProductIssual } from "../hooks/useProductIssual";
 
-// Enhanced Product Issual interface for display purposes
-interface EnhancedProductIssualDto extends ProductIssualDto {
-  totalItems: number;
-  totalRequestedQty: number;
-  totalIssuedQty: number;
-  totalValue: string;
-  totalValueNumeric: number;
-  fromDepartmentDisplay: string;
-  toDepartmentDisplay: string;
-  statusColor: string;
-  daysOld: number;
-  isOverdue: boolean;
-  formattedIssueDate: string;
-  searchableText: string;
-}
-
-// Enhanced filter state interface
-interface FilterState {
-  startDate: Date | null;
-  endDate: Date | null;
-  fromDepartmentID: string;
-  toDepartmentID: string;
-  approvedStatus: string;
-  dateRange: string;
-  sortBy: string;
-  sortOrder: string;
-  pisCode: string;
-  indentNo: string;
-}
-
-// Sort options configuration
-const SORT_OPTIONS = [
-  { value: "pisDate", label: "Issue Date" },
-  { value: "pisCode", label: "Issue Code" },
-  { value: "indentNo", label: "Indent Number" },
-  { value: "fromDeptName", label: "From Department" },
-  { value: "toDeptName", label: "To Department" },
-  { value: "approvedYN", label: "Status" },
-];
-
-// Date range quick filters
-const DATE_RANGES = [
-  { value: "today", label: "Today" },
-  { value: "yesterday", label: "Yesterday" },
-  { value: "thisWeek", label: "This Week" },
-  { value: "lastWeek", label: "Last Week" },
-  { value: "thisMonth", label: "This Month" },
-  { value: "lastMonth", label: "Last Month" },
-  { value: "last3Months", label: "Last 3 Months" },
-  { value: "thisYear", label: "This Year" },
-  { value: "custom", label: "Custom Range" },
-];
-
-const statusOptions = [
-  { value: "all", label: "All Status" },
-  { value: "Y", label: "Approved" },
-  { value: "N", label: "Pending" },
-];
-
-// Utility functions
-const formatIssueDate = (date: Date): string => {
-  return date ? dayjs(date).format("DD/MM/YYYY") : "";
-};
-
-const calculateDaysOld = (date: Date): number => {
-  return date ? dayjs().diff(dayjs(date), "days") : 0;
-};
-
-const isDateInRange = (date: Date, startDate: Dayjs, endDate: Dayjs): boolean => {
-  if (!date) return false;
-  const dayJsDate = dayjs(date);
-  return dayJsDate.isAfter(startDate.subtract(1, "day")) && dayJsDate.isBefore(endDate.add(1, "day"));
-};
-
 const EnhancedProductIssualPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -166,11 +91,27 @@ const EnhancedProductIssualPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isApproveConfirmOpen, setIsApproveConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
+  const [isCopyMode, setIsCopyMode] = useState<boolean>(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "cards" | "detailed">("grid");
   const [reportsMenuAnchor, setReportsMenuAnchor] = useState<null | HTMLElement>(null);
   const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(false);
+  const [showStatistics, setShowStatistics] = useState<boolean>(false); // New state for statistics toggle
+
+  // Filter states using simple state variables
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [fromDepartmentID, setFromDepartmentID] = useState<string>("all");
+  const [toDepartmentID, setToDepartmentID] = useState<string>("all");
+  const [approvedStatus, setApprovedStatus] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<string>("thisMonth");
+  const [sortBy, setSortBy] = useState<string>("pisDate");
+  const [sortOrder, setSortOrder] = useState<string>("desc");
+  const [pisCode, setPisCode] = useState<string>("");
+  const [indentNo, setIndentNo] = useState<string>("");
+
   const [statistics, setStatistics] = useState({
     total: 0,
     approved: 0,
@@ -181,24 +122,14 @@ const EnhancedProductIssualPage: React.FC = () => {
 
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
   const { department } = useDropdownValues(["department"]);
-  const { paginatedIssuals, isLoading, error, issualSearch, deleteIssual, approveIssual, canEditIssual, canApproveIssual, canDeleteIssual } = useProductIssual();
+  const [departmentIssuals, setDepartmentIssuals] = useState<ProductIssualDto[]>([]);
+  const [isDepartmentLoading, setIsDepartmentLoading] = useState<boolean>(false);
+
+  const { isLoading, error, deleteIssual, approveIssual, canEditIssual, canApproveIssual, canDeleteIssual, getIssualWithDetailsById } = useProductIssual();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [filters, setFilters] = useState<FilterState>({
-    startDate: null,
-    endDate: null,
-    fromDepartmentID: "all",
-    toDepartmentID: "all",
-    approvedStatus: "all",
-    dateRange: "thisMonth",
-    sortBy: "pisDate",
-    sortOrder: "desc",
-    pisCode: "",
-    indentNo: "",
-  });
-
-  const getDateFilterType = (dateRange: string): eDateFilterType => {
-    switch (dateRange) {
+  const getDateFilterType = (dateRangeValue: string): eDateFilterType => {
+    switch (dateRangeValue) {
       case "today":
         return eDateFilterType.Today;
       case "thisWeek":
@@ -214,39 +145,143 @@ const EnhancedProductIssualPage: React.FC = () => {
     }
   };
 
+  // Utility functions
+  const formatIssueDate = (date: Date): string => {
+    return date ? dayjs(date).format("DD/MM/YYYY") : "";
+  };
+
+  const calculateDaysOld = (date: Date): number => {
+    return date ? dayjs().diff(dayjs(date), "days") : 0;
+  };
+
+  const isDateInRange = (date: Date, startDateValue: Dayjs, endDateValue: Dayjs): boolean => {
+    if (!date) return false;
+    const dayJsDate = dayjs(date);
+    return dayJsDate.isAfter(startDateValue.subtract(1, "day")) && dayJsDate.isBefore(endDateValue.add(1, "day"));
+  };
+
   const fetchIssualsForDepartment = useCallback(
     async (departmentID: number) => {
       if (!departmentID) return;
 
       try {
-        const searchRequest: ProductIssualSearchRequest = {
-          pageIndex: 1,
-          pageSize: 100,
-          sortBy: filters.sortBy || "pisDate",
-          sortAscending: filters.sortOrder === "asc",
-          dateFilterType: getDateFilterType(filters.dateRange),
-          fromDepartmentID: filters.fromDepartmentID !== "all" ? parseInt(filters.fromDepartmentID) : undefined,
-          toDepartmentID: filters.toDepartmentID !== "all" ? parseInt(filters.toDepartmentID) : undefined,
-          approvedStatus: filters.approvedStatus !== "all" ? filters.approvedStatus : undefined,
-          pisCode: filters.pisCode || undefined,
-          indentNo: filters.indentNo || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        };
+        console.log("Fetching issuals for department:", departmentID);
+        setIsDepartmentLoading(true);
+        const response = await productIssualMastService.getAll();
+        if (response.success && response.data && Array.isArray(response.data)) {
+          // FIXED: Only filter by fromDeptID (issuing department), not toDeptID
+          const departmentRelatedIssuals = response.data.filter((issual: ProductIssualDto) => {
+            return issual.fromDeptID === departmentID;
+          });
 
-        await issualSearch(searchRequest);
+          let filteredIssuals = [...departmentRelatedIssuals];
+
+          if (fromDepartmentID !== "all") {
+            const fromDeptFilter = parseInt(fromDepartmentID);
+            filteredIssuals = filteredIssuals.filter((issual) => issual.fromDeptID === fromDeptFilter);
+          }
+
+          if (toDepartmentID !== "all") {
+            const toDeptFilter = parseInt(toDepartmentID);
+            filteredIssuals = filteredIssuals.filter((issual) => issual.toDeptID === toDeptFilter);
+          }
+
+          if (approvedStatus !== "all") {
+            filteredIssuals = filteredIssuals.filter((issual) => issual.approvedYN === approvedStatus);
+          }
+
+          if (pisCode) {
+            filteredIssuals = filteredIssuals.filter((issual) => issual.pisCode?.toLowerCase().includes(pisCode.toLowerCase()));
+          }
+
+          if (indentNo) {
+            filteredIssuals = filteredIssuals.filter((issual) => issual.indentNo?.toLowerCase().includes(indentNo.toLowerCase()));
+          }
+
+          // Apply date range filter
+          if (startDate && endDate) {
+            const start = dayjs(startDate).startOf("day");
+            const end = dayjs(endDate).endOf("day");
+            filteredIssuals = filteredIssuals.filter((issual) => {
+              const issualDate = dayjs(issual.pisDate);
+              return issualDate.isAfter(start.subtract(1, "day")) && issualDate.isBefore(end.add(1, "day"));
+            });
+          }
+
+          // Sort the results
+          filteredIssuals.sort((a, b) => {
+            let aValue: any, bValue: any;
+
+            switch (sortBy) {
+              case "pisDate":
+                aValue = new Date(a.pisDate || 0);
+                bValue = new Date(b.pisDate || 0);
+                break;
+              case "pisCode":
+                aValue = a.pisCode || "";
+                bValue = b.pisCode || "";
+                break;
+              case "indentNo":
+                aValue = a.indentNo || "";
+                bValue = b.indentNo || "";
+                break;
+              case "fromDeptName":
+                aValue = a.fromDeptName || "";
+                bValue = b.fromDeptName || "";
+                break;
+              case "toDeptName":
+                aValue = a.toDeptName || "";
+                bValue = b.toDeptName || "";
+                break;
+              case "approvedYN":
+                aValue = a.approvedYN || "";
+                bValue = b.approvedYN || "";
+                break;
+              default:
+                aValue = a.pisid;
+                bValue = b.pisid;
+            }
+
+            if (typeof aValue === "string") {
+              const comparison = aValue.localeCompare(bValue);
+              return sortOrder === "asc" ? comparison : -comparison;
+            } else {
+              const comparison = aValue - bValue;
+              return sortOrder === "asc" ? comparison : -comparison;
+            }
+          });
+
+          console.log("Final filtered and sorted issuals:", filteredIssuals.length);
+          setDepartmentIssuals(filteredIssuals);
+        } else {
+          console.error("Invalid response structure:", response);
+          throw new Error(response.errorMessage || "Failed to fetch product issuals - invalid response");
+        }
       } catch (error) {
         console.error("Error fetching Product Issuals for department:", error);
         showAlert("Error", "Failed to fetch Product Issual data for the selected department", "error");
+        setDepartmentIssuals([]);
+      } finally {
+        setIsDepartmentLoading(false);
       }
     },
-    [issualSearch, filters, showAlert]
+    [fromDepartmentID, toDepartmentID, approvedStatus, pisCode, indentNo, startDate, endDate, sortBy, sortOrder, showAlert]
   );
 
+  // Handle department selection from dialog
   const handleDepartmentSelectWithIssualFetch = useCallback(
     async (selectedDeptId: number, selectedDeptName: string) => {
       try {
+        console.log("Department selected:", selectedDeptId, selectedDeptName);
         await handleDepartmentSelect(selectedDeptId, selectedDeptName);
+
+        // Reset filters when changing department
+        setFromDepartmentID("all");
+        setToDepartmentID("all");
+        setApprovedStatus("all");
+        setPisCode("");
+        setIndentNo("");
+
         await fetchIssualsForDepartment(selectedDeptId);
         showAlert("Success", `Loaded Product Issual data for ${selectedDeptName}`, "success");
       } catch (error) {
@@ -257,143 +292,133 @@ const EnhancedProductIssualPage: React.FC = () => {
     [handleDepartmentSelect, fetchIssualsForDepartment, showAlert]
   );
 
+  // Handle department change button click
   const handleDepartmentChange = useCallback(() => {
     openDialog();
   }, [openDialog]);
 
+  // Initial effect - only open dialog if no department selected
   useEffect(() => {
     if (!isDepartmentSelected && !isDialogOpen) {
       openDialog();
     }
   }, []);
 
+  // Effect to fetch issuals when department is selected
   useEffect(() => {
     if (isDepartmentSelected && deptId) {
+      console.log("Department selected, fetching issuals for:", deptId);
       fetchIssualsForDepartment(deptId);
     }
   }, [isDepartmentSelected, deptId, fetchIssualsForDepartment]);
 
-  const enhancedIssuals = useMemo((): EnhancedProductIssualDto[] => {
-    const issualsList = paginatedIssuals.items || [];
+  // Process issuals list - use departmentIssuals instead of paginatedIssuals
+  const processedIssuals = useMemo((): ProductIssualDto[] => {
+    console.log("Processing issuals:", departmentIssuals.length);
+    return departmentIssuals;
+  }, [departmentIssuals]);
 
-    return issualsList.map((issual) => {
-      const pendingApproval = issual.approvedYN !== "Y";
-      const daysOld = calculateDaysOld(issual.pisDate);
-      const totalItems = calculateTotalItems(issual.details || []);
-      const totalRequestedQty = calculateTotalRequestedQty(issual.details || []);
-      const totalIssuedQty = calculateTotalIssuedQty(issual.details || []);
-      const totalValue = (issual.details || []).reduce((sum, detail) => {
-        const itemValue = (detail.unitPrice || 0) * detail.issuedQty;
-        const taxValue = itemValue * ((detail.tax || 0) / 100);
-        return sum + itemValue + taxValue;
-      }, 0);
-
-      return {
-        ...issual,
-        totalItems,
-        totalRequestedQty,
-        totalIssuedQty,
-        totalValue: formatCurrency(totalValue),
-        totalValueNumeric: totalValue,
-        fromDepartmentDisplay: issual.fromDeptName || `Dept #${issual.fromDeptID}`,
-        toDepartmentDisplay: issual.toDeptName || `Dept #${issual.toDeptID}`,
-        statusColor: issual.approvedYN === "Y" ? "#4caf50" : "#ff9800",
-        daysOld,
-        isOverdue: daysOld > 7 && pendingApproval,
-        formattedIssueDate: formatIssueDate(issual.pisDate),
-        searchableText: `${issual.pisCode || ""} ${issual.indentNo || ""} ${issual.fromDeptName || ""} ${issual.toDeptName || ""}`.toLowerCase(),
-      };
-    });
-  }, [paginatedIssuals]);
-
-  // Enhanced filtering and searching
+  // Filter and search issuals - FIXED: filter by selected department only as fromDeptID
   const filteredAndSearchedIssuals = useMemo(() => {
-    let filtered = [...enhancedIssuals];
+    let filtered = [...processedIssuals];
 
-    // Apply search term with comprehensive matching
+    console.log("Filtering issuals. Total:", filtered.length, "Selected Dept ID:", deptId);
+
+    // FIXED: Only filter by fromDeptID (issuing department)
+    if (deptId) {
+      filtered = filtered.filter((issual) => issual.fromDeptID === deptId);
+      console.log("After department filter (showing issuals from dept", deptId, "):", filtered.length);
+    }
+
+    // Search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter((issual) => issual.searchableText?.includes(searchLower));
+      filtered = filtered.filter((issual) => {
+        const searchableText = `${issual.pisCode || ""} ${issual.indentNo || ""} ${issual.fromDeptName || ""} ${issual.toDeptName || ""}`.toLowerCase();
+        return searchableText.includes(searchLower);
+      });
+      console.log("After search filter:", filtered.length);
     }
 
-    // Apply date range filter
-    if (filters.dateRange !== "all") {
+    // Date range filter
+    if (dateRange !== "all") {
       const now = dayjs();
-      let startDate: Dayjs | null = null;
-      let endDate: Dayjs | null = null;
+      let startDateValue: Dayjs | null = null;
+      let endDateValue: Dayjs | null = null;
 
-      switch (filters.dateRange) {
+      switch (dateRange) {
         case "today":
-          startDate = now.startOf("day");
-          endDate = now.endOf("day");
+          startDateValue = now.startOf("day");
+          endDateValue = now.endOf("day");
           break;
         case "yesterday":
-          startDate = now.subtract(1, "day").startOf("day");
-          endDate = now.subtract(1, "day").endOf("day");
+          startDateValue = now.subtract(1, "day").startOf("day");
+          endDateValue = now.subtract(1, "day").endOf("day");
           break;
         case "thisWeek":
-          startDate = now.startOf("week");
-          endDate = now.endOf("week");
+          startDateValue = now.startOf("week");
+          endDateValue = now.endOf("week");
           break;
         case "lastWeek":
-          startDate = now.subtract(1, "week").startOf("week");
-          endDate = now.subtract(1, "week").endOf("week");
+          startDateValue = now.subtract(1, "week").startOf("week");
+          endDateValue = now.subtract(1, "week").endOf("week");
           break;
         case "thisMonth":
-          startDate = now.startOf("month");
-          endDate = now.endOf("month");
+          startDateValue = now.startOf("month");
+          endDateValue = now.endOf("month");
           break;
         case "lastMonth":
-          startDate = now.subtract(1, "month").startOf("month");
-          endDate = now.subtract(1, "month").endOf("month");
+          startDateValue = now.subtract(1, "month").startOf("month");
+          endDateValue = now.subtract(1, "month").endOf("month");
           break;
         case "last3Months":
-          startDate = now.subtract(3, "month").startOf("month");
-          endDate = now.endOf("month");
+          startDateValue = now.subtract(3, "month").startOf("month");
+          endDateValue = now.endOf("month");
           break;
         case "thisYear":
-          startDate = now.startOf("year");
-          endDate = now.endOf("year");
+          startDateValue = now.startOf("year");
+          endDateValue = now.endOf("year");
           break;
         case "custom":
-          if (filters.startDate) startDate = dayjs(filters.startDate);
-          if (filters.endDate) endDate = dayjs(filters.endDate);
+          if (startDate) startDateValue = dayjs(startDate);
+          if (endDate) endDateValue = dayjs(endDate);
           break;
       }
 
-      if (startDate && endDate) {
+      if (startDateValue && endDateValue) {
         filtered = filtered.filter((issual) => {
-          return isDateInRange(issual.pisDate, startDate!, endDate!);
+          return isDateInRange(issual.pisDate, startDateValue!, endDateValue!);
         });
+        console.log("After date filter:", filtered.length);
       }
     }
 
-    // Apply other filters
-    if (filters.fromDepartmentID !== "all") {
-      filtered = filtered.filter((issual) => issual.fromDeptID?.toString() === filters.fromDepartmentID);
+    // Additional filters
+    if (fromDepartmentID !== "all") {
+      filtered = filtered.filter((issual) => issual.fromDeptID?.toString() === fromDepartmentID);
     }
 
-    if (filters.toDepartmentID !== "all") {
-      filtered = filtered.filter((issual) => issual.toDeptID?.toString() === filters.toDepartmentID);
+    if (toDepartmentID !== "all") {
+      filtered = filtered.filter((issual) => issual.toDeptID?.toString() === toDepartmentID);
     }
 
-    if (filters.approvedStatus !== "all") {
-      filtered = filtered.filter((issual) => issual.approvedYN === filters.approvedStatus);
+    if (approvedStatus !== "all") {
+      filtered = filtered.filter((issual) => issual.approvedYN === approvedStatus);
     }
 
-    if (filters.pisCode) {
-      filtered = filtered.filter((issual) => issual.pisCode?.toLowerCase().includes(filters.pisCode.toLowerCase()));
+    if (pisCode) {
+      filtered = filtered.filter((issual) => issual.pisCode?.toLowerCase().includes(pisCode.toLowerCase()));
     }
 
-    if (filters.indentNo) {
-      filtered = filtered.filter((issual) => issual.indentNo?.toLowerCase().includes(filters.indentNo.toLowerCase()));
+    if (indentNo) {
+      filtered = filtered.filter((issual) => issual.indentNo?.toLowerCase().includes(indentNo.toLowerCase()));
     }
 
-    // Apply sorting
+    // Sort
     filtered.sort((a, b) => {
       let aValue: any, bValue: any;
 
-      switch (filters.sortBy) {
+      switch (sortBy) {
         case "pisDate":
           aValue = new Date(a.pisDate || 0);
           bValue = new Date(b.pisDate || 0);
@@ -425,28 +450,41 @@ const EnhancedProductIssualPage: React.FC = () => {
 
       if (typeof aValue === "string") {
         const comparison = aValue.localeCompare(bValue);
-        return filters.sortOrder === "asc" ? comparison : -comparison;
+        return sortOrder === "asc" ? comparison : -comparison;
       } else {
         const comparison = aValue - bValue;
-        return filters.sortOrder === "asc" ? comparison : -comparison;
+        return sortOrder === "asc" ? comparison : -comparison;
       }
     });
 
+    console.log("Final filtered issuals:", filtered.length);
     return filtered;
-  }, [enhancedIssuals, searchTerm, filters]);
+  }, [processedIssuals, searchTerm, deptId, dateRange, startDate, endDate, fromDepartmentID, toDepartmentID, approvedStatus, pisCode, indentNo, sortBy, sortOrder]);
 
-  // Calculate statistics
+  // FIXED: Updated statistics calculation to properly calculate quantities and total value
   useEffect(() => {
-    const total = enhancedIssuals.length;
-    const approved = enhancedIssuals.filter((issual) => issual.approvedYN === "Y").length;
+    const total = processedIssuals.length;
+    const approved = processedIssuals.filter((issual) => issual.approvedYN === "Y").length;
     const pending = total - approved;
-    const overdue = enhancedIssuals.filter((issual) => issual.isOverdue).length;
-    const totalValue = enhancedIssuals.reduce((sum, issual) => sum + issual.totalValueNumeric, 0);
+    const daysOldCheck = (date: Date): number => (date ? dayjs().diff(dayjs(date), "days") : 0);
+    const overdue = processedIssuals.filter((issual) => daysOldCheck(issual.pisDate) > 7 && issual.approvedYN !== "Y").length;
+
+    // FIXED: Calculate total value correctly from issual details
+    const totalValue = processedIssuals.reduce((sum, issual) => {
+      if (issual.details && Array.isArray(issual.details)) {
+        const issualValue = issual.details.reduce((detailSum, detail) => {
+          const itemValue = (detail.unitPrice || 0) * (detail.issuedQty || 0);
+          const taxValue = itemValue * ((detail.tax || 0) / 100);
+          return detailSum + itemValue + taxValue;
+        }, 0);
+        return sum + issualValue;
+      }
+      return sum;
+    }, 0);
 
     setStatistics({ total, approved, pending, overdue, totalValue });
-  }, [enhancedIssuals]);
+  }, [processedIssuals]);
 
-  // Event handlers
   const handleRefresh = useCallback(async () => {
     if (!deptId) {
       showAlert("Warning", "Please select a department first", "warning");
@@ -460,32 +498,138 @@ const EnhancedProductIssualPage: React.FC = () => {
   }, [deptId, fetchIssualsForDepartment, showAlert]);
 
   const handleAddNew = useCallback(() => {
+    console.log("Creating new issual");
     setSelectedIssual(null);
     setIsViewMode(false);
+    setIsCopyMode(false);
     setIsFormOpen(true);
   }, []);
 
+  // FIXED Copy functionality with detailed issual loading
+  const handleCopy = useCallback(
+    async (issual: ProductIssualDto) => {
+      try {
+        console.log("Starting copy for issual:", issual.pisid);
+        setIsLoadingDetails(true);
+
+        // Load the complete issual with details using ProductIssualCompositeDto
+        const compositeDto = await getIssualWithDetailsById(issual.pisid);
+
+        if (!compositeDto || !compositeDto.productIssual) {
+          throw new Error("Failed to load issual details for copying");
+        }
+
+        // Create a proper ProductIssualDto with details populated
+        const issualToCopy: ProductIssualDto = {
+          ...compositeDto.productIssual,
+          details: compositeDto.details || [],
+        };
+
+        console.log("Issual to copy with details:", issualToCopy);
+        console.log("Details count:", issualToCopy.details?.length || 0);
+
+        setSelectedIssual(issualToCopy);
+        setIsCopyMode(true);
+        setIsViewMode(false);
+        setIsFormOpen(true);
+
+        showAlert("Info", `Copying issual "${issual.pisCode}" with ${issualToCopy.details?.length || 0} products. Please review and save.`, "info");
+      } catch (error) {
+        console.error("Error initiating copy:", error);
+        showAlert("Error", "Failed to load issual details for copying", "error");
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    },
+    [getIssualWithDetailsById, showAlert]
+  );
+
+  // FIXED Edit functionality with detailed issual loading
   const handleEdit = useCallback(
-    (issual: EnhancedProductIssualDto) => {
+    async (issual: ProductIssualDto) => {
+      debugger;
       if (!canEditIssual(issual)) {
         showAlert("Warning", "Approved issuals cannot be edited.", "warning");
         return;
       }
-      setSelectedIssual(issual);
-      setIsViewMode(false);
-      setIsFormOpen(true);
+
+      try {
+        console.log("Starting edit for issual:", issual.pisid);
+        setIsLoadingDetails(true);
+
+        // Load the complete issual with details using ProductIssualCompositeDto
+        const compositeDto = await getIssualWithDetailsById(issual.pisid);
+
+        if (!compositeDto || !compositeDto.productIssual) {
+          throw new Error("Failed to load issual details for editing");
+        }
+
+        // Create a proper ProductIssualDto with details populated
+        const issualToEdit: ProductIssualDto = {
+          ...compositeDto.productIssual,
+          details: compositeDto.details || [],
+        };
+
+        console.log("Issual to edit with details:", issualToEdit);
+        console.log("Details count:", issualToEdit.details?.length || 0);
+
+        setSelectedIssual(issualToEdit);
+        setIsCopyMode(false);
+        setIsViewMode(false);
+        setIsFormOpen(true);
+
+        showAlert("Info", `Loading issual "${issual.pisCode}" with ${issualToEdit.details?.length || 0} products for editing...`, "info");
+      } catch (error) {
+        console.error("Error initiating edit:", error);
+        showAlert("Error", "Failed to load issual details for editing", "error");
+      } finally {
+        setIsLoadingDetails(false);
+      }
     },
-    [canEditIssual, showAlert]
+    [canEditIssual, getIssualWithDetailsById, showAlert]
   );
 
-  const handleView = useCallback((issual: EnhancedProductIssualDto) => {
-    setSelectedIssual(issual);
-    setIsViewMode(true);
-    setIsFormOpen(true);
-  }, []);
+  // FIXED View functionality with detailed issual loading
+  const handleView = useCallback(
+    async (issual: ProductIssualDto) => {
+      try {
+        console.log("Starting view for issual:", issual.pisid);
+        setIsLoadingDetails(true);
+
+        // Load the complete issual with details using ProductIssualCompositeDto
+        const compositeDto = await getIssualWithDetailsById(issual.pisid);
+
+        if (!compositeDto || !compositeDto.productIssual) {
+          throw new Error("Failed to load issual details for viewing");
+        }
+
+        // Create a proper ProductIssualDto with details populated
+        const issualToView: ProductIssualDto = {
+          ...compositeDto.productIssual,
+          details: compositeDto.details || [],
+        };
+
+        console.log("Issual to view with details:", issualToView);
+        console.log("Details count:", issualToView.details?.length || 0);
+
+        setSelectedIssual(issualToView);
+        setIsCopyMode(false);
+        setIsViewMode(true);
+        setIsFormOpen(true);
+
+        showAlert("Info", `Loading issual "${issual.pisCode}" with ${issualToView.details?.length || 0} products for viewing...`, "info");
+      } catch (error) {
+        console.error("Error initiating view:", error);
+        showAlert("Error", "Failed to load issual details for viewing", "error");
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    },
+    [getIssualWithDetailsById, showAlert]
+  );
 
   const handleDeleteClick = useCallback(
-    (issual: EnhancedProductIssualDto) => {
+    (issual: ProductIssualDto) => {
       if (!canDeleteIssual(issual)) {
         showAlert("Warning", "Approved issuals cannot be deleted.", "warning");
         return;
@@ -497,7 +641,7 @@ const EnhancedProductIssualPage: React.FC = () => {
   );
 
   const handleApproveClick = useCallback(
-    (issual: EnhancedProductIssualDto) => {
+    (issual: ProductIssualDto) => {
       if (!canApproveIssual(issual)) {
         showAlert("Warning", "This issual is already approved.", "warning");
         return;
@@ -524,10 +668,14 @@ const EnhancedProductIssualPage: React.FC = () => {
     await fetchIssualsForDepartment(deptId);
   }, [selectedIssual, approveIssual, deptId, fetchIssualsForDepartment]);
 
+  // FIXED form close handler to reset all states
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
+      console.log("Closing form, refresh data:", refreshData);
       setIsFormOpen(false);
       setSelectedIssual(null);
+      setIsCopyMode(false);
+      setIsViewMode(false);
       if (refreshData && deptId) {
         fetchIssualsForDepartment(deptId);
       }
@@ -536,28 +684,34 @@ const EnhancedProductIssualPage: React.FC = () => {
   );
 
   // Sort handling
-  const handleSortChange = useCallback((sortBy: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      sortBy,
-      sortOrder: prev.sortBy === sortBy && prev.sortOrder === "asc" ? "desc" : "asc",
-    }));
-    setSortMenuAnchor(null);
-  }, []);
+  const handleSortChange = useCallback(
+    (sortByValue: string) => {
+      setSortOrder((prev) => (sortBy === sortByValue && prev === "asc" ? "desc" : "asc"));
+      setSortBy(sortByValue);
+      setSortMenuAnchor(null);
+    },
+    [sortBy]
+  );
 
   // Enhanced export functionality
   const handleExportIssuals = useCallback(
     (format: "excel" | "pdf" | "csv") => {
       const exportData = filteredAndSearchedIssuals.map((issual) => ({
         "Issue Code": issual.pisCode,
-        "Issue Date": issual.formattedIssueDate,
+        "Issue Date": formatIssueDate(issual.pisDate),
         "Indent No": issual.indentNo,
         "From Department": issual.fromDeptName,
         "To Department": issual.toDeptName,
         "Total Items": issual.totalItems,
         "Total Requested Qty": issual.totalRequestedQty,
         "Total Issued Qty": issual.totalIssuedQty,
-        "Total Value": issual.totalValue,
+        "Total Value": formatCurrency(
+          (issual.details || []).reduce((sum, detail) => {
+            const itemValue = (detail.unitPrice || 0) * (detail.issuedQty || 0);
+            const taxValue = itemValue * ((detail.tax || 0) / 100);
+            return sum + itemValue + taxValue;
+          }, 0)
+        ),
         Status: issual.approvedYN === "Y" ? "Approved" : "Pending",
         "Approved By": issual.approvedBy,
       }));
@@ -580,6 +734,15 @@ const EnhancedProductIssualPage: React.FC = () => {
     [filteredAndSearchedIssuals, deptName, showAlert]
   );
 
+  // Calculate total value for an issual
+  const calculateIssualTotalValue = (issual: ProductIssualDto): number => {
+    return (issual.details || []).reduce((sum, detail) => {
+      const itemValue = (detail.unitPrice || 0) * (detail.issuedQty || 0);
+      const taxValue = itemValue * ((detail.tax || 0) / 100);
+      return sum + itemValue + taxValue;
+    }, 0);
+  };
+
   // Enhanced view mode rendering
   const renderContent = () => {
     if (viewMode === "cards") {
@@ -593,7 +756,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                   height: "100%",
                   cursor: "pointer",
                   "&:hover": { elevation: 4 },
-                  borderLeft: `4px solid ${issual.statusColor}`,
+                  borderLeft: `4px solid ${issual.approvedYN === "Y" ? "#4caf50" : "#ff9800"}`,
                 }}
                 onClick={() => handleView(issual)}
               >
@@ -614,13 +777,13 @@ const EnhancedProductIssualPage: React.FC = () => {
                     To: {issual.toDeptName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Date: {issual.formattedIssueDate}
+                    Date: {formatIssueDate(issual.pisDate)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Items: {issual.totalItems} | Issued: {issual.totalIssuedQty}
                   </Typography>
                   <Typography variant="body2" color="primary" fontWeight="bold">
-                    Value: {issual.totalValue}
+                    Value: {formatCurrency(calculateIssualTotalValue(issual))}
                   </Typography>
                 </CardContent>
               </Card>
@@ -633,84 +796,92 @@ const EnhancedProductIssualPage: React.FC = () => {
     if (viewMode === "detailed") {
       return (
         <List>
-          {filteredAndSearchedIssuals.map((issual) => (
-            <ListItem
-              key={issual.pisid}
-              sx={{
-                mb: 1,
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                "&:hover": { backgroundColor: "action.hover" },
-              }}
-            >
-              <ListItemText
-                primary={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Typography variant="h6">{issual.pisCode || "Pending"}</Typography>
-                    <Chip size="small" label={issual.approvedYN === "Y" ? "Approved" : "Pending"} color={issual.approvedYN === "Y" ? "success" : "warning"} />
-                    {issual.isOverdue && <Chip size="small" label="Overdue" color="error" />}
-                  </Box>
-                }
-                secondary={
-                  <Box sx={{ mt: 1 }}>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant="caption" display="block">
-                          Indent No
-                        </Typography>
-                        <Typography variant="body2">{issual.indentNo || "N/A"}</Typography>
+          {filteredAndSearchedIssuals.map((issual) => {
+            const daysOld = calculateDaysOld(issual.pisDate);
+            const isOverdue = daysOld > 7 && issual.approvedYN !== "Y";
+
+            return (
+              <ListItem
+                key={issual.pisid}
+                sx={{
+                  mb: 1,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  "&:hover": { backgroundColor: "action.hover" },
+                }}
+              >
+                <ListItemText
+                  primary={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Typography variant="h6">{issual.pisCode || "Pending"}</Typography>
+                      <Chip size="small" label={issual.approvedYN === "Y" ? "Approved" : "Pending"} color={issual.approvedYN === "Y" ? "success" : "warning"} />
+                      {isOverdue && <Chip size="small" label="Overdue" color="error" />}
+                    </Box>
+                  }
+                  secondary={
+                    <Box sx={{ mt: 1 }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant="caption" display="block">
+                            Indent No
+                          </Typography>
+                          <Typography variant="body2">{issual.indentNo || "N/A"}</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant="caption" display="block">
+                            From Department
+                          </Typography>
+                          <Typography variant="body2">{issual.fromDeptName}</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant="caption" display="block">
+                            To Department
+                          </Typography>
+                          <Typography variant="body2">{issual.toDeptName}</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant="caption" display="block">
+                            Date
+                          </Typography>
+                          <Typography variant="body2">{formatIssueDate(issual.pisDate)}</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant="caption" display="block">
+                            Total Items
+                          </Typography>
+                          <Typography variant="body2">{issual.totalItems}</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant="caption" display="block">
+                            Total Value
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold" color="primary">
+                            {formatCurrency(calculateIssualTotalValue(issual))}
+                          </Typography>
+                        </Grid>
                       </Grid>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant="caption" display="block">
-                          From Department
-                        </Typography>
-                        <Typography variant="body2">{issual.fromDeptName}</Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant="caption" display="block">
-                          To Department
-                        </Typography>
-                        <Typography variant="body2">{issual.toDeptName}</Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant="caption" display="block">
-                          Date
-                        </Typography>
-                        <Typography variant="body2">{issual.formattedIssueDate}</Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant="caption" display="block">
-                          Total Items
-                        </Typography>
-                        <Typography variant="body2">{issual.totalItems}</Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant="caption" display="block">
-                          Total Value
-                        </Typography>
-                        <Typography variant="body2" fontWeight="bold" color="primary">
-                          {issual.totalValue}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                }
-              />
-              <ListItemSecondaryAction>
-                <Stack direction="row" spacing={1}>
-                  <IconButton size="small" onClick={() => handleView(issual)}>
-                    <VisibilityIcon />
-                  </IconButton>
-                  {canEditIssual(issual) && (
-                    <IconButton size="small" onClick={() => handleEdit(issual)}>
-                      <EditIcon />
+                    </Box>
+                  }
+                />
+                <ListItemSecondaryAction>
+                  <Stack direction="row" spacing={1}>
+                    <IconButton size="small" onClick={() => handleView(issual)} disabled={isLoadingDetails}>
+                      {isLoadingDetails ? <CircularProgress size={16} /> : <VisibilityIcon />}
                     </IconButton>
-                  )}
-                </Stack>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
+                    {canEditIssual(issual) && (
+                      <IconButton size="small" onClick={() => handleEdit(issual)} disabled={isLoadingDetails}>
+                        {isLoadingDetails ? <CircularProgress size={16} /> : <EditIcon />}
+                      </IconButton>
+                    )}
+                    <IconButton size="small" onClick={() => handleCopy(issual)} disabled={isLoadingDetails}>
+                      {isLoadingDetails ? <CircularProgress size={16} /> : <ContentCopyIcon />}
+                    </IconButton>
+                  </Stack>
+                </ListItemSecondaryAction>
+              </ListItem>
+            );
+          })}
         </List>
       );
     }
@@ -720,23 +891,23 @@ const EnhancedProductIssualPage: React.FC = () => {
       <CustomGrid
         columns={columns}
         data={filteredAndSearchedIssuals}
-        loading={isLoading}
+        loading={isDepartmentLoading}
         maxHeight="600px"
         emptyStateMessage={`No product issuals found for ${deptName}. Click "New Issual" to create the first one.`}
         rowKeyField="pisid"
-        onRowClick={handleView}
+        onRowClick={(issual) => handleView(issual)}
       />
     );
   };
 
-  const columns: Column<EnhancedProductIssualDto>[] = [
+  const columns: Column<ProductIssualDto>[] = [
     {
       key: "select",
       header: "",
       visible: true,
       sortable: false,
       width: 50,
-      render: (issual: EnhancedProductIssualDto) => (
+      render: (issual: ProductIssualDto) => (
         <input
           type="checkbox"
           checked={selectedRows.includes(issual.pisid)}
@@ -753,7 +924,7 @@ const EnhancedProductIssualPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 240,
-      render: (issual: EnhancedProductIssualDto) => (
+      render: (issual: ProductIssualDto) => (
         <Box>
           <Box display="flex" alignItems="center" gap={1} mb={0.5}>
             <AssignmentIcon sx={{ fontSize: 20, color: "primary.main" }} />
@@ -762,10 +933,10 @@ const EnhancedProductIssualPage: React.FC = () => {
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.875rem" }}>
-            <strong>Indent:</strong> {issual.indentNo || "N/A"} • <strong>Date:</strong> {issual.formattedIssueDate}
+            <strong>Indent:</strong> {issual.indentNo || "N/A"} • <strong>Date:</strong> {formatIssueDate(issual.pisDate)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Days: {issual.daysOld} • Items: {issual.totalItems}
+            Days: {calculateDaysOld(issual.pisDate)} • Items: {issual.totalItems}
           </Typography>
         </Box>
       ),
@@ -776,7 +947,7 @@ const EnhancedProductIssualPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 200,
-      render: (issual: EnhancedProductIssualDto) => (
+      render: (issual: ProductIssualDto) => (
         <Box display="flex" alignItems="center" gap={1}>
           <DeptIcon sx={{ fontSize: 20, color: "primary.main" }} />
           <Box>
@@ -796,7 +967,7 @@ const EnhancedProductIssualPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 200,
-      render: (issual: EnhancedProductIssualDto) => (
+      render: (issual: ProductIssualDto) => (
         <Box display="flex" alignItems="center" gap={1}>
           <TransferIcon sx={{ fontSize: 20, color: "secondary.main" }} />
           <Box>
@@ -810,70 +981,64 @@ const EnhancedProductIssualPage: React.FC = () => {
         </Box>
       ),
     },
-    {
-      key: "quantities",
-      header: "Quantities",
-      visible: true,
-      sortable: false,
-      width: 160,
-      render: (issual: EnhancedProductIssualDto) => (
-        <Box>
-          <Typography variant="body2" color="text.secondary">
-            <strong>Requested:</strong> {issual.totalRequestedQty}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            <strong>Issued:</strong> {issual.totalIssuedQty}
-          </Typography>
-        </Box>
-      ),
-    },
+    // {
+    //   key: "quantities",
+    //   header: "Quantities",
+    //   visible: true,
+    //   sortable: false,
+    //   width: 160,
+    //   render: (issual: ProductIssualDto) => (
+    //     <Box>
+    //       <Typography variant="body2" color="text.secondary">
+    //         <strong>Requested:</strong> {issual.totalRequestedQty || 0}
+    //       </Typography>
+    //       <Typography variant="body2" color="text.secondary">
+    //         <strong>Issued:</strong> {issual.totalIssuedQty || 0}
+    //       </Typography>
+    //     </Box>
+    //   ),
+    // },
     {
       key: "status",
       header: "Status",
       visible: true,
       sortable: true,
       width: 160,
-      render: (issual: EnhancedProductIssualDto) => (
-        <Stack spacing={1}>
-          {issual.approvedYN === "Y" ? (
-            <Chip label="Approved" size="small" variant="filled" color="success" icon={<ApproveIcon />} sx={{ fontWeight: 500 }} />
-          ) : (
-            <Chip
-              label="Pending"
-              size="small"
-              variant="filled"
-              icon={<PendingIcon />}
-              sx={{
-                backgroundColor: "#ff9800",
-                color: "white",
-                fontWeight: 500,
-                "& .MuiChip-icon": { color: "white" },
-              }}
-            />
-          )}
-          {issual.isOverdue && <Chip label="Overdue" size="small" color="error" variant="outlined" sx={{ fontWeight: 500 }} />}
-        </Stack>
-      ),
+      render: (issual: ProductIssualDto) => {
+        const daysOld = calculateDaysOld(issual.pisDate);
+        const isOverdue = daysOld > 7 && issual.approvedYN !== "Y";
+
+        return (
+          <Stack spacing={1}>
+            {issual.approvedYN === "Y" ? (
+              <Chip label="Approved" size="small" variant="filled" color="success" icon={<ApproveIcon />} sx={{ fontWeight: 500 }} />
+            ) : (
+              <Chip
+                label="Pending"
+                size="small"
+                variant="filled"
+                icon={<PendingIcon />}
+                sx={{
+                  backgroundColor: "#ff9800",
+                  color: "white",
+                  fontWeight: 500,
+                  "& .MuiChip-icon": { color: "white" },
+                }}
+              />
+            )}
+            {isOverdue && <Chip label="Overdue" size="small" color="error" variant="outlined" sx={{ fontWeight: 500 }} />}
+          </Stack>
+        );
+      },
     },
-    {
-      key: "totalValue",
-      header: "Total Value",
-      visible: true,
-      sortable: true,
-      width: 120,
-      render: (issual: EnhancedProductIssualDto) => (
-        <Typography variant="body2" fontWeight="bold" color="primary">
-          {issual.totalValue}
-        </Typography>
-      ),
-    },
+
     {
       key: "approvedBy",
       header: "Approved By",
       visible: true,
       sortable: true,
       width: 150,
-      render: (issual: EnhancedProductIssualDto) => (
+      render: (issual: ProductIssualDto) => (
         <Typography variant="body2" color="text.secondary">
           {issual.approvedBy || "-"}
         </Typography>
@@ -884,8 +1049,8 @@ const EnhancedProductIssualPage: React.FC = () => {
       header: "Actions",
       visible: true,
       sortable: false,
-      width: 200,
-      render: (issual: EnhancedProductIssualDto) => (
+      width: 250,
+      render: (issual: ProductIssualDto) => (
         <Stack direction="row" spacing={0.5}>
           <Tooltip title="View Details">
             <IconButton
@@ -895,6 +1060,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                 e.stopPropagation();
                 handleView(issual);
               }}
+              disabled={isLoadingDetails}
               sx={{
                 "&:hover": {
                   backgroundColor: "primary.main",
@@ -902,7 +1068,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                 },
               }}
             >
-              <VisibilityIcon fontSize="small" />
+              {isLoadingDetails ? <CircularProgress size={16} /> : <VisibilityIcon fontSize="small" />}
             </IconButton>
           </Tooltip>
 
@@ -915,6 +1081,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                   e.stopPropagation();
                   handleEdit(issual);
                 }}
+                disabled={isLoadingDetails}
                 sx={{
                   "&:hover": {
                     backgroundColor: "secondary.main",
@@ -922,10 +1089,30 @@ const EnhancedProductIssualPage: React.FC = () => {
                   },
                 }}
               >
-                <EditIcon fontSize="small" />
+                {isLoadingDetails ? <CircularProgress size={16} /> : <EditIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
           )}
+
+          <Tooltip title="Copy Issual">
+            <IconButton
+              size="small"
+              color="info"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopy(issual);
+              }}
+              disabled={isLoadingDetails}
+              sx={{
+                "&:hover": {
+                  backgroundColor: "info.main",
+                  color: "white",
+                },
+              }}
+            >
+              {isLoadingDetails ? <CircularProgress size={16} /> : <ContentCopyIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
 
           {canApproveIssual(issual) && (
             <Tooltip title="Approve Issual">
@@ -985,8 +1172,8 @@ const EnhancedProductIssualPage: React.FC = () => {
         <Alert severity="error" sx={{ mb: 2 }}>
           Error loading product issuals: {error}
         </Alert>
-        <Button onClick={handleRefresh} variant="contained" color="primary">
-          Retry
+        <Button onClick={handleRefresh} variant="contained" color="primary" disabled={isDepartmentLoading}>
+          {isDepartmentLoading ? "Loading..." : "Retry"}
         </Button>
       </Box>
     );
@@ -994,6 +1181,29 @@ const EnhancedProductIssualPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Loading overlay */}
+      {isLoadingDetails && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: "rgba(0, 0, 0, 0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Box sx={{ bgcolor: "background.paper", p: 3, borderRadius: 2, display: "flex", alignItems: "center", gap: 2 }}>
+            <CircularProgress />
+            <Typography>Loading issual details...</Typography>
+          </Box>
+        </Box>
+      )}
+
       {isDepartmentSelected && (
         <>
           {/* Enhanced Header */}
@@ -1010,7 +1220,16 @@ const EnhancedProductIssualPage: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-              <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Button
+                  variant="outlined"
+                  startIcon={<StatisticsIcon />}
+                  endIcon={showStatistics ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  onClick={() => setShowStatistics(!showStatistics)}
+                  size="small"
+                >
+                  Statistics
+                </Button>
                 <SmartButton text={`${deptName}`} onClick={handleDepartmentChange} variant="contained" size="small" color="warning" icon={Sync} />
                 <CustomButton variant="contained" icon={AddIcon} text="New Issual" onClick={handleAddNew} size="small" />
                 <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous size="small" />
@@ -1018,37 +1237,109 @@ const EnhancedProductIssualPage: React.FC = () => {
             </Box>
           </Paper>
 
-          {/* Enhanced Statistics Dashboard */}
-          <Grid container spacing={3} mb={3}>
-            {[
-              { title: "Total Issuals", value: statistics.total, icon: <DashboardIcon />, color: "#1976d2" },
-              { title: "Approved", value: statistics.approved, icon: <TaskAltIcon />, color: "#4caf50" },
-              { title: "Pending", value: statistics.pending, icon: <PendingIcon />, color: "#ff9800" },
-              { title: "Overdue", value: statistics.overdue, icon: <WarningIcon />, color: "#f44336" },
-            ].map((stat) => (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={stat.title}>
-                <Card
-                  elevation={2}
-                  sx={{
-                    height: "100%",
-                    borderLeft: `4px solid ${stat.color}`,
-                    transition: "box-shadow 0.2s",
-                    "&:hover": { elevation: 4 },
-                  }}
-                >
-                  <CardContent sx={{ textAlign: "center", p: 2.5 }}>
-                    <Box sx={{ color: stat.color, mb: 1 }}>{React.cloneElement(stat.icon, { sx: { fontSize: 32 } })}</Box>
-                    <Typography variant="h5" fontWeight="700" sx={{ color: stat.color, mb: 0.5 }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" fontWeight="500">
-                      {stat.title}
-                    </Typography>
-                  </CardContent>
-                </Card>
+          {/* NEW: Statistics with Dashboard Style */}
+          <Collapse in={showStatistics}>
+            <Paper elevation={1} sx={{ p: 3, mb: 3, bgcolor: "grey.50" }}>
+              <Grid container spacing={3} justifyContent="center">
+                {[
+                  {
+                    title: "Total Visits",
+                    value: statistics.total,
+                    icon: <DashboardIcon sx={{ fontSize: 24, color: "white" }} />,
+                    bgColor: "#1976d2",
+                  },
+                  {
+                    title: "Waiting",
+                    value: statistics.pending,
+                    icon: <PendingIcon sx={{ fontSize: 24, color: "white" }} />,
+                    bgColor: "#ff9800",
+                  },
+                  {
+                    title: "Completed",
+                    value: statistics.approved,
+                    icon: <TaskAltIcon sx={{ fontSize: 24, color: "white" }} />,
+                    bgColor: "#4caf50",
+                  },
+                  {
+                    title: "Cancelled",
+                    value: statistics.overdue,
+                    icon: <WarningIcon sx={{ fontSize: 24, color: "white" }} />,
+                    bgColor: "#f44336",
+                  },
+                  {
+                    title: "Hospital",
+                    value: Math.round(statistics.totalValue / 1000),
+                    icon: <InventoryIcon sx={{ fontSize: 24, color: "white" }} />,
+                    bgColor: "#2196f3",
+                  },
+                  {
+                    title: "Physician",
+                    value: 0,
+                    icon: <AssignmentIcon sx={{ fontSize: 24, color: "white" }} />,
+                    bgColor: "#9c27b0",
+                  },
+                ].map((stat, index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }} key={stat.title}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        textAlign: "center",
+                        gap: 1.5,
+                        p: 2,
+                        bgcolor: "background.paper",
+                        borderRadius: 2,
+                        border: `3px solid ${stat.bgColor}`,
+                        borderLeft: `6px solid ${stat.bgColor}`,
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                          boxShadow: 2,
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          borderRadius: "50%",
+                          bgcolor: stat.bgColor,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          mb: 1,
+                        }}
+                      >
+                        {stat.icon}
+                      </Box>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          fontWeight: 700,
+                          color: stat.bgColor,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {stat.value}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          fontSize: "0.875rem",
+                          fontWeight: 500,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {stat.title}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
+            </Paper>
+          </Collapse>
 
           {/* Enhanced Search and Filters */}
           <Paper elevation={2} sx={{ p: 2.5, mb: 3 }}>
@@ -1112,7 +1403,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           {/* Results Summary */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="body2" color="text.secondary" fontWeight="500">
-              Showing <strong>{filteredAndSearchedIssuals.length}</strong> of <strong>{statistics.total}</strong> issuals for <strong>{deptName}</strong>
+              Showing <strong>{filteredAndSearchedIssuals.length}</strong> of <strong>{statistics.total}</strong> issuals from <strong>{deptName}</strong>
               {selectedRows.length > 0 && ` (${selectedRows.length} selected)`}
               {searchTerm && ` • Filtered by: "${searchTerm}"`}
             </Typography>
@@ -1138,12 +1429,19 @@ const EnhancedProductIssualPage: React.FC = () => {
       {/* Sort Menu */}
       <Menu anchorEl={sortMenuAnchor} open={Boolean(sortMenuAnchor)} onClose={() => setSortMenuAnchor(null)}>
         <MenuList>
-          {SORT_OPTIONS.map((option) => (
-            <MenuItem key={option.value} onClick={() => handleSortChange(option.value)} selected={filters.sortBy === option.value}>
+          {[
+            { value: "pisDate", label: "Issue Date" },
+            { value: "pisCode", label: "Issue Code" },
+            { value: "indentNo", label: "Indent Number" },
+            { value: "fromDeptName", label: "From Department" },
+            { value: "toDeptName", label: "To Department" },
+            { value: "approvedYN", label: "Status" },
+          ].map((option) => (
+            <MenuItem key={option.value} onClick={() => handleSortChange(option.value)} selected={sortBy === option.value}>
               <ListItemText>{option.label}</ListItemText>
-              {filters.sortBy === option.value && (
+              {sortBy === option.value && (
                 <Typography variant="caption" sx={{ ml: 1 }}>
-                  {filters.sortOrder === "asc" ? "↑" : "↓"}
+                  {sortOrder === "asc" ? "↑" : "↓"}
                 </Typography>
               )}
             </MenuItem>
@@ -1187,8 +1485,18 @@ const EnhancedProductIssualPage: React.FC = () => {
         <Stack spacing={3}>
           <FormControl fullWidth size="small">
             <InputLabel>Date Range</InputLabel>
-            <Select value={filters.dateRange} onChange={(e) => setFilters((prev) => ({ ...prev, dateRange: e.target.value }))} label="Date Range">
-              {DATE_RANGES.map((range) => (
+            <Select value={dateRange} onChange={(e) => setDateRange(e.target.value)} label="Date Range">
+              {[
+                { value: "today", label: "Today" },
+                { value: "yesterday", label: "Yesterday" },
+                { value: "thisWeek", label: "This Week" },
+                { value: "lastWeek", label: "Last Week" },
+                { value: "thisMonth", label: "This Month" },
+                { value: "lastMonth", label: "Last Month" },
+                { value: "last3Months", label: "Last 3 Months" },
+                { value: "thisYear", label: "This Year" },
+                { value: "custom", label: "Custom Range" },
+              ].map((range) => (
                 <MenuItem key={range.value} value={range.value}>
                   {range.label}
                 </MenuItem>
@@ -1196,29 +1504,25 @@ const EnhancedProductIssualPage: React.FC = () => {
             </Select>
           </FormControl>
 
-          {filters.dateRange === "custom" && (
+          {dateRange === "custom" && (
             <>
-              <DatePicker
-                label="Start Date"
-                value={filters.startDate ? dayjs(filters.startDate) : null}
-                onChange={(d) => setFilters((p) => ({ ...p, startDate: d ? d.toDate() : null }))}
-              />
-              <DatePicker
-                label="End Date"
-                value={filters.endDate ? dayjs(filters.endDate) : null}
-                onChange={(d) => setFilters((p) => ({ ...p, endDate: d ? d.toDate() : null }))}
-              />
+              <DatePicker label="Start Date" value={startDate ? dayjs(startDate) : null} onChange={(d) => setStartDate(d ? d.toDate() : null)} />
+              <DatePicker label="End Date" value={endDate ? dayjs(endDate) : null} onChange={(d) => setEndDate(d ? d.toDate() : null)} />
             </>
           )}
 
-          <TextField label="Issue Code" size="small" fullWidth value={filters.pisCode} onChange={(e) => setFilters((p) => ({ ...p, pisCode: e.target.value }))} />
+          <TextField label="Issue Code" size="small" fullWidth value={pisCode} onChange={(e) => setPisCode(e.target.value)} />
 
-          <TextField label="Indent Number" size="small" fullWidth value={filters.indentNo} onChange={(e) => setFilters((p) => ({ ...p, indentNo: e.target.value }))} />
+          <TextField label="Indent Number" size="small" fullWidth value={indentNo} onChange={(e) => setIndentNo(e.target.value)} />
 
           <FormControl fullWidth size="small">
             <InputLabel>Approval Status</InputLabel>
-            <Select value={filters.approvedStatus} onChange={(e) => setFilters((p) => ({ ...p, approvedStatus: e.target.value }))} label="Approval Status">
-              {statusOptions.map((status) => (
+            <Select value={approvedStatus} onChange={(e) => setApprovedStatus(e.target.value)} label="Approval Status">
+              {[
+                { value: "all", label: "All Status" },
+                { value: "Y", label: "Approved" },
+                { value: "N", label: "Pending" },
+              ].map((status) => (
                 <MenuItem key={status.value} value={status.value}>
                   {status.label}
                 </MenuItem>
@@ -1228,7 +1532,7 @@ const EnhancedProductIssualPage: React.FC = () => {
 
           <FormControl fullWidth size="small">
             <InputLabel>From Department</InputLabel>
-            <Select value={filters.fromDepartmentID} onChange={(e) => setFilters((p) => ({ ...p, fromDepartmentID: e.target.value }))} label="From Department">
+            <Select value={fromDepartmentID} onChange={(e) => setFromDepartmentID(e.target.value)} label="From Department">
               <MenuItem value="all">All Departments</MenuItem>
               {department?.map((dept) => (
                 <MenuItem key={dept.value} value={dept.value}>
@@ -1240,7 +1544,7 @@ const EnhancedProductIssualPage: React.FC = () => {
 
           <FormControl fullWidth size="small">
             <InputLabel>To Department</InputLabel>
-            <Select value={filters.toDepartmentID} onChange={(e) => setFilters((p) => ({ ...p, toDepartmentID: e.target.value }))} label="To Department">
+            <Select value={toDepartmentID} onChange={(e) => setToDepartmentID(e.target.value)} label="To Department">
               <MenuItem value="all">All Departments</MenuItem>
               {department?.map((dept) => (
                 <MenuItem key={dept.value} value={dept.value}>
@@ -1265,18 +1569,16 @@ const EnhancedProductIssualPage: React.FC = () => {
               variant="outlined"
               text="Clear"
               onClick={() => {
-                setFilters({
-                  startDate: null,
-                  endDate: null,
-                  fromDepartmentID: "all",
-                  toDepartmentID: "all",
-                  approvedStatus: "all",
-                  dateRange: "thisMonth",
-                  sortBy: "pisDate",
-                  sortOrder: "desc",
-                  pisCode: "",
-                  indentNo: "",
-                });
+                setStartDate(null);
+                setEndDate(null);
+                setFromDepartmentID("all");
+                setToDepartmentID("all");
+                setApprovedStatus("all");
+                setDateRange("thisMonth");
+                setSortBy("pisDate");
+                setSortOrder("desc");
+                setPisCode("");
+                setIndentNo("");
                 setIsFilterDrawerOpen(false);
                 fetchIssualsForDepartment(deptId);
                 showAlert("Success", "Filters cleared", "success");
@@ -1298,7 +1600,7 @@ const EnhancedProductIssualPage: React.FC = () => {
               icon={ApproveIcon}
               text={`Approve Selected (${
                 selectedRows.filter((id) => {
-                  const issual = enhancedIssuals.find((i) => i.pisid === id);
+                  const issual = processedIssuals.find((i) => i.pisid === id);
                   return issual && issual.approvedYN !== "Y";
                 }).length
               } eligible)`}
@@ -1314,7 +1616,6 @@ const EnhancedProductIssualPage: React.FC = () => {
               text="Export Selected"
               color="info"
               onClick={() => {
-                // Handle bulk export
                 setIsBulkActionsOpen(false);
                 showAlert("Info", "Bulk export functionality to be implemented", "info");
               }}
@@ -1324,7 +1625,7 @@ const EnhancedProductIssualPage: React.FC = () => {
               icon={DeleteIcon}
               text={`Delete Selected (${
                 selectedRows.filter((id) => {
-                  const issual = enhancedIssuals.find((i) => i.pisid === id);
+                  const issual = processedIssuals.find((i) => i.pisid === id);
                   return issual && canDeleteIssual(issual);
                 }).length
               } eligible)`}
@@ -1341,13 +1642,14 @@ const EnhancedProductIssualPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Form Dialog */}
+      {/* FIXED Form Dialog - with proper props and issual data */}
       {isFormOpen && (
         <CompleteProductIssualForm
           open={isFormOpen}
           onClose={handleFormClose}
           initialData={selectedIssual}
           viewOnly={isViewMode}
+          copyMode={isCopyMode}
           selectedDepartmentId={deptId}
           selectedDepartmentName={deptName}
         />
