@@ -90,33 +90,20 @@ export interface BillServicesDto extends BaseDto {
 }
 
 export interface BillProductsDto extends BaseDto {
-  billDetID: number;
-  billID: number;
   productID: number;
-  batchNo?: string;
-  expiryDate?: Date | string;
-  grnDetID?: number;
+  productName: string;
+  batchNo: string;
+  expiryDate: Date | string;
+  grnDetID: number;
   deptID: number;
   deptName: string;
-  cHValue: number;
-  chUnits?: number;
-  chDisc?: number;
-  actualDDValue?: number;
-  actualHCValue?: number;
-  dCValue?: number;
-  drPercShare?: number;
-  dValDisc?: number;
-  hCValue?: number;
+  selectedQuantity: number;
+  hValue: number;
   hospPercShare?: number;
   hValDisc?: number;
   packID?: number;
   packName?: string;
-  opipNo?: number;
-  physicianYN: string;
-  actualAmt?: number;
   rActiveYN?: string;
-  transferYN?: string;
-  rNotes?: string;
 }
 
 export interface BillSaveRequest {

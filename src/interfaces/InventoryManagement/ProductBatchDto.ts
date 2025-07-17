@@ -1,5 +1,6 @@
 export interface ProductBatchDto {
   productID: number;
+  productName: string;
   batchNo: string;
   expiryDate: Date | string;
   grnDetID: number;
