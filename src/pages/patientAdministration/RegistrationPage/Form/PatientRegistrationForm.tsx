@@ -1049,7 +1049,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           {/* Address Information - Compact */}
           <Grid size={{ xs: 12 }}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
-              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
                 Address Information
               </Typography>
               <Grid container spacing={1.5}>
@@ -1101,7 +1101,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           {isCreateMode && (
             <Grid size={{ xs: 12 }}>
               <Paper variant="outlined" sx={{ p: 1.5 }}>
-                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
                   Visit Configuration
                 </Typography>
                 <Grid container spacing={1.5}>
@@ -1177,7 +1177,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           {/* Payment & Membership - Combined */}
           <Grid size={{ xs: 12 }}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
-              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
                 Payment & Membership
               </Typography>
               <Grid container spacing={1.5}>
@@ -1225,7 +1225,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           {/* Additional Information - Compact */}
           <Grid size={{ xs: 12 }}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
-              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography variant="subtitle2" color="primary" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
                 Additional Information
               </Typography>
               <Grid container spacing={1.5}>

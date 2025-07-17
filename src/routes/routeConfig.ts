@@ -48,6 +48,8 @@ const AlertManager = lazy(() => import("@/pages/common/AlertManagerPage/MainPage
 const ProductList = lazy(() => import("@/pages/inventoryManagement/ProductList/MainPage/ProductList"));
 const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/ProductTransaction/ProductTransaction"));
 const PatientRegistrationRouter = lazy(() => import("@/pages/patientAdministration/RegistrationPage/PatientRegistrationRouter"));
+const PatientRegistrationFormManager = lazy(() => import("@/pages/patientAdministration/RegistrationPage/MainPage/PatientRegistrationFormManager"));
+const PatientRegistrationManager = lazy(() => import("@/pages/patientAdministration/RegistrationPage/MainPage/PatientRegistrationManager"));
 const DeptUnitAllocationPage = lazy(() => import("@/pages/hospitalAdministration/DeptUnitAllocation/MainPage/DeptUnitAllocationPage"));
 const MedicationRoutePage = lazy(() => import("@/pages/clinicalManagement/MedicationRoute/MainPage/MedicationRoutePage"));
 const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
@@ -106,8 +108,18 @@ const routeConfig: RouteConfig[] = [
     },
   },
   {
-    path: "/registrationpage",
-    component: wrapWithSuspense(PatientRegistrationRouter),
+    path: "/RegistrationSearchPage",
+    component: wrapWithSuspense(PatientRegistrationManager),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Registration",
+      category: "patient",
+    },
+  },
+  {
+    path: "/RegistrationFormPage",
+    component: wrapWithSuspense(PatientRegistrationFormManager),
     protected: true,
     providers: [AlertProvider],
     metadata: {
