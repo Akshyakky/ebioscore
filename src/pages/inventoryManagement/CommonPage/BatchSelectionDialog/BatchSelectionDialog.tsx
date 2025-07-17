@@ -2,7 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { Close, Search } from "@mui/icons-material";
-import { Box, Button, Chip, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Chip, TextField, Typography, useTheme } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 
 export interface BatchSelectionDialogProps<T = any> {
@@ -98,7 +98,6 @@ function BatchSelectionDialog<T extends Record<string, any>>({ open, onClose, on
   const finalColumns: Column<T>[] = useMemo(() => {
     const baseColumns: Column<T>[] = batchColumns<T>();
 
-    // Add action column at the end
     const actionColumn: Column<T> = {
       key: "_actions",
       header: "",
@@ -108,17 +107,15 @@ function BatchSelectionDialog<T extends Record<string, any>>({ open, onClose, on
       align: "center",
       render: (item) => {
         return (
-          <Button
-            size="small"
-            variant="contained"
-            color="primary"
+          <SmartButton
+            text="Select"
             onClick={(e) => {
               e.stopPropagation();
               handleSelectItem(item);
             }}
-          >
-            Select
-          </Button>
+            variant="contained"
+            color="primary"
+          />
         );
       },
     };
