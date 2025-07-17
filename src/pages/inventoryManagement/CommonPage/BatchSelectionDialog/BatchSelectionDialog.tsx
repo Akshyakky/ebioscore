@@ -1,7 +1,7 @@
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { AddCircle, CheckCircle, Close, Search } from "@mui/icons-material";
+import { Close, Search } from "@mui/icons-material";
 import { Box, Button, Chip, TextField, Typography, alpha, useTheme } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
 
@@ -22,21 +22,6 @@ export interface BatchSelectionDialogProps<T = any> {
   onClose: () => void;
   onSelect: (selectedItem: T) => void;
   data: T[];
-  columns?: BatchSelectionColumn<T>[];
-  title?: string;
-  subtitle?: string;
-  idField?: keyof T;
-  selectionField?: keyof T;
-  defaultColumns?: boolean;
-  maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
-  fullWidth?: boolean;
-  showSearch?: boolean;
-  searchPlaceholder?: string;
-  selectButtonIcon?: React.ElementType;
-  height?: number;
-  multiSelect?: boolean;
-  selectedItems?: T[];
-  getRowId?: (row: T) => string | number;
 }
 
 // Default batch columns
@@ -105,110 +90,36 @@ const getDefaultBatchColumns = <T extends Record<string, any>>(): Column<T>[] =>
   },
 ];
 
-function BatchSelectionDialog<T extends Record<string, any>>({
-  open,
-  onClose,
-  onSelect,
-  data,
-  columns,
-  title = "Select Product Batch",
-  subtitle = "Select a batch from the available options below:",
-  idField = "grnDetID" as keyof T,
-  selectionField = "batchNo" as keyof T,
-  defaultColumns = true,
-  maxWidth = "md",
-  fullWidth = true,
-  showSearch = false,
-  searchPlaceholder = "Search...",
-  height = 400,
-  multiSelect = false,
-  selectedItems = [],
-  getRowId,
-}: BatchSelectionDialogProps<T>) {
+function BatchSelectionDialog<T extends Record<string, any>>({ open, onClose, onSelect, data }: BatchSelectionDialogProps<T>) {
   const theme = useTheme();
-  const [selectedMultipleItems, setSelectedMultipleItems] = useState<T[]>(selectedItems);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const getItemId = useCallback(
-    (item: T | null) => {
-      if (!item) return null;
-      return getRowId ? getRowId(item) : idField ? item[idField] : null;
-    },
-    [idField, getRowId]
-  );
+  const getItemId = (item: T | null) => {
+    if (!item) return null;
+    return item["grnDetID"];
+  };
 
   const handleSelectItem = useCallback(
     (item: T) => {
-      if (multiSelect) {
-        const itemId = getItemId(item);
-        const isSelected = selectedMultipleItems.some((selected) => getItemId(selected) === itemId);
-
-        if (isSelected) {
-          setSelectedMultipleItems(selectedMultipleItems.filter((selected) => getItemId(selected) !== itemId));
-        } else {
-          setSelectedMultipleItems([...selectedMultipleItems, item]);
-        }
-      } else {
-        onSelect(item);
-        onClose();
-      }
+      onSelect(item);
+      onClose();
     },
-    [multiSelect, selectedMultipleItems, getItemId, onSelect, onClose]
+    [getItemId, onSelect, onClose]
   );
-
-  const handleMultiSelectComplete = useCallback(() => {
-    selectedMultipleItems.forEach((item) => onSelect(item));
-    onClose();
-  }, [selectedMultipleItems, onSelect, onClose]);
-
-  // Convert BatchSelectionColumn to Column
-  const convertToColumn = (col: BatchSelectionColumn<T>): Column<T> => {
-    return {
-      key: String(col.field),
-      header: col.headerName,
-      visible: true,
-      width: col.width,
-      sortable: col.sortable,
-      type: col.type === "string" ? "text" : col.type === "number" ? "number" : col.type === "date" ? "date" : "custom",
-      render: col.renderCell,
-      align: col.align,
-    };
-  };
 
   // Merge default columns with custom columns and add action column
   const finalColumns: Column<T>[] = useMemo(() => {
-    const baseColumns: Column<T>[] = columns ? columns.map(convertToColumn) : defaultColumns ? getDefaultBatchColumns<T>() : [];
+    const baseColumns: Column<T>[] = getDefaultBatchColumns<T>();
 
     // Add action column at the end
     const actionColumn: Column<T> = {
       key: "_actions",
-      header: multiSelect ? "Action" : "",
+      header: "",
       visible: true,
-      width: multiSelect ? 120 : 100,
+      width: 100,
       sortable: false,
       align: "center",
       render: (item) => {
-        if (multiSelect) {
-          const itemId = getItemId(item);
-          const isSelected = selectedMultipleItems.some((selected) => getItemId(selected) === itemId);
-
-          return (
-            <Button
-              size="small"
-              variant={isSelected ? "contained" : "outlined"}
-              color={isSelected ? "success" : "primary"}
-              startIcon={isSelected ? <CheckCircle /> : <AddCircle />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelectItem(item);
-              }}
-              sx={{ minWidth: 90 }}
-            >
-              {isSelected ? "Selected" : "Select"}
-            </Button>
-          );
-        }
-
         return (
           <Button
             size="small"
@@ -226,10 +137,9 @@ function BatchSelectionDialog<T extends Record<string, any>>({
     };
 
     return [...baseColumns, actionColumn];
-  }, [columns, defaultColumns, multiSelect, selectedMultipleItems, getItemId, handleSelectItem]);
+  }, [getItemId, handleSelectItem]);
 
   const handleClose = useCallback(() => {
-    setSelectedMultipleItems([]);
     setSearchTerm("");
     onClose();
   }, [onClose]);
@@ -238,9 +148,9 @@ function BatchSelectionDialog<T extends Record<string, any>>({
     <GenericDialog
       open={open}
       onClose={handleClose}
-      title={title}
-      maxWidth={maxWidth}
-      fullWidth={fullWidth}
+      title="Select Product Batch"
+      maxWidth="md"
+      fullWidth={true}
       showCloseButton={true}
       disableEscapeKeyDown={false}
       disableBackdropClick={false}
@@ -251,48 +161,35 @@ function BatchSelectionDialog<T extends Record<string, any>>({
       actions={
         <>
           <SmartButton text="Cancel" onClick={handleClose} variant="outlined" color="secondary" icon={Close} />
-          {multiSelect && selectedMultipleItems.length > 0 && (
-            <SmartButton text={`Confirm Selection (${selectedMultipleItems.length})`} onClick={handleMultiSelectComplete} variant="contained" color="primary" />
-          )}
         </>
       }
     >
       <Box sx={{ mt: 2 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {subtitle}
+          Select a batch from the available options below:
         </Typography>
 
-        {showSearch && (
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: <Search sx={{ mr: 1, color: "text.secondary" }} />,
-              }}
-            />
-          </Box>
-        )}
-
-        {multiSelect && selectedMultipleItems.length > 0 && (
-          <Box sx={{ mb: 2, p: 1.5, bgcolor: alpha(theme.palette.success.main, 0.08), borderRadius: 1 }}>
-            <Typography variant="body2" color="success.main" fontWeight="medium">
-              {selectedMultipleItems.length} item{selectedMultipleItems.length > 1 ? "s" : ""} selected
-            </Typography>
-          </Box>
-        )}
+        <Box sx={{ mb: 2 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder={"Search..."}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: <Search sx={{ mr: 1, color: "text.secondary" }} />,
+            }}
+          />
+        </Box>
 
         {data.length > 0 ? (
           <Box sx={{ width: "100%" }}>
             <CustomGrid<T>
               columns={finalColumns}
               data={data}
-              maxHeight={`${height}px`}
+              maxHeight={`400px`}
               searchTerm={searchTerm}
-              rowKeyField={idField}
+              rowKeyField={"grnDetID"}
               density="medium"
               showDensityControls={false}
               pagination={data.length > 10}

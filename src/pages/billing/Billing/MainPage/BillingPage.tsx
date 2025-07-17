@@ -54,7 +54,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useBilling } from "../hooks/useBilling";
 
-// Schema definitions (keeping the same)
 const BillServicesDtoSchema = z.object({
   billDetID: z.number().default(0),
   billID: z.number().default(0),
@@ -113,7 +112,6 @@ const BillProductsDtoSchema = z.object({
   rActiveYN: z.string().default("Y"),
 });
 
-// Add this to your schema definition
 const schema = z.object({
   pChartID: z.number().min(1, "Patient selection is required"),
   pChartCode: z.string().default(""),
@@ -157,7 +155,7 @@ const schema = z.object({
   drBillID: z.number().default(0),
   billGrossAmt: z.number().default(0),
   billDiscAmt: z.number().default(0),
-  visitReferenceCode: z.string().optional().default(""), // Add this field to store visit reference
+  visitReferenceCode: z.string().optional().default(""),
   billServices: z.array(BillServicesDtoSchema).default([]),
   billProducts: z.array(BillProductsDtoSchema).default([]),
   rActiveYN: z.string().default("Y"),
@@ -176,20 +174,6 @@ interface BillProductRow extends z.infer<typeof BillProductsDtoSchema> {
   id: string | number;
 }
 
-// Mock product interface (replace with your actual product interface)
-interface ProductDto {
-  productID: number;
-  productCode: string;
-  productName: string;
-  unitPrice: number;
-  availableQuantity?: number;
-  batchNo?: string;
-  expiryDate?: string;
-  grnDetID?: number;
-  deptID?: number;
-  deptName?: string;
-}
-
 const BillingPage: React.FC = () => {
   const theme = useTheme();
   const { setLoading } = useLoading();
@@ -198,7 +182,7 @@ const BillingPage: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-  const [isChangingVisit, setIsChangingVisit] = useState(false); // New state for changing visit
+  const [isChangingVisit, setIsChangingVisit] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const dropdownValues = useDropdownValues(["pic"]);
   const [services, setServices] = useState<BChargeDto[]>([]);
@@ -210,7 +194,7 @@ const BillingPage: React.FC = () => {
   const [serviceSearchTerm, setServiceSearchTerm] = useState("");
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<ProductDto | ProductListDto | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductListDto | null>(null);
   const [itemMode, setItemMode] = useState<"service" | "product">("service");
   const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
   const {
@@ -225,10 +209,10 @@ const BillingPage: React.FC = () => {
   const {
     isDialogOpen: isBatchSelectionDialogOpen,
     availableBatches,
-    selectedBatch,
+    selectedBatch: _selectedBatch,
     openDialog: openBatchDialog,
     closeDialog: closeBatchDialog,
-    handleBatchSelect: handleBatchSelectInternal,
+    handleBatchSelect: _handleBatchSelectInternal,
   } = useBatchSelection();
   const physicians = [
     { value: 1, label: "Dr. Ajeesh" },
@@ -297,7 +281,7 @@ const BillingPage: React.FC = () => {
     setValue,
     watch,
     trigger,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
   } = useForm<BillingFormData>({
     defaultValues,
     resolver: zodResolver(schema),
@@ -305,7 +289,7 @@ const BillingPage: React.FC = () => {
   });
 
   const {
-    fields: serviceFields,
+    fields: _serviceFields,
     append: appendService,
     remove: removeService,
     update: updateService,
@@ -315,7 +299,7 @@ const BillingPage: React.FC = () => {
   });
 
   const {
-    fields: productFields,
+    fields: _productFields,
     append: appendProduct,
     remove: removeProduct,
     update: updateProduct,
@@ -323,7 +307,7 @@ const BillingPage: React.FC = () => {
     control,
     name: "billProducts",
   });
-  console.log(productFields, appendProduct, removeProduct);
+
   const watchedBillServices = watch("billServices");
   const watchedBillProducts = watch("billProducts");
   const watchedVisitReference = watch("visitReferenceCode");
@@ -480,7 +464,7 @@ const BillingPage: React.FC = () => {
 
   // Handle product selection from autocomplete
   const handleProductSelect = useCallback(
-    async (product: ProductDto | ProductListDto | null) => {
+    async (product: ProductListDto | null) => {
       if (product && isDepartmentSelected && selectedDeptId) {
         try {
           const response = await billingService.getBatchNoProduct(product.productID, selectedDeptId);
@@ -585,9 +569,7 @@ const BillingPage: React.FC = () => {
 
       // Recalculate based on what changed
       const quantity = updatedProduct.selectedQuantity || 1;
-      const drAmt = 0;
       const hospAmt = updatedProduct.hValue || 0;
-      const drDiscPerc = 0;
       const hospDiscPerc = updatedProduct.hospPercShare || 0;
 
       if (field === "hospPercShare" || field === "hCValue" || field === "chUnits") {
@@ -613,7 +595,7 @@ const BillingPage: React.FC = () => {
   // Handle cell value change for Product DataGrid
   const handleProductCellValueChange = useCallback(
     (id: string | number, field: keyof z.infer<typeof BillProductsDtoSchema>, value: any) => {
-      const index = watchedBillProducts.findIndex((product, idx) => `temp-product-${idx}` === id);
+      const index = watchedBillProducts.findIndex((_product, idx) => `temp-product-${idx}` === id);
       if (index !== -1) {
         handleProductFieldChange(index, field, value);
       }
@@ -1159,6 +1141,10 @@ const BillingPage: React.FC = () => {
     return netAfterDiscount - groupDiscountAmount;
   }, [watch("billGrossAmt"), watch("billDiscAmt"), watchedGroupDisc, calculateDiscountFromPercent]);
 
+  useEffect(() => {
+    console.log(isChangingVisit);
+  }, [isChangingVisit]);
+
   return (
     <Box sx={{ p: 2 }}>
       {/* Main Form */}
@@ -1358,7 +1344,7 @@ const BillingPage: React.FC = () => {
                     <ToggleButtonGroup
                       value={itemMode}
                       exclusive
-                      onChange={(event, newMode) => {
+                      onChange={(_event, newMode) => {
                         if (newMode !== null) {
                           if (newMode === "product" && !isDepartmentSelected) {
                             openDepartmentDialog();
@@ -1420,13 +1406,13 @@ const BillingPage: React.FC = () => {
                     {itemMode === "service" && (
                       <Autocomplete
                         value={selectedService}
-                        onChange={(event, newValue) => {
+                        onChange={(_event, newValue) => {
                           if (newValue) {
                             handleServiceSelect(newValue);
                           }
                         }}
                         inputValue={serviceSearchTerm}
-                        onInputChange={(event, newInputValue) => {
+                        onInputChange={(_event, newInputValue) => {
                           setServiceSearchTerm(newInputValue);
                         }}
                         options={filteredServices}
@@ -1469,13 +1455,13 @@ const BillingPage: React.FC = () => {
                     {itemMode === "product" && (
                       <Autocomplete
                         value={selectedProduct}
-                        onChange={(event, newValue) => {
+                        onChange={(_event, newValue) => {
                           if (newValue) {
                             handleProductSelect(newValue);
                           }
                         }}
                         inputValue={productSearchTerm}
-                        onInputChange={(event, newInputValue) => {
+                        onInputChange={(_event, newInputValue) => {
                           setProductSearchTerm(newInputValue);
                         }}
                         options={filteredProducts}
