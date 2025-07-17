@@ -8,15 +8,19 @@ import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfii
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
   Add as AddIcon,
+  Business,
+  CheckCircle,
   Close as CloseIcon,
   Delete as DeleteIcon,
+  PauseCircleOutline,
+  Person,
   Refresh as RefreshIcon,
   PlayCircleOutline as ResumeIcon,
   Search as SearchIcon,
   PauseCircleOutline as SuspendIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import BreakListForm from "../Form/BreakListForm";
 import BreakSuspend from "../Form/BreakSuspend";
@@ -250,38 +254,107 @@ const BreakListPage: React.FC = () => {
   }, [breakList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Total Breaks</Typography>
-          <Typography variant="h4">{stats.totalBreaks}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeBreaks}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Physician</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.physicianBreaks}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Resource</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.resourceBreaks}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Suspended</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.suspendedBreaks}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <AddIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalBreaks}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Breaks
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <CheckCircle fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeBreaks}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <Person fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.physicianBreaks}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Physician
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <Business fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.resourceBreaks}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Resource
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <PauseCircleOutline fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.suspendedBreaks}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Suspended
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const formatTime = (date: Date | string) => {

@@ -7,6 +7,9 @@ import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
   Add as AddIcon,
+  Build,
+  Cancel,
+  CheckCircle,
   Close as CloseIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -14,7 +17,7 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ResourceListForm from "../Form/ResourceListForm";
 import { useResourceList } from "../hooks/useResourceList";
@@ -205,38 +208,107 @@ const ResourceListPage: React.FC = () => {
   }, [resourceList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Total Resources</Typography>
-          <Typography variant="h4">{stats.totalResources}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeResources}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveResources}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">OT Resources</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.otResources}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Validated</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.validatedResources}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <AddIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalResources}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Resources
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <CheckCircle fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeResources}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <Cancel fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveResources}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <Build fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.otResources}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  OT Resources
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <CheckCircle fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.validatedResources}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Validated
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const columns: Column<ResourceListData>[] = [
@@ -263,7 +335,7 @@ const ResourceListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "success" : "default"} label={value === "Y" ? "Yes" : "No"} />,
+      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "success" : "warning"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rLOtYN",
@@ -272,7 +344,7 @@ const ResourceListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "info" : "default"} label={value === "Y" ? "Yes" : "No"} />,
+      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "info" : "warning"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rActiveYN",

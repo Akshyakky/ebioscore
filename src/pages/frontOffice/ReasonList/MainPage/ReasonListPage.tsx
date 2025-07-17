@@ -6,7 +6,10 @@ import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
+  AccessTime,
   Add as AddIcon,
+  Cancel,
+  CheckCircle,
   Close as CloseIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -14,7 +17,7 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ReasonListForm from "../Form/ReasonListForm";
 import { useReasonList } from "../hooks/useReasonList";
@@ -196,44 +199,127 @@ const ReasonListPage: React.FC = () => {
   }, [reasonList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Total Reasons</Typography>
-          <Typography variant="h4">{stats.totalReasons}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeReasons}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveReasons}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Short</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.shortDuration}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Medium</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.mediumDuration}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Long</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.longDuration}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <AddIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalReasons}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Reasons
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <CheckCircle fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeReasons}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <Cancel fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveReasons}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <AccessTime fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.shortDuration}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Short
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <AccessTime fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.mediumDuration}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Medium
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <AccessTime fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {stats.longDuration}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Long
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const columns: Column<ReasonListData>[] = [
