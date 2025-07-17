@@ -1,4 +1,3 @@
-// src\pages\inventoryManagement\CommonPage\BatchSelectionDialog\useBatchSelection.tsx
 import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { useCallback, useState } from "react";
