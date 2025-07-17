@@ -11,28 +11,11 @@ export interface HospWorkHoursDto {
   transferYN: string;
 }
 
-export interface WorkHoursFormDto {
-  hwrkID: number;
-  langType: string;
-  daysDesc: string;
-  startTime: Date | null;
-  endTime: Date | null;
-  wkHoliday: string;
-  rActiveYN: string;
-  rNotes?: string;
-  transferYN: string;
-}
-
 export interface WorkHoursFilterDto {
   langType?: string;
   daysDesc?: string;
   wkHoliday?: string;
   status?: string;
-}
-
-export interface WorkHoursTemplateDto {
-  templateName: string;
-  workHours: HospWorkHoursDto[];
 }
 
 // Language and day options for dropdowns
