@@ -9,8 +9,8 @@ import { useAlert } from "@/providers/AlertProvider";
 import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 import { getPatientAllVisitHistory, RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Cancel as CancelIcon, Save as SaveIcon, OpenInNew as SelectVisitIcon } from "@mui/icons-material";
-import { Alert, Box, Chip, Grid, IconButton, Paper, Stack, Tab, Tabs, Tooltip, Typography } from "@mui/material";
+import { Cancel as CancelIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, Grid, Paper, Stack, Tab, Tabs, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -174,7 +174,7 @@ const PatientVisitDialog: React.FC<PatientVisitDialogProps> = ({ open, onClose, 
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -241,7 +241,7 @@ const PatientVisitDialog: React.FC<PatientVisitDialogProps> = ({ open, onClose, 
   );
 
   const handleDropdownChange = useCallback(
-    async (fieldName: keyof VisitFormData, value: string | number, options?: DropdownOption[], additionalFields?: Record<string, any>) => {
+    async (fieldName: keyof VisitFormData, value: string | number, _options?: DropdownOption[], additionalFields?: Record<string, any>) => {
       setValue(fieldName, value, { shouldValidate: true, shouldDirty: true });
       if (additionalFields) {
         Object.entries(additionalFields).forEach(([key, val]) => {
@@ -371,22 +371,17 @@ const PatientVisitDialog: React.FC<PatientVisitDialogProps> = ({ open, onClose, 
       render: (item) => (
         <Stack direction="row" spacing={1}>
           <Tooltip title="Select Visit">
-            <IconButton
-              size="small"
-              color="secondary"
+            <SmartButton
+              text="Select"
               onClick={() => {
                 if (onVisitSelect) {
                   onVisitSelect(item);
                 }
                 onClose();
               }}
-              sx={{
-                bgcolor: "rgba(25, 118, 210, 0.08)",
-                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-              }}
-            >
-              <SelectVisitIcon fontSize="small" />
-            </IconButton>
+              variant="contained"
+              color="primary"
+            />
           </Tooltip>
         </Stack>
       ),

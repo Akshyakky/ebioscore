@@ -54,7 +54,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useBilling } from "../hooks/useBilling";
 
-// Schema definitions (keeping the same)
 const BillServicesDtoSchema = z.object({
   billDetID: z.number().default(0),
   billID: z.number().default(0),
@@ -105,6 +104,7 @@ const BillProductsDtoSchema = z.object({
   deptID: z.number().min(1),
   deptName: z.string(),
   selectedQuantity: z.number().default(0),
+  productQOH: z.number().default(0),
   hValue: z.number().optional().default(0),
   hospPercShare: z.number().optional().default(0),
   hValDisc: z.number().optional().default(0),
@@ -113,7 +113,6 @@ const BillProductsDtoSchema = z.object({
   rActiveYN: z.string().default("Y"),
 });
 
-// Add this to your schema definition
 const schema = z.object({
   pChartID: z.number().min(1, "Patient selection is required"),
   pChartCode: z.string().default(""),
@@ -157,7 +156,7 @@ const schema = z.object({
   drBillID: z.number().default(0),
   billGrossAmt: z.number().default(0),
   billDiscAmt: z.number().default(0),
-  visitReferenceCode: z.string().optional().default(""), // Add this field to store visit reference
+  visitReferenceCode: z.string().optional().default(""),
   billServices: z.array(BillServicesDtoSchema).default([]),
   billProducts: z.array(BillProductsDtoSchema).default([]),
   rActiveYN: z.string().default("Y"),
@@ -176,20 +175,6 @@ interface BillProductRow extends z.infer<typeof BillProductsDtoSchema> {
   id: string | number;
 }
 
-// Mock product interface (replace with your actual product interface)
-interface ProductDto {
-  productID: number;
-  productCode: string;
-  productName: string;
-  unitPrice: number;
-  availableQuantity?: number;
-  batchNo?: string;
-  expiryDate?: string;
-  grnDetID?: number;
-  deptID?: number;
-  deptName?: string;
-}
-
 const BillingPage: React.FC = () => {
   const theme = useTheme();
   const { setLoading } = useLoading();
@@ -198,7 +183,7 @@ const BillingPage: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-  const [isChangingVisit, setIsChangingVisit] = useState(false); // New state for changing visit
+  const [isChangingVisit, setIsChangingVisit] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const dropdownValues = useDropdownValues(["pic"]);
   const [services, setServices] = useState<BChargeDto[]>([]);
@@ -210,7 +195,7 @@ const BillingPage: React.FC = () => {
   const [serviceSearchTerm, setServiceSearchTerm] = useState("");
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<BChargeDto | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<ProductDto | ProductListDto | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductListDto | null>(null);
   const [itemMode, setItemMode] = useState<"service" | "product">("service");
   const { calculateServiceDiscountAmount, calculateServiceNetAmount, calculateDiscountFromPercent, calculateServicesTotal } = useBilling();
   const {
@@ -225,10 +210,10 @@ const BillingPage: React.FC = () => {
   const {
     isDialogOpen: isBatchSelectionDialogOpen,
     availableBatches,
-    selectedBatch,
+    selectedBatch: _selectedBatch,
     openDialog: openBatchDialog,
     closeDialog: closeBatchDialog,
-    handleBatchSelect: handleBatchSelectInternal,
+    handleBatchSelect: _handleBatchSelectInternal,
   } = useBatchSelection();
   const physicians = [
     { value: 1, label: "Dr. Ajeesh" },
@@ -297,7 +282,7 @@ const BillingPage: React.FC = () => {
     setValue,
     watch,
     trigger,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
   } = useForm<BillingFormData>({
     defaultValues,
     resolver: zodResolver(schema),
@@ -305,7 +290,7 @@ const BillingPage: React.FC = () => {
   });
 
   const {
-    fields: serviceFields,
+    fields: _serviceFields,
     append: appendService,
     remove: removeService,
     update: updateService,
@@ -315,7 +300,7 @@ const BillingPage: React.FC = () => {
   });
 
   const {
-    fields: productFields,
+    fields: _productFields,
     append: appendProduct,
     remove: removeProduct,
     update: updateProduct,
@@ -323,7 +308,7 @@ const BillingPage: React.FC = () => {
     control,
     name: "billProducts",
   });
-  console.log(productFields, appendProduct, removeProduct);
+
   const watchedBillServices = watch("billServices");
   const watchedBillProducts = watch("billProducts");
   const watchedVisitReference = watch("visitReferenceCode");
@@ -480,24 +465,34 @@ const BillingPage: React.FC = () => {
 
   // Handle product selection from autocomplete
   const handleProductSelect = useCallback(
-    async (product: ProductDto | ProductListDto | null) => {
+    async (product: ProductListDto | null) => {
       if (product && isDepartmentSelected && selectedDeptId) {
         try {
           const response = await billingService.getBatchNoProduct(product.productID, selectedDeptId);
 
           if (response.success && response.data) {
+            const selectedProductWithBatchDetails = response.data;
             if (Array.isArray(response.data)) {
-              if (response.data.length === 0) {
+              if (selectedProductWithBatchDetails.length === 0) {
                 showAlert("Warning", "No batches available for this product", "warning");
-              } else if (response.data.length === 1) {
-                appendProduct(response.data[0]);
+              } else if (selectedProductWithBatchDetails.length === 1) {
+                const batch = selectedProductWithBatchDetails[0];
+                const selectedProduct: BillProductsDto = {
+                  ...batch,
+                  selectedQuantity: 1,
+                  productQOH: batch.productQOH,
+                  hValue: batch.sellingPrice,
+                  hospPercShare: 0,
+                  hValDisc: 0,
+                  packID: 0,
+                  packName: "",
+                  rActiveYN: "Y",
+                };
+                appendProduct(selectedProduct);
                 showAlert("Success", `Product "${product.productName}" added`, "success");
               } else {
-                openBatchDialog(response.data);
+                openBatchDialog(selectedProductWithBatchDetails);
               }
-            } else {
-              appendProduct(response.data);
-              showAlert("Success", `Product "${product.productName}" added`, "success");
             }
           } else {
             showAlert("Error", response.errorMessage || "Product not added", "warning");
@@ -526,7 +521,8 @@ const BillingPage: React.FC = () => {
         grnDetID: batch.grnDetID,
         deptID: batch.deptID,
         deptName: batch.deptName,
-        selectedQuantity: batch.productQOH,
+        selectedQuantity: 1,
+        productQOH: batch.productQOH,
         hValue: batch.sellingPrice,
         hospPercShare: 0,
         hValDisc: 0,
@@ -580,23 +576,37 @@ const BillingPage: React.FC = () => {
       const currentProduct = watchedBillProducts[index];
       const updatedProduct = { ...currentProduct };
 
-      // Update the changed field
-      updatedProduct[field] = value;
+      // Validate quantity against available stock
+      if (field === "selectedQuantity") {
+        const enteredQty = parseFloat(value) || 0;
+        const availableQty = currentProduct.productQOH || 0;
+
+        if (enteredQty > availableQty) {
+          showAlert("Warning", `Quantity cannot exceed available stock (${availableQty})`, "warning");
+          // Set to maximum available quantity
+          updatedProduct[field] = availableQty;
+        } else if (enteredQty < 0) {
+          showAlert("Warning", "Quantity cannot be negative", "warning");
+          updatedProduct[field] = 0;
+        } else {
+          updatedProduct[field] = enteredQty;
+        }
+      } else {
+        updatedProduct[field] = value;
+      }
 
       // Recalculate based on what changed
       const quantity = updatedProduct.selectedQuantity || 1;
-      const drAmt = 0;
       const hospAmt = updatedProduct.hValue || 0;
-      const drDiscPerc = 0;
       const hospDiscPerc = updatedProduct.hospPercShare || 0;
 
-      if (field === "hospPercShare" || field === "hCValue" || field === "chUnits") {
+      if (field === "hospPercShare" || field === "hValue" || field === "selectedQuantity") {
         updatedProduct.hValDisc = calculateDiscountFromPercent(hospAmt * quantity, hospDiscPerc);
       }
 
       updateProduct(index, updatedProduct);
     },
-    [watchedBillProducts, updateProduct, calculateDiscountFromPercent]
+    [watchedBillProducts, updateProduct, calculateDiscountFromPercent, showAlert]
   );
 
   // Handle cell value change for Service DataGrid
@@ -613,7 +623,7 @@ const BillingPage: React.FC = () => {
   // Handle cell value change for Product DataGrid
   const handleProductCellValueChange = useCallback(
     (id: string | number, field: keyof z.infer<typeof BillProductsDtoSchema>, value: any) => {
-      const index = watchedBillProducts.findIndex((product, idx) => `temp-product-${idx}` === id);
+      const index = watchedBillProducts.findIndex((_product, idx) => `temp-product-${idx}` === id);
       if (index !== -1) {
         handleProductFieldChange(index, field, value);
       }
@@ -642,20 +652,32 @@ const BillingPage: React.FC = () => {
 
   // Render functions for Product DataGrid cells
   const renderProductNumberField = useCallback(
-    (params: GridRenderCellParams, field: keyof z.infer<typeof BillProductsDtoSchema>) => (
-      <TextField
-        size="small"
-        type="number"
-        value={params.row[field] || ""}
-        onChange={(e) => {
-          const value = parseFloat(e.target.value) || 0;
-          handleProductCellValueChange(params.id, field, value);
-        }}
-        sx={{ width: "100%" }}
-        inputProps={{ style: { textAlign: "right" } }}
-        fullWidth
-      />
-    ),
+    (params: GridRenderCellParams, field: keyof z.infer<typeof BillProductsDtoSchema>) => {
+      const isQuantityField = field === "selectedQuantity";
+      const maxQuantity = isQuantityField ? params.row.productQOH : undefined;
+
+      return (
+        <TextField
+          size="small"
+          type="number"
+          value={params.row[field] || ""}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value) || 0;
+            handleProductCellValueChange(params.id, field, value);
+          }}
+          sx={{ width: "100%" }}
+          inputProps={{
+            style: { textAlign: "right" },
+            min: 0,
+            max: maxQuantity,
+            step: 1,
+          }}
+          fullWidth
+          error={isQuantityField && params.row[field] > params.row.productQOH}
+          helperText={isQuantityField && params.row[field] > params.row.productQOH ? "Exceeds available" : ""}
+        />
+      );
+    },
     [handleProductCellValueChange]
   );
 
@@ -893,7 +915,7 @@ const BillingPage: React.FC = () => {
       {
         field: "productName",
         headerName: "Product Name",
-        width: 300,
+        width: 250,
         sortable: false,
       },
       {
@@ -901,6 +923,21 @@ const BillingPage: React.FC = () => {
         headerName: "Batch No",
         width: 120,
         sortable: false,
+      },
+      {
+        field: "productQOH",
+        headerName: "Available",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => <Chip label={params.value || 0} size="small" color={params.value > 10 ? "success" : params.value > 0 ? "warning" : "error"} variant="outlined" />,
+      },
+      {
+        field: "selectedQuantity",
+        headerName: "Qty",
+        width: 120,
+        sortable: false,
+        type: "number",
+        renderCell: (params) => renderProductNumberField(params, "selectedQuantity"),
       },
       {
         field: "expiryDate",
@@ -1159,6 +1196,10 @@ const BillingPage: React.FC = () => {
     return netAfterDiscount - groupDiscountAmount;
   }, [watch("billGrossAmt"), watch("billDiscAmt"), watchedGroupDisc, calculateDiscountFromPercent]);
 
+  useEffect(() => {
+    console.log(isChangingVisit);
+  }, [isChangingVisit]);
+
   return (
     <Box sx={{ p: 2 }}>
       {/* Main Form */}
@@ -1358,7 +1399,7 @@ const BillingPage: React.FC = () => {
                     <ToggleButtonGroup
                       value={itemMode}
                       exclusive
-                      onChange={(event, newMode) => {
+                      onChange={(_event, newMode) => {
                         if (newMode !== null) {
                           if (newMode === "product" && !isDepartmentSelected) {
                             openDepartmentDialog();
@@ -1420,13 +1461,13 @@ const BillingPage: React.FC = () => {
                     {itemMode === "service" && (
                       <Autocomplete
                         value={selectedService}
-                        onChange={(event, newValue) => {
+                        onChange={(_event, newValue) => {
                           if (newValue) {
                             handleServiceSelect(newValue);
                           }
                         }}
                         inputValue={serviceSearchTerm}
-                        onInputChange={(event, newInputValue) => {
+                        onInputChange={(_event, newInputValue) => {
                           setServiceSearchTerm(newInputValue);
                         }}
                         options={filteredServices}
@@ -1469,13 +1510,13 @@ const BillingPage: React.FC = () => {
                     {itemMode === "product" && (
                       <Autocomplete
                         value={selectedProduct}
-                        onChange={(event, newValue) => {
+                        onChange={(_event, newValue) => {
                           if (newValue) {
                             handleProductSelect(newValue);
                           }
                         }}
                         inputValue={productSearchTerm}
-                        onInputChange={(event, newInputValue) => {
+                        onInputChange={(_event, newInputValue) => {
                           setProductSearchTerm(newInputValue);
                         }}
                         options={filteredProducts}
