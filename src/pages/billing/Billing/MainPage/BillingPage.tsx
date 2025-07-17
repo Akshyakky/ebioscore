@@ -4,7 +4,8 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
-import { BillSaveRequest } from "@/interfaces/Billing/BillingDto";
+import { BillProductsDto, BillSaveRequest } from "@/interfaces/Billing/BillingDto";
+import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { GetPatientAllVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
@@ -510,7 +511,6 @@ const BillingPage: React.FC = () => {
                 openBatchDialog(response.data);
               }
             } else {
-              // Single batch response (backward compatibility)
               appendProduct(response.data);
               showAlert("Success", `Product "${product.productName}" added`, "success");
             }
@@ -532,8 +532,37 @@ const BillingPage: React.FC = () => {
   );
 
   const handleBatchSelect = useCallback(
-    (batch: any) => {
-      appendProduct(batch);
+    (batch: ProductBatchDto) => {
+      const selectedProduct: BillProductsDto = {
+        billDetID: 0,
+        billID: 0,
+        productID: batch.productID,
+        batchNo: batch.batchNo,
+        expiryDate: batch.expiryDate,
+        grnDetID: batch.grnDetID,
+        deptID: batch.deptID,
+        deptName: batch.deptName,
+        cHValue: 0,
+        chUnits: batch.productQOH,
+        chDisc: 0,
+        actualDDValue: 0,
+        actualHCValue: 0,
+        dCValue: 0,
+        drPercShare: 0,
+        dValDisc: 0,
+        hCValue: batch.sellingPrice,
+        hospPercShare: 0,
+        hValDisc: 0,
+        packID: 0,
+        packName: "",
+        opipNo: 0,
+        physicianYN: "N",
+        actualAmt: 0,
+        rActiveYN: "Y",
+        transferYN: "N",
+        rNotes: "",
+      };
+      appendProduct(selectedProduct);
       showAlert("Success", `Batch "${batch.batchNo}" added`, "success");
       closeBatchDialog();
     },
@@ -1744,6 +1773,7 @@ const BillingPage: React.FC = () => {
         pChartCode={selectedPatient?.pChartCode}
         onVisitSelect={handleVisitSelect}
       />
+      {/* Product Department Selection Dialog */}
       <DepartmentSelectionDialog
         open={isDepartmentDialogOpen}
         onClose={closeDepartmentDialog}

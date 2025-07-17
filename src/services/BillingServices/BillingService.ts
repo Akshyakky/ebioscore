@@ -1,7 +1,7 @@
 // src/services/BillingServices/billingService.ts
 
 import { APIConfig } from "@/apiConfig";
-import { BillProductsDto, BillSaveRequest, BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
+import { BillSaveRequest, BillsDto, BillServicesDto } from "@/interfaces/Billing/BillingDto";
 import {
   BChargeAliasDto,
   BChargeDetailDto,
@@ -12,6 +12,7 @@ import {
   ChargeCodeGenerationDto,
   ChargeWithAllDetailsDto,
 } from "@/interfaces/Billing/ChargeDto";
+import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { GenericEntityService, OperationResult } from "@/services/GenericEntityService/GenericEntityService";
 import { createEntityService } from "@/utils/Common/serviceFactory";
@@ -99,8 +100,8 @@ class ExtendedBillingService extends GenericEntityService<BillsDto> {
   async getBillingServiceById(chargeId: number): Promise<OperationResult<BillServicesDto[]>> {
     return this.apiService.get<OperationResult<BillServicesDto[]>>(`${this.baseEndpoint}/GetBillingServiceById/${chargeId}`, this.getToken());
   }
-  async getBatchNoProduct(productId: number, departmentId: number): Promise<OperationResult<BillProductsDto[]>> {
-    return this.apiService.get<OperationResult<BillProductsDto[]>>(`${this.baseEndpoint}/GetBatchNoProduct?productId=${productId}&departmentId=${departmentId}`, this.getToken());
+  async getBatchNoProduct(productId: number, departmentId: number): Promise<OperationResult<ProductBatchDto[]>> {
+    return this.apiService.get<OperationResult<ProductBatchDto[]>>(`${this.baseEndpoint}/GetBatchNoProduct?productId=${productId}&departmentId=${departmentId}`, this.getToken());
   }
 }
 
