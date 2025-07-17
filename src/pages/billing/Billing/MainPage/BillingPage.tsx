@@ -4,7 +4,8 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
-import { BillSaveRequest } from "@/interfaces/Billing/BillingDto";
+import { BillProductsDto, BillSaveRequest } from "@/interfaces/Billing/BillingDto";
+import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { GetPatientAllVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
@@ -96,35 +97,20 @@ const BillServicesDtoSchema = z.object({
 });
 
 const BillProductsDtoSchema = z.object({
-  billDetID: z.number().default(0),
-  billID: z.number().default(0),
   productID: z.number(),
-  productCode: z.string().optional(),
   productName: z.string().optional(),
-  batchNo: z.string().optional(),
-  expiryDate: z.union([z.date(), z.string()]).optional(),
-  grnDetID: z.number().optional(),
-  deptID: z.number(),
-  deptName: z.string().default(""),
-  cHValue: z.number().default(0),
-  chUnits: z.number().optional().default(1),
-  chDisc: z.number().optional().default(0),
-  actualDDValue: z.number().optional().default(0),
-  actualHCValue: z.number().optional().default(0),
-  dCValue: z.number().optional().default(0),
-  drPercShare: z.number().optional().default(0),
-  dValDisc: z.number().optional().default(0),
-  hCValue: z.number().optional().default(0),
+  batchNo: z.string().min(1),
+  expiryDate: z.union([z.date(), z.string()]),
+  grnDetID: z.number().min(1),
+  deptID: z.number().min(1),
+  deptName: z.string(),
+  selectedQuantity: z.number().default(0),
+  hValue: z.number().optional().default(0),
   hospPercShare: z.number().optional().default(0),
   hValDisc: z.number().optional().default(0),
   packID: z.number().optional(),
   packName: z.string().optional(),
-  opipNo: z.number().optional(),
-  physicianYN: z.string().default("N"),
-  actualAmt: z.number().optional().default(0),
   rActiveYN: z.string().default("Y"),
-  transferYN: z.string().default("N"),
-  rNotes: z.string().optional(),
 });
 
 // Add this to your schema definition
@@ -355,7 +341,7 @@ const BillingPage: React.FC = () => {
   const productRows: BillProductRow[] = useMemo(() => {
     return watchedBillProducts.map((product, index) => ({
       ...product,
-      id: product.billDetID || `temp-product-${index}`,
+      id: `temp-product-${index}`,
     }));
   }, [watchedBillProducts]);
 
@@ -381,10 +367,10 @@ const BillingPage: React.FC = () => {
 
     // Calculate products totals (similar logic)
     watchedBillProducts.forEach((product) => {
-      const quantity = product.chUnits || 1;
-      const drAmt = product.dCValue || 0;
-      const hospAmt = product.hCValue || 0;
-      const drDiscAmt = product.dValDisc || 0;
+      const quantity = product.selectedQuantity || 1;
+      const drAmt = 0;
+      const hospAmt = product.hValue || 0;
+      const drDiscAmt = 0;
       const hospDiscAmt = product.hValDisc || 0;
 
       const grossAmount = quantity * (drAmt + hospAmt);
@@ -510,7 +496,6 @@ const BillingPage: React.FC = () => {
                 openBatchDialog(response.data);
               }
             } else {
-              // Single batch response (backward compatibility)
               appendProduct(response.data);
               showAlert("Success", `Product "${product.productName}" added`, "success");
             }
@@ -532,8 +517,24 @@ const BillingPage: React.FC = () => {
   );
 
   const handleBatchSelect = useCallback(
-    (batch: any) => {
-      appendProduct(batch);
+    (batch: ProductBatchDto) => {
+      const selectedProduct: BillProductsDto = {
+        productID: batch.productID,
+        productName: batch.productName,
+        batchNo: batch.batchNo,
+        expiryDate: batch.expiryDate,
+        grnDetID: batch.grnDetID,
+        deptID: batch.deptID,
+        deptName: batch.deptName,
+        selectedQuantity: batch.productQOH,
+        hValue: batch.sellingPrice,
+        hospPercShare: 0,
+        hValDisc: 0,
+        packID: 0,
+        packName: "",
+        rActiveYN: "Y",
+      };
+      appendProduct(selectedProduct);
       showAlert("Success", `Batch "${batch.batchNo}" added`, "success");
       closeBatchDialog();
     },
@@ -583,23 +584,15 @@ const BillingPage: React.FC = () => {
       updatedProduct[field] = value;
 
       // Recalculate based on what changed
-      const quantity = updatedProduct.chUnits || 1;
-      const drAmt = updatedProduct.dCValue || 0;
-      const hospAmt = updatedProduct.hCValue || 0;
-      const drDiscPerc = updatedProduct.drPercShare || 0;
+      const quantity = updatedProduct.selectedQuantity || 1;
+      const drAmt = 0;
+      const hospAmt = updatedProduct.hValue || 0;
+      const drDiscPerc = 0;
       const hospDiscPerc = updatedProduct.hospPercShare || 0;
-
-      // Calculate discount amounts based on percentages
-      if (field === "drPercShare" || field === "dCValue" || field === "chUnits") {
-        updatedProduct.dValDisc = calculateDiscountFromPercent(drAmt * quantity, drDiscPerc);
-      }
 
       if (field === "hospPercShare" || field === "hCValue" || field === "chUnits") {
         updatedProduct.hValDisc = calculateDiscountFromPercent(hospAmt * quantity, hospDiscPerc);
       }
-
-      // Calculate gross amount
-      updatedProduct.cHValue = drAmt + hospAmt;
 
       updateProduct(index, updatedProduct);
     },
@@ -620,7 +613,7 @@ const BillingPage: React.FC = () => {
   // Handle cell value change for Product DataGrid
   const handleProductCellValueChange = useCallback(
     (id: string | number, field: keyof z.infer<typeof BillProductsDtoSchema>, value: any) => {
-      const index = watchedBillProducts.findIndex((product, idx) => (product.billDetID || `temp-product-${idx}`) === id);
+      const index = watchedBillProducts.findIndex((product, idx) => `temp-product-${idx}` === id);
       if (index !== -1) {
         handleProductFieldChange(index, field, value);
       }
@@ -873,7 +866,7 @@ const BillingPage: React.FC = () => {
         field: "actions",
         type: "actions",
         headerName: "Delete",
-        width: 60,
+        width: 90,
         getActions: (params) => {
           const index = serviceRows.findIndex((row) => row.id === params.id);
           return [
@@ -900,7 +893,7 @@ const BillingPage: React.FC = () => {
       {
         field: "productName",
         headerName: "Product Name",
-        width: 200,
+        width: 300,
         sortable: false,
       },
       {
@@ -922,53 +915,25 @@ const BillingPage: React.FC = () => {
         },
       },
       {
-        field: "chUnits",
-        headerName: "Quantity",
-        width: 80,
+        field: "selectedQuantity",
+        headerName: "Qty",
+        width: 120,
         sortable: false,
         type: "number",
-        renderCell: (params) => renderProductNumberField(params, "chUnits"),
+        renderCell: (params) => renderProductNumberField(params, "selectedQuantity"),
       },
       {
-        field: "dCValue",
-        headerName: "Dr Amt (₹)",
-        width: 90,
-        sortable: false,
-        type: "number",
-        renderCell: (params) => renderProductNumberField(params, "dCValue"),
-      },
-      {
-        field: "drPercShare",
-        headerName: "Dr Disc %",
-        width: 90,
-        sortable: false,
-        type: "number",
-        renderCell: (params) => renderProductNumberField(params, "drPercShare"),
-      },
-      {
-        field: "dValDisc",
-        headerName: "Dr Disc ₹",
-        width: 90,
-        sortable: false,
-        type: "number",
-        align: "right",
-        headerAlign: "right",
-        renderCell: (params) => (
-          <TextField value={params.row.dValDisc?.toFixed(2) || "0.00"} size="small" fullWidth disabled InputProps={{ readOnly: true, style: { textAlign: "right" } }} />
-        ),
-      },
-      {
-        field: "hCValue",
+        field: "hValue",
         headerName: "Hosp Amt (₹)",
-        width: 100,
+        width: 150,
         sortable: false,
         type: "number",
-        renderCell: (params) => renderProductNumberField(params, "hCValue"),
+        renderCell: (params) => renderProductNumberField(params, "hValue"),
       },
       {
         field: "hospPercShare",
         headerName: "Hosp Disc %",
-        width: 100,
+        width: 150,
         sortable: false,
         type: "number",
         renderCell: (params) => renderProductNumberField(params, "hospPercShare"),
@@ -976,7 +941,7 @@ const BillingPage: React.FC = () => {
       {
         field: "hValDisc",
         headerName: "Hosp Disc ₹",
-        width: 100,
+        width: 150,
         sortable: false,
         type: "number",
         align: "right",
@@ -988,16 +953,15 @@ const BillingPage: React.FC = () => {
       {
         field: "grossAmt",
         headerName: "Gross Amt",
-        width: 100,
+        width: 150,
         sortable: false,
         type: "number",
         align: "right",
         headerAlign: "right",
         renderCell: (params) => {
-          const quantity = params.row.chUnits || 1;
-          const drAmt = params.row.dCValue || 0;
-          const hospAmt = params.row.hCValue || 0;
-          const grossAmt = quantity * (drAmt + hospAmt);
+          const quantity = params.row.selectedQuantity || 1;
+          const hospAmt = params.row.hValue || 0;
+          const grossAmt = quantity * hospAmt;
           return (
             <Typography variant="body2" fontWeight="medium">
               ₹{grossAmt.toFixed(2)}
@@ -1008,13 +972,13 @@ const BillingPage: React.FC = () => {
       {
         field: "discAmt",
         headerName: "Disc Amt",
-        width: 90,
+        width: 150,
         sortable: false,
         type: "number",
         align: "right",
         headerAlign: "right",
         renderCell: (params) => {
-          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          const totalDiscAmt = params.row.hValDisc || 0;
           return (
             <Typography variant="body2" color="error">
               ₹{totalDiscAmt.toFixed(2)}
@@ -1031,11 +995,10 @@ const BillingPage: React.FC = () => {
         align: "right",
         headerAlign: "right",
         renderCell: (params) => {
-          const quantity = params.row.chUnits || 1;
-          const drAmt = params.row.dCValue || 0;
-          const hospAmt = params.row.hCValue || 0;
-          const grossAmt = quantity * (drAmt + hospAmt);
-          const totalDiscAmt = (params.row.dValDisc || 0) + (params.row.hValDisc || 0);
+          const quantity = params.row.selectedQuantity || 1;
+          const hospAmt = params.row.hValue || 0;
+          const grossAmt = quantity * hospAmt;
+          const totalDiscAmt = params.row.hValDisc || 0;
           const netAmt = grossAmt - totalDiscAmt;
           return (
             <Typography variant="body2" fontWeight="bold" color="primary">
@@ -1045,13 +1008,13 @@ const BillingPage: React.FC = () => {
         },
       },
       {
-        field: "deptName",
-        headerName: "Department",
-        width: 150,
+        field: "packName",
+        headerName: "Pack Name",
+        width: 120,
         sortable: false,
         renderCell: (params) => (
           <Typography variant="body2" noWrap>
-            {params.row.deptName || "-"}
+            {params.row.packName || ""}
           </Typography>
         ),
       },
@@ -1059,7 +1022,7 @@ const BillingPage: React.FC = () => {
         field: "actions",
         type: "actions",
         headerName: "Delete",
-        width: 60,
+        width: 100,
         getActions: (params) => {
           const index = productRows.findIndex((row) => row.id === params.id);
           return [
@@ -1744,6 +1707,7 @@ const BillingPage: React.FC = () => {
         pChartCode={selectedPatient?.pChartCode}
         onVisitSelect={handleVisitSelect}
       />
+      {/* Product Department Selection Dialog */}
       <DepartmentSelectionDialog
         open={isDepartmentDialogOpen}
         onClose={closeDepartmentDialog}

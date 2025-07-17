@@ -49,13 +49,13 @@ const getDefaultBatchColumns = <T extends Record<string, any>>(): Column<T>[] =>
     sortable: false,
   },
   {
-    key: "chUnits",
+    key: "productQOH",
     header: "Available Qty",
     visible: true,
     width: 120,
     sortable: false,
     type: "number",
-    render: (item) => <Chip label={item.chUnits || 0} size="small" color={item.chUnits > 10 ? "success" : item.chUnits > 0 ? "warning" : "error"} variant="outlined" />,
+    render: (item) => <Chip label={item.productQOH || 0} size="small" color={item.productQOH > 10 ? "success" : item.productQOH > 0 ? "warning" : "error"} variant="outlined" />,
   },
   {
     key: "expiryDate",
@@ -84,7 +84,7 @@ const getDefaultBatchColumns = <T extends Record<string, any>>(): Column<T>[] =>
     },
   },
   {
-    key: "hCValue",
+    key: "sellingPrice",
     header: "Unit Price",
     visible: true,
     width: 120,
@@ -92,7 +92,7 @@ const getDefaultBatchColumns = <T extends Record<string, any>>(): Column<T>[] =>
     type: "number",
     render: (item) => (
       <Typography variant="body2" fontWeight="medium">
-        ₹{(item.hCValue || 0).toFixed(2)}
+        ₹{(item.sellingPrice || 0).toFixed(2)}
       </Typography>
     ),
   },
