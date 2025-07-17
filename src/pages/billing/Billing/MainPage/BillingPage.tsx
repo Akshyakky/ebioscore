@@ -4,12 +4,10 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDto } from "@/interfaces/Billing/BChargeDetails";
-import { BillProductsDto, BillSaveRequest } from "@/interfaces/Billing/BillingDto";
-import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
+import { BillSaveRequest } from "@/interfaces/Billing/BillingDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { GetPatientAllVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
-import { BatchSelectionDialog, useBatchSelection } from "@/pages/inventoryManagement/CommonPage/BatchSelectionDialog";
 import DepartmentSelectionDialog from "@/pages/inventoryManagement/CommonPage/DepartmentSelectionDialog";
 import PatientVisitDialog from "@/pages/patientAdministration/RevisitPage/SubPage/PatientVisitDialog";
 import { useAlert } from "@/providers/AlertProvider";
@@ -59,7 +57,6 @@ const BillingPage: React.FC = () => {
     closeDialog: closeDepartmentDialog,
     handleDepartmentSelect: handleDeptSelect,
   } = useDepartmentSelection();
-  const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, openDialog: openBatchDialog, closeDialog: closeBatchDialog } = useBatchSelection();
 
   // Mock data - should be replaced with actual API data
   const physicians = [
@@ -177,32 +174,6 @@ const BillingPage: React.FC = () => {
     }
   }, [selectedPChartID]);
 
-  const handleBatchSelect = useCallback(
-    (batch: ProductBatchDto) => {
-      const selectedProduct: BillProductsDto = {
-        productID: batch.productID,
-        productName: batch.productName,
-        batchNo: batch.batchNo,
-        expiryDate: batch.expiryDate,
-        grnDetID: batch.grnDetID,
-        deptID: batch.deptID,
-        deptName: batch.deptName,
-        selectedQuantity: 1,
-        hValue: batch.sellingPrice,
-        hospPercShare: 0,
-        hValDisc: 0,
-        packID: 0,
-        packName: "",
-        rActiveYN: "Y",
-      };
-      // This will be passed to ItemsSection which will handle appending
-      showAlert("Success", `Batch "${batch.batchNo}" added`, "success");
-      closeBatchDialog();
-      return selectedProduct;
-    },
-    [showAlert, closeBatchDialog]
-  );
-
   const onSubmit = async (data: BillingFormData) => {
     try {
       setLoading(true);
@@ -286,7 +257,6 @@ const BillingPage: React.FC = () => {
                 watchedBillProducts={watchedBillProducts}
                 calculateDiscountFromPercent={calculateDiscountFromPercent}
                 billingService={billingService}
-                openBatchDialog={openBatchDialog}
                 physicians={physicians}
                 setValue={setValue}
               />
@@ -344,8 +314,6 @@ const BillingPage: React.FC = () => {
         initialDeptId={selectedDeptId}
         requireSelection={true}
       />
-
-      <BatchSelectionDialog open={isBatchSelectionDialogOpen} onClose={closeBatchDialog} onSelect={handleBatchSelect} data={availableBatches} />
     </Box>
   );
 };

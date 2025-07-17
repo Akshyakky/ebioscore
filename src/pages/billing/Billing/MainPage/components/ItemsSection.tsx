@@ -1,4 +1,7 @@
 // src/pages/billing/Billing/MainPage/components/ItemsSection.tsx
+import { BillProductsDto } from "@/interfaces/Billing/BillingDto";
+import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
+import { BatchSelectionDialog, useBatchSelection } from "@/pages/inventoryManagement/CommonPage/BatchSelectionDialog";
 import { Edit as EditIcon, MedicalServices as MedicalServicesIcon, ShoppingCart as ShoppingCartIcon } from "@mui/icons-material";
 import { alpha, Autocomplete, Box, Card, Chip, CircularProgress, TextField, ToggleButton, ToggleButtonGroup, Typography, useTheme } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
@@ -25,7 +28,6 @@ interface ItemsSectionProps {
   watchedBillProducts: any[];
   calculateDiscountFromPercent: (amount: number, percentage: number) => number;
   billingService: any;
-  openBatchDialog: (batches: any[]) => void;
   physicians: DropdownOption[];
   setValue: UseFormSetValue<BillingFormData>;
 }
@@ -47,7 +49,6 @@ export const ItemsSection: React.FC<ItemsSectionProps> = ({
   watchedBillProducts,
   calculateDiscountFromPercent,
   billingService,
-  openBatchDialog,
   physicians,
   setValue,
 }) => {
@@ -56,7 +57,7 @@ export const ItemsSection: React.FC<ItemsSectionProps> = ({
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
-
+  const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, openDialog: openBatchDialog, closeDialog: closeBatchDialog } = useBatchSelection();
   const {
     append: appendService,
     remove: removeService,
@@ -80,6 +81,31 @@ export const ItemsSection: React.FC<ItemsSectionProps> = ({
 
   const filteredProducts = useMemo(() => filterProducts(products, productSearchTerm), [productSearchTerm, products]);
 
+  const handleBatchSelect = useCallback(
+    (batch: ProductBatchDto) => {
+      const selectedProduct: BillProductsDto = {
+        productID: batch.productID,
+        productName: batch.productName,
+        batchNo: batch.batchNo,
+        expiryDate: batch.expiryDate,
+        grnDetID: batch.grnDetID,
+        deptID: batch.deptID,
+        deptName: batch.deptName,
+        selectedQuantity: 1,
+        productQOH: batch.productQOH,
+        hValue: batch.sellingPrice,
+        hospPercShare: 0,
+        hValDisc: 0,
+        packID: 0,
+        packName: "",
+        rActiveYN: "Y",
+      };
+      appendProduct(selectedProduct);
+      showAlert("Success", `Batch "${batch.batchNo}" added`, "success");
+      closeBatchDialog();
+    },
+    [appendProduct, showAlert, closeBatchDialog]
+  );
   // Handle service selection
   const handleServiceSelect = useCallback(
     async (service: any | null) => {
@@ -320,6 +346,7 @@ export const ItemsSection: React.FC<ItemsSectionProps> = ({
           />
         )}
       </Box>
+      <BatchSelectionDialog open={isBatchSelectionDialogOpen} onClose={closeBatchDialog} onSelect={handleBatchSelect} data={availableBatches} />
     </Card>
   );
 };
