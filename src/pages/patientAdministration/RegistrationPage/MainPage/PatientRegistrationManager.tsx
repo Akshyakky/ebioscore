@@ -10,11 +10,14 @@ import { formatDt } from "@/utils/Common/dateUtils";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
   Cancel as CancelIcon,
+  CheckCircle,
   Close as CloseIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   AccountBalance as InsuranceIcon,
   FitnessCenter as LifestyleIcon,
+  LocalHospital,
+  MedicalServices,
   People as NextOfKinIcon,
   PersonAdd as PersonAddIcon,
   Refresh as RefreshIcon,
@@ -24,7 +27,7 @@ import {
 } from "@mui/icons-material";
 
 import LifestyleManagement from "@/pages/clinicalManagement/LifeStyle/MainPage/LifestyleManagement";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import NextOfKinManagement from "../Components/NextOfKinManagement";
 import PatientInsuranceManagement from "../Components/PatientInsuranceManagement";
@@ -505,50 +508,107 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
 
   // Statistics dashboard
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Box textAlign="center">
-            <Typography variant="h4" color="primary">
-              {stats.total}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Patients
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Box textAlign="center">
-            <Typography variant="h4" color="success.main">
-              {stats.active}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Active
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Box textAlign="center">
-            <Typography variant="h4" color="error.main">
-              {stats.inactive}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Inactive
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Box textAlign="center">
-            <Typography variant="h4" color="info.main">
-              {stats.hospitalVisits}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Hospital Visits
-            </Typography>
-          </Box>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <PersonAddIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.total}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Patients
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <CheckCircle fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.active}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <CancelIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactive}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <LocalHospital fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.hospitalVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Hospital Visits
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <MedicalServices fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.physicianVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Physician Visits
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   if (error) {
