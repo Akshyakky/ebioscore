@@ -2,20 +2,8 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { Close, Search } from "@mui/icons-material";
-import { Box, Button, Chip, TextField, Typography, alpha, useTheme } from "@mui/material";
-import React, { useCallback, useMemo, useState } from "react";
-
-export interface BatchSelectionColumn<T = any> {
-  field: keyof T | string;
-  headerName: string;
-  width?: number;
-  sortable?: boolean;
-  type?: "string" | "number" | "date" | "boolean";
-  renderCell?: (item: T, rowIndex: number, columnIndex: number) => React.ReactNode;
-  valueGetter?: (item: T) => any;
-  align?: "left" | "center" | "right";
-  headerAlign?: "left" | "center" | "right";
-}
+import { Box, Button, Chip, TextField, Typography, useTheme } from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
 
 export interface BatchSelectionDialogProps<T = any> {
   open: boolean;
@@ -24,8 +12,8 @@ export interface BatchSelectionDialogProps<T = any> {
   data: T[];
 }
 
-// Default batch columns
-const getDefaultBatchColumns = <T extends Record<string, any>>(): Column<T>[] => [
+// batch columns
+const batchColumns = <T extends Record<string, any>>(): Column<T>[] => [
   {
     key: "batchNo",
     header: "Batch No",
@@ -107,9 +95,8 @@ function BatchSelectionDialog<T extends Record<string, any>>({ open, onClose, on
     [getItemId, onSelect, onClose]
   );
 
-  // Merge default columns with custom columns and add action column
   const finalColumns: Column<T>[] = useMemo(() => {
-    const baseColumns: Column<T>[] = getDefaultBatchColumns<T>();
+    const baseColumns: Column<T>[] = batchColumns<T>();
 
     // Add action column at the end
     const actionColumn: Column<T> = {
@@ -192,26 +179,7 @@ function BatchSelectionDialog<T extends Record<string, any>>({ open, onClose, on
               rowKeyField={"grnDetID"}
               density="medium"
               showDensityControls={false}
-              pagination={data.length > 10}
-              pageSize={10}
               emptyStateMessage="No batches available"
-              gridStyle={{
-                "& .MuiTableRow-root:hover": {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                },
-                "& .MuiTableHead-root": {
-                  "& .MuiTableCell-root": {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.06),
-                    borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                    fontWeight: 600,
-                  },
-                },
-                "& .MuiTableBody-root": {
-                  "& .MuiTableCell-root": {
-                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                  },
-                },
-              }}
             />
           </Box>
         ) : (
