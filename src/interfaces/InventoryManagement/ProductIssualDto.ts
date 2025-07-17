@@ -60,6 +60,7 @@ export interface ProductIssualDetailDto extends BaseDto {
   manufacturerCode?: string;
   manufacturerName?: string;
   psbid?: number;
+  rActiveYN: string; // New field for active status
   remarks?: string;
 }
 
@@ -241,6 +242,7 @@ export const defaultProductIssualDetailDto = (): ProductIssualDetailDto => ({
   catDesc: "REVENUE",
   expiryYN: "N",
   pUnitsPerPack: 1,
+  rActiveYN: "Y", // New field for active status
 });
 
 export const defaultProductIssualCompositeDto = (): ProductIssualCompositeDto => ({

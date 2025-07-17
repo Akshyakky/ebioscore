@@ -107,47 +107,61 @@ export const useProductIssual = (): ProductIssualHookReturn => {
     [setLoading, showAlert, clearError]
   );
 
+  // Helper function to validate ProductIssualCompositeDto structure
+  const validateIssualComposite = (issualData: ProductIssualCompositeDto): void => {
+    const { productIssual, details } = issualData;
+
+    // Validate main issual object
+    if (!productIssual.fromDeptID) {
+      throw new Error("From department is required");
+    }
+    if (!productIssual.toDeptID) {
+      throw new Error("To department is required");
+    }
+    if (productIssual.fromDeptID === productIssual.toDeptID) {
+      throw new Error("From department and To department cannot be the same");
+    }
+
+    // Validate details array
+    if (!details || details.length === 0) {
+      throw new Error("At least one product detail is required");
+    }
+
+    // Validate each detail item
+    details.forEach((detail, index) => {
+      if (!detail.productID || detail.productID <= 0) {
+        throw new Error(`Product is required for detail item ${index + 1}`);
+      }
+      if (!detail.issuedQty || detail.issuedQty <= 0) {
+        throw new Error(`Invalid issued quantity for product ${detail.productName || "Unknown"}`);
+      }
+      if (!detail.requestedQty || detail.requestedQty <= 0) {
+        throw new Error(`Invalid requested quantity for product ${detail.productName || "Unknown"}`);
+      }
+      if (detail.issuedQty > detail.requestedQty) {
+        throw new Error(`Issued quantity cannot exceed requested quantity for product ${detail.productName || "Unknown"}`);
+      }
+      if (detail.availableQty !== undefined && detail.issuedQty > detail.availableQty) {
+        throw new Error(`Insufficient stock for product ${detail.productName || "Unknown"}. Available: ${detail.availableQty}, Requested: ${detail.issuedQty}`);
+      }
+    });
+  };
+
   const saveIssualWithDetails = useCallback(
     async (issualData: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> => {
       try {
-        debugger;
         setLoading(true);
         clearError();
-        if (!issualData.productIssual.fromDeptID) {
-          throw new Error("From department is required");
-        }
-        if (!issualData.productIssual.toDeptID) {
-          throw new Error("To department is required");
-        }
-        if (issualData.productIssual.fromDeptID === issualData.productIssual.toDeptID) {
-          throw new Error("From department and To department cannot be the same");
-        }
-        if (!issualData.details || issualData.details.length === 0) {
-          throw new Error("At least one product detail is required");
-        }
-        for (const detail of issualData.details) {
-          if (!detail.productID || detail.productID <= 0) {
-            throw new Error("Product is required for all detail items");
-          }
-          if (!detail.issuedQty || detail.issuedQty <= 0) {
-            throw new Error(`Invalid issued quantity for product ${detail.productName || "Unknown"}`);
-          }
-          if (!detail.requestedQty || detail.requestedQty <= 0) {
-            throw new Error(`Invalid requested quantity for product ${detail.productName || "Unknown"}`);
-          }
-          if (detail.issuedQty > detail.requestedQty) {
-            throw new Error(`Issued quantity cannot exceed requested quantity for product ${detail.productName || "Unknown"}`);
-          }
-          if (detail.availableQty !== undefined && detail.issuedQty > detail.availableQty) {
-            throw new Error(`Insufficient stock for product ${detail.productName || "Unknown"}. Available: ${detail.availableQty}, Requested: ${detail.issuedQty}`);
-          }
-        }
+
+        // Use the extracted validation function
+        validateIssualComposite(issualData);
 
         const response = await productIssualService.createIssualWithDetails(issualData);
 
         if (response.success) {
           const isEdit = issualData.productIssual.pisid > 0;
           showAlert("Success", `Product Issual ${isEdit ? "updated" : "created"} successfully!`, "success");
+
           if (lastSearchRequest) {
             await refreshCurrentPage();
           }
@@ -182,10 +196,7 @@ export const useProductIssual = (): ProductIssualHookReturn => {
 
         if (response.success) {
           showAlert("Success", "Product Issual deleted successfully", "success");
-
-          // Refresh the current page
           await refreshCurrentPage();
-
           return true;
         } else {
           throw new Error(response.errorMessage || "Failed to delete product issual");
@@ -205,10 +216,8 @@ export const useProductIssual = (): ProductIssualHookReturn => {
   const generateIssualCode = useCallback(
     async (fromDepartmentId: number): Promise<string | null> => {
       try {
-        debugger;
         setLoading(true);
         const response = await productIssualService.generateIssualCode(fromDepartmentId);
-
         if (response.success && response.data) {
           return response.data;
         } else {
@@ -236,13 +245,9 @@ export const useProductIssual = (): ProductIssualHookReturn => {
         }
 
         const response = await productIssualService.approveIssual(issualId);
-
         if (response.success) {
           showAlert("Success", "Product Issual approved successfully", "success");
-
-          // Refresh the current page
           await refreshCurrentPage();
-
           return true;
         } else {
           throw new Error(response.errorMessage || "Failed to approve product issual");
@@ -270,11 +275,8 @@ export const useProductIssual = (): ProductIssualHookReturn => {
         }
 
         const response = await productIssualService.getAvailableStock(departmentId, productId);
-
         if (response.success && response.data) {
-          // Filter out products with zero or negative stock
           const availableProducts = response.data.filter((product) => (product.productQuantityOnHand || 0) > 0);
-
           return availableProducts;
         }
 

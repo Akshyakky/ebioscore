@@ -16,15 +16,7 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
   }
 
   async generateIssualCode(fromDepartmentId: number): Promise<OperationResult<string>> {
-    try {
-      return await this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GenerateIssualCode?fromDepartmentId=${fromDepartmentId}`, this.getToken());
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to generate issual code",
-        data: undefined,
-      };
-    }
+    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GenerateIssualCode?fromDepartmentId=${fromDepartmentId}`, this.getToken());
   }
 
   async createIssualWithDetails(issualDto: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> {
@@ -78,7 +70,7 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
   async getAvailableStock(departmentId: number, productId?: number): Promise<OperationResult<ProductStockBalance[]>> {
     try {
       let url = `${this.baseEndpoint}/GetAvailableStock?deptId=${departmentId}`;
-      if (productId && productId > 0) {
+      if (productId) {
         url += `&productId=${productId}`;
       }
       return await this.apiService.get<OperationResult<ProductStockBalance[]>>(url, this.getToken());
@@ -86,77 +78,63 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
       return {
         success: false,
         errorMessage: error instanceof Error ? error.message : "Failed to retrieve available stock",
-        data: [],
+        data: undefined,
+      };
+    }
+  }
+
+  async deleteIssual(issualId: number): Promise<OperationResult<boolean>> {
+    try {
+      return await this.delete(issualId);
+    } catch (error) {
+      return {
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "Failed to delete issual",
+        data: undefined,
       };
     }
   }
 
   async validateStockAvailability(departmentId: number, productId: number, requiredQty: number, batchNo?: string): Promise<OperationResult<boolean>> {
     try {
-      let url = `${this.baseEndpoint}/ValidateStockAvailability?departmentId=${departmentId}&productId=${productId}&requiredQty=${requiredQty}`;
-      if (batchNo) {
-        url += `&batchNo=${encodeURIComponent(batchNo)}`;
-      }
-      return await this.apiService.get<OperationResult<boolean>>(url, this.getToken());
-    } catch (error) {
-      // Fallback to client-side validation if backend endpoint is not available
-      try {
-        const stockResult = await this.getAvailableStock(departmentId, productId);
+      const stockResult = await this.getAvailableStock(departmentId, productId);
 
-        if (!stockResult.success || !stockResult.data) {
-          return {
-            success: false,
-            errorMessage: "Failed to retrieve stock information",
-            data: false,
-          };
-        }
-
-        const availableStock = stockResult.data.find((stock) => stock.productID === productId && (!batchNo || stock.batchNumber === batchNo));
-
-        if (!availableStock) {
-          return {
-            success: false,
-            errorMessage: "Product not available in stock",
-            data: false,
-          };
-        }
-
-        const availableQty = availableStock.productQuantityOnHand || 0;
-        if (availableQty < requiredQty) {
-          return {
-            success: false,
-            errorMessage: `Insufficient stock. Available: ${availableQty}, Required: ${requiredQty}`,
-            data: false,
-          };
-        }
-
-        return {
-          success: true,
-          data: true,
-        };
-      } catch (fallbackError) {
+      if (!stockResult.success || !stockResult.data) {
         return {
           success: false,
-          errorMessage: fallbackError instanceof Error ? fallbackError.message : "Failed to validate stock availability",
-          data: false,
+          errorMessage: "Failed to retrieve stock information",
+          data: undefined,
         };
       }
-    }
-  }
 
-  async deleteIssual(issualId: number): Promise<OperationResult<boolean>> {
-    try {
-      const result = await this.delete(issualId);
+      const availableStock = stockResult.data.find((stock) => stock.productID === productId && (!batchNo || stock.batchNumber === batchNo));
+
+      if (!availableStock) {
+        return {
+          success: false,
+          errorMessage: "Product not available in stock",
+          data: undefined,
+        };
+      }
+
+      const availableQty = availableStock.productQuantityOnHand || 0;
+      if (availableQty < requiredQty) {
+        return {
+          success: false,
+          errorMessage: `Insufficient stock. Available: ${availableQty}, Required: ${requiredQty}`,
+          data: undefined,
+        };
+      }
+
       return {
-        success: result.success,
-        errorMessage: result.errorMessage,
-        data: result.success,
+        success: true,
+        data: true,
       };
     } catch (error) {
       return {
         success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to delete issual",
-        data: false,
+        errorMessage: error instanceof Error ? error.message : "Failed to validate stock availability",
+        data: undefined,
       };
     }
   }
