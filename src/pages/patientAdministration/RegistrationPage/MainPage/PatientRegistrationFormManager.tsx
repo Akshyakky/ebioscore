@@ -232,7 +232,7 @@ const PatientRegistrationFormManager: React.FC<PatientRegistrationFormManagerPro
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1">
+            <Typography variant="h5" color="primary" sx={{ fontWeight: 600, mb: 1 }} component="h1">
               Patient Registration Form
             </Typography>
             <Typography variant="body2" color="text.secondary">

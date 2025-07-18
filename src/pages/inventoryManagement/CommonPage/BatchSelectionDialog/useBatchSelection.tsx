@@ -1,23 +1,22 @@
-// src\pages\inventoryManagement\CommonPage\BatchSelectionDialog\useBatchSelection.tsx
-import { BillProductsDto } from "@/interfaces/Billing/BillingDto";
+import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { useCallback, useState } from "react";
 
 interface BatchSelectionState {
   isDialogOpen: boolean;
-  availableBatches: BillProductsDto[];
-  selectedBatch: BillProductsDto | null;
+  availableBatches: ProductBatchDto[];
+  selectedBatch: ProductBatchDto | null;
   isLoading: boolean;
 }
 
 interface UseBatchSelectionReturn {
   isDialogOpen: boolean;
-  availableBatches: BillProductsDto[];
-  selectedBatch: BillProductsDto | null;
+  availableBatches: ProductBatchDto[];
+  selectedBatch: ProductBatchDto | null;
   isLoading: boolean;
-  openDialog: (batches: BillProductsDto[]) => void;
+  openDialog: (batches: ProductBatchDto[]) => void;
   closeDialog: () => void;
-  handleBatchSelect: (batch: BillProductsDto) => void;
+  handleBatchSelect: (batch: ProductBatchDto) => void;
   clearSelection: () => void;
 }
 
@@ -31,7 +30,7 @@ const useBatchSelection = (): UseBatchSelectionReturn => {
   });
 
   const openDialog = useCallback(
-    (batches: BillProductsDto[]) => {
+    (batches: ProductBatchDto[]) => {
       if (!batches || batches.length === 0) {
         showAlert("Warning", "No batches available for this product", "warning");
         return;
@@ -56,7 +55,7 @@ const useBatchSelection = (): UseBatchSelectionReturn => {
     }));
   }, []);
 
-  const handleBatchSelect = useCallback((batch: BillProductsDto) => {
+  const handleBatchSelect = useCallback((batch: ProductBatchDto) => {
     setState((prev) => ({
       ...prev,
       selectedBatch: batch,
