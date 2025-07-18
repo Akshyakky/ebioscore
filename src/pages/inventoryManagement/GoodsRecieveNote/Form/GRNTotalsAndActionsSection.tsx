@@ -6,6 +6,7 @@ import { Check as ApplyIcon, DeleteSweep as DeleteAllIcon, History as HistoryIco
 import { Alert, Box, Chip, FormControlLabel, Grid, Paper, Stack, Switch, Typography, useTheme } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+
 import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 import ProductHistoryDialog from "./ProductHistoryDailogue";
 import ProductSelectionDialog from "./ProductSelectionDailogue";
@@ -25,6 +26,9 @@ interface GRNTotalsAndActionsSectionProps {
   onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
   selectedProductForIssue?: GrnDetailDto | null;
   onSelectedProductForIssueChange?: (product: GrnDetailDto | null) => void;
+  defaultIndentNo?: string;
+  defaultRemarks?: string;
+  departments: { value: string; label: string }[];
 }
 
 interface CalculatedTotals {
@@ -65,6 +69,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
   setValue,
   watch,
   onDeleteAll,
+  onShowHistory,
   onNewIssueDepartment,
   onApplyDiscount,
   disabled = false,
@@ -73,6 +78,9 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
   onIssueDepartmentChange,
   selectedProductForIssue,
   onSelectedProductForIssueChange,
+  defaultIndentNo = "",
+  defaultRemarks = "",
+  departments,
 }) => {
   const theme = useTheme();
   const { showAlert } = useAlert();
@@ -86,10 +94,17 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
   const watchedDiscount = watch("disc") || 0;
   const watchedOtherAmount = watch("otherAmt") || 0;
   const watchedCoinAdjustment = watch("coinAdj") || 0;
+  const watchedCreateProductIssuals = watch("createProductIssuals");
 
+  // Handle discount type and product issuuals
   useEffect(() => {
     setIsDiscountInPercentage(watchedDiscountType === "Y");
-  }, [watchedDiscountType]);
+
+    // Always enable product issuuals when there are issue departments
+    if (issueDepartments.length > 0) {
+      setValue("createProductIssuals", true, { shouldDirty: true });
+    }
+  }, [watchedDiscountType, issueDepartments, setValue]);
 
   const calculateTotals = useCallback((): CalculatedTotals => {
     if (!grnDetails || grnDetails.length === 0) {
@@ -219,7 +234,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
 
   const handleIssueDepartmentSubmit = (data: IssueDepartmentData) => {
     if (onIssueDepartmentChange) {
-      const updatedDepartments = [...issueDepartments];
+      let updatedDepartments = [...issueDepartments];
       if (editingIssueDepartment) {
         const index = updatedDepartments.findIndex((dept) => dept.id === editingIssueDepartment.id);
         if (index !== -1) {
@@ -301,7 +316,7 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
           <CustomButton
             text="New Issue Department"
             icon={NewDeptIcon}
-            color="primary"
+            color={watchedCreateProductIssuals && issueDepartments.length === 0 ? "error" : "primary"}
             onClick={handleNewIssueDepartmentClick}
             disabled={allDisabled || !grnDetails || grnDetails.length === 0}
           />
@@ -328,17 +343,32 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
         </Stack>
 
         {issueDepartments.length > 0 && (
-          <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 2 }}>
+          <Alert severity={watchedCreateProductIssuals ? "success" : "info"} icon={<InfoIcon />} sx={{ mb: 2 }}>
             <Typography variant="body2">
               <strong>Issue Department Summary:</strong> {issueDeptSummary.totalIssueDepts} departments,
               {issueDeptSummary.uniqueProducts} products, Total Qty: {issueDeptSummary.totalIssueQty}
+              {watchedCreateProductIssuals && " (Will be created on GRN approval)"}
             </Typography>
             <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
               {issueDepartments.slice(0, 5).map((dept) => (
-                <Chip key={dept.id} label={`${dept.deptName}: ${dept.quantity}`} size="small" variant="outlined" color="primary" />
+                <Chip
+                  key={dept.id}
+                  label={`${dept.deptName}: ${dept.quantity}`}
+                  size="small"
+                  variant={watchedCreateProductIssuals ? "filled" : "outlined"}
+                  color={watchedCreateProductIssuals ? "success" : "primary"}
+                />
               ))}
               {issueDepartments.length > 5 && <Chip label={`+${issueDepartments.length - 5} more`} size="small" variant="outlined" color="default" />}
             </Box>
+          </Alert>
+        )}
+
+        {watchedCreateProductIssuals && issueDepartments.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Product Issual Enabled:</strong> Please add at least one issue department to create product issuuals on GRN approval.
+            </Typography>
           </Alert>
         )}
 
@@ -427,6 +457,11 @@ const GRNTotalsAndActionsSection: React.FC<GRNTotalsAndActionsSectionProps> = ({
         selectedProduct={selectedProductForIssue}
         editData={editingIssueDepartment}
         title={editingIssueDepartment ? "Edit Issue Department" : "New Issue Department"}
+        defaultIndentNo={defaultIndentNo}
+        defaultRemarks={defaultRemarks}
+        departments={departments} // Pass departments prop
+        existingIssueDepartments={issueDepartments} // Pass existing issue departments
+        showAlert={showAlert} // Pass showAlert function
       />
 
       <ProductSelectionDialog

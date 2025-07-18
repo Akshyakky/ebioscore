@@ -25,7 +25,7 @@ import { z } from "zod";
 import { useGrn } from "../hooks/useGrnhooks";
 import UnifiedGrnDetailsComponent from "./GrnPOandProductDetails";
 import GRNTotalsAndActionsSection from "./GRNTotalsAndActionsSection";
-import { IssueDepartmentData } from "./NewIssueDepartmentDialog";
+import IssueDepartmentDialog, { IssueDepartmentData } from "./NewIssueDepartmentDialog";
 
 const GRNHelpers = {
   calculateProductValue: (detail: Partial<GrnDetailDto>): number => {
@@ -113,6 +113,121 @@ const GRNHelpers = {
       totalQty,
     };
   },
+
+  // Utility functions for validation and mapping
+  validateIssualData: (issueDepartments: IssueDepartmentData[], grnDetails: GrnDetailDto[]): string[] => {
+    const errors: string[] = [];
+
+    // Group by product to validate total quantities
+    const issualsByProduct = issueDepartments.reduce((acc, dept) => {
+      if (!acc[dept.productID]) {
+        acc[dept.productID] = [];
+      }
+      acc[dept.productID].push(dept);
+      return acc;
+    }, {} as Record<number, IssueDepartmentData[]>);
+
+    // Validate each product's total issual quantity
+    Object.entries(issualsByProduct).forEach(([productIdStr, productIssuuals]) => {
+      const productId = parseInt(productIdStr);
+      const grnDetail = grnDetails.find((detail) => detail.productID === productId);
+
+      if (!grnDetail) {
+        errors.push(`Product with ID ${productId} not found in GRN details`);
+        return;
+      }
+
+      const availableQty = grnDetail.acceptQty || grnDetail.recvdQty || 0;
+      const totalIssualQty = productIssuuals.reduce((sum, issual) => sum + issual.quantity, 0);
+
+      if (totalIssualQty > availableQty) {
+        errors.push(`Total issual quantity (${totalIssualQty}) exceeds available quantity (${availableQty}) for product ${grnDetail.productName}`);
+      }
+
+      // Check for duplicate departments per product
+      const departmentIds = productIssuuals.map((issual) => issual.deptID);
+      const uniqueDepartmentIds = [...new Set(departmentIds)];
+      if (departmentIds.length !== uniqueDepartmentIds.length) {
+        errors.push(`Duplicate departments found for product ${grnDetail.productName}`);
+      }
+
+      // Validate individual issual records
+      productIssuuals.forEach((issual) => {
+        if (!issual.deptID || issual.deptID <= 0) {
+          errors.push(`Invalid department ID for product ${grnDetail.productName}`);
+        }
+        if (!issual.quantity || issual.quantity <= 0) {
+          errors.push(`Invalid quantity for product ${grnDetail.productName} to department ${issual.deptName}`);
+        }
+      });
+    });
+
+    return errors;
+  },
+
+  // Convert frontend data to backend format with validation
+  convertToBackendFormat: (issueDepartments: IssueDepartmentData[], grnDetails: GrnDetailDto[]): GrnDetailDto[] => {
+    // Validate data first
+    const validationErrors = GRNHelpers.validateIssualData(issueDepartments, grnDetails);
+    if (validationErrors.length > 0) {
+      throw new Error(`Validation failed: ${validationErrors.join("; ")}`);
+    }
+
+    // Create a deep copy of GRN details to avoid mutating the original
+    const updatedGrnDetails = JSON.parse(JSON.stringify(grnDetails)) as GrnDetailDto[];
+
+    // Group issue departments by productID
+    const issualsByProduct = issueDepartments.reduce((acc, dept) => {
+      if (!acc[dept.productID]) {
+        acc[dept.productID] = [];
+      }
+      acc[dept.productID].push(dept);
+      return acc;
+    }, {} as Record<number, IssueDepartmentData[]>);
+
+    // Add issuuals to their respective products
+    updatedGrnDetails.forEach((detail) => {
+      const productIssuuals = issualsByProduct[detail.productID] || [];
+
+      if (productIssuuals.length > 0) {
+        // Map frontend IssueDepartmentData to backend GrnProductIssualDto format
+        detail.productIssuuals = productIssuuals.map((issual) => ({
+          toDeptID: issual.deptID, // Frontend deptID -> Backend toDeptID
+          toDeptName: issual.deptName, // Frontend deptName -> Backend toDeptName
+          issuualQty: issual.quantity, // Frontend quantity -> Backend issuualQty
+          indentNo: issual.indentNo || null, // Frontend indentNo -> Backend indentNo
+          remarks: issual.remarks || null, // Frontend remarks -> Backend remarks
+          createIssual: true, // Frontend createIssual -> Backend createIssual
+        }));
+      } else {
+        // Ensure empty array if no issuuals
+        detail.productIssuuals = [];
+      }
+    });
+
+    return updatedGrnDetails;
+  },
+
+  // Get summary information about issue departments
+  getSummary: (
+    issueDepartments: IssueDepartmentData[]
+  ): {
+    totalIssuuals: number;
+    uniqueDepartments: string[];
+    totalQuantity: number;
+    productCount: number;
+  } => {
+    const uniqueDepartments = [...new Set(issueDepartments.map((dept) => dept.deptName))];
+    const totalQuantity = issueDepartments.reduce((sum, dept) => sum + dept.quantity, 0);
+    const uniqueProducts = [...new Set(issueDepartments.map((dept) => dept.productID))];
+
+    return {
+      totalIssuuals: issueDepartments.length,
+      uniqueDepartments,
+      totalQuantity,
+      productCount: uniqueProducts.length,
+    };
+  },
 };
 
 const grnSchema = z.object({
@@ -157,6 +272,10 @@ const grnSchema = z.object({
   rActiveYN: z.string().default("Y"),
   rNotes: z.string().optional().nullable(),
   grnApprovedDate: z.string().optional().nullable(),
+  // New fields for product issual integration
+  createProductIssuals: z.boolean().default(false),
+  defaultIssualIndentNo: z.string().optional().nullable(),
+  defaultIssualRemarks: z.string().optional().nullable(),
 });
 
 type GrnFormData = z.infer<typeof grnSchema>;
@@ -187,6 +306,8 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   const [allGrnDetails, setAllGrnDetails] = useState<GrnDetailDto[]>([]);
   const [issueDepartments, setIssueDepartments] = useState<IssueDepartmentData[]>([]);
   const [selectedProductForIssue, setSelectedProductForIssue] = useState<GrnDetailDto | null>(null);
+  const [showIssueDepartmentDialog, setShowIssueDepartmentDialog] = useState(false);
+  const [editingIssueData, setEditingIssueData] = useState<IssueDepartmentData | null>(null);
   const { grnType } = useDropdownValues(["grnType"]);
   const [originalGrnID, setOriginalGrnID] = useState<number>(0);
   const [expandedSections, setExpandedSections] = useState({
@@ -221,6 +342,8 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   const watchedSupplierID = watch("supplrID");
   const watchedInvoiceNo = watch("invoiceNo");
   const watchedGrnType = watch("grnType");
+  const watchedDefaultIssualIndentNo = watch("defaultIssualIndentNo");
+  const watchedDefaultIssualRemarks = watch("defaultIssualRemarks");
 
   // Form validation function to check if all required fields are filled
   const isFormValid = useMemo(() => {
@@ -285,6 +408,9 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           discPercentageYN: grn.grnMastDto.discPercentageYN || "N",
           rActiveYN: grn.grnMastDto.rActiveYN || "Y",
           rNotes: grn.grnMastDto.rNotes || "",
+          createProductIssuals: grn.grnMastDto.createProductIssuals || false,
+          defaultIssualIndentNo: grn.grnMastDto.defaultIssualIndentNo || "",
+          defaultIssualRemarks: grn.grnMastDto.defaultIssualRemarks || "",
         };
         reset(formData);
 
@@ -294,7 +420,31 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
 
         const grnDetailsList = grn.grnDetailDto || [];
         setAllGrnDetails(grnDetailsList);
-        setIssueDepartments([]);
+
+        // Convert existing product issuuals to IssueDepartmentData format
+        const existingIssueDepartments: IssueDepartmentData[] = [];
+        grnDetailsList.forEach((detail) => {
+          if (detail.productIssuuals && detail.productIssuuals.length > 0) {
+            detail.productIssuuals.forEach((issual) => {
+              if (issual.createIssual) {
+                existingIssueDepartments.push({
+                  id: `issue-${detail.productID}-${issual.toDeptID}-${Date.now()}`,
+                  deptID: issual.toDeptID,
+                  deptName: issual.toDeptName,
+                  quantity: issual.issuualQty,
+                  productName: detail.productName || "",
+                  productID: detail.productID,
+                  grnDetailId: detail.grnDetID,
+                  indentNo: issual.indentNo || "",
+                  remarks: issual.remarks || "",
+                  createIssual: true,
+                });
+              }
+            });
+          }
+        });
+
+        setIssueDepartments(existingIssueDepartments);
       } else {
         // New GRN mode - populate with selected department
         setOriginalGrnID(0);
@@ -311,6 +461,9 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           auGrpID: 18,
           discPercentageYN: "N",
           rActiveYN: "Y",
+          createProductIssuals: false,
+          defaultIssualIndentNo: "",
+          defaultIssualRemarks: "",
         };
 
         // Set selected department if available
@@ -325,6 +478,14 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
       }
     }
   }, [open, grn, reset, selectedDepartmentId, selectedDepartmentName]);
+
+  // FIXED: Move the setValue call to useEffect to prevent infinite re-renders
+  useEffect(() => {
+    // Set createProductIssuals to true when there are issue departments
+    if (issueDepartments.length > 0) {
+      setValue("createProductIssuals", true, { shouldDirty: false });
+    }
+  }, [issueDepartments.length, setValue]);
 
   const handleGenerateCode = useCallback(async () => {
     if (!watcheddeptID) {
@@ -487,7 +648,37 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
     showAlert("Info", "History functionality to be implemented", "info");
   }, [showAlert]);
 
-  const handleNewIssueDepartment = useCallback(() => {}, []);
+  const handleNewIssueDepartment = useCallback((product?: GrnDetailDto) => {
+    setSelectedProductForIssue(product || null);
+    setEditingIssueData(null);
+    setShowIssueDepartmentDialog(true);
+  }, []);
+
+  const handleEditIssueDepartment = useCallback(
+    (issueData: IssueDepartmentData) => {
+      const product = allGrnDetails.find((detail) => detail.productID === issueData.productID);
+      setSelectedProductForIssue(product || null);
+      setEditingIssueData(issueData);
+      setShowIssueDepartmentDialog(true);
+    },
+    [allGrnDetails]
+  );
+
+  const handleIssueDepartmentSubmit = useCallback(
+    (data: IssueDepartmentData) => {
+      if (editingIssueData) {
+        // Update existing issue department
+        const updatedIssueDepartments = issueDepartments.map((dept) => (dept.id === editingIssueData.id ? data : dept));
+        setIssueDepartments(updatedIssueDepartments);
+        showAlert("Success", "Issue department updated successfully", "success");
+      } else {
+        // Add new issue department
+        setIssueDepartments((prev) => [...prev, data]);
+        showAlert("Success", "Issue department added successfully", "success");
+      }
+    },
+    [editingIssueData, issueDepartments, showAlert]
+  );
 
   const handleApplydiscount = useCallback(() => {
     calculateTotals(allGrnDetails);
@@ -496,6 +687,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
 
   const onSubmit = async (data: GrnFormData) => {
     try {
+      debugger;
       if (!data.deptID || data.deptID === 0) {
         showAlert("Validation Error", "Department is required", "error");
         return;
@@ -515,12 +707,38 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
 
       const selectedDept = departments.find((d) => Number(d.value) === Number(data.deptID));
       const selectedSupplier = suppliers.find((s) => Number(s.value) === Number(data.supplrID));
-      const masterGrnID = isEditMode ? originalGrnID : 0;
 
+      if (!selectedDept) {
+        showAlert("Validation Error", "Selected department not found", "error");
+        return;
+      }
+      if (!selectedSupplier) {
+        showAlert("Validation Error", "Selected supplier not found", "error");
+        return;
+      }
+
+      const masterGrnID = isEditMode ? originalGrnID : 0;
       const isBeingApproved = data.grnApprovedYN === "Y";
       const currentTime = new Date().toISOString();
 
-      const processedGrnDetails = allGrnDetails.map((detail, index) => {
+      // Always create product issuuals if issue departments are defined
+      data.createProductIssuals = issueDepartments.length > 0;
+
+      // Process product issuuals if any issue departments are defined
+      let processedGrnDetails = allGrnDetails;
+      if (issueDepartments.length > 0) {
+        try {
+          processedGrnDetails = GRNHelpers.convertToBackendFormat(issueDepartments, allGrnDetails);
+          const summary = GRNHelpers.getSummary(issueDepartments);
+          console.log("Issue Department Summary:", summary);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Invalid issue department configuration";
+          showAlert("Validation Error", errorMessage, "error");
+          return;
+        }
+      }
+
+      const processedGrnDetailDtos = processedGrnDetails.map((detail, index) => {
         if (!detail.productID || detail.productID === 0) {
           throw new Error(`Product ID is required for item ${detail.productName || "Unknown Product"}`);
         }
@@ -600,18 +818,19 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           rUpdatedBy: detail.rUpdatedBy || "",
           rUpdatedDate: detail.rUpdatedDate || "",
           rNotes: detail.rNotes || "",
+          productIssuuals: detail.productIssuuals || [],
         };
       });
 
       const grnMastData: GrnMastDto = {
         grnID: masterGrnID,
         deptID: data.deptID,
-        deptName: selectedDept?.label || "",
+        deptName: selectedDept.label,
         grnDate: data.grnDate ? new Date(data.grnDate).toISOString() : new Date().toISOString(),
         invoiceNo: data.invoiceNo.trim(),
         invDate: data.invDate ? new Date(data.invDate).toISOString() : new Date().toISOString(),
         supplrID: data.supplrID,
-        supplrName: selectedSupplier?.label || "",
+        supplrName: selectedSupplier.label,
         tot: data.tot || 0,
         disc: data.disc || 0,
         netTot: data.netTot || 0,
@@ -649,22 +868,31 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         rUpdatedBy: "",
         rUpdatedDate: "",
         rNotes: data.rNotes || "",
+        createProductIssuals: issueDepartments.length > 0,
+        defaultIssualIndentNo: data.defaultIssualIndentNo || "",
+        defaultIssualRemarks: data.defaultIssualRemarks || "",
       };
 
       const formattedData: GrnDto = {
         grnMastDto: grnMastData,
-        grnDetailDto: processedGrnDetails,
+        grnDetailDto: processedGrnDetailDtos,
       };
 
       const response = await createGrn(formattedData);
       if (response.success) {
-        const successMessage = isEditMode
+        let successMessage = isEditMode
           ? `GRN updated successfully${isBeingApproved ? " and approved. Stock has been updated." : "."}`
           : `GRN created successfully with ${formattedData.grnDetailDto?.length || 0} product(s)${isBeingApproved ? " and approved. Stock has been updated." : "."}`;
-
+        if (issueDepartments.length > 0 && isBeingApproved) {
+          const summary = GRNHelpers.getSummary(issueDepartments);
+          successMessage += ` ${summary.totalIssuuals} product issual(s) were automatically created for ${
+            summary.uniqueDepartments.length
+          } department(s): ${summary.uniqueDepartments.join(", ")}. Total quantity issued: ${summary.totalQuantity}.`;
+        } else if (issueDepartments.length > 0) {
+          const summary = GRNHelpers.getSummary(issueDepartments);
+          successMessage += ` ${summary.totalIssuuals} product issual(s) for ${summary.uniqueDepartments.join(", ")} will be created when the GRN is approved.`;
+        }
         showAlert("Success", successMessage, "success");
-
-        // Call the callback to refresh the parent component's data
         if (onGrnSaved) {
           onGrnSaved();
         }
@@ -680,7 +908,6 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
   };
 
   const handleClear = () => {
-    // Reset to initial state with selected department if in new mode
     if (!isEditMode && selectedDepartmentId && selectedDepartmentName) {
       const initialFormData: Partial<GrnFormData> = {
         grnID: 0,
@@ -697,6 +924,9 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         auGrpID: 18,
         discPercentageYN: "N",
         rActiveYN: "Y",
+        createProductIssuals: false,
+        defaultIssualIndentNo: "",
+        defaultIssualRemarks: "",
       };
       reset(initialFormData);
     } else {
@@ -730,7 +960,7 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
         />
       </Box>
     );
-  }, [handleSubmit, onSubmit, onClose, isEditMode, isSubmitting, isApproved]);
+  }, [handleSubmit, onSubmit, onClose, isEditMode, isSubmitting, isApproved, isFormValid, handleClear]);
 
   return (
     <GenericDialog
@@ -864,6 +1094,9 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           issueDepartments={issueDepartments}
           onIssueDepartmentChange={handleIssueDepartmentChange}
           onPoDataFetched={handlePoDataFetched}
+          defaultIndentNo={watchedDefaultIssualIndentNo || ""}
+          defaultRemarks={watchedDefaultIssualRemarks || ""}
+          departments={departments}
         />
 
         <GRNTotalsAndActionsSection
@@ -881,6 +1114,9 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
           onIssueDepartmentChange={handleIssueDepartmentChange}
           selectedProductForIssue={selectedProductForIssue}
           onSelectedProductForIssueChange={setSelectedProductForIssue}
+          defaultIndentNo={watchedDefaultIssualIndentNo || ""}
+          defaultRemarks={watchedDefaultIssualRemarks || ""}
+          departments={departments}
         />
 
         <Accordion expanded={expandedSections.configuration} onChange={() => handleSectionToggle("configuration")}>
@@ -954,6 +1190,24 @@ const ComprehensiveGrnFormDialog: React.FC<ComprehensiveGrnFormDialogProps> = ({
             </Grid>
           </AccordionDetails>
         </Accordion>
+
+        <IssueDepartmentDialog
+          open={showIssueDepartmentDialog}
+          onClose={() => {
+            setShowIssueDepartmentDialog(false);
+            setSelectedProductForIssue(null);
+            setEditingIssueData(null);
+          }}
+          onSubmit={handleIssueDepartmentSubmit}
+          selectedProduct={selectedProductForIssue}
+          editData={editingIssueData}
+          departments={departments}
+          existingIssueDepartments={issueDepartments}
+          defaultIndentNo={watchedDefaultIssualIndentNo || ""}
+          defaultRemarks={watchedDefaultIssualRemarks || ""}
+          showAlert={showAlert}
+          title={editingIssueData ? "Edit Issue Department" : "New Issue Department"}
+        />
       </Box>
     </GenericDialog>
   );
