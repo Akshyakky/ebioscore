@@ -1,10 +1,13 @@
 import CustomButton from "@/components/Button/CustomButton";
 import { GrnDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
 import { ProductIssualDetailDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { BatchSelectionDialog, useBatchSelection } from "@/pages/inventoryManagement/CommonPage/BatchSelectionDialog";
+import { billingService } from "@/services/BillingServices/BillingService";
 import { grnDetailService, productListService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, Error as ErrorIcon, Info as InfoIcon, Save, Warning as WarningIcon } from "@mui/icons-material";
-import { Alert, Box, Chip, CircularProgress, Grid, IconButton, InputAdornment, Paper, TextField, Tooltip, Typography } from "@mui/material";
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, Error as ErrorIcon, Info as InfoIcon, Warning as WarningIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, CircularProgress, Grid, IconButton, Paper, TextField, Tooltip, Typography } from "@mui/material";
 import { DataGrid, GridColDef, GridRowsProp } from "@mui/x-data-grid";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Control, FieldArrayWithId, FieldErrors, UseFieldArrayAppend, UseFieldArrayRemove, UseFormSetValue, useWatch } from "react-hook-form";
@@ -93,10 +96,6 @@ interface ProductDetailsSectionProps {
 
 const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, fields, append, remove, setValue, errors, isViewMode, showAlert }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductListDto | null>(null);
-  const [availableBatches, setAvailableBatches] = useState<GrnDetailDto[]>([]);
-  const [selectedBatch, setSelectedBatch] = useState<GrnDetailDto | null>(null);
-  const [selectedProductBatchNo, setSelectedProductBatchNo] = useState<string>("");
-  const [selectedProductQoh, setSelectedProductQoh] = useState<number | undefined>(undefined);
   const [selectedProductIssuedQty, setSelectedProductIssuedQty] = useState<number | undefined>(undefined);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isLoadingBatches, setIsLoadingBatches] = useState(false);
@@ -107,12 +106,13 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
   const [clearProductSearchTrigger, setClearProductSearchTrigger] = useState(0);
   const productSearchRef = useRef<ProductSearchRef>(null);
   const watchedDetails = useWatch({ control, name: "details" });
+  const fromDeptID = useWatch({ control, name: "fromDeptID" });
+
+  // Use the BatchSelectionDialog hook
+  const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, openDialog: openBatchDialog, closeDialog: closeBatchDialog } = useBatchSelection();
+
   const clearTemporaryFields = useCallback(() => {
     setSelectedProduct(null);
-    setAvailableBatches([]);
-    setSelectedBatch(null);
-    setSelectedProductBatchNo("");
-    setSelectedProductQoh(undefined);
     setSelectedProductIssuedQty(undefined);
     setIsAddingProduct(false);
     setIsLoadingBatches(false);
@@ -123,27 +123,200 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     setClearProductSearchTrigger((prev) => prev + 1);
   }, []);
 
-  const getExpiryDateFromGrn = useCallback((grnDetail: GrnDetailDto): Date | undefined => {
-    if (!grnDetail.expiryDate) return undefined;
-    try {
-      const dateStr = grnDetail.expiryDate.toString();
-      let parsedDate: Date;
-      if (dateStr.includes("T") || dateStr.includes("Z")) {
-        parsedDate = new Date(dateStr);
-      } else {
-        parsedDate = new Date(dateStr);
+  // Convert GrnDetailDto to ProductBatchDto format for BatchSelectionDialog
+  const convertGrnToBatchDto = useCallback(
+    (grn: GrnDetailDto, product: ProductListDto): ProductBatchDto => {
+      return {
+        productID: grn.productID,
+        productName: product.productName || "",
+        batchNo: grn.batchNo || "",
+        expiryDate: grn.expiryDate ? new Date(grn.expiryDate) : undefined,
+        grnDetID: grn.grnDetID,
+        deptID: fromDeptID || 0,
+        deptName: "",
+        productQOH: grn.acceptQty || 0,
+        sellingPrice: grn.unitPrice || grn.defaultPrice || 0,
+      } as ProductBatchDto;
+    },
+    [fromDeptID]
+  );
+
+  // Handle batch selection from dialog
+  const handleBatchSelect = useCallback(
+    async (batch: ProductBatchDto) => {
+      try {
+        // Close the dialog first to prevent multiple selections
+        closeBatchDialog();
+
+        // Create the product detail from the selected batch
+        const newProductDetail: ProductIssualDetailDto = {
+          pisDetID: 0,
+          pisid: 0,
+          productID: batch.productID,
+          productCode: selectedProduct?.productCode || "",
+          productName: batch.productName || selectedProduct?.productName || "",
+          catValue: selectedProduct?.catValue || "MEDI",
+          catDesc: selectedProduct?.catDesc || "REVENUE",
+          mfID: selectedProduct?.mfID || 0,
+          mfName: selectedProduct?.mfName || "",
+          pUnitID: selectedProduct?.pUnitID || 0,
+          pUnitName: selectedProduct?.pUnitName || "",
+          pUnitsPerPack: selectedProduct?.pUnitsPerPack || 1,
+          pkgID: selectedProduct?.pkgID || 0,
+          pkgName: selectedProduct?.pkgName || "",
+          batchNo: batch.batchNo || "",
+          expiryDate: new Date(batch.expiryDate),
+          unitPrice: batch.sellingPrice || 0,
+          tax: selectedProduct?.tax || 0,
+          sellUnitPrice: batch.sellingPrice || 0,
+          requestedQty: 0,
+          issuedQty: selectedProductIssuedQty || 0,
+          availableQty: batch.productQOH || 0,
+          expiryYN: selectedProduct?.expiryYN || "N",
+          psGrpID: selectedProduct?.psGrpID || 0,
+          psGrpName: selectedProduct?.psGrpName || "",
+          pGrpID: selectedProduct?.pGrpID || 0,
+          pGrpName: selectedProduct?.pGrpName || "",
+          taxID: selectedProduct?.taxID || 0,
+          taxCode: selectedProduct?.taxCode || "",
+          taxName: selectedProduct?.taxName || "",
+          hsnCode: selectedProduct?.hsnCode || "",
+          mrp: selectedProduct?.mrp || 0,
+          manufacturerID: selectedProduct?.manufacturerID || 0,
+          manufacturerCode: selectedProduct?.manufacturerCode || "",
+          manufacturerName: selectedProduct?.manufacturerName || "",
+          psbid: batch.grnDetID || 0,
+          rActiveYN: "Y",
+          remarks: "",
+        };
+
+        if (isEditingExistingProduct && editingProductIndex !== null) {
+          // Update existing product
+          setValue(`details.${editingProductIndex}`, newProductDetail, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+          showAlert("Success", `Product "${batch.productName}" updated successfully`, "success");
+        } else {
+          // Add new product
+          append(newProductDetail);
+          showAlert("Success", `Product "${batch.productName}" added to the list`, "success");
+        }
+
+        // Clear temporary fields after successful addition/update
+        clearTemporaryFields();
+      } catch (error) {
+        showAlert("Error", "Failed to add/update product. Please try again.", "error");
+        clearTemporaryFields();
       }
-      return parsedDate;
-    } catch (error) {}
-  }, []);
+    },
+    [selectedProduct, selectedProductIssuedQty, isEditingExistingProduct, editingProductIndex, append, setValue, showAlert, closeBatchDialog, clearTemporaryFields]
+  );
 
-  const getAvailableQuantity = useCallback((grnDetail: GrnDetailDto): number => {
-    return grnDetail.acceptQty || 0;
-  }, []);
+  const handleProductSelect = useCallback(
+    async (product: ProductListDto | null) => {
+      if (!product?.productID) {
+        clearTemporaryFields();
+        return;
+      }
 
-  const getUnitPrice = useCallback((grnDetail: GrnDetailDto): number => {
-    return grnDetail.unitPrice || grnDetail.defaultPrice || 0;
-  }, []);
+      if (!fromDeptID) {
+        showAlert("Warning", "Please select a from department first", "warning");
+        return;
+      }
+
+      if (fields.find((d) => d.productID === product.productID)) {
+        showAlert("Warning", `"${product.productName}" is already added to the list.`, "warning");
+        productSearchRef.current?.clearSelection();
+        return;
+      }
+
+      try {
+        setSelectedProduct(product);
+        setIsLoadingBatches(true);
+
+        const response = await billingService.getBatchNoProduct(product.productID, fromDeptID);
+
+        if (response.success && response.data) {
+          const batches = response.data;
+
+          if (batches.length === 0) {
+            showAlert("Warning", "No batches available for this product", "warning");
+            clearTemporaryFields();
+          } else {
+            // Open batch dialog with available batches
+            openBatchDialog(batches);
+          }
+        } else {
+          showAlert("Warning", "Failed to fetch product batches", "warning");
+          clearTemporaryFields();
+        }
+      } catch (error) {
+        showAlert("Error", "Failed to fetch product batches", "error");
+        clearTemporaryFields();
+      } finally {
+        setIsLoadingBatches(false);
+      }
+    },
+    [fields, showAlert, fromDeptID, clearTemporaryFields, openBatchDialog]
+  );
+
+  const handleEditExistingProduct = useCallback(
+    async (index: number) => {
+      if (isViewMode) return;
+
+      const productDetail = fields[index];
+      if (!productDetail) return;
+
+      try {
+        setIsAddingProduct(true);
+        setIsLoadingBatches(true);
+        setEditingProductIndex(index);
+        setIsEditingExistingProduct(true);
+
+        const productResponse = await productListService.getById(productDetail.productID);
+        if (!productResponse.success || !productResponse.data) {
+          throw new Error("Failed to fetch product details");
+        }
+
+        const fullProductData = productResponse.data;
+        setSelectedProduct(fullProductData);
+        setSelectedProductIssuedQty(productDetail.issuedQty || 0);
+
+        // Get available batches for editing
+        const grnResponse = await grnDetailService.getById(productDetail.productID);
+        if (grnResponse.success && grnResponse.data) {
+          const grnData = Array.isArray(grnResponse.data) ? grnResponse.data : [grnResponse.data];
+          const validBatches = grnData
+            .filter((grn: GrnDetailDto) => grn && grn.batchNo && grn.acceptQty && grn.acceptQty > 0)
+            .sort((a: GrnDetailDto, b: GrnDetailDto) => {
+              const dateA = a.expiryDate ? new Date(a.expiryDate).getTime() : 0;
+              const dateB = b.expiryDate ? new Date(b.expiryDate).getTime() : 0;
+              return dateA - dateB;
+            });
+
+          if (validBatches.length > 1) {
+            // Multiple batches - open dialog for selection
+            const batchDtos = validBatches.map((grn) => convertGrnToBatchDto(grn, fullProductData));
+            openBatchDialog(batchDtos);
+          } else if (validBatches.length === 1) {
+            // Single batch - update directly
+            const batch = convertGrnToBatchDto(validBatches[0], fullProductData);
+            handleBatchSelect(batch);
+          }
+        }
+
+        showAlert("Info", `Editing product "${productDetail.productName}" - select a batch to update`, "info");
+      } catch (error) {
+        showAlert("Error", "Failed to load product for editing", "error");
+        clearTemporaryFields();
+      } finally {
+        setIsAddingProduct(false);
+        setIsLoadingBatches(false);
+      }
+    },
+    [fields, isViewMode, showAlert, clearTemporaryFields, convertGrnToBatchDto, openBatchDialog, handleBatchSelect]
+  );
 
   const statistics = useMemo(() => {
     const totalProducts = watchedDetails?.length || 0;
@@ -233,302 +406,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       return row;
     });
   }, [fields]);
-
-  const validateProductForAddition = (selectedProduct: ProductListDto) => {
-    const errors: string[] = [];
-    const issuedQty = selectedProductIssuedQty || 0;
-    const availableQty = selectedProductQoh || 0;
-    if (issuedQty < 0) {
-      errors.push("Issue quantity must be non-negative");
-    }
-    if (issuedQty > availableQty) {
-      errors.push(`Issue quantity (${issuedQty}) cannot exceed available quantity (${availableQty})`);
-    }
-    return errors;
-  };
-
-  const handleProductSelect = useCallback(
-    async (product: ProductListDto | null) => {
-      if (!product?.productID) {
-        clearTemporaryFields();
-        return;
-      }
-      if (fields.find((d) => d.productID === product.productID)) {
-        showAlert("Warning", `"${product.productName}" is already added to the list.`, "warning");
-        productSearchRef.current?.clearSelection();
-        return;
-      }
-
-      setIsAddingProduct(true);
-      setIsLoadingBatches(true);
-      try {
-        const productData = await productListService.getById(product.productID);
-        if (!productData.success || !productData.data) {
-          throw new Error("Failed to fetch product details");
-        }
-        const fullProductData = productData.data;
-        setSelectedProduct(fullProductData);
-        const grnResponse = await grnDetailService.getById(product.productID);
-        if (grnResponse.success && grnResponse.data) {
-          const grnData = Array.isArray(grnResponse.data) ? grnResponse.data : [grnResponse.data];
-          const validBatches: GrnDetailDto[] = grnData
-            .filter((grn: GrnDetailDto) => {
-              return grn && grn.batchNo && grn.acceptQty && grn.acceptQty > 0;
-            })
-            .sort((a: GrnDetailDto, b: GrnDetailDto) => {
-              const dateA = getExpiryDateFromGrn(a);
-              const dateB = getExpiryDateFromGrn(b);
-              if (dateA && dateB) {
-                return dateA.getTime() - dateB.getTime();
-              }
-              return 0;
-            });
-          setAvailableBatches(validBatches);
-          if (validBatches.length > 0) {
-            const firstBatch = validBatches[0];
-            setSelectedBatch(firstBatch);
-            setSelectedProductBatchNo(firstBatch.batchNo || "");
-            setSelectedProductQoh(getAvailableQuantity(firstBatch));
-            setSelectedProductIssuedQty(0);
-          } else {
-            showAlert("Warning", "No batch information found for this product in GRN records.", "warning");
-            setSelectedBatch(null);
-            setSelectedProductBatchNo("");
-            setSelectedProductQoh(0);
-            setSelectedProductIssuedQty(0);
-          }
-        } else {
-          showAlert("Warning", "No GRN batch data found. Using product default values.", "warning");
-          const batchNo = fullProductData.serialNumber || fullProductData.batchNumber || "";
-          const availableQty = fullProductData.availableQty || fullProductData.rOL || 0;
-
-          const mockGrnDetail: GrnDetailDto = {
-            grnDetID: 0,
-            grnID: 0,
-            productID: fullProductData.productID,
-            catValue: fullProductData.catValue || "MEDI",
-            batchNo,
-            acceptQty: availableQty,
-            unitPrice: fullProductData.defaultPrice || 0,
-            defaultPrice: fullProductData.defaultPrice || 0,
-          };
-          setSelectedBatch(mockGrnDetail);
-          setSelectedProductBatchNo(batchNo);
-          setSelectedProductQoh(availableQty);
-          setSelectedProductIssuedQty(0);
-        }
-
-        showAlert("Success", `Product "${fullProductData.productName}" selected.`, "success");
-        setTimeout(() => {
-          const issueQtyField = document.querySelector('input[name="selectedProductIssuedQty"]') as HTMLInputElement;
-          if (issueQtyField) {
-            issueQtyField.focus();
-            issueQtyField.select();
-          }
-        }, 100);
-      } catch (error) {
-        showAlert("Error", "Failed to fetch product details. Please try again.", "error");
-        clearTemporaryFields();
-      } finally {
-        setIsAddingProduct(false);
-        setIsLoadingBatches(false);
-        productSearchRef.current?.clearSelection();
-      }
-    },
-    [fields, showAlert, getExpiryDateFromGrn, getAvailableQuantity, clearTemporaryFields]
-  );
-
-  const handleBatchSelect = useCallback(
-    (batchNo: string) => {
-      const batch = availableBatches.find((b) => b.batchNo === batchNo);
-      if (batch) {
-        setSelectedBatch(batch);
-        setSelectedProductBatchNo(batch.batchNo || "");
-        setSelectedProductQoh(getAvailableQuantity(batch));
-        setSelectedProductIssuedQty(0);
-      }
-    },
-    [availableBatches, getAvailableQuantity, getExpiryDateFromGrn]
-  );
-
-  const handleEditExistingProduct = useCallback(
-    async (index: number) => {
-      if (isViewMode) return;
-
-      const productDetail = fields[index];
-      if (!productDetail) return;
-
-      try {
-        setIsAddingProduct(true);
-        setIsLoadingBatches(true);
-        setEditingProductIndex(index);
-        setIsEditingExistingProduct(true);
-
-        const productResponse = await productListService.getById(productDetail.productID);
-        if (!productResponse.success || !productResponse.data) {
-          throw new Error("Failed to fetch product details");
-        }
-
-        const fullProductData = productResponse.data;
-        setSelectedProduct(fullProductData);
-
-        const grnResponse = await grnDetailService.getById(productDetail.productID);
-        if (grnResponse.success && grnResponse.data) {
-          const grnData = Array.isArray(grnResponse.data) ? grnResponse.data : [grnResponse.data];
-          const validBatches = grnData
-            .filter((grn: GrnDetailDto) => grn && grn.batchNo && grn.acceptQty && grn.acceptQty > 0)
-            .sort((a: GrnDetailDto, b: GrnDetailDto) => {
-              const dateA = getExpiryDateFromGrn(a);
-              const dateB = getExpiryDateFromGrn(b);
-              if (dateA && dateB) {
-                return dateA.getTime() - dateB.getTime();
-              }
-              return 0;
-            });
-
-          setAvailableBatches(validBatches);
-
-          let matchingBatch = validBatches.find((batch) => batch.batchNo === productDetail.batchNo);
-          if (!matchingBatch) {
-            matchingBatch = {
-              grnDetID: 0,
-              grnID: 0,
-              productID: productDetail.productID,
-              catValue: productDetail.catValue || "MEDI",
-              batchNo: productDetail.batchNo || "",
-              acceptQty: productDetail.availableQty || 0,
-              unitPrice: productDetail.unitPrice || 0,
-              defaultPrice: productDetail.unitPrice || 0,
-              expiryDate: productDetail.expiryDate,
-            };
-          }
-
-          setSelectedBatch(matchingBatch);
-        } else {
-          const mockBatch: GrnDetailDto = {
-            grnDetID: 0,
-            grnID: 0,
-            productID: productDetail.productID,
-            catValue: productDetail.catValue || "MEDI",
-            batchNo: productDetail.batchNo || "",
-            acceptQty: productDetail.availableQty || 0,
-            unitPrice: productDetail.unitPrice || 0,
-            defaultPrice: productDetail.unitPrice || 0,
-            expiryDate: productDetail.expiryDate ? productDetail.expiryDate.toISOString() : undefined,
-          };
-          setAvailableBatches([mockBatch]);
-          setSelectedBatch(mockBatch);
-        }
-        setSelectedProductBatchNo(productDetail.batchNo || "");
-        setSelectedProductQoh(productDetail.availableQty || 0);
-        setSelectedProductIssuedQty(productDetail.issuedQty || 0);
-        showAlert("Info", `Editing product "${productDetail.productName}" - modify the details below and click Update`, "info");
-      } catch (error) {
-        showAlert("Error", "Failed to load product for editing", "error");
-        clearTemporaryFields();
-      } finally {
-        setIsAddingProduct(false);
-        setIsLoadingBatches(false);
-      }
-    },
-    [fields, isViewMode, getExpiryDateFromGrn, showAlert, clearTemporaryFields]
-  );
-
-  const handleAddToList = useCallback(() => {
-    if (!selectedProduct) {
-      showAlert("Warning", "Please select a product first", "warning");
-      return;
-    }
-
-    if (!selectedBatch) {
-      showAlert("Warning", "Please select a batch first", "warning");
-      return;
-    }
-
-    const issuedQty = selectedProductIssuedQty || 0;
-
-    const validationErrors = validateProductForAddition(selectedProduct);
-    if (validationErrors.length > 0) {
-      showAlert("Error", validationErrors.join(". "), "error");
-      return;
-    }
-
-    if (!isEditingExistingProduct) {
-      if (fields.find((item) => item.productID === selectedProduct.productID && item.batchNo === selectedBatch.batchNo)) {
-        showAlert("Warning", "Product with this batch already exists in the list", "warning");
-        return;
-      }
-    }
-
-    try {
-      const totalGst = selectedProduct.gstPerValue || 0;
-      const batchExpiryDate = getExpiryDateFromGrn(selectedBatch);
-      const productDetail: ProductIssualDetailDto = {
-        pisDetID: isEditingExistingProduct && editingProductIndex !== null ? fields[editingProductIndex].pisDetID : 0,
-        pisid: isEditingExistingProduct && editingProductIndex !== null ? fields[editingProductIndex].pisid : 0,
-        productID: selectedProduct.productID,
-        productCode: selectedProduct.productCode || "",
-        productName: selectedProduct.productName || "",
-        catValue: selectedProduct.catValue || "",
-        catDesc: selectedProduct.catDescription || "",
-        mfID: selectedProduct.mFID || 0,
-        mfName: selectedProduct.MFName || "",
-        pUnitID: selectedProduct.pUnitID || 0,
-        pUnitName: selectedProduct.pUnitName || "",
-        pUnitsPerPack: selectedProduct.unitPack || 1,
-        pkgID: selectedProduct.pPackageID || 0,
-        pkgName: selectedProduct.productPackageName || "",
-        batchNo: selectedBatch.batchNo || "",
-        expiryDate: batchExpiryDate,
-        unitPrice: getUnitPrice(selectedBatch),
-        tax: totalGst,
-        sellUnitPrice: selectedProduct.sellPrice || selectedProduct.defaultPrice || 0,
-        requestedQty: issuedQty,
-        issuedQty: issuedQty,
-        availableQty: getAvailableQuantity(selectedBatch),
-        expiryYN: selectedProduct.expiry || "N",
-        psGrpID: selectedProduct.psGrpID || 0,
-        psGrpName: selectedProduct.psGroupName || "",
-        pGrpID: selectedProduct.pGrpID || 0,
-        pGrpName: selectedProduct.productGroupName || "",
-        taxID: selectedProduct.taxID || 0,
-        taxCode: selectedProduct.taxCode || "",
-        taxName: selectedProduct.taxName || "",
-        hsnCode: selectedProduct.hsnCODE || "",
-        mrp: selectedProduct.mrp || selectedProduct.defaultPrice || 0,
-        manufacturerID: selectedProduct.manufacturerID || 0,
-        manufacturerCode: selectedProduct.manufacturerCode || "",
-        manufacturerName: selectedProduct.manufacturerName || "",
-        psbid: selectedProduct.psbid || 0,
-        rActiveYN: "Y",
-        remarks: "",
-      };
-      if (isEditingExistingProduct && editingProductIndex !== null) {
-        setValue(`details.${editingProductIndex}`, productDetail, { shouldValidate: true, shouldDirty: true });
-        showAlert("Success", `Product "${selectedProduct.productName}" updated successfully.`, "success");
-      } else {
-        append(productDetail);
-        showAlert("Success", `"${selectedProduct.productName}" (ID: ${selectedProduct.productID}, Batch: ${selectedBatch.batchNo}) added successfully.`, "success");
-      }
-      clearTemporaryFields();
-    } catch (error) {
-      showAlert("Error", "Failed to process product. Please try again.", "error");
-    }
-  }, [
-    selectedProduct,
-    selectedBatch,
-    fields,
-    append,
-    setValue,
-    showAlert,
-    selectedProductIssuedQty,
-    getExpiryDateFromGrn,
-    getUnitPrice,
-    getAvailableQuantity,
-    clearTemporaryFields,
-    isEditingExistingProduct,
-    editingProductIndex,
-  ]);
 
   const getExpiryWarning = (expiryDate?: Date) => {
     if (!expiryDate) return null;
@@ -841,61 +718,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
               )}
             </Grid>
 
-            <Grid size={{ sm: 6, md: 2 }}>
-              {availableBatches.length > 1 ? (
-                <TextField
-                  select
-                  label="Batch No"
-                  value={selectedProductBatchNo}
-                  onChange={(e) => handleBatchSelect(e.target.value)}
-                  disabled={isViewMode || !selectedProduct || isAddingProduct || isLoadingBatches}
-                  size="small"
-                  fullWidth
-                  SelectProps={{
-                    native: false,
-                  }}
-                >
-                  {availableBatches.map((batch) => {
-                    const expiryDate = getExpiryDateFromGrn(batch);
-                    return (
-                      <option key={batch.batchNo} value={batch.batchNo || ""}>
-                        {`${batch.batchNo} (Qty: ${getAvailableQuantity(batch)}${expiryDate ? `, Exp: ${expiryDate.toLocaleDateString()}` : ""})`}
-                      </option>
-                    );
-                  })}
-                </TextField>
-              ) : (
-                <TextField
-                  label="Batch No"
-                  value={selectedProductBatchNo}
-                  disabled={isViewMode || !selectedProduct || isAddingProduct || isLoadingBatches}
-                  size="small"
-                  fullWidth
-                  placeholder={isLoadingBatches ? "Loading batches..." : "Auto-filled from GRN"}
-                  InputProps={{
-                    startAdornment: isLoadingBatches ? (
-                      <InputAdornment position="start">
-                        <CircularProgress size={16} />
-                      </InputAdornment>
-                    ) : null,
-                  }}
-                />
-              )}
-            </Grid>
-
-            <Grid size={{ sm: 6, md: 2 }}>
-              <TextField
-                label=" QOH (Units)"
-                type="number"
-                value={selectedProductQoh || ""}
-                disabled={isViewMode || !selectedProduct || isAddingProduct || isLoadingBatches}
-                size="small"
-                fullWidth
-                placeholder="Auto-filled from GRN"
-              />
-            </Grid>
-
-            <Grid size={{ sm: 6, md: 2 }}>
+            <Grid size={{ sm: 6, md: 3 }}>
               <TextField
                 label="Issue Quantity"
                 type="number"
@@ -905,57 +728,26 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 size="small"
                 fullWidth
                 inputProps={{ min: 0, step: 0.01 }}
-                placeholder="Enter quantity to issue (0 allowed)"
+                placeholder="Enter quantity to issue"
               />
+            </Grid>
+
+            <Grid size={{ sm: 6, md: 3 }}>
+              {isEditingExistingProduct && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Chip label={`Editing: ${selectedProduct?.productName || "Product"}`} color="primary" size="small" variant="outlined" />
+                  <CustomButton variant="outlined" text="Cancel Edit" onClick={clearTemporaryFields} size="small" color="secondary" />
+                </Box>
+              )}
             </Grid>
           </Grid>
 
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            {isEditingExistingProduct && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Chip label={`Editing: ${selectedProduct?.productName || "Product"}`} color="primary" size="small" variant="outlined" />
-                <CustomButton variant="outlined" text="Cancel Edit" onClick={clearTemporaryFields} size="small" color="secondary" />
-              </Box>
-            )}
-            <Box sx={{ ml: "auto" }}>
-              <CustomButton
-                variant="contained"
-                text={isEditingExistingProduct ? "Update Product" : "Add to List"}
-                onClick={handleAddToList}
-                disabled={!selectedProduct || !selectedBatch || isViewMode || isAddingProduct || isLoadingBatches}
-                icon={isEditingExistingProduct ? Save : AddIcon}
-                color={isEditingExistingProduct ? "success" : "primary"}
-                size="medium"
-              />
-            </Box>
-          </Box>
-
-          {selectedProduct && selectedBatch && (
+          {selectedProduct && (
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="body2">
-                <strong>Selected:</strong> {selectedProduct.productName} |<strong> Batch:</strong> {selectedBatch.batchNo} |<strong> Available:</strong>{" "}
-                {getAvailableQuantity(selectedBatch)} units
-                {(() => {
-                  const expiryDate = getExpiryDateFromGrn(selectedBatch);
-                  return expiryDate ? (
-                    <span>
-                      {" "}
-                      | <strong>Expiry:</strong> {expiryDate.toLocaleDateString()}
-                    </span>
-                  ) : (
-                    <span>
-                      {" "}
-                      | <strong>Expiry:</strong> Not available
-                    </span>
-                  );
-                })()}
+                <strong>Selected:</strong> {selectedProduct.productName}
+                {!isBatchSelectionDialogOpen && " - Select batch from dialog to add to list"}
               </Typography>
-            </Alert>
-          )}
-
-          {selectedProduct && availableBatches.length === 0 && !isLoadingBatches && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              <Typography variant="body2">No batch information found in GRN records for this product. Please verify the product has been received through GRN.</Typography>
             </Alert>
           )}
         </Paper>
@@ -1089,6 +881,9 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
           </Box>
         </Box>
       </Paper>
+
+      {/* Batch Selection Dialog */}
+      <BatchSelectionDialog open={isBatchSelectionDialogOpen} onClose={closeBatchDialog} onSelect={handleBatchSelect} data={availableBatches} />
     </>
   );
 };

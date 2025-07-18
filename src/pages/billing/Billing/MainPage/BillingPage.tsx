@@ -226,13 +226,13 @@ const BillingPage: React.FC = () => {
             </Alert>
           )}
 
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {/* Patient Information Section */}
-            <Grid size={{ sm: 8 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 8 }}>
               <PatientSection selectedPChartID={selectedPChartID} clearSearchTrigger={clearSearchTrigger} onPatientSelect={handlePatientSelect} />
             </Grid>
             {/* Visit Reference Section */}
-            <Grid size={{ sm: 4 }}>{watchedVisitReference && <VisitReferenceCard visitReference={watchedVisitReference} onChangeVisit={handleChangeVisit} />}</Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 4 }}>{watchedVisitReference && <VisitReferenceCard visitReference={watchedVisitReference} onChangeVisit={handleChangeVisit} />}</Grid>
             {/* Bill Details Section */}
             <Grid size={{ sm: 12 }}>
               <BillDetailsSection control={control} dropdownValues={dropdownValues} physicians={physicians} referals={referals} setValue={setValue} />
@@ -306,7 +306,6 @@ const BillingPage: React.FC = () => {
         pChartCode={selectedPatient?.pChartCode}
         onVisitSelect={handleVisitSelect}
       />
-
       <DepartmentSelectionDialog
         open={isDepartmentDialogOpen}
         onClose={closeDepartmentDialog}
