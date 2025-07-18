@@ -1,6 +1,6 @@
 // src/pages/billing/Billing/MainPage/components/grids/ProductGrid.tsx
 import { Delete as DeleteIcon } from "@mui/icons-material";
-import { Box, Chip, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, TextField, Tooltip, Typography } from "@mui/material";
 import { DataGrid, GridActionsCellItem, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import React, { useCallback, useMemo } from "react";
 import { Control } from "react-hook-form";
@@ -15,7 +15,6 @@ interface ProductGridProps {
   removeProduct: (index: number) => void;
   calculateDiscountFromPercent: (amount: number, percentage: number) => number;
   showAlert: (title: string, message: string, type: "success" | "error" | "warning" | "info") => void;
- 
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({ products, control, updateProduct, removeProduct, calculateDiscountFromPercent, showAlert }) => {
@@ -118,13 +117,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, control, upd
         sortable: false,
       },
       {
-        field: "productQOH",
-        headerName: "Available",
-        width: 100,
-        sortable: false,
-        renderCell: (params) => <Chip label={params.value || 0} size="small" color={params.value > 10 ? "success" : params.value > 0 ? "warning" : "error"} variant="outlined" />,
-      },
-      {
         field: "selectedQuantity",
         headerName: "Qty",
         width: 120,
@@ -143,14 +135,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ products, control, upd
           const formattedDate = new Date(date).toLocaleDateString();
           return formattedDate;
         },
-      },
-      {
-        field: "selectedQuantity",
-        headerName: "Qty",
-        width: 120,
-        sortable: false,
-        type: "number",
-        renderCell: (params) => renderProductNumberField(params, "selectedQuantity"),
       },
       {
         field: "hValue",
