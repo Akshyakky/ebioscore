@@ -93,6 +93,9 @@ interface UnifiedGrnDetailsComponentProps {
   issueDepartments?: IssueDepartmentData[];
   onIssueDepartmentChange?: (departments: IssueDepartmentData[]) => void;
   onPoDataFetched?: (mast: PurchaseOrderMastDto | null, details: PurchaseOrderDetailDto[]) => void;
+  defaultIndentNo?: string;
+  defaultRemarks?: string;
+  departments: { value: string; label: string }[]; // Required departments prop
 }
 
 interface PaginationState {
@@ -228,6 +231,9 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
   issueDepartments = [],
   onIssueDepartmentChange,
   onPoDataFetched,
+  defaultIndentNo = "",
+  defaultRemarks = "",
+  departments, // Now receiving departments from parent
 }) => {
   const theme = useTheme();
   const { showAlert } = useAlert();
@@ -261,6 +267,7 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const watchedDeptID = watch("deptID");
   const watchedDeptName = watch("deptName");
+  const watchedCreateProductIssuals = watch("createProductIssuals");
 
   const processedGrnDetails: UnifiedGRNDetailRow[] = useMemo(() => {
     return grnDetails.map((detail, index) => {
@@ -509,6 +516,7 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
         rUpdatedBy: "",
         rUpdatedDate: "",
         rNotes: "",
+        productIssuuals: [],
       };
     },
     [grnID, catValue]
@@ -614,6 +622,7 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
           rUpdatedBy: "",
           rUpdatedDate: "",
           rNotes: "",
+          productIssuuals: [],
         };
         onGrnDetailsChange([...grnDetails, newDetail]);
         showAlert("Success", `Product "${productData.data.productName}" added.`, "success");
@@ -636,6 +645,19 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
   const handleDeleteRow = () => {
     if (!deleteConfirmation.id) return;
 
+    // First, check if there are any issue departments linked to this product
+    const detailToDelete = grnDetails.find((detail) => {
+      const detailId = detail.grnDetID || detail.poDetID || `temp-${detail.productID}-${grnDetails.indexOf(detail)}`;
+      return detailId === deleteConfirmation.id;
+    });
+
+    // If the product has issue departments, remove them too
+    if (detailToDelete && onIssueDepartmentChange) {
+      const updatedIssueDepartments = issueDepartments.filter((dept) => dept.productID !== detailToDelete.productID);
+      onIssueDepartmentChange(updatedIssueDepartments);
+    }
+
+    // Remove the product from GRN details
     const updatedDetails = grnDetails.filter((detail) => {
       const detailId = detail.grnDetID || detail.poDetID || `temp-${detail.productID}-${grnDetails.indexOf(detail)}`;
       return detailId !== deleteConfirmation.id;
@@ -647,6 +669,20 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
   };
 
   const handleDeleteSelected = useCallback(() => {
+    // Get the products being deleted
+    const productsToDelete = grnDetails.filter((detail) => {
+      const detailId = detail.grnDetID || detail.poDetID || `temp-${detail.productID}-${grnDetails.indexOf(detail)}`;
+      return selectedRows.has(detailId);
+    });
+
+    // If there are issue departments, clean them up too
+    if (productsToDelete.length > 0 && onIssueDepartmentChange) {
+      const productIdsToDelete = productsToDelete.map((p) => p.productID);
+      const updatedIssueDepartments = issueDepartments.filter((dept) => !productIdsToDelete.includes(dept.productID));
+      onIssueDepartmentChange(updatedIssueDepartments);
+    }
+
+    // Remove the products from GRN details
     const updatedDetails = grnDetails.filter((detail) => {
       const detailId = detail.grnDetID || detail.poDetID || `temp-${detail.productID}-${grnDetails.indexOf(detail)}`;
       return !selectedRows.has(detailId);
@@ -655,9 +691,29 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
     onGrnDetailsChange(updatedDetails);
     setSelectedRows(new Set());
     showAlert("Success", `${selectedRows.size} products removed successfully.`, "success");
-  }, [grnDetails, selectedRows, onGrnDetailsChange, showAlert]);
+  }, [grnDetails, selectedRows, onGrnDetailsChange, onIssueDepartmentChange, issueDepartments, showAlert]);
 
   const handleDeleteAll = useCallback(() => {
+    // If we're about to delete all products (or a filtered set), clean up issue departments too
+    if (onIssueDepartmentChange) {
+      if (activeView === "all") {
+        // Removing all products means removing all issue departments
+        onIssueDepartmentChange([]);
+      } else {
+        // Removing products of a specific source, keep departments for other sources
+        const remainingProductIds = grnDetails
+          .filter((detail) => {
+            const source = detail.poDetID && detail.poDetID > 0 ? "po" : "manual";
+            return source !== activeView;
+          })
+          .map((detail) => detail.productID);
+
+        const updatedIssueDepartments = issueDepartments.filter((dept) => remainingProductIds.includes(dept.productID));
+        onIssueDepartmentChange(updatedIssueDepartments);
+      }
+    }
+
+    // Update GRN details
     if (activeView !== "all") {
       const remainingItems = grnDetails.filter((detail) => {
         const source = detail.poDetID && detail.poDetID > 0 ? "po" : "manual";
@@ -669,7 +725,7 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
       onGrnDetailsChange([]);
       showAlert("Success", "All products removed.", "success");
     }
-  }, [activeView, grnDetails, onGrnDetailsChange, showAlert]);
+  }, [activeView, grnDetails, onGrnDetailsChange, onIssueDepartmentChange, issueDepartments, showAlert]);
 
   const handleCellValueChange = useCallback(
     (id: string | number, field: keyof GrnDetailDto, value: any) => {
@@ -1001,7 +1057,12 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
               <Box display="flex" alignItems="center" gap={1}>
                 {row._issueDepartments.length > 0 ? (
                   <>
-                    <Chip label={`${row._issueDepartments.length} Dept${row._issueDepartments.length > 1 ? "s" : ""}`} size="small" color="success" variant="outlined" />
+                    <Chip
+                      label={`${row._issueDepartments.length} Dept${row._issueDepartments.length > 1 ? "s" : ""}`}
+                      size="small"
+                      color={watchedCreateProductIssuals ? "success" : "primary"}
+                      variant={watchedCreateProductIssuals ? "filled" : "outlined"}
+                    />
                     <Tooltip title="View/Edit Issue Departments">
                       <IconButton size="small" onClick={() => handleRowExpand(row.id)} disabled={disabled || grnApproved}>
                         {row._expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -1009,8 +1070,13 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
                     </Tooltip>
                   </>
                 ) : (
-                  <Tooltip title="Add Issue Department">
-                    <IconButton size="small" onClick={() => handleIssueDepartmentClick(row)} disabled={disabled || grnApproved} color="primary">
+                  <Tooltip title={watchedCreateProductIssuals ? "Add Issue Department (Required)" : "Add Issue Department"}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleIssueDepartmentClick(row)}
+                      disabled={disabled || grnApproved}
+                      color={watchedCreateProductIssuals ? "error" : "primary"}
+                    >
                       <IssueIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
@@ -1029,7 +1095,7 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
           </TableRow>
 
           <TableRow>
-            <TableCell colSpan={18} sx={{ p: 0, border: "none" }}>
+            <TableCell colSpan={20} sx={{ p: 0, border: "none" }}>
               <Collapse in={row._expanded} timeout="auto" unmountOnExit>
                 <Box sx={{ p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.02) }}>
                   <Typography variant="subtitle2" color="primary" gutterBottom>
@@ -1041,6 +1107,9 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
                         <TableCell>Sl.No</TableCell>
                         <TableCell>Issue Department Name</TableCell>
                         <TableCell align="right">Issue Quantity</TableCell>
+                        <TableCell>Indent No</TableCell>
+                        <TableCell>Remarks</TableCell>
+                        <TableCell align="center">Create Issual</TableCell>
                         <TableCell align="center">Edit</TableCell>
                         <TableCell align="center">Delete</TableCell>
                       </TableRow>
@@ -1051,6 +1120,11 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{dept.deptName}</TableCell>
                           <TableCell align="right">{dept.quantity}</TableCell>
+                          <TableCell>{dept.indentNo || "-"}</TableCell>
+                          <TableCell>{dept.remarks ? (dept.remarks.length > 30 ? `${dept.remarks.substring(0, 30)}...` : dept.remarks) : "-"}</TableCell>
+                          <TableCell align="center">
+                            <Checkbox checked={dept.createIssual !== false} disabled size="small" />
+                          </TableCell>
                           <TableCell align="center">
                             <IconButton size="small" onClick={() => handleEditIssueDepartment(row, dept)} disabled={disabled || grnApproved}>
                               <EditIcon fontSize="small" />
@@ -1099,6 +1173,7 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
       theme.palette.primary.main,
       pagination.pageIndex,
       pagination.pageSize,
+      watchedCreateProductIssuals,
     ]
   );
 
@@ -1644,6 +1719,11 @@ const UnifiedGrnDetailsComponent: React.FC<UnifiedGrnDetailsComponentProps> = ({
         selectedProduct={selectedProductForIssue}
         editData={editingIssueDepartment}
         title={editingIssueDepartment ? "Edit Issue Department" : "New Issue Department"}
+        defaultIndentNo={defaultIndentNo}
+        defaultRemarks={defaultRemarks}
+        departments={departments} // Pass departments prop
+        existingIssueDepartments={issueDepartments} // Pass existing issue departments
+        showAlert={showAlert} // Pass showAlert function
       />
     </>
   );
