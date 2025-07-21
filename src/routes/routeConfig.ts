@@ -56,6 +56,7 @@ const InvestigationListPage = lazy(() => import("@/pages/laboratory/Investigatio
 const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 const GRNManagementPage = lazy(() => import("@/pages/inventoryManagement/GoodsRecieveNote/MainPage/GrnListPage"));
 const ProductIssualPage = lazy(() => import("@/pages/inventoryManagement/ProductIssual/MainPage/ProductIssualPage"));
+const HospWorkHoursPage = lazy(() => import("@/pages/frontOffice/HospWorkHours/MainPage/HospWorkHoursPage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -595,6 +596,16 @@ const routeConfig: RouteConfig[] = [
     metadata: {
       title: "Billing",
       category: "billing",
+    },
+  },
+  {
+    path: "/WorkingHourSetupPage",
+    component: wrapWithSuspense(HospWorkHoursPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Working Hour Setup",
+      category: "default",
     },
   },
   // 404 Not Found route - must be placed last to catch all unmatched routes

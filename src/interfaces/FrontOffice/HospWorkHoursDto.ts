@@ -28,13 +28,13 @@ export const LANGUAGE_OPTIONS = [
 ];
 
 export const DAY_OPTIONS = [
-  { value: "SUNDAY", label: "Sunday" },
-  { value: "MONDAY", label: "Monday" },
-  { value: "TUESDAY", label: "Tuesday" },
-  { value: "WEDNESDAY", label: "Wednesday" },
-  { value: "THURSDAY", label: "Thursday" },
-  { value: "FRIDAY", label: "Friday" },
-  { value: "SATURDAY", label: "Saturday" },
+  { value: "Sunday", label: "Sunday" },
+  { value: "Monday", label: "Monday" },
+  { value: "Tuesday", label: "Tuesday" },
+  { value: "Wednesday", label: "Wednesday" },
+  { value: "Thursday", label: "Thursday" },
+  { value: "Friday", label: "Friday" },
+  { value: "Saturday", label: "Saturday" },
 ];
 
 export const HOLIDAY_OPTIONS = [
