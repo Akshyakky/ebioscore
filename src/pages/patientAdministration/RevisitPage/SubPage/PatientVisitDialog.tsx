@@ -310,10 +310,19 @@ const PatientVisitDialog: React.FC<PatientVisitDialogProps> = ({ open, onClose, 
 
       const response = await saveVisit(visitData);
 
-      if (response.success) {
+      if (response.success && response.data) {
         showAlert("Success", "Visit created successfully", "success");
+
+        const responseHistoryVisits = await getPatientAllVisitHistory(pChartID);
+        const newVisit: GetPatientAllVisitHistory = responseHistoryVisits.data.find((visit) => visit.opVID === response.data.opVID);
+        // Automatically select the newly created visit
+        if (onVisitSelect) {
+          onVisitSelect(newVisit);
+        }
+        // Reset form and close dialog
         reset(defaultValues);
         onClose();
+        // Refresh the visit list
         fetchVisitList(DateFilterType.Today, null, null);
       } else {
         throw new Error(response.errorMessage || "Failed to save visit");

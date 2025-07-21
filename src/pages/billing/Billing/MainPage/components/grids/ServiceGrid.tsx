@@ -24,7 +24,7 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({ services, control, upd
   const serviceRows: BillServiceRow[] = useMemo(() => {
     return services.map((service, index) => ({
       ...service,
-      id: service.billDetID || `temp-service-${index}`,
+      id: `temp-service-${index}`,
     }));
   }, [services]);
 
@@ -61,7 +61,7 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({ services, control, upd
   );
   const handleServiceCellValueChange = useCallback(
     (id: string | number, field: keyof z.infer<typeof BillServicesDtoSchema>, value: any) => {
-      const index = services.findIndex((service, idx) => (service.billDetID || `temp-service-${idx}`) === id);
+      const index = services.findIndex((_service, idx) => `temp-service-${idx}` === id);
       if (index !== -1) {
         handleServiceFieldChange(index, field, value);
       }

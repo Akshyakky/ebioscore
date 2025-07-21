@@ -2,6 +2,16 @@
 
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
+// ADDED: New interface for product issuals within a GRN detail
+export interface GrnProductIssualDto {
+  toDeptID: number;
+  toDeptName: string;
+  issuualQty: number;
+  indentNo?: string | null;
+  remarks?: string | null;
+  createIssual: boolean;
+}
+
 export interface GrnMastDto extends BaseDto {
   grnID: number;
   deptID: number;
@@ -41,6 +51,11 @@ export interface GrnMastDto extends BaseDto {
   totalTaxableAmt?: number;
   netCGSTTaxAmt?: number;
   netSGSTTaxAmt?: number;
+
+  // ADDED: Enhanced properties for issual integration
+  createProductIssuals: boolean;
+  defaultIssualIndentNo?: string | null;
+  defaultIssualRemarks?: string | null;
 }
 
 export interface GrnDetailDto extends BaseDto {
@@ -106,6 +121,9 @@ export interface GrnDetailDto extends BaseDto {
   sgstTaxAmt?: number;
   taxableAmt?: number;
   defaultPrice: number;
+
+  // ADDED: Enhanced property for issual integration
+  productIssuuals: GrnProductIssualDto[];
 }
 
 export interface GrnGridItemDto extends GrnDetailDto {
@@ -125,6 +143,7 @@ export interface GrnSearchRequest {
   endDate?: string;
   supplierID?: number;
   departmentID?: number;
+
   invoiceNo?: string;
   grnCode?: string;
   grnStatus?: string;
