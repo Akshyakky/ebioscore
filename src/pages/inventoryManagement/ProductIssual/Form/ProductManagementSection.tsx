@@ -81,6 +81,22 @@ type ProductDetailWithId = ProductIssualDetailDto & {
   id: string;
   cgst?: number;
   sgst?: number;
+  // Additional ProductListDto fields for comprehensive display
+  barcode?: string;
+  vedCode?: string;
+  abcCode?: string;
+  prescription?: string;
+  sellable?: string;
+  taxable?: string;
+  chargableYN?: string;
+  isAssetYN?: string;
+  transferYN?: string;
+  leadTime?: number;
+  leadTimeDesc?: string;
+  rOL?: number;
+  universalCode?: number;
+  cgstPerValue?: number;
+  sgstPerValue?: number;
 };
 
 interface ProductDetailsSectionProps {
@@ -123,6 +139,57 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     setClearProductSearchTrigger((prev) => prev + 1);
   }, []);
 
+  // Enhanced helper function to map complete ProductListDto to ProductIssualDetailDto
+  const mapCompleteProductListToIssualDetail = useCallback((completeProduct: ProductListDto, batch: ProductBatchDto, issuedQty: number = 0): ProductIssualDetailDto => {
+    const safeIssuedQty = Math.max(0, issuedQty);
+
+    // Get requestedQty from ProductListDto - assuming there's a field like 'requestedQuantity' or 'orderQuantity'
+    // Replace 'requestedQuantity' with the actual field name from ProductListDto
+    // If no such field exists, you can use a default value or get it from another source
+    const requestedQtyFromProduct = completeProduct.requestedQuantity || completeProduct.orderQuantity || completeProduct.defaultQuantity || 1;
+
+    return {
+      pisDetID: 0,
+      pisid: 0,
+      productID: completeProduct.productID,
+      productCode: completeProduct.productCode || "",
+      productName: completeProduct.productName || "",
+      catValue: completeProduct.catValue || "MEDI",
+      catDesc: completeProduct.catDescription || "REVENUE",
+      mfID: completeProduct.mFID || completeProduct.manufacturerID || 0,
+      mfName: completeProduct.MFName || completeProduct.manufacturerName || "",
+      pUnitID: completeProduct.pUnitID || 0,
+      pUnitName: completeProduct.pUnitName || "",
+      pUnitsPerPack: completeProduct.unitPack || 1,
+      pkgID: completeProduct.pPackageID || 0,
+      pkgName: completeProduct.productPackageName || "",
+      batchNo: batch.batchNo || "",
+      expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : undefined,
+      unitPrice: batch.sellingPrice || completeProduct.defaultPrice || 0,
+      tax: completeProduct.gstPerValue || 0,
+      sellUnitPrice: batch.sellingPrice || completeProduct.defaultPrice || 0,
+      requestedQty: requestedQtyFromProduct, // Non-editable, comes from ProductListDto
+      issuedQty: safeIssuedQty,
+      availableQty: batch.productQOH || 0,
+      expiryYN: completeProduct.expiry || "N",
+      psGrpID: completeProduct.psGrpID || 0,
+      psGrpName: completeProduct.psGroupName || "",
+      pGrpID: completeProduct.pGrpID || 0,
+      pGrpName: completeProduct.productGroupName || "",
+      taxID: completeProduct.taxID || 0,
+      taxCode: completeProduct.taxCode || "",
+      taxName: completeProduct.taxName || "",
+      hsnCode: completeProduct.hsnCODE || "",
+      mrp: completeProduct.defaultPrice || 0,
+      manufacturerID: completeProduct.manufacturerID || 0,
+      manufacturerCode: completeProduct.manufacturerCode || "",
+      manufacturerName: completeProduct.manufacturerName || "",
+      psbid: batch.grnDetID || 0,
+      rActiveYN: completeProduct.rActiveYN || "Y",
+      remarks: completeProduct.productNotes || "",
+    };
+  }, []);
+
   // Convert GrnDetailDto to ProductBatchDto format for BatchSelectionDialog
   const convertGrnToBatchDto = useCallback(
     (grn: GrnDetailDto, product: ProductListDto): ProductBatchDto => {
@@ -141,54 +208,22 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     [fromDeptID]
   );
 
-  // Handle batch selection from dialog
+  // Enhanced handleBatchSelect to fetch complete ProductListDto by productID
   const handleBatchSelect = useCallback(
     async (batch: ProductBatchDto) => {
       try {
-        // Close the dialog first to prevent multiple selections
+        debugger;
+        setIsLoadingBatches(true);
         closeBatchDialog();
 
-        // Create the product detail from the selected batch
-        const newProductDetail: ProductIssualDetailDto = {
-          pisDetID: 0,
-          pisid: 0,
-          productID: batch.productID,
-          productCode: selectedProduct?.productCode || "",
-          productName: batch.productName || selectedProduct?.productName || "",
-          catValue: selectedProduct?.catValue || "MEDI",
-          catDesc: selectedProduct?.catDesc || "REVENUE",
-          mfID: selectedProduct?.mfID || 0,
-          mfName: selectedProduct?.mfName || "",
-          pUnitID: selectedProduct?.pUnitID || 0,
-          pUnitName: selectedProduct?.pUnitName || "",
-          pUnitsPerPack: selectedProduct?.pUnitsPerPack || 1,
-          pkgID: selectedProduct?.pkgID || 0,
-          pkgName: selectedProduct?.pkgName || "",
-          batchNo: batch.batchNo || "",
-          expiryDate: new Date(batch.expiryDate),
-          unitPrice: batch.sellingPrice || 0,
-          tax: selectedProduct?.tax || 0,
-          sellUnitPrice: batch.sellingPrice || 0,
-          requestedQty: 0,
-          issuedQty: selectedProductIssuedQty || 0,
-          availableQty: batch.productQOH || 0,
-          expiryYN: selectedProduct?.expiryYN || "N",
-          psGrpID: selectedProduct?.psGrpID || 0,
-          psGrpName: selectedProduct?.psGrpName || "",
-          pGrpID: selectedProduct?.pGrpID || 0,
-          pGrpName: selectedProduct?.pGrpName || "",
-          taxID: selectedProduct?.taxID || 0,
-          taxCode: selectedProduct?.taxCode || "",
-          taxName: selectedProduct?.taxName || "",
-          hsnCode: selectedProduct?.hsnCode || "",
-          mrp: selectedProduct?.mrp || 0,
-          manufacturerID: selectedProduct?.manufacturerID || 0,
-          manufacturerCode: selectedProduct?.manufacturerCode || "",
-          manufacturerName: selectedProduct?.manufacturerName || "",
-          psbid: batch.grnDetID || 0,
-          rActiveYN: "Y",
-          remarks: "",
-        };
+        const productResponse = await productListService.getById(batch.productID);
+
+        if (!productResponse.success || !productResponse.data) {
+          throw new Error(`Failed to fetch complete ProductListDto for productID: ${batch.productID}`);
+        }
+
+        const completeProductData = productResponse.data;
+        const newProductDetail = mapCompleteProductListToIssualDetail(completeProductData, batch, selectedProductIssuedQty || 0);
 
         if (isEditingExistingProduct && editingProductIndex !== null) {
           // Update existing product
@@ -196,21 +231,33 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             shouldValidate: true,
             shouldDirty: true,
           });
-          showAlert("Success", `Product "${batch.productName}" updated successfully`, "success");
+          showAlert("Success", `Product "${completeProductData.productName}" updated successfully`, "success");
         } else {
-          // Add new product
+          // Add new product only if not editing
           append(newProductDetail);
-          showAlert("Success", `Product "${batch.productName}" added to the list`, "success");
+          showAlert("Success", `Product "${completeProductData.productName}" added for batch: ${batch.batchNo}`, "success");
         }
 
-        // Clear temporary fields after successful addition/update
         clearTemporaryFields();
       } catch (error) {
-        showAlert("Error", "Failed to add/update product. Please try again.", "error");
+        console.error("Error in handleBatchSelect:", error);
+        showAlert("Error", `Failed to fetch product data. Please try again.`, "error");
         clearTemporaryFields();
+      } finally {
+        setIsLoadingBatches(false);
       }
     },
-    [selectedProduct, selectedProductIssuedQty, isEditingExistingProduct, editingProductIndex, append, setValue, showAlert, closeBatchDialog, clearTemporaryFields]
+    [
+      selectedProductIssuedQty,
+      isEditingExistingProduct,
+      editingProductIndex,
+      append,
+      setValue,
+      showAlert,
+      closeBatchDialog,
+      clearTemporaryFields,
+      mapCompleteProductListToIssualDetail,
+    ]
   );
 
   const handleProductSelect = useCallback(
@@ -225,7 +272,8 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
         return;
       }
 
-      if (fields.find((d) => d.productID === product.productID)) {
+      // Only check for duplicate products when adding new (not when editing existing)
+      if (!isEditingExistingProduct && fields.find((d) => d.productID === product.productID)) {
         showAlert("Warning", `"${product.productName}" is already added to the list.`, "warning");
         productSearchRef.current?.clearSelection();
         return;
@@ -244,7 +292,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             showAlert("Warning", "No batches available for this product", "warning");
             clearTemporaryFields();
           } else {
-            // Open batch dialog with available batches
             openBatchDialog(batches);
           }
         } else {
@@ -258,7 +305,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
         setIsLoadingBatches(false);
       }
     },
-    [fields, showAlert, fromDeptID, clearTemporaryFields, openBatchDialog]
+    [fields, showAlert, fromDeptID, clearTemporaryFields, openBatchDialog, isEditingExistingProduct]
   );
 
   const handleEditExistingProduct = useCallback(
@@ -269,21 +316,21 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       if (!productDetail) return;
 
       try {
+        // Set editing state first
+        setIsEditingExistingProduct(true);
+        setEditingProductIndex(index);
         setIsAddingProduct(true);
         setIsLoadingBatches(true);
-        setEditingProductIndex(index);
-        setIsEditingExistingProduct(true);
 
         const productResponse = await productListService.getById(productDetail.productID);
         if (!productResponse.success || !productResponse.data) {
-          throw new Error("Failed to fetch product details");
+          throw new Error("Failed to fetch complete ProductListDto for editing");
         }
 
         const fullProductData = productResponse.data;
         setSelectedProduct(fullProductData);
         setSelectedProductIssuedQty(productDetail.issuedQty || 0);
 
-        // Get available batches for editing
         const grnResponse = await grnDetailService.getById(productDetail.productID);
         if (grnResponse.success && grnResponse.data) {
           const grnData = Array.isArray(grnResponse.data) ? grnResponse.data : [grnResponse.data];
@@ -296,19 +343,15 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             });
 
           if (validBatches.length > 1) {
-            // Multiple batches - open dialog for selection
             const batchDtos = validBatches.map((grn) => convertGrnToBatchDto(grn, fullProductData));
             openBatchDialog(batchDtos);
           } else if (validBatches.length === 1) {
-            // Single batch - update directly
             const batch = convertGrnToBatchDto(validBatches[0], fullProductData);
             handleBatchSelect(batch);
           }
         }
-
-        showAlert("Info", `Editing product "${productDetail.productName}" - select a batch to update`, "info");
       } catch (error) {
-        showAlert("Error", "Failed to load product for editing", "error");
+        showAlert("Error", "Failed to load product data for editing", "error");
         clearTemporaryFields();
       } finally {
         setIsAddingProduct(false);
@@ -359,7 +402,8 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       const totalTax = field.tax || 0;
       const cgst = totalTax / 2;
       const sgst = totalTax / 2;
-      const row = {
+
+      const row: ProductDetailWithId = {
         pisDetID: field.pisDetID ?? 0,
         pisid: field.pisid ?? 0,
         productID: field.productID ?? 0,
@@ -431,6 +475,18 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       },
     },
     {
+      field: "productCode",
+      headerName: "Product Code",
+      width: 120,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
+          {params.value || ""}
+        </Typography>
+      ),
+    },
+    {
       field: "productName",
       headerName: "Product Name",
       flex: 1,
@@ -438,9 +494,11 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
-          {params.value || ""}
-        </Typography>
+        <Tooltip title={params.value || ""} placement="top">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+            {params.value || ""}
+          </Typography>
+        </Tooltip>
       ),
     },
     {
@@ -463,14 +521,68 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       sortable: false,
       filterable: false,
       renderCell: (params) => (
+        <Tooltip title={params.value || ""} placement="top">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+            {params.value || ""}
+          </Typography>
+        </Tooltip>
+      ),
+    },
+    {
+      field: "batchNo",
+      headerName: "Batch No",
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", fontWeight: 500, color: "primary.main" }}>
+          {params.value || ""}
+        </Typography>
+      ),
+    },
+    {
+      field: "pGrpName",
+      headerName: "Product Group",
+      width: 130,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Tooltip title={params.value || ""} placement="top">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+            {params.value || ""}
+          </Typography>
+        </Tooltip>
+      ),
+    },
+    {
+      field: "psGrpName",
+      headerName: "Sub Group",
+      width: 120,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Tooltip title={params.value || ""} placement="top">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+            {params.value || ""}
+          </Typography>
+        </Tooltip>
+      ),
+    },
+    {
+      field: "pUnitName",
+      headerName: "Unit",
+      width: 80,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
         <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
           {params.value || ""}
         </Typography>
       ),
     },
     {
-      field: "batchNo",
-      headerName: "Batch No",
+      field: "pkgName",
+      headerName: "Package",
       width: 100,
       sortable: false,
       filterable: false,
@@ -481,26 +593,22 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       ),
     },
     {
-      field: "pGrpName",
-      headerName: "Group",
-      width: 120,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
-          {params.value || ""}
-        </Typography>
-      ),
-    },
-    {
       field: "requestedQty",
-      headerName: "Required Qty",
-      width: 120,
+      headerName: "Requested Qty",
+      width: 130,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
-          {params.value || 0}
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: "0.875rem",
+            textAlign: "right",
+            fontWeight: 500,
+            color: "primary.main",
+          }}
+        >
+          {params.row.requestedQty || 0}
         </Typography>
       ),
     },
@@ -511,7 +619,15 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: "0.875rem",
+            textAlign: "right",
+            color: (params.value || 0) === 0 ? "warning.main" : "inherit",
+            fontWeight: (params.value || 0) === 0 ? 600 : 400,
+          }}
+        >
           {params.value || 0}
         </Typography>
       ),
@@ -539,6 +655,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
         }
 
         const currentValue = watchedDetails?.[index]?.issuedQty || params.row.issuedQty || 0;
+        const availableQty = watchedDetails?.[index]?.availableQty || params.row.availableQty || 0;
 
         return (
           <TextField
@@ -547,6 +664,13 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             value={currentValue}
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
+
+              // Check against availableQty instead of requestedQty
+              if (value > availableQty) {
+                showAlert("Warning", `Issued quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
+                return;
+              }
+
               setValue(`details.${index}.issuedQty`, value, {
                 shouldValidate: true,
                 shouldDirty: true,
@@ -555,8 +679,9 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             onClick={(e) => e.stopPropagation()}
             onFocus={(e) => e.stopPropagation()}
             disabled={isViewMode}
-            inputProps={{ min: 0, step: 0.01 }}
-            error={!!errors.details?.[index]?.issuedQty}
+            inputProps={{ min: 0, max: availableQty, step: 0.01 }} // Use availableQty as max
+            error={!!errors.details?.[index]?.issuedQty || currentValue > availableQty}
+            helperText={currentValue > availableQty ? "Cannot exceed available qty" : ""}
             sx={{
               width: "100px",
               "& .MuiInputBase-input": {
@@ -584,12 +709,25 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             sx={{
               fontSize: "0.875rem",
               color: warning === "expired" ? "error.main" : warning === "warning" ? "warning.main" : "inherit",
+              fontWeight: warning ? 600 : 400,
             }}
           >
             {displayDate}
           </Typography>
         );
       },
+    },
+    {
+      field: "unitPrice",
+      headerName: "Unit Price",
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
+          ₹{(params.value || 0).toFixed(2)}
+        </Typography>
+      ),
     },
     {
       field: "mrp",
@@ -612,6 +750,18 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       renderCell: (params) => (
         <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
           {(params.value || 0).toFixed(2)}%
+        </Typography>
+      ),
+    },
+    {
+      field: "taxCode",
+      headerName: "Tax Code",
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+          {params.value || ""}
         </Typography>
       ),
     },
@@ -700,7 +850,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 ref={productSearchRef}
                 onProductSelect={handleProductSelect}
                 clearTrigger={clearProductSearchTrigger}
-                label="Product Search"
+                label="Search Product"
                 placeholder="Scan barcode or search product name..."
                 disabled={isViewMode || isAddingProduct}
                 className="product-search-field"
@@ -712,7 +862,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
                   <CircularProgress size={16} sx={{ mr: 1 }} />
                   <Typography variant="caption" color="text.secondary">
-                    Loading product details...
+                    Loading product data...
                   </Typography>
                 </Box>
               )}
@@ -743,10 +893,13 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
           </Grid>
 
           {selectedProduct && (
-            <Alert severity="info" sx={{ mt: 2 }}>
+            <Alert severity="success" sx={{ mt: 2 }}>
               <Typography variant="body2">
-                <strong>Selected:</strong> {selectedProduct.productName}
-                {!isBatchSelectionDialogOpen && " - Select batch from dialog to add to list"}
+                <strong>Product Selected:</strong> {selectedProduct.productName}
+                <br />
+                <strong>Product Code:</strong> {selectedProduct.productCode || "N/A"}
+                <br />
+                <strong>Status:</strong> Waiting for batch selection...
               </Typography>
             </Alert>
           )}
@@ -759,22 +912,16 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             Product Details ({fields.length} items)
           </Typography>
 
-          {!isViewMode && fields.length > 0 && (
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Click on any product row to edit it, or use the Edit button in the Actions column. Set issued quantity to 0 for products you don't want to issue.
-            </Typography>
-          )}
-
           {fields.length === 0 ? (
             <Alert severity="info" sx={{ mb: 2 }}>
-              No products added yet. {!isViewMode && "Use the product search above to add products."}
+              No products added yet. {!isViewMode && "Select a product above to get started."}
             </Alert>
           ) : (
-            <Box sx={{ height: 400, width: "100%" }}>
+            <Box sx={{ height: 500, width: "100%" }}>
               <DataGrid
                 rows={dataGridRows}
                 columns={detailColumns}
-                pageSizeOptions={[5, 10, 25]}
+                pageSizeOptions={[5, 10, 25, 50]}
                 initialState={{
                   pagination: {
                     paginationModel: { page: 0, pageSize: 10 },
@@ -782,19 +929,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 }}
                 disableRowSelectionOnClick
                 density="compact"
-                onRowClick={(params) => {
-                  if (!isViewMode) {
-                    const index = fields.findIndex((field) => {
-                      if (field.pisDetID && params.row.pisDetID) {
-                        return field.pisDetID === params.row.pisDetID;
-                      }
-                      return field.productID === params.row.productID;
-                    });
-                    if (index !== -1) {
-                      handleEditExistingProduct(index);
-                    }
-                  }
-                }}
                 sx={{
                   "& .MuiDataGrid-cell": {
                     borderRight: "1px solid rgba(224, 224, 224, 1)",
@@ -804,9 +938,9 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                     borderBottom: "2px solid rgba(224, 224, 224, 1)",
                   },
                   "& .MuiDataGrid-row": {
-                    cursor: isViewMode ? "default" : "pointer",
+                    cursor: "default",
                     "&:hover": {
-                      backgroundColor: isViewMode ? "inherit" : "rgba(0, 0, 0, 0.04)",
+                      backgroundColor: "rgba(0, 0, 0, 0.04)",
                     },
                   },
                 }}
@@ -822,7 +956,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
 
           <Box sx={{ mt: 2, p: 2, bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
             <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-              Issue Summary
+              Summary
             </Typography>
 
             <Grid container spacing={2}>
@@ -882,7 +1016,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
         </Box>
       </Paper>
 
-      {/* Batch Selection Dialog */}
       <BatchSelectionDialog open={isBatchSelectionDialogOpen} onClose={closeBatchDialog} onSelect={handleBatchSelect} data={availableBatches} />
     </>
   );

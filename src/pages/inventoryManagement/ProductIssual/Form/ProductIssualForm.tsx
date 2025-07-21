@@ -14,6 +14,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import { useProductIssual } from "../hooks/useProductIssual";
+import ProductBillingSection from "./ProductBillingSection";
 import ProductDetailsSection from "./ProductManagementSection";
 
 interface ProductIssualFormProps {
@@ -726,6 +727,8 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
             isViewMode={isViewMode}
             showAlert={showAlert}
           />
+
+          <ProductBillingSection control={control} />
         </Box>
       </GenericDialog>
 
