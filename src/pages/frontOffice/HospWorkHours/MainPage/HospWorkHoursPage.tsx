@@ -2,7 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import { DAY_OPTIONS, HOLIDAY_OPTIONS, HospWorkHoursDto, LANGUAGE_OPTIONS, STATUS_OPTIONS } from "@/interfaces/FrontOffice/HospWorkHoursDt";
+import { DAY_OPTIONS, HOLIDAY_OPTIONS, HospWorkHoursDto, LANGUAGE_OPTIONS, STATUS_OPTIONS } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {

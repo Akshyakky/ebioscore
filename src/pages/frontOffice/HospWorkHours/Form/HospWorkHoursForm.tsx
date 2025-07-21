@@ -3,7 +3,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { DAY_OPTIONS, HOLIDAY_OPTIONS, HospWorkHoursDto, LANGUAGE_OPTIONS, STATUS_OPTIONS } from "@/interfaces/FrontOffice/HospWorkHoursDt";
+import { DAY_OPTIONS, HOLIDAY_OPTIONS, HospWorkHoursDto, LANGUAGE_OPTIONS, STATUS_OPTIONS } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { formatTimeStringToDate } from "@/utils/Common/dateUtils";
 import { zodResolver } from "@hookform/resolvers/zod";

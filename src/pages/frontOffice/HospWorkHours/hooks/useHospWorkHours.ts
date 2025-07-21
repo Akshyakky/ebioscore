@@ -1,5 +1,5 @@
 import { useLoading } from "@/hooks/Common/useLoading";
-import { HospWorkHoursDto, WorkHoursFilterDto } from "@/interfaces/FrontOffice/HospWorkHoursDt";
+import { HospWorkHoursDto, WorkHoursFilterDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { hospWorkHoursService } from "@/services/FrontOfficeServices/HospWorkHoursService";
 import { useCallback, useEffect, useRef, useState } from "react";
 

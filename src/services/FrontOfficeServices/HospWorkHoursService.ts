@@ -1,7 +1,7 @@
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { PaginatedList } from "@/interfaces/Common/PaginatedList";
-import { HospWorkHoursDto, WorkHoursFilterDto } from "@/interfaces/FrontOffice/HospWorkHoursDt";
+import { HospWorkHoursDto, WorkHoursFilterDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 

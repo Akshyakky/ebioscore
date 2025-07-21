@@ -1,4 +1,4 @@
-import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDt";
+import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { useCallback, useState } from "react";
 import { useHospWorkHours } from "./useHospWorkHours";
