@@ -6,15 +6,19 @@ import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitLis
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
+  CheckCircle as ActiveIcon,
   Add as AddIcon,
   Close as CloseIcon,
   Delete as DeleteIcon,
+  Business as DepartmentIcon,
   Edit as EditIcon,
+  Cancel as InactiveIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
+  AccountTree as UnitIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DeptUnitListForm from "../Form/DeptUnitListForm";
 import { useDeptUnitList } from "../hooks/useDeptUnitList";
@@ -31,7 +35,7 @@ const DeptUnitListPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
   const { showAlert } = useAlert();
   const { deptUnitList, isLoading, error, fetchDeptUnitList, deleteDeptUnit } = useDeptUnitList();
 
@@ -173,32 +177,87 @@ const DeptUnitListPage: React.FC = () => {
   }, [deptUnitList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Total Units</Typography>
-          <Typography variant="h4">{stats.totalUnits}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Active Units</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeUnits}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Inactive Units</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveUnits}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Departments</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.departmentCount}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <UnitIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalUnits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Units
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ActiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeUnits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active Units
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <InactiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveUnits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive Units
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <DepartmentIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.departmentCount}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Departments
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const columns: Column<DeptUnitListDto>[] = [
@@ -306,37 +365,19 @@ const DeptUnitListPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2 }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+          Department Unit List
+        </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
 
+      {/* Statistics Dashboard */}
       {showStats && renderStatsDashboard()}
 
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
-              Department Unit List
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={1}>
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
-                variant="outlined"
-                size="small"
-                disabled={isLoading}
-                loadingText="Refreshing..."
-                asynchronous={true}
-                showLoadingIndicator={true}
-              />
-              <SmartButton text="Add Unit" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-            </Stack>
-          </Grid>
-
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
@@ -361,9 +402,9 @@ const DeptUnitListPage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Tooltip title="Filter Department Units">
-              <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
                 <DropdownSelect
                   label="Status"
                   name="status"
@@ -373,12 +414,28 @@ const DeptUnitListPage: React.FC = () => {
                   size="small"
                   defaultText="All Status"
                 />
-
                 <Box display="flex" alignItems="center" gap={1}>
                   {filters.status && <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />}
                 </Box>
               </Stack>
             </Tooltip>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <SmartButton
+                text="Refresh"
+                icon={RefreshIcon}
+                onClick={handleRefresh}
+                color="info"
+                variant="outlined"
+                size="small"
+                disabled={isLoading}
+                loadingText="Refreshing..."
+                asynchronous={true}
+                showLoadingIndicator={true}
+              />
+              <SmartButton text="Add Unit" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+            </Stack>
           </Grid>
         </Grid>
       </Paper>
