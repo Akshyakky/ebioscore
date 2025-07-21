@@ -18,7 +18,7 @@ export const AppointmentService = {
   },
 
   fetchAppointmentConsultants: async (): Promise<OperationResult<any[]>> => {
-    const url = `AppointBooking/GetAllAppointmentConsultants`;
+    const url = `Appointment/GetAllAppointmentConsultants`;
     return commonApiService.get<OperationResult<any[]>>(url, getToken());
   },
 
