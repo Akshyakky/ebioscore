@@ -266,10 +266,11 @@ const AppointmentScheduler = () => {
   const [workHours, setWorkHours] = useState<WorkHoursData[]>(mockWorkHours);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
 
-  // Generate 15-minute time slots
+  // Generate 15-minute time slots for a full 24-hour day
   const timeSlots = useMemo(() => {
     const slots = [];
-    for (let hour = 8; hour < 18; hour++) {
+    // Loop from hour 0 to 23 to cover the entire day
+    for (let hour = 0; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
         slots.push({
           time: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
@@ -509,15 +510,13 @@ const AppointmentScheduler = () => {
             Time
           </Typography>
         </Box>
-        {timeSlots
-          .filter((_, index) => index % 4 === 0)
-          .map((slot) => (
-            <Box key={slot.time} sx={{ height: 60, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 1 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-                {slot.time}
-              </Typography>
-            </Box>
-          ))}
+        {timeSlots.map((slot) => (
+          <Box key={slot.time} sx={{ height: 40, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+              {slot.time}
+            </Typography>
+          </Box>
+        ))}
       </Grid>
 
       <Grid size={{ xs: 10 }}>
@@ -527,38 +526,36 @@ const AppointmentScheduler = () => {
           </Typography>
         </Box>
 
-        {timeSlots
-          .filter((_, index) => index % 4 === 0)
-          .map((slot) => {
-            const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
-            const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
+        {timeSlots.map((slot) => {
+          const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
+          const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
 
-            return (
-              <Box
-                key={slot.time}
-                sx={{
-                  height: 60,
-                  borderBottom: 1,
-                  borderColor: "divider",
-                  backgroundColor: !withinWorkingHours ? "#f5f5f5" : "transparent",
-                  p: 0.5,
-                  cursor: withinWorkingHours ? "pointer" : "not-allowed",
-                  "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
-                }}
-                onClick={() => withinWorkingHours && setShowBookingDialog(true)}
-              >
-                {!withinWorkingHours && (
-                  <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
-                    <Block fontSize="small" sx={{ mr: 0.5 }} />
-                    <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
-                      Outside hours
-                    </Typography>
-                  </Box>
-                )}
-                {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment))}
-              </Box>
-            );
-          })}
+          return (
+            <Box
+              key={slot.time}
+              sx={{
+                height: 40,
+                borderBottom: 1,
+                borderColor: "divider",
+                backgroundColor: !withinWorkingHours ? "#f5f5f5" : "transparent",
+                p: 0.5,
+                cursor: withinWorkingHours ? "pointer" : "not-allowed",
+                "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
+              }}
+              onClick={() => withinWorkingHours && setShowBookingDialog(true)}
+            >
+              {!withinWorkingHours && (
+                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
+                  <Block fontSize="small" sx={{ mr: 0.5 }} />
+                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                    Outside hours
+                  </Typography>
+                </Box>
+              )}
+              {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment))}
+            </Box>
+          );
+        })}
       </Grid>
     </Grid>
   );
@@ -575,15 +572,13 @@ const AppointmentScheduler = () => {
               Time
             </Typography>
           </Box>
-          {timeSlots
-            .filter((_, index) => index % 8 === 0)
-            .map((slot) => (
-              <Box key={slot.time} sx={{ height: 40, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 0.5 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.6rem" }}>
-                  {slot.time}
-                </Typography>
-              </Box>
-            ))}
+          {timeSlots.map((slot) => (
+            <Box key={slot.time} sx={{ height: 30, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 0.5 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.6rem" }}>
+                {slot.time}
+              </Typography>
+            </Box>
+          ))}
         </Grid>
 
         {weekDates.map((date, index) => (
@@ -597,37 +592,34 @@ const AppointmentScheduler = () => {
               </Typography>
             </Box>
 
-            {timeSlots
-              .filter((_, idx) => idx % 8 === 0)
-              .map((slot) => {
-                const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);
-                const withinWorkingHours = isWithinWorkingHours(date, slot.hour, slot.minute);
+            {timeSlots.map((slot) => {
+              const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);
+              const withinWorkingHours = isWithinWorkingHours(date, slot.hour, slot.minute);
 
-                return (
-                  <Box
-                    key={`${index}-${slot.time}`}
-                    sx={{
-                      height: 40,
-                      borderBottom: 1,
-                      borderRight: index < weekDates.length - 1 ? 1 : 0,
-                      borderColor: "divider",
-                      backgroundColor: !withinWorkingHours ? "#f9f9f9" : "transparent",
-                      p: 0.25,
-                      cursor: withinWorkingHours ? "pointer" : "not-allowed",
-                      "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
-                    }}
-                    onClick={() => withinWorkingHours && setShowBookingDialog(true)}
-                  >
-                    {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment, false))}
-                  </Box>
-                );
-              })}
+              return (
+                <Box
+                  key={`${index}-${slot.time}`}
+                  sx={{
+                    height: 30,
+                    borderBottom: 1,
+                    borderRight: index < weekDates.length - 1 ? 1 : 0,
+                    borderColor: "divider",
+                    backgroundColor: !withinWorkingHours ? "#f9f9f9" : "transparent",
+                    p: 0.25,
+                    cursor: withinWorkingHours ? "pointer" : "not-allowed",
+                    "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
+                  }}
+                  onClick={() => withinWorkingHours && setShowBookingDialog(true)}
+                >
+                  {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment, false))}
+                </Box>
+              );
+            })}
           </Grid>
         ))}
       </Grid>
     );
   };
-
   // Render Month View
   const renderMonthView = () => {
     const monthDates = getMonthDates(currentDate);
