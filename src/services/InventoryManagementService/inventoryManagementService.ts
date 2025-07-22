@@ -7,6 +7,7 @@ import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxLi
 import { PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
+// Basic entity services
 export const productListService = createEntityService<ProductListDto>("ProductMaster", "inventoryManagementURL");
 export const productSubGroupService = createEntityService<ProductSubGroupDto>("ProductSubGroup", "inventoryManagementURL");
 export const productGroupService = createEntityService<ProductGroupDto>("ProductGroup", "inventoryManagementURL");
@@ -17,8 +18,10 @@ export const purchaseOrderMastService = createEntityService<PurchaseOrderMastDto
 export const purchaseOrderService = createEntityService<purchaseOrderSaveDto>("PurchaseOrder", "inventoryManagementURL");
 export const grnMastService = createEntityService<GrnMastDto>("GrnMast", "inventoryManagementURL");
 export const grnDetailService = createEntityService<GrnDetailDto>("GrnDetail", "inventoryManagementURL");
+
+// Product Issual Services - Updated to use the individual controllers
 export const productIssualMastService = createEntityService<ProductIssualDto>("ProductIssual", "inventoryManagementURL");
 export const productIssualDetailService = createEntityService<ProductIssualDetailDto>("ProductIssualDetail", "inventoryManagementURL");
 
-// Enhanced ProductIssualService instance
-// export const productIssualService = new productIssualService();
+// Note: The main ProductIssualCompositeService is imported separately from the ProductIssualService
+// This provides backward compatibility while the new service handles composite operations

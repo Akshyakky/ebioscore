@@ -56,6 +56,7 @@ const InvestigationListPage = lazy(() => import("@/pages/laboratory/Investigatio
 const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 const GRNManagementPage = lazy(() => import("@/pages/inventoryManagement/GoodsRecieveNote/MainPage/GrnListPage"));
 const ProductIssualPage = lazy(() => import("@/pages/inventoryManagement/ProductIssual/MainPage/ProductIssualPage"));
+const PhysicianIssualPage = lazy(() => import("@/pages/inventoryManagement/PhysicianIssual/MainPage/PhysicianIssualMainPage"));
 const HospWorkHoursPage = lazy(() => import("@/pages/frontOffice/HospWorkHours/MainPage/HospWorkHoursPage"));
 const AppointmentScheduler = lazy(() => import("@/pages/frontOffice/Appointment/AppointmentScheduler"));
 
@@ -586,6 +587,17 @@ const routeConfig: RouteConfig[] = [
     providers: [AlertProvider],
     metadata: {
       title: "  Department Product Issual",
+      category: "inventory",
+    },
+  },
+
+  {
+    path: "/PhysicianIssualPage",
+    component: wrapWithSuspense(PhysicianIssualPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "  Physician  Issual",
       category: "inventory",
     },
   },

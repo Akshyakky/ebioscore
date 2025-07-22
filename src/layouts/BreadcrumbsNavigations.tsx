@@ -1,3 +1,4 @@
+// src/layouts/CompactLayout/CompactBreadcrumbs.tsx
 import routeConfig from "@/routes/routeConfig";
 import HomeIcon from "@mui/icons-material/Home";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -5,17 +6,29 @@ import { Box, Breadcrumbs, Chip, Link as MuiLink, Tooltip } from "@mui/material"
 import { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import React, { useMemo } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
+import { useDensity } from "./MainLayout/MainLayout";
 
-// Custom link component that combines React Router and MUI Link
 interface BreadcrumbLinkProps {
   to: string;
   children: React.ReactNode;
   underline?: MuiLinkProps["underline"];
+  isCompact?: boolean;
 }
 
-const RouterBreadcrumbLink = React.forwardRef<HTMLAnchorElement, BreadcrumbLinkProps>(({ to, children, underline = "hover", ...props }, ref) => {
+const RouterBreadcrumbLink = React.forwardRef<HTMLAnchorElement, BreadcrumbLinkProps>(({ to, children, underline = "hover", isCompact = false, ...props }, ref) => {
   return (
-    <MuiLink component={RouterLink} to={to} ref={ref} underline={underline} color="text.secondary" {...props}>
+    <MuiLink
+      component={RouterLink}
+      to={to}
+      ref={ref}
+      underline={underline}
+      color="text.secondary"
+      sx={{
+        fontSize: isCompact ? "0.75rem" : "0.875rem",
+        lineHeight: isCompact ? 1.2 : 1.4,
+      }}
+      {...props}
+    >
       {children}
     </MuiLink>
   );
@@ -29,20 +42,17 @@ interface BreadcrumbsNavigationProps {
 
 const BreadcrumbsNavigation: React.FC<BreadcrumbsNavigationProps> = ({ showHome = true }) => {
   const location = useLocation();
+  const { density, isCompactMode } = useDensity();
 
-  // Generate breadcrumbs from current path
+  const isCompact = isCompactMode || density === "compact";
+
   const breadcrumbs = useMemo(() => {
     const pathnames = location.pathname.split("/").filter(Boolean);
 
-    // Create breadcrumbs array
     const crumbs = pathnames.map((value, index) => {
-      // Build up path for this breadcrumb
       const url = `/${pathnames.slice(0, index + 1).join("/")}`;
-
-      // Find route config entry for additional info
       const routeEntry = routeConfig.find((route) => route.path === url || route.path === url.toLowerCase());
 
-      // Get display name and category from route metadata or use fallback
       const displayName =
         routeEntry?.metadata?.title ||
         value.charAt(0).toUpperCase() +
@@ -62,7 +72,6 @@ const BreadcrumbsNavigation: React.FC<BreadcrumbsNavigationProps> = ({ showHome 
       };
     });
 
-    // Add home as first breadcrumb if requested
     if (showHome && pathnames.length > 0) {
       const homeRoute = routeConfig.find((route) => route.path === "/dashboard");
       crumbs.unshift({
@@ -77,37 +86,57 @@ const BreadcrumbsNavigation: React.FC<BreadcrumbsNavigationProps> = ({ showHome 
     return crumbs;
   }, [location.pathname, showHome]);
 
-  // Don't show breadcrumbs for dashboard/home
   if (breadcrumbs.length <= 1 && location.pathname === "/dashboard") {
     return null;
   }
 
   return (
-    <Box mb={1} aria-label="breadcrumb">
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb navigation">
+    <Box mb={isCompact ? 0.5 : 1} aria-label="breadcrumb">
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize={isCompact ? "small" : "small"} />}
+        aria-label="breadcrumb navigation"
+        sx={{
+          "& .MuiBreadcrumbs-separator": {
+            fontSize: isCompact ? "0.75rem" : "0.875rem",
+          },
+        }}
+      >
         {breadcrumbs.map((breadcrumb, index) => {
-          // Final breadcrumb (current page)
           if (breadcrumb.active) {
-            return <Chip key={index} label={breadcrumb.name} size="small" color="primary" variant="outlined" />;
+            return (
+              <Chip
+                key={index}
+                label={breadcrumb.name}
+                size={isCompact ? "small" : "small"}
+                color="primary"
+                variant="outlined"
+                sx={{
+                  fontSize: isCompact ? "0.7rem" : "0.75rem",
+                  height: isCompact ? 20 : 24,
+                  "& .MuiChip-label": {
+                    px: isCompact ? 0.75 : 1,
+                    fontSize: "inherit",
+                  },
+                }}
+              />
+            );
           }
 
-          // Home breadcrumb
           if (breadcrumb.path === "/dashboard") {
             return (
               <Tooltip key={index} title="Home">
-                <RouterBreadcrumbLink to={breadcrumb.path}>
+                <RouterBreadcrumbLink to={breadcrumb.path} isCompact={isCompact}>
                   <Box display="flex" alignItems="center">
-                    <HomeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                    {breadcrumb.name}
+                    <HomeIcon fontSize={isCompact ? "small" : "small"} sx={{ mr: 0.5, fontSize: isCompact ? "1rem" : "1.25rem" }} />
+                    {!isCompact && breadcrumb.name}
                   </Box>
                 </RouterBreadcrumbLink>
               </Tooltip>
             );
           }
 
-          // Regular breadcrumb links
           return (
-            <RouterBreadcrumbLink key={index} to={breadcrumb.path}>
+            <RouterBreadcrumbLink key={index} to={breadcrumb.path} isCompact={isCompact}>
               {breadcrumb.name}
             </RouterBreadcrumbLink>
           );

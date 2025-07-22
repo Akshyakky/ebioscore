@@ -4,9 +4,8 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ProductIssualCompositeDto, ProductIssualDetailDto, ProductIssualDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
+import { IssualType, ProductIssualCompositeDto, ProductIssualDetailDto, ProductIssualDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { useAlert } from "@/providers/AlertProvider";
-import { productIssualService } from "@/services/InventoryManagementService/ProductIssualService/ProductIssualService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check as CheckIcon, ContentCopy as ContentCopyIcon, Refresh, Save, Search as SearchIcon, Sync as SyncIcon } from "@mui/icons-material";
 import { Alert, Box, CircularProgress, Grid, IconButton, InputAdornment, Paper, Typography } from "@mui/material";
@@ -71,6 +70,7 @@ const issualDetailSchema = z.object({
 const schema = z.object({
   pisid: z.number(),
   pisDate: z.date(),
+  issualType: z.nativeEnum(IssualType).default(IssualType.Department),
   fromDeptID: z.number().min(1, "From department is required"),
   fromDeptName: z.string(),
   toDeptID: z.number().min(1, "To department is required"),
@@ -80,8 +80,6 @@ const schema = z.object({
   catValue: z.string().optional(),
   indentNo: z.string().optional(),
   pisCode: z.string().optional(),
-  recConID: z.number().optional(),
-  recConName: z.string().optional(),
   approvedYN: z.string(),
   approvedID: z.number().optional(),
   approvedBy: z.string().optional(),
@@ -93,7 +91,7 @@ type ProductIssualFormData = z.infer<typeof schema>;
 
 const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, initialData, viewOnly = false, copyMode = false, selectedDepartmentId, selectedDepartmentName }) => {
   const { setLoading } = useLoading();
-  const { getIssualWithDetailsById, generateIssualCode } = useProductIssual();
+  const { getIssualWithDetailsById, generateDepartmentIssualCode, saveDepartmentIssual } = useProductIssual();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
@@ -112,6 +110,7 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
     () => ({
       pisid: 0,
       pisDate: new Date(),
+      issualType: IssualType.Department,
       fromDeptID: selectedDepartmentId || 0,
       fromDeptName: selectedDepartmentName || "",
       toDeptID: 0,
@@ -121,8 +120,6 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
       catValue: "MEDI",
       indentNo: "",
       pisCode: "",
-      recConID: 0,
-      recConName: "",
       approvedYN: "N",
       approvedID: 0,
       approvedBy: "",
@@ -235,11 +232,11 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
     if (!isAddMode || !deptId) return;
     try {
       setIsGeneratingCode(true);
-      const code = await generateIssualCode(deptId);
+      const code = await generateDepartmentIssualCode(deptId);
       if (code) {
         setValue("pisCode", code, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate issue code", "warning");
+        showAlert("Warning", "Failed to generate Department Issual code", "warning");
       }
     } catch (error) {
     } finally {
@@ -260,13 +257,14 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
       } else {
         const fetchedComposite = await getIssualWithDetailsById(initialData.pisid);
         if (!fetchedComposite || !fetchedComposite.productIssual) {
-          showAlert("Error", "Failed to fetch issual details from API", "error");
+          showAlert("Error", "Failed to fetch Department Issual details from API", "error");
         }
         compositeDto = fetchedComposite;
       }
       const formData: ProductIssualFormData = {
         pisid: isCopyMode ? 0 : compositeDto.productIssual.pisid,
         pisDate: isCopyMode ? new Date() : new Date(compositeDto.productIssual.pisDate),
+        issualType: IssualType.Department, // Always Department type
         fromDeptID: compositeDto.productIssual.fromDeptID,
         fromDeptName: compositeDto.productIssual.fromDeptName,
         toDeptID: compositeDto.productIssual.toDeptID,
@@ -276,8 +274,6 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
         catValue: compositeDto.productIssual.catValue || "MEDI",
         indentNo: isCopyMode ? "" : compositeDto.productIssual.indentNo || "",
         pisCode: isCopyMode ? "" : compositeDto.productIssual.pisCode || "",
-        recConID: compositeDto.productIssual.recConID || 0,
-        recConName: compositeDto.productIssual.recConName || "",
         approvedYN: isCopyMode ? "N" : compositeDto.productIssual.approvedYN,
         approvedID: isCopyMode ? 0 : compositeDto.productIssual.approvedID || 0,
         approvedBy: isCopyMode ? "" : compositeDto.productIssual.approvedBy || "",
@@ -290,9 +286,9 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
         setTimeout(() => generateIssualCodeAsync(), 500);
       }
       const actionText = isViewMode ? "viewing" : isCopyMode ? "copying" : "editing";
-      showAlert("Success", `Issual data loaded successfully for ${actionText} (${formData.details.length} products)`, "success");
+      showAlert("Success", `Department Issual data loaded successfully for ${actionText} (${formData.details.length} products)`, "success");
     } catch (error) {
-      showAlert("Error", "Failed to load issual details", "error");
+      showAlert("Error", "Failed to load Department Issual details", "error");
     } finally {
       setLoading(false);
     }
@@ -329,81 +325,6 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
     }
   }, [getValues("fromDeptID"), selectedDepartmentId, isAddMode, isCopyMode, isDataLoaded]);
 
-  const saveIssualWithDetailsTransformed = useCallback(async (issualData: ProductIssualCompositeDto) => {
-    const transformedData = {
-      productIssual: {
-        PISID: issualData.productIssual.pisid,
-        PISDate: issualData.productIssual.pisDate,
-        FromDeptID: issualData.productIssual.fromDeptID,
-        FromDeptName: issualData.productIssual.fromDeptName,
-        ToDeptID: issualData.productIssual.toDeptID,
-        ToDeptName: issualData.productIssual.toDeptName,
-        AuGrpID: issualData.productIssual.auGrpID || 18,
-        CatDesc: issualData.productIssual.catDesc || "REVENUE",
-        CatValue: issualData.productIssual.catValue || "MEDI",
-        IndentNo: issualData.productIssual.indentNo || "",
-        PisCode: issualData.productIssual.pisCode || "",
-        RecConID: issualData.productIssual.recConID || 0,
-        RecConName: issualData.productIssual.recConName || "",
-        ApprovedYN: issualData.productIssual.approvedYN || "N",
-        ApprovedID: issualData.productIssual.approvedID || 0,
-        ApprovedBy: issualData.productIssual.approvedBy || "",
-        RActiveYN: issualData.productIssual.rActiveYN || "Y",
-      },
-      details: issualData.details.map((detail) => ({
-        PISDetID: detail.pisDetID || 0,
-        PISID: detail.pisid || 0,
-        ProductID: detail.productID,
-        ProductCode: detail.productCode || "",
-        ProductName: detail.productName,
-        CatValue: detail.catValue || "MEDI",
-        CatDesc: detail.catDesc || "REVENUE",
-        MFID: detail.mfID || 0,
-        MFName: detail.mfName || "",
-        PUnitID: detail.pUnitID || 0,
-        PUnitName: detail.pUnitName || "",
-        PUnitsPerPack: detail.pUnitsPerPack || 1,
-        PkgID: detail.pkgID || 0,
-        PkgName: detail.pkgName || "",
-        BatchNo: detail.batchNo || "",
-        ExpiryDate: detail.expiryDate,
-        UnitPrice: detail.unitPrice || 0,
-        Tax: detail.tax || 0,
-        SellUnitPrice: detail.sellUnitPrice || 0,
-        RequestedQty: detail.requestedQty,
-        IssuedQty: detail.issuedQty,
-        AvailableQty: detail.availableQty || 0,
-        ExpiryYN: detail.expiryYN || "N",
-        PSGrpID: detail.psGrpID || 0,
-        PSGrpName: detail.psGrpName || "",
-        PGrpID: detail.pGrpID || 0,
-        PGrpName: detail.pGrpName || "",
-        TaxID: detail.taxID || 0,
-        TaxCode: detail.taxCode || "",
-        TaxName: detail.taxName || "",
-        HSNCode: detail.hsnCode || "",
-        MRP: detail.mrp || 0,
-        ManufacturerID: detail.manufacturerID || 0,
-        ManufacturerCode: detail.manufacturerCode || "",
-        ManufacturerName: detail.manufacturerName || "",
-        PSBID: detail.psbid || 0,
-        Remarks: detail.remarks || "",
-        RActiveYN: detail.rActiveYN || "Y",
-      })),
-    };
-
-    try {
-      const response = await productIssualService.createIssualWithDetails(transformedData as any);
-      return response;
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to save issual",
-        data: undefined,
-      };
-    }
-  }, []);
-
   const onSubmit = async (data: ProductIssualFormData) => {
     if (isViewMode) return;
     setFormError(null);
@@ -419,18 +340,22 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
           data.fromDeptName = selectedDepartmentName || "";
         } else {
           showAlert("Warning", "From department is required. Please select a department.", "warning");
+          return;
         }
       }
 
       if (!data.toDeptID || data.toDeptID === 0) {
         showAlert("Warning", "To department is required. Please select a destination department.", "warning");
+        return;
       }
       if (data.fromDeptID === data.toDeptID) {
         showAlert("Warning", "From Department and To Department cannot be the same", "warning");
+        return;
       }
       const validDetails = data.details.filter((detail) => detail.issuedQty > 0);
       if (validDetails.length === 0) {
         showAlert("Warning", "At least one product must have an issued quantity greater than 0", "warning");
+        return;
       }
 
       const calculatedDetails = validDetails.map((detail) => ({
@@ -441,10 +366,12 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
       const fromDept = department?.find((d) => Number(d.value) === data.fromDeptID);
       const toDept = department?.find((d) => Number(d.value) === data.toDeptID);
 
-      const issualCompositeDto: ProductIssualCompositeDto = {
+      // Create the composite DTO for Department Issual
+      const departmentIssualCompositeDto: ProductIssualCompositeDto = {
         productIssual: {
           pisid: data.pisid,
           pisDate: data.pisDate,
+          issualType: IssualType.Department, // Ensure it's Department type
           fromDeptID: data.fromDeptID,
           fromDeptName: fromDept?.label || data.fromDeptName,
           toDeptID: data.toDeptID,
@@ -454,15 +381,17 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
           catValue: data.catValue || "MEDI",
           indentNo: data.indentNo || "",
           pisCode: data.pisCode || "",
-          recConID: data.recConID || 0,
-          recConName: data.recConName || "",
           approvedYN: data.approvedYN || "N",
           approvedID: data.approvedID || 0,
           approvedBy: data.approvedBy || "",
           totalItems: calculatedDetails.length,
           totalRequestedQty: calculatedDetails.reduce((sum, detail) => sum + detail.requestedQty, 0),
           totalIssuedQty: calculatedDetails.reduce((sum, detail) => sum + detail.issuedQty, 0),
-        } as ProductIssualDto & { rActiveYN: string },
+          issualTypeName: "Department Issual",
+          destinationInfo: toDept?.label || data.toDeptName,
+          destinationID: data.toDeptID,
+          issualCodePrefix: "DIS",
+        } as ProductIssualDto,
         details: calculatedDetails.map(
           (detail) =>
             ({
@@ -507,16 +436,18 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
             } as ProductIssualDetailDto)
         ),
       };
-      const response = await saveIssualWithDetailsTransformed(issualCompositeDto);
+
+      // Use the Department Issual service method
+      const response = await saveDepartmentIssual(departmentIssualCompositeDto);
       if (response.success) {
         const actionText = isCopyMode ? "copied" : isAddMode ? "created" : "updated";
-        showAlert("Success", `Product Issual ${actionText} successfully. ${calculatedDetails.length} products processed.`, "success");
+        showAlert("Success", `Department Issual ${actionText} successfully. ${calculatedDetails.length} products processed.`, "success");
         onClose(true);
       } else {
-        showAlert("Error", "Failed to save product issual", "error");
+        showAlert("Error", response.errorMessage || "Failed to save Department Issual", "error");
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to save product issual";
+      const errorMessage = error instanceof Error ? error.message : "Failed to save Department Issual";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -545,12 +476,12 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
   };
 
   const dialogTitle = isViewMode
-    ? `View Product Issual Details - ${initialData?.pisCode || "N/A"}`
+    ? `View Department Issual Details - ${initialData?.pisCode || "N/A"}`
     : isCopyMode
-    ? `Copy Product Issual - ${initialData?.pisCode || "N/A"}`
+    ? `Copy Department Issual - ${initialData?.pisCode || "N/A"}`
     : isAddMode
-    ? "Create New Product Issual"
-    : `Edit Product Issual - ${initialData?.pisCode || "N/A"}`;
+    ? "Create New Department Issual"
+    : `Edit Department Issual - ${initialData?.pisCode || "N/A"}`;
 
   const dialogActions = isViewMode ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -592,7 +523,7 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <ContentCopyIcon />
                 <Typography variant="body2">
-                  You are copying issual "{initialData?.pisCode}". A new issual code will be generated automatically.
+                  You are copying Department Issual "{initialData?.pisCode}". A new issual code will be generated automatically.
                   {initialData?.details && initialData.details.length > 0 && <span> {initialData.details.length} product(s) will be copied to the new issual.</span>}
                 </Typography>
               </Box>
@@ -603,7 +534,7 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
             <Alert severity="info" sx={{ mb: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircularProgress size={20} />
-                <Typography variant="body2">Loading issual data...</Typography>
+                <Typography variant="body2">Loading Department Issual data...</Typography>
               </Box>
             </Alert>
           )}
@@ -620,7 +551,7 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
                 <FormField
                   name="pisCode"
                   control={control}
-                  label="Issue Code"
+                  label="Department Issue Code"
                   type="text"
                   required
                   disabled={isViewMode || (!isAddMode && !isCopyMode)}
