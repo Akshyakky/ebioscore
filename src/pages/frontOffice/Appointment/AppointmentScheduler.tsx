@@ -287,11 +287,6 @@ const bookingModeOptions = [
   { value: "resource", label: "Resource" },
 ];
 
-// Simple FormField component since we don't have the actual import
-const SimpleFormField = ({ name, control, type, label, options, required, ...props }) => {
-  return <FormField name={name} control={control} type={type} label={label} options={options} required={required} {...props} />;
-};
-
 const AppointmentScheduler = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -358,6 +353,16 @@ const AppointmentScheduler = () => {
     }
     return slots;
   }, []);
+
+  // Check if a time slot has elapsed (is in the past)
+  const isTimeSlotElapsed = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const slotDate = new Date(date);
+      slotDate.setHours(hour, minute, 0, 0);
+      return slotDate < currentTime;
+    },
+    [currentTime]
+  );
 
   // Get week dates
   const getWeekDates = useCallback((date: Date) => {
@@ -480,6 +485,25 @@ const AppointmentScheduler = () => {
       return slotMinutes >= startMinutes && slotMinutes < endMinutes;
     },
     [workHours]
+  );
+
+  // Get background color for time slot based on status
+  const getSlotBackgroundColor = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+      const isElapsed = isTimeSlotElapsed(date, hour, minute);
+
+      if (!withinWorkingHours) {
+        return isElapsed ? "#eeeeee" : "#f5f5f5";
+      }
+
+      if (isElapsed) {
+        return "#e8e8e8"; // Light gray for elapsed working hours
+      }
+
+      return "transparent"; // Default for future working hours
+    },
+    [isWithinWorkingHours, isTimeSlotElapsed]
   );
 
   // Navigation functions
@@ -650,6 +674,8 @@ const AppointmentScheduler = () => {
         {timeSlots.map((slot) => {
           const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
           const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
+          const isElapsed = isTimeSlotElapsed(currentDate, slot.hour, slot.minute);
+          const backgroundColor = getSlotBackgroundColor(currentDate, slot.hour, slot.minute);
 
           return (
             <Box
@@ -658,18 +684,27 @@ const AppointmentScheduler = () => {
                 height: 40,
                 borderBottom: 1,
                 borderColor: "divider",
-                backgroundColor: !withinWorkingHours ? "#f5f5f5" : "transparent",
+                backgroundColor,
                 p: 0.5,
-                cursor: withinWorkingHours ? "pointer" : "not-allowed",
-                "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
+                cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
+                "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
+                opacity: isElapsed ? 0.7 : 1,
+                position: "relative",
               }}
-              onClick={() => withinWorkingHours && setShowBookingDialog(true)}
+              onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
             >
               {!withinWorkingHours && (
                 <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
                   <Block fontSize="small" sx={{ mr: 0.5 }} />
                   <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
                     Outside hours
+                  </Typography>
+                </Box>
+              )}
+              {isElapsed && withinWorkingHours && slotAppointments.length === 0 && (
+                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
+                  <Typography variant="caption" sx={{ fontSize: "0.6rem", fontStyle: "italic" }}>
+                    Elapsed
                   </Typography>
                 </Box>
               )}
@@ -717,6 +752,8 @@ const AppointmentScheduler = () => {
             {timeSlots.map((slot) => {
               const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);
               const withinWorkingHours = isWithinWorkingHours(date, slot.hour, slot.minute);
+              const isElapsed = isTimeSlotElapsed(date, slot.hour, slot.minute);
+              const backgroundColor = getSlotBackgroundColor(date, slot.hour, slot.minute);
 
               return (
                 <Box
@@ -726,12 +763,13 @@ const AppointmentScheduler = () => {
                     borderBottom: 1,
                     borderRight: index < weekDates.length - 1 ? 1 : 0,
                     borderColor: "divider",
-                    backgroundColor: !withinWorkingHours ? "#f9f9f9" : "transparent",
+                    backgroundColor,
                     p: 0.25,
-                    cursor: withinWorkingHours ? "pointer" : "not-allowed",
-                    "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
+                    cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
+                    "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
+                    opacity: isElapsed ? 0.7 : 1,
                   }}
-                  onClick={() => withinWorkingHours && setShowBookingDialog(true)}
+                  onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
                 >
                   {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment, false))}
                 </Box>
@@ -769,6 +807,7 @@ const AppointmentScheduler = () => {
               const dayAppointments = getAppointmentsForDate(date);
               const isCurrentMonth = date.getMonth() === currentDate.getMonth();
               const isToday = new Date().toDateString() === date.toDateString();
+              const isPastDate = date < new Date().setHours(0, 0, 0, 0);
 
               return (
                 <Grid size={{ xs: 12 / 7 }} key={dayIndex}>
@@ -776,19 +815,20 @@ const AppointmentScheduler = () => {
                     sx={{
                       height: 100,
                       p: 0.5,
-                      backgroundColor: !isCurrentMonth ? "#f5f5f5" : isToday ? "#e3f2fd" : "white",
+                      backgroundColor: !isCurrentMonth ? "#f5f5f5" : isPastDate ? "#eeeeee" : isToday ? "#e3f2fd" : "white",
                       cursor: "pointer",
                       "&:hover": { backgroundColor: "#f0f0f0" },
                       overflow: "hidden",
+                      opacity: isPastDate ? 0.7 : 1,
                     }}
-                    onClick={() => setShowBookingDialog(true)}
+                    onClick={() => !isPastDate && setShowBookingDialog(true)}
                   >
                     <Typography
                       variant="caption"
                       sx={{
                         fontSize: "0.7rem",
                         fontWeight: isToday ? "bold" : "normal",
-                        color: !isCurrentMonth ? "text.disabled" : "text.primary",
+                        color: !isCurrentMonth ? "text.disabled" : isPastDate ? "text.secondary" : "text.primary",
                         display: "block",
                         mb: 0.5,
                       }}
@@ -940,9 +980,42 @@ const AppointmentScheduler = () => {
         </Grid>
       </Paper>
 
+      {/* Time Legend */}
+      <Paper sx={{ p: 1, mb: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem", mb: 0.5, display: "block" }}>
+          Time Slot Legend:
+        </Typography>
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ width: 16, height: 16, backgroundColor: "transparent", border: "1px solid #ddd" }} />
+            <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
+              Future
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ width: 16, height: 16, backgroundColor: "#e8e8e8", border: "1px solid #ddd" }} />
+            <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
+              Elapsed
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ width: 16, height: 16, backgroundColor: "#f5f5f5", border: "1px solid #ddd" }} />
+            <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
+              Outside Hours
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ width: 16, height: 2, backgroundColor: "red" }} />
+            <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
+              Current Time
+            </Typography>
+          </Box>
+        </Stack>
+      </Paper>
+
       {/* Scheduler Views */}
       <Paper sx={{ p: 1, mb: 1 }}>
-        <Box sx={{ height: "calc(100vh - 300px)", overflow: "auto" }}>
+        <Box sx={{ height: "calc(100vh - 400px)", overflow: "auto" }}>
           {viewMode === "day" && renderDayView()}
           {viewMode === "week" && renderWeekView()}
           {viewMode === "month" && renderMonthView()}
