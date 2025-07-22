@@ -1,4 +1,3 @@
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import {
   Add as AddIcon,
   Block,
@@ -25,18 +24,22 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   FormControlLabel,
   Grid,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   Switch,
   Tab,
   Tabs,
+  TextField,
   Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 
 // Mock data and interfaces
 interface AppointmentData {
@@ -89,31 +92,6 @@ interface WorkHoursData {
   rActiveYN: string;
 }
 
-// Form interfaces
-interface DateSelectionForm {
-  selectedDate: Date;
-}
-
-interface BookingForm {
-  patientSearch: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email: string;
-  provider: number | string;
-  resource: number | string;
-  appointmentDate: Date;
-  appointmentTime: string;
-  duration: number;
-  notes: string;
-}
-
-interface FilterForm {
-  bookingMode: "physician" | "resource";
-  selectedProvider: number | string;
-  selectedResource: number | string;
-}
-
 // Mock data with more appointments for different dates
 const mockAppointments: AppointmentData[] = [
   {
@@ -137,6 +115,26 @@ const mockAppointments: AppointmentData[] = [
     procNotes: "Regular checkup",
   },
   {
+    abID: 5,
+    abFName: "Akshay",
+    abLName: "Kumar",
+    hplID: 1,
+    providerName: "Dr. Smith",
+    rlID: 2,
+    rlName: "Room 2",
+    abDuration: 45,
+    abDurDesc: "45m",
+    abDate: new Date(2025, 6, 22),
+    abTime: new Date(2025, 6, 22, 9, 0),
+    abEndTime: new Date(2025, 6, 22, 9, 45),
+    pChartID: 124,
+    pChartCode: "P002",
+    abPType: "OP",
+    abStatus: "Scheduled",
+    patRegisterYN: "Y",
+    procNotes: "Regular checkup",
+  },
+  {
     abID: 2,
     abFName: "Jane",
     abLName: "Smith",
@@ -149,8 +147,8 @@ const mockAppointments: AppointmentData[] = [
     abDate: new Date(2025, 6, 22),
     abTime: new Date(2025, 6, 22, 10, 0),
     abEndTime: new Date(2025, 6, 22, 10, 45),
-    pChartID: 124,
-    pChartCode: "P002",
+    pChartID: 125,
+    pChartCode: "P003",
     abPType: "OP",
     abStatus: "Confirmed",
     patRegisterYN: "Y",
@@ -169,8 +167,8 @@ const mockAppointments: AppointmentData[] = [
     abDate: new Date(2025, 6, 23),
     abTime: new Date(2025, 6, 23, 14, 15),
     abEndTime: new Date(2025, 6, 23, 14, 30),
-    pChartID: 125,
-    pChartCode: "P003",
+    pChartID: 126,
+    pChartCode: "P004",
     abPType: "OP",
     abStatus: "Confirmed",
     patRegisterYN: "Y",
@@ -189,12 +187,53 @@ const mockAppointments: AppointmentData[] = [
     abDate: new Date(2025, 6, 24),
     abTime: new Date(2025, 6, 24, 11, 0),
     abEndTime: new Date(2025, 6, 24, 12, 0),
-    pChartID: 126,
-    pChartCode: "P004",
+    pChartID: 127,
+    pChartCode: "P005",
     abPType: "OP",
     abStatus: "Scheduled",
     patRegisterYN: "Y",
     procNotes: "Comprehensive exam",
+  },
+  {
+    abID: 6,
+    abFName: "Lakshmi",
+    abLName: "M",
+    hplID: 1,
+    providerName: "Dr. Smith",
+    rlID: 1,
+    rlName: "Room 1",
+    abDuration: 45,
+    abDurDesc: "45m",
+    abDate: new Date(2025, 6, 24),
+    abTime: new Date(2025, 6, 24, 11, 0),
+    abEndTime: new Date(2025, 6, 24, 11, 45),
+    pChartID: 128,
+    pChartCode: "P006",
+    abPType: "OP",
+    abStatus: "Scheduled",
+    patRegisterYN: "Y",
+    procNotes: "Comprehensive exam",
+  },
+  // Adding more overlapping appointments for testing
+  {
+    abID: 7,
+    abFName: "Sarah",
+    abLName: "Connor",
+    hplID: 1,
+    providerName: "Dr. Smith",
+    rlID: 3,
+    rlName: "Room 3",
+    abDuration: 30,
+    abDurDesc: "30m",
+    abDate: new Date(2025, 6, 22),
+    abTime: new Date(2025, 6, 22, 9, 0),
+    abEndTime: new Date(2025, 6, 22, 9, 30),
+    pChartID: 129,
+    pChartCode: "P007",
+    abPType: "OP",
+    abStatus: "Confirmed",
+    patRegisterYN: "Y",
+    procNotes: "Consultation",
   },
 ];
 
@@ -297,6 +336,24 @@ const AppointmentScheduler = () => {
   const [breaks, setBreaks] = useState<BreakData[]>(mockBreaks);
   const [workHours, setWorkHours] = useState<WorkHoursData[]>(mockWorkHours);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
+  const [bookingMode, setBookingMode] = useState("physician");
+  const [selectedProvider, setSelectedProvider] = useState("");
+  const [selectedResource, setSelectedResource] = useState("");
+
+  // Booking form state
+  const [bookingForm, setBookingForm] = useState({
+    patientSearch: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    provider: "",
+    resource: "",
+    appointmentDate: new Date(),
+    appointmentTime: "09:00",
+    duration: 30,
+    notes: "",
+  });
 
   // Update current time every minute
   useEffect(() => {
@@ -305,39 +362,6 @@ const AppointmentScheduler = () => {
     }, 60000);
     return () => clearInterval(timer);
   }, []);
-
-  // Form controls using useForm
-  const dateControl = useForm<DateSelectionForm>({
-    defaultValues: {
-      selectedDate: currentDate,
-    },
-  });
-
-  const filterControl = useForm<FilterForm>({
-    defaultValues: {
-      bookingMode: "physician",
-      selectedProvider: "",
-      selectedResource: "",
-    },
-  });
-
-  const bookingControl = useForm<BookingForm>({
-    defaultValues: {
-      patientSearch: "",
-      firstName: "",
-      lastName: "",
-      phone: "",
-      email: "",
-      provider: "",
-      resource: "",
-      appointmentDate: new Date(),
-      appointmentTime: "09:00",
-      duration: 30,
-      notes: "",
-    },
-  });
-
-  const filterValues = filterControl.watch();
 
   // Generate 15-minute time slots for a full 24-hour day
   const timeSlots = useMemo(() => {
@@ -426,12 +450,69 @@ const AppointmentScheduler = () => {
         return aptDate.getMonth() === currentDate.getMonth() && aptDate.getFullYear() === currentDate.getFullYear();
       }
 
-      return (
-        (filterValues.selectedProvider === "" || apt.hplID === filterValues.selectedProvider) &&
-        (filterValues.selectedResource === "" || apt.rlID === filterValues.selectedResource)
-      );
+      return (selectedProvider === "" || apt.hplID.toString() === selectedProvider) && (selectedResource === "" || apt.rlID.toString() === selectedResource);
     });
-  }, [appointments, currentDate, viewMode, filterValues.selectedProvider, filterValues.selectedResource, getWeekDates]);
+  }, [appointments, currentDate, viewMode, selectedProvider, selectedResource, getWeekDates]);
+
+  // Get overlapping appointments for a specific time range
+  const getOverlappingAppointments = useCallback(
+    (date: Date, startTime: Date, endTime: Date) => {
+      return filteredAppointments.filter((apt) => {
+        const aptDate = new Date(apt.abDate);
+        const aptStartTime = new Date(apt.abTime);
+        const aptEndTime = new Date(apt.abEndTime);
+
+        const dateMatches = aptDate.getDate() === date.getDate() && aptDate.getMonth() === date.getMonth() && aptDate.getFullYear() === date.getFullYear();
+
+        if (!dateMatches) return false;
+
+        // Check if appointments overlap
+        return aptStartTime < endTime && aptEndTime > startTime;
+      });
+    },
+    [filteredAppointments]
+  );
+
+  // Calculate appointment positioning to prevent overlaps
+  const calculateAppointmentLayout = useCallback((date: Date, appointments: AppointmentData[]) => {
+    const sortedAppointments = [...appointments].sort((a, b) => new Date(a.abTime).getTime() - new Date(b.abTime).getTime());
+    const layout: Array<{ appointment: AppointmentData; column: number; totalColumns: number }> = [];
+    const columns: Array<{ endTime: Date; appointments: AppointmentData[] }> = [];
+
+    sortedAppointments.forEach((appointment) => {
+      const startTime = new Date(appointment.abTime);
+      const endTime = new Date(appointment.abEndTime);
+
+      // Find available column
+      let columnIndex = columns.findIndex((col) => col.endTime <= startTime);
+
+      if (columnIndex === -1) {
+        // Create new column
+        columnIndex = columns.length;
+        columns.push({ endTime, appointments: [appointment] });
+      } else {
+        // Use existing column
+        columns[columnIndex].endTime = endTime;
+        columns[columnIndex].appointments.push(appointment);
+      }
+
+      layout.push({
+        appointment,
+        column: columnIndex,
+        totalColumns: Math.max(
+          columns.length,
+          layout.reduce((max, item) => Math.max(max, item.totalColumns), 1)
+        ),
+      });
+    });
+
+    // Update totalColumns for all items
+    layout.forEach((item) => {
+      item.totalColumns = columns.length;
+    });
+
+    return layout;
+  }, []);
 
   // Get appointments for specific date and time slot
   const getAppointmentsForSlot = useCallback(
@@ -498,10 +579,10 @@ const AppointmentScheduler = () => {
       }
 
       if (isElapsed) {
-        return "#e8e8e8"; // Light gray for elapsed working hours
+        return "#e8e8e8";
       }
 
-      return "transparent"; // Default for future working hours
+      return "transparent";
     },
     [isWithinWorkingHours, isTimeSlotElapsed]
   );
@@ -534,21 +615,25 @@ const AppointmentScheduler = () => {
     }
 
     setCurrentDate(newDate);
-    dateControl.setValue("selectedDate", newDate);
-  };
-
-  // Handle date selection from date picker
-  const handleDateSelection = (selectedDate: Date | null) => {
-    if (selectedDate) {
-      setCurrentDate(selectedDate);
-    }
   };
 
   // Handle booking form submission
-  const handleBookingSubmit = (data: BookingForm) => {
-    console.log("Booking data:", data);
+  const handleBookingSubmit = () => {
+    console.log("Booking data:", bookingForm);
     setShowBookingDialog(false);
-    bookingControl.reset();
+    setBookingForm({
+      patientSearch: "",
+      firstName: "",
+      lastName: "",
+      phone: "",
+      email: "",
+      provider: "",
+      resource: "",
+      appointmentDate: new Date(),
+      appointmentTime: "09:00",
+      duration: 30,
+      notes: "",
+    });
   };
 
   // Appointment status colors
@@ -572,7 +657,10 @@ const AppointmentScheduler = () => {
   };
 
   // Compact appointment card
-  const renderCompactAppointmentCard = (appointment: AppointmentData, showDetails = true) => {
+  const renderCompactAppointmentCard = (appointment: AppointmentData, showDetails = true, column = 0, totalColumns = 1) => {
+    const widthPercentage = 100 / totalColumns;
+    const leftPercentage = (column * 100) / totalColumns;
+
     return (
       <Box
         key={appointment.abID}
@@ -603,15 +691,18 @@ const AppointmentScheduler = () => {
               : "#2196f3"
           }`,
           "&:hover": { backgroundColor: "action.hover" },
+          width: `${widthPercentage - 1}%`,
+          left: `${leftPercentage}%`,
+          position: "absolute",
         }}
         onClick={() => setSelectedAppointment(appointment)}
       >
-        <Typography variant="caption" fontWeight="bold" display="block" sx={{ whiteSpace: "nowrap" }}>
+        <Typography variant="caption" fontWeight="bold" display="block" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {appointment.abFName} {appointment.abLName}
         </Typography>
         {showDetails && (
           <>
-            <Typography variant="caption" color="text.secondary" display="block">
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {appointment.providerName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -647,110 +738,119 @@ const AppointmentScheduler = () => {
     );
   };
 
-  // Render Day View
-  const renderDayView = () => (
-    <Grid container spacing={1}>
-      <Grid size={{ xs: 1 }}>
-        <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
-          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
-            Time
-          </Typography>
-        </Box>
-        {timeSlots.map((slot) => (
-          <Box key={slot.time} sx={{ height: 40, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-              {slot.time}
+  // Render Day View with fixed overlapping
+  const renderDayView = () => {
+    const dayAppointments = getAppointmentsForDate(currentDate);
+    const appointmentLayout = calculateAppointmentLayout(currentDate, dayAppointments);
+
+    return (
+      <Grid container spacing={1}>
+        <Grid size={{ xs: 1 }}>
+          <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+            <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
+              Time
             </Typography>
           </Box>
-        ))}
-      </Grid>
-
-      <Grid size={{ xs: 11 }} sx={{ position: "relative" }}>
-        <CurrentTimeIndicator date={currentDate} height={40} />
-        <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
-          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
-            {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-          </Typography>
-        </Box>
-
-        {timeSlots.map((slot) => {
-          const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
-          const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
-          const isElapsed = isTimeSlotElapsed(currentDate, slot.hour, slot.minute);
-          const backgroundColor = getSlotBackgroundColor(currentDate, slot.hour, slot.minute);
-
-          return (
-            <Box
-              key={slot.time}
-              sx={{
-                height: 40,
-                borderBottom: 1,
-                borderColor: "divider",
-                backgroundColor,
-                p: 0.5,
-                cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
-                "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
-                opacity: isElapsed ? 0.7 : 1,
-                position: "relative",
-              }}
-              onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
-            >
-              {!withinWorkingHours && !slotAppointments.length && (
-                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
-                  <Block fontSize="small" sx={{ mr: 0.5 }} />
-                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
-                    Outside hours
-                  </Typography>
-                </Box>
-              )}
-              {isElapsed && withinWorkingHours && slotAppointments.length === 0 && (
-                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
-                  <Typography variant="caption" sx={{ fontSize: "0.6rem", fontStyle: "italic" }}>
-                    Elapsed
-                  </Typography>
-                </Box>
-              )}
-              {slotAppointments.map((appointment) => {
-                const appointmentStart = new Date(appointment.abTime);
-                const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
-                const slotStartMinutes = slot.hour * 60 + slot.minute;
-                const nextSlotStartMinutes = slotStartMinutes + 15;
-
-                // Only render the appointment in the slot where it begins
-                if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
-                  const slotHeight = 40; // Height of a single time slot
-                  const durationInSlots = appointment.abDuration / 15;
-                  const appointmentHeight = durationInSlots * slotHeight - 2; // -2 for a small gap
-
-                  const minuteOffset = appointmentStartMinutes - slotStartMinutes;
-                  const topOffset = (minuteOffset / 15) * slotHeight;
-
-                  return (
-                    <Box
-                      key={appointment.abID}
-                      sx={{
-                        position: "absolute",
-                        top: `${topOffset}px`,
-                        left: "4px",
-                        right: "4px",
-                        height: `${appointmentHeight}px`,
-                        zIndex: 1,
-                      }}
-                    >
-                      {renderCompactAppointmentCard(appointment)}
-                    </Box>
-                  );
-                }
-                return null;
-              })}
+          {timeSlots.map((slot) => (
+            <Box key={slot.time} sx={{ height: 40, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+                {slot.time}
+              </Typography>
             </Box>
-          );
-        })}
-      </Grid>
-    </Grid>
-  );
+          ))}
+        </Grid>
 
-  // Render Week View
+        <Grid size={{ xs: 11 }} sx={{ position: "relative" }}>
+          <CurrentTimeIndicator date={currentDate} height={40} />
+          <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+            <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
+              {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+            </Typography>
+          </Box>
+
+          {timeSlots.map((slot) => {
+            const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
+            const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
+            const isElapsed = isTimeSlotElapsed(currentDate, slot.hour, slot.minute);
+            const backgroundColor = getSlotBackgroundColor(currentDate, slot.hour, slot.minute);
+
+            return (
+              <Box
+                key={slot.time}
+                sx={{
+                  height: 40,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  backgroundColor,
+                  p: 0.5,
+                  cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
+                  "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
+                  opacity: isElapsed ? 0.7 : 1,
+                  position: "relative",
+                }}
+                onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
+              >
+                {!withinWorkingHours && !slotAppointments.length && (
+                  <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
+                    <Block fontSize="small" sx={{ mr: 0.5 }} />
+                    <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                      Outside hours
+                    </Typography>
+                  </Box>
+                )}
+                {isElapsed && withinWorkingHours && slotAppointments.length === 0 && (
+                  <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
+                    <Typography variant="caption" sx={{ fontSize: "0.6rem", fontStyle: "italic" }}>
+                      Elapsed
+                    </Typography>
+                  </Box>
+                )}
+                {slotAppointments.map((appointment) => {
+                  const appointmentStart = new Date(appointment.abTime);
+                  const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
+                  const slotStartMinutes = slot.hour * 60 + slot.minute;
+                  const nextSlotStartMinutes = slotStartMinutes + 15;
+
+                  // Only render the appointment in the slot where it begins
+                  if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
+                    const slotHeight = 40;
+                    const durationInSlots = appointment.abDuration / 15;
+                    const appointmentHeight = durationInSlots * slotHeight - 2;
+
+                    const minuteOffset = appointmentStartMinutes - slotStartMinutes;
+                    const topOffset = (minuteOffset / 15) * slotHeight;
+
+                    const layoutInfo = appointmentLayout.find((layout) => layout.appointment.abID === appointment.abID);
+                    const column = layoutInfo?.column || 0;
+                    const totalColumns = layoutInfo?.totalColumns || 1;
+
+                    return (
+                      <Box
+                        key={appointment.abID}
+                        sx={{
+                          position: "absolute",
+                          top: `${topOffset}px`,
+                          left: "4px",
+                          right: "4px",
+                          height: `${appointmentHeight}px`,
+                          zIndex: 1,
+                        }}
+                      >
+                        {renderCompactAppointmentCard(appointment, true, column, totalColumns)}
+                      </Box>
+                    );
+                  }
+                  return null;
+                })}
+              </Box>
+            );
+          })}
+        </Grid>
+      </Grid>
+    );
+  };
+
+  // Render Week View with fixed overlapping
   const renderWeekView = () => {
     const weekDates = getWeekDates(currentDate);
 
@@ -771,78 +871,87 @@ const AppointmentScheduler = () => {
           ))}
         </Grid>
 
-        {weekDates.map((date, index) => (
-          <Grid size={{ xs: 1.5 }} key={index} sx={{ position: "relative" }}>
-            <CurrentTimeIndicator date={date} height={30} />
-            <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
-              <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem", fontWeight: "bold" }}>
-                {date.toLocaleDateString("en-US", { weekday: "short" })}
-              </Typography>
-              <Typography variant="caption" align="center" sx={{ fontSize: "0.6rem", color: "text.secondary", display: "block" }}>
-                {date.getDate()}
-              </Typography>
-            </Box>
+        {weekDates.map((date, index) => {
+          const dayAppointments = getAppointmentsForDate(date);
+          const appointmentLayout = calculateAppointmentLayout(date, dayAppointments);
 
-            {timeSlots.map((slot) => {
-              const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);
-              const withinWorkingHours = isWithinWorkingHours(date, slot.hour, slot.minute);
-              const isElapsed = isTimeSlotElapsed(date, slot.hour, slot.minute);
-              const backgroundColor = getSlotBackgroundColor(date, slot.hour, slot.minute);
+          return (
+            <Grid size={{ xs: 1.5 }} key={index} sx={{ position: "relative" }}>
+              <CurrentTimeIndicator date={date} height={30} />
+              <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
+                <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem", fontWeight: "bold" }}>
+                  {date.toLocaleDateString("en-US", { weekday: "short" })}
+                </Typography>
+                <Typography variant="caption" align="center" sx={{ fontSize: "0.6rem", color: "text.secondary", display: "block" }}>
+                  {date.getDate()}
+                </Typography>
+              </Box>
 
-              return (
-                <Box
-                  key={`${index}-${slot.time}`}
-                  sx={{
-                    height: 30,
-                    borderBottom: 1,
-                    borderRight: index < weekDates.length - 1 ? 1 : 0,
-                    borderColor: "divider",
-                    backgroundColor,
-                    p: 0.25,
-                    cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
-                    "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
-                    opacity: isElapsed ? 0.7 : 1,
-                    position: "relative",
-                  }}
-                  onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
-                >
-                  {slotAppointments.map((appointment) => {
-                    const appointmentStart = new Date(appointment.abTime);
-                    const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
-                    const slotStartMinutes = slot.hour * 60 + slot.minute;
-                    const nextSlotStartMinutes = slotStartMinutes + 15;
+              {timeSlots.map((slot) => {
+                const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);
+                const withinWorkingHours = isWithinWorkingHours(date, slot.hour, slot.minute);
+                const isElapsed = isTimeSlotElapsed(date, slot.hour, slot.minute);
+                const backgroundColor = getSlotBackgroundColor(date, slot.hour, slot.minute);
 
-                    if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
-                      const slotHeight = 30;
-                      const durationInSlots = appointment.abDuration / 15;
-                      const appointmentHeight = durationInSlots * slotHeight - 1;
+                return (
+                  <Box
+                    key={`${index}-${slot.time}`}
+                    sx={{
+                      height: 30,
+                      borderBottom: 1,
+                      borderRight: index < weekDates.length - 1 ? 1 : 0,
+                      borderColor: "divider",
+                      backgroundColor,
+                      p: 0.25,
+                      cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
+                      "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
+                      opacity: isElapsed ? 0.7 : 1,
+                      position: "relative",
+                    }}
+                    onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
+                  >
+                    {slotAppointments.map((appointment) => {
+                      const appointmentStart = new Date(appointment.abTime);
+                      const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
+                      const slotStartMinutes = slot.hour * 60 + slot.minute;
+                      const nextSlotStartMinutes = slotStartMinutes + 15;
 
-                      const minuteOffset = appointmentStartMinutes - slotStartMinutes;
-                      const topOffset = (minuteOffset / 15) * slotHeight;
+                      if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
+                        const slotHeight = 30;
+                        const durationInSlots = appointment.abDuration / 15;
+                        const appointmentHeight = durationInSlots * slotHeight - 1;
 
-                      return (
-                        <Box
-                          key={appointment.abID}
-                          sx={{
-                            position: "absolute",
-                            top: `${topOffset}px`,
-                            left: "2px",
-                            right: "2px",
-                            height: `${appointmentHeight}px`,
-                            zIndex: 1,
-                          }}
-                        >
-                          {renderCompactAppointmentCard(appointment, false)}
-                        </Box>
-                      );
-                    }
-                    return null;
-                  })}
-                </Box>
-              );
-            })}
-          </Grid>
-        ))}
+                        const minuteOffset = appointmentStartMinutes - slotStartMinutes;
+                        const topOffset = (minuteOffset / 15) * slotHeight;
+
+                        const layoutInfo = appointmentLayout.find((layout) => layout.appointment.abID === appointment.abID);
+                        const column = layoutInfo?.column || 0;
+                        const totalColumns = layoutInfo?.totalColumns || 1;
+
+                        return (
+                          <Box
+                            key={appointment.abID}
+                            sx={{
+                              position: "absolute",
+                              top: `${topOffset}px`,
+                              left: "2px",
+                              right: "2px",
+                              height: `${appointmentHeight}px`,
+                              zIndex: 1,
+                            }}
+                          >
+                            {renderCompactAppointmentCard(appointment, false, column, totalColumns)}
+                          </Box>
+                        );
+                      }
+                      return null;
+                    })}
+                  </Box>
+                );
+              })}
+            </Grid>
+          );
+        })}
       </Grid>
     );
   };
@@ -950,7 +1059,7 @@ const AppointmentScheduler = () => {
 
   return (
     <Box sx={{ p: 1 }}>
-      {/* Enhanced Header with Date Selection */}
+      {/* Header with Date Selection */}
       <Paper sx={{ p: 1, mb: 1 }}>
         <Grid container spacing={1} alignItems="center">
           <Grid size={{ xs: 12, md: 6 }}>
@@ -968,20 +1077,13 @@ const AppointmentScheduler = () => {
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" spacing={0.5} justifyContent="flex-end" flexWrap="wrap" alignItems="center">
-              <Box sx={{ minWidth: 140 }}>
-                <FormField
-                  name="selectedDate"
-                  control={dateControl.control}
-                  type="datepicker"
-                  label=""
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  defaultValue={currentDate}
-                  onChange={handleDateSelection}
-                  placeholder="Select date"
-                />
-              </Box>
+              <TextField
+                type="date"
+                size="small"
+                value={currentDate.toISOString().split("T")[0]}
+                onChange={(e) => setCurrentDate(new Date(e.target.value))}
+                sx={{ minWidth: 140 }}
+              />
 
               <Button variant="outlined" startIcon={<Today />} onClick={() => navigateDate("today")} size="small" sx={{ minWidth: "auto", px: 1 }}>
                 Today
@@ -1005,37 +1107,48 @@ const AppointmentScheduler = () => {
         </Grid>
       </Paper>
 
-      {/* Enhanced Filters using FormField */}
+      {/* Filters */}
       <Paper sx={{ p: 1, mb: 1 }}>
         <Grid container spacing={1} alignItems="center">
           <Grid size={{ xs: 6, sm: 3 }}>
-            <FormField name="bookingMode" control={filterControl.control} type="select" label="Mode" options={bookingModeOptions} size="small" fullWidth />
+            <FormControl size="small" fullWidth>
+              <InputLabel>Mode</InputLabel>
+              <Select value={bookingMode} onChange={(e) => setBookingMode(e.target.value)} label="Mode">
+                {bookingModeOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
 
           <Grid size={{ xs: 6, sm: 3 }}>
-            <FormField
-              name="selectedProvider"
-              control={filterControl.control}
-              type="select"
-              label="Provider"
-              options={[{ value: "", label: "All Providers" }, ...mockProviders]}
-              size="small"
-              fullWidth
-              clearable
-            />
+            <FormControl size="small" fullWidth>
+              <InputLabel>Provider</InputLabel>
+              <Select value={selectedProvider} onChange={(e) => setSelectedProvider(e.target.value)} label="Provider">
+                <MenuItem value="">All Providers</MenuItem>
+                {mockProviders.map((provider) => (
+                  <MenuItem key={provider.value} value={provider.value.toString()}>
+                    {provider.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
 
           <Grid size={{ xs: 6, sm: 3 }}>
-            <FormField
-              name="selectedResource"
-              control={filterControl.control}
-              type="select"
-              label="Resource"
-              options={[{ value: "", label: "All Resources" }, ...mockResources]}
-              size="small"
-              fullWidth
-              clearable
-            />
+            <FormControl size="small" fullWidth>
+              <InputLabel>Resource</InputLabel>
+              <Select value={selectedResource} onChange={(e) => setSelectedResource(e.target.value)} label="Resource">
+                <MenuItem value="">All Resources</MenuItem>
+                {mockResources.map((resource) => (
+                  <MenuItem key={resource.value} value={resource.value.toString()}>
+                    {resource.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
 
           <Grid size={{ xs: 6, sm: 3 }}>
@@ -1088,7 +1201,7 @@ const AppointmentScheduler = () => {
         </Box>
       </Paper>
 
-      {/* Compact Statistics */}
+      {/* Statistics */}
       <Paper sx={{ p: 1 }}>
         <Typography variant="subtitle2" gutterBottom sx={{ fontSize: "0.9rem" }}>
           Today's Statistics
@@ -1152,78 +1265,150 @@ const AppointmentScheduler = () => {
         </Grid>
       </Paper>
 
-      {/* Enhanced Booking Dialog using FormField */}
+      {/* Booking Dialog */}
       <Dialog open={showBookingDialog} onClose={() => setShowBookingDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
           <Typography variant="h6" sx={{ fontSize: "1rem" }}>
             Book Appointment
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {filterValues.bookingMode === "physician" ? "Physician" : "Resource"} Booking
+            {bookingMode === "physician" ? "Physician" : "Resource"} Booking
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
-          <Box component="form" onSubmit={bookingControl.handleSubmit(handleBookingSubmit)}>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={<Switch checked={isRegisteredPatient} onChange={(e) => setIsRegisteredPatient(e.target.checked)} size="small" />}
+                label={<Typography sx={{ fontSize: "0.8rem" }}>Registered Patient</Typography>}
+              />
+            </Grid>
+
+            {isRegisteredPatient ? (
               <Grid size={{ xs: 12 }}>
-                <FormControlLabel
-                  control={<Switch checked={isRegisteredPatient} onChange={(e) => setIsRegisteredPatient(e.target.checked)} size="small" />}
-                  label={<Typography sx={{ fontSize: "0.8rem" }}>Registered Patient</Typography>}
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Search Patient"
+                  placeholder="Enter name or ID"
+                  value={bookingForm.patientSearch}
+                  onChange={(e) => setBookingForm({ ...bookingForm, patientSearch: e.target.value })}
                 />
               </Grid>
-
-              {isRegisteredPatient ? (
-                <Grid size={{ xs: 12 }}>
-                  <FormField name="patientSearch" control={bookingControl.control} type="text" label="Search Patient" placeholder="Enter name or ID" size="small" fullWidth />
+            ) : (
+              <>
+                <Grid size={{ xs: 6 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="First Name"
+                    required
+                    value={bookingForm.firstName}
+                    onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })}
+                  />
                 </Grid>
-              ) : (
-                <>
-                  <Grid size={{ xs: 6 }}>
-                    <FormField name="firstName" control={bookingControl.control} type="text" label="First Name" required size="small" fullWidth />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <FormField name="lastName" control={bookingControl.control} type="text" label="Last Name" size="small" fullWidth />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <FormField name="phone" control={bookingControl.control} type="tel" label="Phone" required size="small" fullWidth />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <FormField name="email" control={bookingControl.control} type="email" label="Email" size="small" fullWidth />
-                  </Grid>
-                </>
-              )}
+                <Grid size={{ xs: 6 }}>
+                  <TextField fullWidth size="small" label="Last Name" value={bookingForm.lastName} onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })} />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <TextField fullWidth size="small" label="Phone" required value={bookingForm.phone} onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })} />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Email"
+                    type="email"
+                    value={bookingForm.email}
+                    onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
+                  />
+                </Grid>
+              </>
+            )}
 
-              <Grid size={{ xs: 6 }}>
-                <FormField name="provider" control={bookingControl.control} type="select" label="Provider" options={mockProviders} required size="small" fullWidth />
-              </Grid>
-
-              <Grid size={{ xs: 6 }}>
-                <FormField name="resource" control={bookingControl.control} type="select" label="Resource" options={mockResources} required size="small" fullWidth />
-              </Grid>
-
-              <Grid size={{ xs: 4 }}>
-                <FormField name="appointmentDate" control={bookingControl.control} type="datepicker" label="Date" required size="small" fullWidth />
-              </Grid>
-
-              <Grid size={{ xs: 4 }}>
-                <FormField name="appointmentTime" control={bookingControl.control} type="timepicker" label="Time" required size="small" fullWidth />
-              </Grid>
-
-              <Grid size={{ xs: 4 }}>
-                <FormField name="duration" control={bookingControl.control} type="select" label="Duration" options={durationOptions} required size="small" fullWidth />
-              </Grid>
-
-              <Grid size={{ xs: 12 }}>
-                <FormField name="notes" control={bookingControl.control} type="textarea" label="Notes" rows={2} size="small" fullWidth />
-              </Grid>
+            <Grid size={{ xs: 6 }}>
+              <FormControl fullWidth size="small" required>
+                <InputLabel>Provider</InputLabel>
+                <Select value={bookingForm.provider} onChange={(e) => setBookingForm({ ...bookingForm, provider: e.target.value })} label="Provider">
+                  {mockProviders.map((provider) => (
+                    <MenuItem key={provider.value} value={provider.value}>
+                      {provider.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
-          </Box>
+
+            <Grid size={{ xs: 6 }}>
+              <FormControl fullWidth size="small" required>
+                <InputLabel>Resource</InputLabel>
+                <Select value={bookingForm.resource} onChange={(e) => setBookingForm({ ...bookingForm, resource: e.target.value })} label="Resource">
+                  {mockResources.map((resource) => (
+                    <MenuItem key={resource.value} value={resource.value}>
+                      {resource.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Date"
+                type="date"
+                required
+                value={bookingForm.appointmentDate.toISOString().split("T")[0]}
+                onChange={(e) => setBookingForm({ ...bookingForm, appointmentDate: new Date(e.target.value) })}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Time"
+                type="time"
+                required
+                value={bookingForm.appointmentTime}
+                onChange={(e) => setBookingForm({ ...bookingForm, appointmentTime: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 4 }}>
+              <FormControl fullWidth size="small" required>
+                <InputLabel>Duration</InputLabel>
+                <Select value={bookingForm.duration} onChange={(e) => setBookingForm({ ...bookingForm, duration: Number(e.target.value) })} label="Duration">
+                  {durationOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Notes"
+                multiline
+                rows={2}
+                value={bookingForm.notes}
+                onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions sx={{ pt: 1 }}>
           <Button onClick={() => setShowBookingDialog(false)} size="small">
             Cancel
           </Button>
-          <Button variant="contained" onClick={bookingControl.handleSubmit(handleBookingSubmit)} size="small">
+          <Button variant="contained" onClick={handleBookingSubmit} size="small">
             Book
           </Button>
         </DialogActions>

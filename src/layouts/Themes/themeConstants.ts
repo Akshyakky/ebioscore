@@ -15,7 +15,7 @@ export const BREAKPOINTS = {
 };
 
 // Spacing
-export const SPACING_UNIT = 8;
+export const SPACING_UNIT = 6;
 
 // Border Radius
 export const BORDER_RADIUS = {
