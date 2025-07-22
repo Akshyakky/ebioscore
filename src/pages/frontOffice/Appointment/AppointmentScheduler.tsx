@@ -549,12 +549,6 @@ const AppointmentScheduler = () => {
 
   // Compact appointment card
   const renderCompactAppointmentCard = (appointment: AppointmentData, showDetails = true) => {
-    const now = currentTime.getTime();
-    const start = new Date(appointment.abTime).getTime();
-    const end = new Date(appointment.abEndTime).getTime();
-    const isElapsed = now > start && now < end;
-    const elapsedTimePercentage = isElapsed ? ((now - start) / (end - start)) * 100 : 0;
-
     return (
       <Box
         key={appointment.abID}
@@ -586,19 +580,6 @@ const AppointmentScheduler = () => {
         }}
         onClick={() => setSelectedAppointment(appointment)}
       >
-        {isElapsed && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              height: "100%",
-              width: `${elapsedTimePercentage}%`,
-              backgroundColor: "rgba(0, 0, 0, 0.1)",
-              borderRadius: "4px 0 0 4px",
-            }}
-          />
-        )}
         <Typography variant="caption" fontWeight="bold" display="block">
           {appointment.abFName} {appointment.abLName}
         </Typography>
@@ -643,7 +624,7 @@ const AppointmentScheduler = () => {
   // Render Day View
   const renderDayView = () => (
     <Grid container spacing={1}>
-      <Grid size={{ xs: 2 }}>
+      <Grid size={{ xs: 1 }}>
         <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
           <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
             Time
@@ -658,7 +639,7 @@ const AppointmentScheduler = () => {
         ))}
       </Grid>
 
-      <Grid size={{ xs: 10 }} sx={{ position: "relative" }}>
+      <Grid size={{ xs: 11 }} sx={{ position: "relative" }}>
         <CurrentTimeIndicator date={currentDate} height={40} />
         <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
           <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
