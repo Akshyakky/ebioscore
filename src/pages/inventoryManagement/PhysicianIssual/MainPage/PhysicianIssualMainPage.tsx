@@ -10,7 +10,6 @@ import { productIssualMastService } from "@/services/InventoryManagementService/
 import {
   Add as AddIcon,
   CheckCircle as ApproveIcon,
-  Assignment as AssignmentIcon,
   ViewModule as CardIcon,
   Clear as ClearIcon,
   ContentCopy as ContentCopyIcon,
@@ -24,7 +23,9 @@ import {
   FilterList as FilterIcon,
   Inventory as InventoryIcon,
   ViewList as ListIcon,
+  LocalHospital as MedicalIcon,
   PendingActions as PendingIcon,
+  PersonOutline as PhysicianIcon,
   Print as PrintIcon,
   Refresh as RefreshIcon,
   Assessment as ReportIcon,
@@ -34,7 +35,6 @@ import {
   BarChart as StatisticsIcon,
   Sync,
   TaskAlt as TaskAltIcon,
-  SwapHoriz as TransferIcon,
   CheckBoxOutlineBlank as UnselectAllIcon,
   Visibility as VisibilityIcon,
   Warning as WarningIcon,
@@ -79,10 +79,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
-import CompleteProductIssualForm from "../Form/ProductIssualForm";
-import { useProductIssual } from "../hooks/useProductIssual";
+import { useProductIssual } from "../../ProductIssual/hooks/useProductIssual";
+import PhysicianIssualForm from "../Form/PhysicianIssualForm";
 
-const EnhancedProductIssualPage: React.FC = () => {
+const PhysicianIssualPage: React.FC = () => {
   const { showAlert } = useAlert();
 
   // State variables
@@ -109,7 +109,7 @@ const EnhancedProductIssualPage: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [fromDepartmentID, setFromDepartmentID] = useState<number | undefined>(undefined);
-  const [toDepartmentID, setToDepartmentID] = useState<number | undefined>(undefined);
+  const [physicianID, setPhysicianID] = useState<number | undefined>(undefined);
   const [approvedStatus, setApprovedStatus] = useState<string | undefined>(undefined);
   const [dateRange, setDateRange] = useState<string>("thisMonth");
   const [sortBy, setSortBy] = useState<string>("pisDate");
@@ -127,7 +127,7 @@ const EnhancedProductIssualPage: React.FC = () => {
 
   // Hooks
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
-  const { department } = useDropdownValues(["department"]);
+  const { attendingPhy } = useDropdownValues(["department", "attendingPhy"]);
 
   // Use the ProductIssual hook for operations (not fetching)
   const {
@@ -159,12 +159,12 @@ const EnhancedProductIssualPage: React.FC = () => {
     hookClearError();
   }, [hookClearError]);
 
-  // Fetch ProductIssuals using productIssualMastService
+  // Fetch PhysicianIssuals using productIssualMastService
   const fetchIssualsForDepartment = useCallback(async () => {
     if (!deptId) return;
 
     try {
-      console.log("Fetching Department Issuals for department:", deptId);
+      console.log("Fetching Physician Issuals for department:", deptId);
       setIsLoading(true);
       clearError();
 
@@ -172,44 +172,44 @@ const EnhancedProductIssualPage: React.FC = () => {
       const response = await productIssualMastService.getAll();
 
       if (response.success && response.data && Array.isArray(response.data)) {
-        // Filter issuals by fromDeptID and IssualType = Department
-        let departmentIssuals = response.data.filter((issual: ProductIssualDto) => {
-          return issual.fromDeptID === deptId && issual.issualType === IssualType.Department;
+        // Filter issuals by fromDeptID and IssualType = Physician
+        let physicianIssuals = response.data.filter((issual: ProductIssualDto) => {
+          return issual.fromDeptID === deptId && issual.issualType === IssualType.Physician;
         });
 
-        console.log(`Found ${departmentIssuals.length} department issuals for department ${deptId}`);
+        console.log(`Found ${physicianIssuals.length} physician issuals for department ${deptId}`);
 
         // Apply additional client-side filters
-        departmentIssuals = applyClientSideFilters(departmentIssuals);
+        physicianIssuals = applyClientSideFilters(physicianIssuals);
 
         // Apply sorting
-        departmentIssuals = applySorting(departmentIssuals);
+        physicianIssuals = applySorting(physicianIssuals);
 
-        setPaginatedIssuals(departmentIssuals);
-        console.log("Successfully fetched and filtered Department Issuals:", departmentIssuals.length);
+        setPaginatedIssuals(physicianIssuals);
+        console.log("Successfully fetched and filtered Physician Issuals:", physicianIssuals.length);
       } else {
         console.error("Invalid response structure:", response);
-        throw new Error(response.errorMessage || "Failed to fetch Department Issuals - invalid response");
+        throw new Error(response.errorMessage || "Failed to fetch Physician Issuals - invalid response");
       }
     } catch (error) {
-      console.error("Error fetching Department Issuals:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to fetch Department Issual data";
+      console.error("Error fetching Physician Issuals:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch Physician Issual data";
       setError(errorMessage);
-      showAlert("Error", "Failed to fetch Department Issual data for the selected department", "error");
+      showAlert("Error", "Failed to fetch Physician Issual data for the selected department", "error");
       setPaginatedIssuals([]);
     } finally {
       setIsLoading(false);
     }
-  }, [deptId, toDepartmentID, approvedStatus, pisCode, indentNo, startDate, endDate, sortBy, sortOrder, showAlert, clearError]);
+  }, [deptId, physicianID, approvedStatus, pisCode, indentNo, startDate, endDate, sortBy, sortOrder, showAlert, clearError]);
 
   // Apply client-side filters
   const applyClientSideFilters = useCallback(
     (issuals: ProductIssualDto[]) => {
       let filtered = [...issuals];
 
-      // Apply toDepartmentID filter
-      if (toDepartmentID) {
-        filtered = filtered.filter((issual) => issual.toDeptID === toDepartmentID);
+      // Apply physician filter
+      if (physicianID) {
+        filtered = filtered.filter((issual) => issual.recConID === physicianID);
       }
 
       // Apply approval status filter
@@ -264,7 +264,7 @@ const EnhancedProductIssualPage: React.FC = () => {
 
       return filtered;
     },
-    [toDepartmentID, approvedStatus, pisCode, indentNo, startDate, endDate, dateRange]
+    [physicianID, approvedStatus, pisCode, indentNo, startDate, endDate, dateRange]
   );
 
   // Apply sorting
@@ -290,9 +290,9 @@ const EnhancedProductIssualPage: React.FC = () => {
             aValue = a.fromDeptName || "";
             bValue = b.fromDeptName || "";
             break;
-          case "toDeptName":
-            aValue = a.toDeptName || "";
-            bValue = b.toDeptName || "";
+          case "recConName":
+            aValue = a.recConName || "";
+            bValue = b.recConName || "";
             break;
           case "approvedYN":
             aValue = a.approvedYN || "";
@@ -329,6 +329,8 @@ const EnhancedProductIssualPage: React.FC = () => {
     [getIssualWithDetailsById]
   );
 
+  // Permission check functions - use hook's functions
+
   // Handle department selection from dialog
   const handleDepartmentSelectWithIssualFetch = useCallback(
     async (selectedDeptId: number, selectedDeptName: string) => {
@@ -338,7 +340,7 @@ const EnhancedProductIssualPage: React.FC = () => {
 
         // Reset filters when changing department
         setFromDepartmentID(undefined);
-        setToDepartmentID(undefined);
+        setPhysicianID(undefined);
         setApprovedStatus(undefined);
         setPisCode("");
         setIndentNo("");
@@ -383,7 +385,7 @@ const EnhancedProductIssualPage: React.FC = () => {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter((issual) => {
-        const searchableText = `${issual.pisCode || ""} ${issual.indentNo || ""} ${issual.fromDeptName || ""} ${issual.toDeptName || ""}`.toLowerCase();
+        const searchableText = `${issual.pisCode || ""} ${issual.indentNo || ""} ${issual.fromDeptName || ""} ${issual.recConName || ""}`.toLowerCase();
         return searchableText.includes(searchLower);
       });
       console.log("After search filter:", filtered.length);
@@ -430,7 +432,7 @@ const EnhancedProductIssualPage: React.FC = () => {
   }, [deptId, fetchIssualsForDepartment, showAlert]);
 
   const handleAddNew = useCallback(() => {
-    console.log("Creating new Department Issual");
+    console.log("Creating new Physician Issual");
     setSelectedIssual(null);
     setIsViewMode(false);
     setIsCopyMode(false);
@@ -441,13 +443,13 @@ const EnhancedProductIssualPage: React.FC = () => {
   const handleCopy = useCallback(
     async (issual: ProductIssualDto) => {
       try {
-        console.log("Starting copy for Department Issual:", issual.pisid);
+        console.log("Starting copy for Physician Issual:", issual.pisid);
         setIsLoadingDetails(true);
 
         const compositeDto = await getIssualWithDetailsByIdLocal(issual.pisid);
 
         if (!compositeDto || !compositeDto.productIssual) {
-          throw new Error("Failed to load Department Issual details for copying");
+          throw new Error("Failed to load Physician Issual details for copying");
         }
 
         const issualToCopy: ProductIssualDto = {
@@ -455,7 +457,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           details: compositeDto.details || [],
         };
 
-        console.log("Department Issual to copy with details:", issualToCopy);
+        console.log("Physician Issual to copy with details:", issualToCopy);
         console.log("Details count:", issualToCopy.details?.length || 0);
 
         setSelectedIssual(issualToCopy);
@@ -463,10 +465,10 @@ const EnhancedProductIssualPage: React.FC = () => {
         setIsViewMode(false);
         setIsFormOpen(true);
 
-        showAlert("Info", `Copying Department Issual "${issual.pisCode}" with ${issualToCopy.details?.length || 0} products. Please review and save.`, "info");
+        showAlert("Info", `Copying Physician Issual "${issual.pisCode}" with ${issualToCopy.details?.length || 0} products. Please review and save.`, "info");
       } catch (error) {
         console.error("Error initiating copy:", error);
-        showAlert("Error", "Failed to load Department Issual details for copying", "error");
+        showAlert("Error", "Failed to load Physician Issual details for copying", "error");
       } finally {
         setIsLoadingDetails(false);
       }
@@ -478,18 +480,18 @@ const EnhancedProductIssualPage: React.FC = () => {
   const handleEdit = useCallback(
     async (issual: ProductIssualDto) => {
       if (!canEditIssual(issual)) {
-        showAlert("Warning", "Approved Department Issuals cannot be edited.", "warning");
+        showAlert("Warning", "Approved Physician Issuals cannot be edited.", "warning");
         return;
       }
 
       try {
-        console.log("Starting edit for Department Issual:", issual.pisid);
+        console.log("Starting edit for Physician Issual:", issual.pisid);
         setIsLoadingDetails(true);
 
         const compositeDto = await getIssualWithDetailsByIdLocal(issual.pisid);
 
         if (!compositeDto || !compositeDto.productIssual) {
-          throw new Error("Failed to load Department Issual details for editing");
+          throw new Error("Failed to load Physician Issual details for editing");
         }
 
         const issualToEdit: ProductIssualDto = {
@@ -497,7 +499,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           details: compositeDto.details || [],
         };
 
-        console.log("Department Issual to edit with details:", issualToEdit);
+        console.log("Physician Issual to edit with details:", issualToEdit);
         console.log("Details count:", issualToEdit.details?.length || 0);
 
         setSelectedIssual(issualToEdit);
@@ -505,10 +507,10 @@ const EnhancedProductIssualPage: React.FC = () => {
         setIsViewMode(false);
         setIsFormOpen(true);
 
-        showAlert("Info", `Loading Department Issual "${issual.pisCode}" with ${issualToEdit.details?.length || 0} products for editing...`, "info");
+        showAlert("Info", `Loading Physician Issual "${issual.pisCode}" with ${issualToEdit.details?.length || 0} products for editing...`, "info");
       } catch (error) {
         console.error("Error initiating edit:", error);
-        showAlert("Error", "Failed to load Department Issual details for editing", "error");
+        showAlert("Error", "Failed to load Physician Issual details for editing", "error");
       } finally {
         setIsLoadingDetails(false);
       }
@@ -520,13 +522,13 @@ const EnhancedProductIssualPage: React.FC = () => {
   const handleView = useCallback(
     async (issual: ProductIssualDto) => {
       try {
-        console.log("Starting view for Department Issual:", issual.pisid);
+        console.log("Starting view for Physician Issual:", issual.pisid);
         setIsLoadingDetails(true);
 
         const compositeDto = await getIssualWithDetailsByIdLocal(issual.pisid);
 
         if (!compositeDto || !compositeDto.productIssual) {
-          throw new Error("Failed to load Department Issual details for viewing");
+          throw new Error("Failed to load Physician Issual details for viewing");
         }
 
         const issualToView: ProductIssualDto = {
@@ -534,7 +536,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           details: compositeDto.details || [],
         };
 
-        console.log("Department Issual to view with details:", issualToView);
+        console.log("Physician Issual to view with details:", issualToView);
         console.log("Details count:", issualToView.details?.length || 0);
 
         setSelectedIssual(issualToView);
@@ -542,10 +544,10 @@ const EnhancedProductIssualPage: React.FC = () => {
         setIsViewMode(true);
         setIsFormOpen(true);
 
-        showAlert("Info", `Loading Department Issual "${issual.pisCode}" with ${issualToView.details?.length || 0} products for viewing...`, "info");
+        showAlert("Info", `Loading Physician Issual "${issual.pisCode}" with ${issualToView.details?.length || 0} products for viewing...`, "info");
       } catch (error) {
         console.error("Error initiating view:", error);
-        showAlert("Error", "Failed to load Department Issual details for viewing", "error");
+        showAlert("Error", "Failed to load Physician Issual details for viewing", "error");
       } finally {
         setIsLoadingDetails(false);
       }
@@ -556,7 +558,7 @@ const EnhancedProductIssualPage: React.FC = () => {
   const handleDeleteClick = useCallback(
     (issual: ProductIssualDto) => {
       if (!canDeleteIssual(issual)) {
-        showAlert("Warning", "Approved Department Issuals cannot be deleted.", "warning");
+        showAlert("Warning", "Approved Physician Issuals cannot be deleted.", "warning");
         return;
       }
       setSelectedIssual(issual);
@@ -568,7 +570,7 @@ const EnhancedProductIssualPage: React.FC = () => {
   const handleApproveClick = useCallback(
     (issual: ProductIssualDto) => {
       if (!canApproveIssual(issual)) {
-        showAlert("Warning", "This Department Issual is already approved.", "warning");
+        showAlert("Warning", "This Physician Issual is already approved.", "warning");
         return;
       }
       setSelectedIssual(issual);
@@ -588,7 +590,7 @@ const EnhancedProductIssualPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Error deleting issual:", error);
-      showAlert("Error", "Failed to delete Department Issual", "error");
+      showAlert("Error", "Failed to delete Physician Issual", "error");
     }
 
     setIsDeleteConfirmOpen(false);
@@ -606,7 +608,7 @@ const EnhancedProductIssualPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Error approving issual:", error);
-      showAlert("Error", "Failed to approve Department Issual", "error");
+      showAlert("Error", "Failed to approve Physician Issual", "error");
     }
 
     setIsApproveConfirmOpen(false);
@@ -646,7 +648,7 @@ const EnhancedProductIssualPage: React.FC = () => {
         "Issue Date": formatIssueDate(issual.pisDate),
         "Indent No": issual.indentNo,
         "From Department": issual.fromDeptName,
-        "To Department": issual.toDeptName,
+        Physician: issual.recConName,
         "Total Items": issual.totalItems,
         "Total Requested Qty": issual.totalRequestedQty,
         "Total Issued Qty": issual.totalIssuedQty,
@@ -668,7 +670,7 @@ const EnhancedProductIssualPage: React.FC = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `department-issual-report-${deptName}-${dayjs().format("YYYY-MM-DD")}.csv`;
+        a.download = `physician-issual-report-${deptName}-${dayjs().format("YYYY-MM-DD")}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
       }
@@ -719,7 +721,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                     From: {issual.fromDeptName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    To: {issual.toDeptName}
+                    Physician: {issual.recConName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Date: {formatIssueDate(issual.pisDate)}
@@ -781,9 +783,9 @@ const EnhancedProductIssualPage: React.FC = () => {
                         </Grid>
                         <Grid size={{ xs: 6, md: 2 }}>
                           <Typography variant="caption" display="block">
-                            To Department
+                            Physician
                           </Typography>
-                          <Typography variant="body2">{issual.toDeptName}</Typography>
+                          <Typography variant="body2">{issual.recConName}</Typography>
                         </Grid>
                         <Grid size={{ xs: 6, md: 2 }}>
                           <Typography variant="caption" display="block">
@@ -838,7 +840,7 @@ const EnhancedProductIssualPage: React.FC = () => {
         data={filteredAndSearchedIssuals}
         loading={isLoading}
         maxHeight="600px"
-        emptyStateMessage={`No Department Issuals found for ${deptName}. Click "New Issual" to create the first one.`}
+        emptyStateMessage={`No Physician Issuals found for ${deptName}. Click "New Issual" to create the first one.`}
         rowKeyField="pisid"
         onRowClick={(issual) => handleView(issual)}
       />
@@ -865,14 +867,14 @@ const EnhancedProductIssualPage: React.FC = () => {
     },
     {
       key: "issualInfo",
-      header: "Department Issual Information",
+      header: "Physician Issual Information",
       visible: true,
       sortable: true,
       width: 240,
       render: (issual: ProductIssualDto) => (
         <Box>
           <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-            <AssignmentIcon sx={{ fontSize: 20, color: "primary.main" }} />
+            <MedicalIcon sx={{ fontSize: 20, color: "primary.main" }} />
             <Typography variant="body2" fontWeight="600" color="primary.main">
               {issual.pisCode || "Pending"}
             </Typography>
@@ -907,20 +909,20 @@ const EnhancedProductIssualPage: React.FC = () => {
       ),
     },
     {
-      key: "toDepartment",
-      header: "To Department",
+      key: "physician",
+      header: "Physician",
       visible: true,
       sortable: true,
       width: 200,
       render: (issual: ProductIssualDto) => (
         <Box display="flex" alignItems="center" gap={1}>
-          <TransferIcon sx={{ fontSize: 20, color: "secondary.main" }} />
+          <PhysicianIcon sx={{ fontSize: 20, color: "secondary.main" }} />
           <Box>
             <Typography variant="body2" fontWeight="500">
-              {issual.toDeptName}
+              {issual.recConName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              ID: {issual.toDeptID}
+              ID: {issual.recConID}
             </Typography>
           </Box>
         </Box>
@@ -1000,7 +1002,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           </Tooltip>
 
           {canEditIssual(issual) && (
-            <Tooltip title="Edit Department Issual">
+            <Tooltip title="Edit Physician Issual">
               <IconButton
                 size="small"
                 color="secondary"
@@ -1021,7 +1023,7 @@ const EnhancedProductIssualPage: React.FC = () => {
             </Tooltip>
           )}
 
-          <Tooltip title="Copy Department Issual">
+          <Tooltip title="Copy Physician Issual">
             <IconButton
               size="small"
               color="info"
@@ -1042,7 +1044,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           </Tooltip>
 
           {canApproveIssual(issual) && (
-            <Tooltip title="Approve Department Issual">
+            <Tooltip title="Approve Physician Issual">
               <IconButton
                 size="small"
                 color="success"
@@ -1063,7 +1065,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           )}
 
           {canDeleteIssual(issual) && (
-            <Tooltip title="Delete Department Issual">
+            <Tooltip title="Delete Physician Issual">
               <IconButton
                 size="small"
                 color="error"
@@ -1097,7 +1099,7 @@ const EnhancedProductIssualPage: React.FC = () => {
     return (
       <Box sx={{ p: 2 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
-          Error loading Department Issuals: {error}
+          Error loading Physician Issuals: {error}
         </Alert>
         <Button onClick={handleRefresh} variant="contained" color="primary" disabled={isLoading}>
           {isLoading ? "Loading..." : "Retry"}
@@ -1126,7 +1128,7 @@ const EnhancedProductIssualPage: React.FC = () => {
         >
           <Box sx={{ bgcolor: "background.paper", p: 3, borderRadius: 2, display: "flex", alignItems: "center", gap: 2 }}>
             <CircularProgress />
-            <Typography>Loading Department Issual details...</Typography>
+            <Typography>Loading Physician Issual details...</Typography>
           </Box>
         </Box>
       )}
@@ -1137,13 +1139,13 @@ const EnhancedProductIssualPage: React.FC = () => {
           <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Box display="flex" alignItems="center" gap={2}>
-                <InventoryIcon sx={{ fontSize: 32, color: "primary.main" }} />
+                <MedicalIcon sx={{ fontSize: 32, color: "primary.main" }} />
                 <Box>
                   <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-                    Department Issual Management - {deptName}
+                    Physician Issual Management - {deptName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Department to Department inventory transfer management system
+                    Department to Physician medication dispensing management system
                   </Typography>
                 </Box>
               </Box>
@@ -1158,7 +1160,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                   Statistics
                 </Button>
                 <SmartButton text={`${deptName}`} onClick={handleDepartmentChange} variant="contained" size="small" color="warning" icon={Sync} />
-                <CustomButton variant="contained" icon={AddIcon} text="New Department Issual" onClick={handleAddNew} size="small" />
+                <CustomButton variant="contained" icon={AddIcon} text="New Physician Issual" onClick={handleAddNew} size="small" />
                 <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={handleRefresh} asynchronous size="small" />
               </Stack>
             </Box>
@@ -1200,9 +1202,9 @@ const EnhancedProductIssualPage: React.FC = () => {
                     bgColor: "#2196f3",
                   },
                   {
-                    title: "Department Transfer",
+                    title: "Physician Issual",
                     value: statistics.total,
-                    icon: <AssignmentIcon sx={{ fontSize: 24, color: "white" }} />,
+                    icon: <MedicalIcon sx={{ fontSize: 24, color: "white" }} />,
                     bgColor: "#9c27b0",
                   },
                 ].map((stat, index) => (
@@ -1275,7 +1277,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Search by Issue Code, Indent No, Department, or Remarks..."
+                  placeholder="Search by Issue Code, Indent No, Department, Physician, or Remarks..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
@@ -1330,7 +1332,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           {/* Results Summary */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="body2" color="text.secondary" fontWeight="500">
-              Showing <strong>{filteredAndSearchedIssuals.length}</strong> of <strong>{statistics.total}</strong> Department Issuals from <strong>{deptName}</strong>
+              Showing <strong>{filteredAndSearchedIssuals.length}</strong> of <strong>{statistics.total}</strong> Physician Issuals from <strong>{deptName}</strong>
               {selectedRows.length > 0 && ` (${selectedRows.length} selected)`}
               {searchTerm && ` • Filtered by: "${searchTerm}"`}
             </Typography>
@@ -1361,7 +1363,7 @@ const EnhancedProductIssualPage: React.FC = () => {
             { value: "pisCode", label: "Issue Code" },
             { value: "indentNo", label: "Indent Number" },
             { value: "fromDeptName", label: "From Department" },
-            { value: "toDeptName", label: "To Department" },
+            { value: "recConName", label: "Physician" },
             { value: "approvedYN", label: "Status" },
           ].map((option) => (
             <MenuItem key={option.value} onClick={() => handleSortChange(option.value)} selected={sortBy === option.value}>
@@ -1458,12 +1460,12 @@ const EnhancedProductIssualPage: React.FC = () => {
           </FormControl>
 
           <FormControl fullWidth size="small">
-            <InputLabel>To Department</InputLabel>
-            <Select value={toDepartmentID || "all"} onChange={(e) => setToDepartmentID(e.target.value === "all" ? undefined : Number(e.target.value))} label="To Department">
-              <MenuItem value="all">All Departments</MenuItem>
-              {department?.map((dept) => (
-                <MenuItem key={dept.value} value={dept.value}>
-                  {dept.label}
+            <InputLabel>Physician</InputLabel>
+            <Select value={physicianID || "all"} onChange={(e) => setPhysicianID(e.target.value === "all" ? undefined : Number(e.target.value))} label="Physician">
+              <MenuItem value="all">All Physicians</MenuItem>
+              {attendingPhy?.map((phy) => (
+                <MenuItem key={phy.value} value={phy.value}>
+                  {phy.label}
                 </MenuItem>
               ))}
             </Select>
@@ -1487,7 +1489,7 @@ const EnhancedProductIssualPage: React.FC = () => {
                 setStartDate(null);
                 setEndDate(null);
                 setFromDepartmentID(undefined);
-                setToDepartmentID(undefined);
+                setPhysicianID(undefined);
                 setApprovedStatus(undefined);
                 setDateRange("thisMonth");
                 setSortBy("pisDate");
@@ -1559,7 +1561,7 @@ const EnhancedProductIssualPage: React.FC = () => {
 
       {/* Form Dialog */}
       {isFormOpen && (
-        <CompleteProductIssualForm
+        <PhysicianIssualForm
           open={isFormOpen}
           onClose={handleFormClose}
           initialData={selectedIssual}
@@ -1567,6 +1569,7 @@ const EnhancedProductIssualPage: React.FC = () => {
           copyMode={isCopyMode}
           selectedDepartmentId={deptId}
           selectedDepartmentName={deptName}
+          issualType={IssualType.Physician}
         />
       )}
 
@@ -1576,7 +1579,7 @@ const EnhancedProductIssualPage: React.FC = () => {
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Confirm Delete"
-        message={`Are you sure you want to delete the Department Issual "${selectedIssual?.pisCode}"?`}
+        message={`Are you sure you want to delete the Physician Issual "${selectedIssual?.pisCode}"?`}
         type="error"
       />
 
@@ -1585,7 +1588,7 @@ const EnhancedProductIssualPage: React.FC = () => {
         onClose={() => setIsApproveConfirmOpen(false)}
         onConfirm={handleConfirmApprove}
         title="Confirm Approval"
-        message={`Are you sure you want to approve the Department Issual "${selectedIssual?.pisCode}"? This action cannot be undone.`}
+        message={`Are you sure you want to approve the Physician Issual "${selectedIssual?.pisCode}"? This action cannot be undone.`}
         type="warning"
       />
 
@@ -1594,4 +1597,4 @@ const EnhancedProductIssualPage: React.FC = () => {
   );
 };
 
-export default EnhancedProductIssualPage;
+export default PhysicianIssualPage;

@@ -1,26 +1,46 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
+export enum IssualType {
+  Department = 1,
+  Physician = 2,
+}
+
 export interface ProductIssualDto extends BaseDto {
   pisid: number;
   pisDate: Date;
+  issualType: IssualType;
+
+  // Source Department (Always Required)
   fromDeptID: number;
   fromDeptName: string;
+
+  // Department Issual Fields (Required for Department Issual)
   toDeptID: number;
   toDeptName: string;
+
+  // Physician Issual Fields (Not used in Department Issual)
+  recConID?: number;
+  recConName?: string;
+
   auGrpID?: number;
   catDesc?: string;
   catValue?: string;
   indentNo?: string;
   pisCode?: string;
-  recConID?: number;
-  recConName?: string;
   approvedYN: string;
   approvedID?: number;
   approvedBy?: string;
+
   details?: ProductIssualDetailDto[];
+
+  // Computed Properties
   readonly totalItems: number;
   readonly totalRequestedQty: number;
   readonly totalIssuedQty: number;
+  readonly issualTypeName: string;
+  readonly destinationInfo: string;
+  readonly destinationID: number | null;
+  readonly issualCodePrefix: string;
 }
 
 export interface ProductIssualDetailDto extends BaseDto {
@@ -60,7 +80,6 @@ export interface ProductIssualDetailDto extends BaseDto {
   manufacturerCode?: string;
   manufacturerName?: string;
   psbid?: number;
-  rActiveYN: string; // New field for active status
   remarks?: string;
 }
 
@@ -72,8 +91,10 @@ export interface ProductIssualCompositeDto {
 export interface ProductIssualSearchRequest {
   pageIndex: number;
   pageSize: number;
+  issualType?: IssualType;
   fromDepartmentID?: number;
   toDepartmentID?: number;
+  physicianID?: number;
   pisCode?: string;
   indentNo?: string;
   approvedStatus?: string;
@@ -136,87 +157,11 @@ export interface ProductStockBalance {
   rActiveYN?: string;
 }
 
-export interface ProductIssualValidation {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
-}
-
-export interface StockValidationResult {
-  isValid: boolean;
-  insufficientStockProducts: {
-    productName: string;
-    available: number;
-    requested: number;
-  }[];
-}
-
-export interface ApprovalRequest {
-  issualId: number;
-  approverComments?: string;
-}
-
-export interface PrintOptions {
-  issualId: number;
-  includeDetails: boolean;
-  includeStockMovement: boolean;
-  format: "PDF" | "EXCEL";
-}
-
-export interface IssualStatistics {
-  totalIssuals: number;
-  approvedIssuals: number;
-  pendingIssuals: number;
-  todayIssuals: number;
-  thisWeekIssuals: number;
-  thisMonthIssuals: number;
-  totalValue: number;
-  averageProcessingTime: number;
-}
-
-export interface StockMovement {
-  movementId: number;
-  issualId: number;
-  productId: number;
-  productName: string;
-  fromDepartmentId: number;
-  fromDepartmentName: string;
-  toDepartmentId: number;
-  toDepartmentName: string;
-  quantity: number;
-  unitPrice: number;
-  totalValue: number;
-  movementDate: Date;
-  batchNumber?: string;
-  expiryDate?: Date;
-  reference: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
-}
-
-export interface AuditTrail {
-  auditId: number;
-  entityType: string;
-  entityId: number;
-  action: "CREATE" | "UPDATE" | "DELETE" | "APPROVE";
-  oldValues?: Record<string, any>;
-  newValues?: Record<string, any>;
-  userId: number;
-  userName: string;
-  timestamp: Date;
-  comments?: string;
-}
-
-export type {
-  ProductIssualSearchRequest as IssualSearchRequest,
-  ProductIssualCompositeDto as ProductIssualComposite,
-  ProductIssualDetailDto as ProductIssualDetail,
-  ProductIssualDto as ProductIssualMaster,
-  ProductStockBalance as StockBalance,
-};
-
+// Default values for Department Issual
 export const defaultProductIssualDto = (): ProductIssualDto => ({
   pisid: 0,
   pisDate: new Date(),
+  issualType: IssualType.Department,
   fromDeptID: 0,
   fromDeptName: "",
   toDeptID: 0,
@@ -228,6 +173,10 @@ export const defaultProductIssualDto = (): ProductIssualDto => ({
   totalItems: 0,
   totalRequestedQty: 0,
   totalIssuedQty: 0,
+  issualTypeName: "Department Issual",
+  destinationInfo: "",
+  destinationID: null,
+  issualCodePrefix: "DIS",
 });
 
 export const defaultProductIssualDetailDto = (): ProductIssualDetailDto => ({
@@ -242,7 +191,6 @@ export const defaultProductIssualDetailDto = (): ProductIssualDetailDto => ({
   catDesc: "REVENUE",
   expiryYN: "N",
   pUnitsPerPack: 1,
-  rActiveYN: "Y", // New field for active status
 });
 
 export const defaultProductIssualCompositeDto = (): ProductIssualCompositeDto => ({
@@ -253,10 +201,12 @@ export const defaultProductIssualCompositeDto = (): ProductIssualCompositeDto =>
 export const defaultProductIssualSearchRequest = (): ProductIssualSearchRequest => ({
   pageIndex: 1,
   pageSize: 20,
+  issualType: IssualType.Department,
   sortBy: "PISDate",
   sortAscending: false,
 });
 
+// Utility functions for Department Issual
 export const isIssualEditable = (issual: ProductIssualDto): boolean => {
   return issual.approvedYN !== "Y";
 };
@@ -287,6 +237,14 @@ export const calculateIssualValue = (details: ProductIssualDetailDto[]): number 
     const taxValue = itemValue * ((detail.tax || 0) / 100);
     return total + itemValue + taxValue;
   }, 0);
+};
+
+export const getIssualTypeName = (issualType: IssualType): string => {
+  return issualType === IssualType.Department ? "Department Issual" : "Physician Issual";
+};
+
+export const getIssualCodePrefix = (issualType: IssualType): string => {
+  return issualType === IssualType.Department ? "DIS" : "PIS";
 };
 
 export const getExpiryStatus = (expiryDate?: Date): "EXPIRED" | "EXPIRING_SOON" | "EXPIRING_NORMAL" | "NORMAL" => {

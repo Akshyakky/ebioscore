@@ -1,3 +1,4 @@
+import { IssualType } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { Info as InfoIcon } from "@mui/icons-material";
 import { Alert, Box, Chip, Paper, Typography } from "@mui/material";
 import React, { useMemo } from "react";
@@ -49,6 +50,7 @@ const issualDetailSchema = z.object({
 const schema = z.object({
   pisid: z.number(),
   pisDate: z.date(),
+  issualType: z.nativeEnum(IssualType).default(IssualType.Department),
   fromDeptID: z.number().min(1, "From department is required"),
   fromDeptName: z.string(),
   toDeptID: z.number().min(1, "To department is required"),
@@ -58,8 +60,6 @@ const schema = z.object({
   catValue: z.string().optional(),
   indentNo: z.string().optional(),
   pisCode: z.string().optional(),
-  recConID: z.number().optional(),
-  recConName: z.string().optional(),
   approvedYN: z.string(),
   approvedID: z.number().optional(),
   approvedBy: z.string().optional(),
@@ -75,6 +75,8 @@ interface BillingSectionProps {
 
 const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
   const watchedDetails = useWatch({ control, name: "details" });
+  const fromDeptName = useWatch({ control, name: "fromDeptName" });
+  const toDeptName = useWatch({ control, name: "toDeptName" });
 
   const calculations = useMemo(() => {
     if (!watchedDetails || watchedDetails.length === 0) {
@@ -87,14 +89,15 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
         coinAdjustment: 0,
         balance: 0,
         totalItems: 0,
-        totalQty: 0,
+        totalRequestedQty: 0,
+        totalIssuedQty: 0,
         cgstAmount: 0,
         sgstAmount: 0,
         igstAmount: 0,
       };
     }
 
-    // Calculate totals based on issued quantities only
+    // Calculate totals based on issued quantities only for Department Issual
     const validDetails = watchedDetails.filter((detail) => detail.issuedQty > 0);
 
     const billAmount = validDetails.reduce((sum, detail) => {
@@ -112,7 +115,7 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
     const sgstAmount = taxAmount / 2;
     const igstAmount = 0; // For inter-state transactions
 
-    const discountPercentage = 0;
+    const discountPercentage = 0; // No discount for Department Issual typically
     const discountAmount = (billAmount * discountPercentage) / 100;
 
     const netBeforeTax = billAmount - discountAmount;
@@ -122,7 +125,8 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
     const balance = netAmount + coinAdjustment;
 
     const totalItems = validDetails.length;
-    const totalQty = validDetails.reduce((sum, detail) => sum + detail.issuedQty, 0);
+    const totalRequestedQty = validDetails.reduce((sum, detail) => sum + detail.requestedQty, 0);
+    const totalIssuedQty = validDetails.reduce((sum, detail) => sum + detail.issuedQty, 0);
 
     return {
       billAmount: Math.round(billAmount * 100) / 100,
@@ -133,7 +137,8 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
       coinAdjustment: Math.round(coinAdjustment * 100) / 100,
       balance: Math.round(balance * 100) / 100,
       totalItems,
-      totalQty: Math.round(totalQty * 100) / 100,
+      totalRequestedQty: Math.round(totalRequestedQty * 100) / 100,
+      totalIssuedQty: Math.round(totalIssuedQty * 100) / 100,
       cgstAmount: Math.round(cgstAmount * 100) / 100,
       sgstAmount: Math.round(sgstAmount * 100) / 100,
       igstAmount: Math.round(igstAmount * 100) / 100,
@@ -144,10 +149,10 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
     return (
       <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
-          Billing Summary
+          Department Transfer Summary
         </Typography>
         <Alert severity="info" icon={<InfoIcon />}>
-          No products added yet. Add products to see billing calculations.
+          No products added yet. Add products to see transfer calculations.
         </Alert>
       </Paper>
     );
@@ -156,10 +161,62 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
   return (
     <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
       <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-        Billing Summary
+        Department Transfer Summary
         <Chip label={`${calculations.totalItems} items`} size="small" color="primary" variant="outlined" />
+        <Chip label={`From: ${fromDeptName || "Not Selected"}`} size="small" color="secondary" variant="outlined" />
+        <Chip label={`To: ${toDeptName || "Not Selected"}`} size="small" color="success" variant="outlined" />
       </Typography>
 
+      {/* Transfer Statistics Section */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          p: 2,
+          bgcolor: "grey.50",
+          borderRadius: 1,
+          mb: 2,
+        }}
+      >
+        <Box sx={{ textAlign: "left" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+            Total Items:
+          </Typography>
+          <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+            {calculations.totalItems}
+          </Typography>
+        </Box>
+
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+            Requested Qty:
+          </Typography>
+          <Typography variant="h6" color="info.main" sx={{ fontWeight: 600 }}>
+            {calculations.totalRequestedQty.toFixed(2)}
+          </Typography>
+        </Box>
+
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+            Issued Qty:
+          </Typography>
+          <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
+            {calculations.totalIssuedQty.toFixed(2)}
+          </Typography>
+        </Box>
+
+        <Box sx={{ textAlign: "right" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+            Transfer Efficiency:
+          </Typography>
+          <Typography variant="h6" color="warning.main" sx={{ fontWeight: 600 }}>
+            {calculations.totalRequestedQty > 0 ? `${((calculations.totalIssuedQty / calculations.totalRequestedQty) * 100).toFixed(1)}%` : "0%"}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Financial Summary Section */}
       <Box
         sx={{
           display: "flex",
@@ -191,30 +248,31 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
 
         <Box sx={{ textAlign: "center" }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-            Discount [%] :
+            CGST ₹ :
           </Typography>
           <Typography variant="h6" color="info.main" sx={{ fontWeight: 600 }}>
-            {calculations.discountPercentage.toFixed(2)}
+            {calculations.cgstAmount.toFixed(2)}
           </Typography>
         </Box>
 
         <Box sx={{ textAlign: "right" }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-            Discount Amt ₹ :
+            SGST ₹ :
           </Typography>
           <Typography variant="h6" color="info.main" sx={{ fontWeight: 600 }}>
-            {calculations.discountAmount.toFixed(2)}
+            {calculations.sgstAmount.toFixed(2)}
           </Typography>
         </Box>
       </Box>
 
+      {/* Final Amount Section */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "grey.50",
+          bgcolor: "success.50",
           borderRadius: 1,
           mb: 2,
         }}
@@ -239,13 +297,21 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
 
         <Box sx={{ textAlign: "right" }}>
           <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-            Balance ₹ :
+            Transfer Value ₹ :
           </Typography>
           <Typography variant="h5" color="error.main" sx={{ fontWeight: 700 }}>
             {calculations.balance.toFixed(2)}
           </Typography>
         </Box>
       </Box>
+
+      {/* Department Transfer Information */}
+      <Alert severity="info" sx={{ mt: 2 }}>
+        <Typography variant="body2">
+          <strong>Department to Department Transfer:</strong> This is an internal transfer between departments. Stock will be deducted from{" "}
+          <strong>{fromDeptName || "source department"}</strong> and added to <strong>{toDeptName || "destination department"}</strong> upon approval.
+        </Typography>
+      </Alert>
     </Paper>
   );
 };
