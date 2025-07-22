@@ -57,6 +57,7 @@ const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/Purchas
 const GRNManagementPage = lazy(() => import("@/pages/inventoryManagement/GoodsRecieveNote/MainPage/GrnListPage"));
 const ProductIssualPage = lazy(() => import("@/pages/inventoryManagement/ProductIssual/MainPage/ProductIssualPage"));
 const HospWorkHoursPage = lazy(() => import("@/pages/frontOffice/HospWorkHours/MainPage/HospWorkHoursPage"));
+const AppointmentScheduler = lazy(() => import("@/pages/frontOffice/Appointment/AppointmentScheduler"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -605,6 +606,16 @@ const routeConfig: RouteConfig[] = [
     providers: [AlertProvider],
     metadata: {
       title: "Working Hour Setup",
+      category: "default",
+    },
+  },
+  {
+    path: "/AppointmentPage",
+    component: wrapWithSuspense(AppointmentScheduler),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Appointment",
       category: "default",
     },
   },

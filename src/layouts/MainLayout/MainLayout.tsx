@@ -82,7 +82,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }
 
   return (
-    <Box display="flex" flexDirection="column" minHeight="100vh" bgcolor="background.default" color="text.primary">
+    <Box display="flex" flexDirection="column" bgcolor="background.default" color="text.primary">
       <Box display="flex" flex={1}>
         {/* Memoized SideBar - will only re-render if userID or token changes */}
         <MemoizedSideBar userID={effectiveUserID} token={userToken} />
