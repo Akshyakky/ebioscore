@@ -577,11 +577,14 @@ const AppointmentScheduler = () => {
       <Box
         key={appointment.abID}
         sx={{
-          mb: 0.25,
+          height: "100%",
           p: 0.5,
           borderRadius: 1,
           cursor: "pointer",
           fontSize: "0.75rem",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
           backgroundColor:
             getStatusColor(appointment.abStatus) === "success"
               ? "#e8f5e8"
@@ -600,11 +603,10 @@ const AppointmentScheduler = () => {
               : "#2196f3"
           }`,
           "&:hover": { backgroundColor: "action.hover" },
-          position: "relative",
         }}
         onClick={() => setSelectedAppointment(appointment)}
       >
-        <Typography variant="caption" fontWeight="bold" display="block">
+        <Typography variant="caption" fontWeight="bold" display="block" sx={{ whiteSpace: "nowrap" }}>
           {appointment.abFName} {appointment.abLName}
         </Typography>
         {showDetails && (
@@ -693,7 +695,7 @@ const AppointmentScheduler = () => {
               }}
               onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
             >
-              {!withinWorkingHours && (
+              {!withinWorkingHours && !slotAppointments.length && (
                 <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
                   <Block fontSize="small" sx={{ mr: 0.5 }} />
                   <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
@@ -708,7 +710,39 @@ const AppointmentScheduler = () => {
                   </Typography>
                 </Box>
               )}
-              {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment))}
+              {slotAppointments.map((appointment) => {
+                const appointmentStart = new Date(appointment.abTime);
+                const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
+                const slotStartMinutes = slot.hour * 60 + slot.minute;
+                const nextSlotStartMinutes = slotStartMinutes + 15;
+
+                // Only render the appointment in the slot where it begins
+                if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
+                  const slotHeight = 40; // Height of a single time slot
+                  const durationInSlots = appointment.abDuration / 15;
+                  const appointmentHeight = durationInSlots * slotHeight - 2; // -2 for a small gap
+
+                  const minuteOffset = appointmentStartMinutes - slotStartMinutes;
+                  const topOffset = (minuteOffset / 15) * slotHeight;
+
+                  return (
+                    <Box
+                      key={appointment.abID}
+                      sx={{
+                        position: "absolute",
+                        top: `${topOffset}px`,
+                        left: "4px",
+                        right: "4px",
+                        height: `${appointmentHeight}px`,
+                        zIndex: 1,
+                      }}
+                    >
+                      {renderCompactAppointmentCard(appointment)}
+                    </Box>
+                  );
+                }
+                return null;
+              })}
             </Box>
           );
         })}
@@ -768,10 +802,42 @@ const AppointmentScheduler = () => {
                     cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
                     "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
                     opacity: isElapsed ? 0.7 : 1,
+                    position: "relative",
                   }}
                   onClick={() => withinWorkingHours && !isElapsed && setShowBookingDialog(true)}
                 >
-                  {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment, false))}
+                  {slotAppointments.map((appointment) => {
+                    const appointmentStart = new Date(appointment.abTime);
+                    const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
+                    const slotStartMinutes = slot.hour * 60 + slot.minute;
+                    const nextSlotStartMinutes = slotStartMinutes + 15;
+
+                    if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
+                      const slotHeight = 30;
+                      const durationInSlots = appointment.abDuration / 15;
+                      const appointmentHeight = durationInSlots * slotHeight - 1;
+
+                      const minuteOffset = appointmentStartMinutes - slotStartMinutes;
+                      const topOffset = (minuteOffset / 15) * slotHeight;
+
+                      return (
+                        <Box
+                          key={appointment.abID}
+                          sx={{
+                            position: "absolute",
+                            top: `${topOffset}px`,
+                            left: "2px",
+                            right: "2px",
+                            height: `${appointmentHeight}px`,
+                            zIndex: 1,
+                          }}
+                        >
+                          {renderCompactAppointmentCard(appointment, false)}
+                        </Box>
+                      );
+                    }
+                    return null;
+                  })}
                 </Box>
               );
             })}
