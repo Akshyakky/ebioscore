@@ -1,3 +1,4 @@
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import {
   Add as AddIcon,
   Block,
@@ -42,6 +43,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
 // Mock data and interfaces
 interface AppointmentData {
@@ -92,6 +94,11 @@ interface WorkHoursData {
   endTime: Date | null;
   wkHoliday: string;
   rActiveYN: string;
+}
+
+// Form interface for date selection
+interface DateSelectionForm {
+  selectedDate: Date;
 }
 
 // Mock data with more appointments for different dates
@@ -266,6 +273,13 @@ const AppointmentScheduler = () => {
   const [workHours, setWorkHours] = useState<WorkHoursData[]>(mockWorkHours);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
 
+  // Form control for date selection
+  const dateControl = useForm<DateSelectionForm>({
+    defaultValues: {
+      selectedDate: currentDate,
+    },
+  });
+
   // Generate 15-minute time slots for a full 24-hour day
   const timeSlots = useMemo(() => {
     const slots = [];
@@ -432,6 +446,15 @@ const AppointmentScheduler = () => {
     }
 
     setCurrentDate(newDate);
+    // Update the form date picker as well
+    dateControl.setValue("selectedDate", newDate);
+  };
+
+  // Handle date selection from date picker
+  const handleDateSelection = (selectedDate: Date | null) => {
+    if (selectedDate) {
+      setCurrentDate(selectedDate);
+    }
   };
 
   // Appointment status colors
@@ -620,6 +643,7 @@ const AppointmentScheduler = () => {
       </Grid>
     );
   };
+
   // Render Month View
   const renderMonthView = () => {
     const monthDates = getMonthDates(currentDate);
@@ -723,7 +747,7 @@ const AppointmentScheduler = () => {
 
   return (
     <Box sx={{ p: 1 }}>
-      {/* Compact Header */}
+      {/* Enhanced Header with Date Selection */}
       <Paper sx={{ p: 1, mb: 1 }}>
         <Grid container spacing={1} alignItems="center">
           <Grid size={{ xs: 12, md: 6 }}>
@@ -740,16 +764,35 @@ const AppointmentScheduler = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <Stack direction="row" spacing={0.5} justifyContent="flex-end" flexWrap="wrap">
+            <Stack direction="row" spacing={0.5} justifyContent="flex-end" flexWrap="wrap" alignItems="center">
+              {/* Inline Date Picker */}
+              <Box sx={{ minWidth: 140 }}>
+                <FormField
+                  name="selectedDate"
+                  control={dateControl.control}
+                  type="datepicker"
+                  label=""
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  defaultValue={currentDate}
+                  onChange={handleDateSelection}
+                  placeholder="Select date"
+                />
+              </Box>
+
               <Button variant="outlined" startIcon={<Today />} onClick={() => navigateDate("today")} size="small" sx={{ minWidth: "auto", px: 1 }}>
                 Today
               </Button>
+
               <IconButton onClick={() => navigateDate("prev")} size="small">
                 <NavigateBefore />
               </IconButton>
+
               <IconButton onClick={() => navigateDate("next")} size="small">
                 <NavigateNext />
               </IconButton>
+
               <Tabs value={viewMode} onChange={(_, value) => setViewMode(value)} variant="scrollable">
                 <Tab icon={<ViewDay />} value="day" label="Day" sx={{ minWidth: "auto", px: 1 }} />
                 <Tab icon={<ViewWeek />} value="week" label="Week" sx={{ minWidth: "auto", px: 1 }} />
