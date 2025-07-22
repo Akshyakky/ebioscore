@@ -63,11 +63,16 @@ export const BillProductsDtoSchema = z.object({
 });
 
 export const BillPaymentDetailsDtoSchema = z.object({
+  paymentID: z.number().min(1),
   paymentMode: z.string().min(1),
   paymentCode: z.string(),
   paymentName: z.string(),
   paidAmount: z.number().min(0),
   paymentNote: z.string().optional(),
+  referenceNumber: z.string().optional(),
+  bank: z.string().optional(),
+  branch: z.string().optional(),
+  transactionNumber: z.number().optional(),
 });
 
 // Main Billing Schema
@@ -117,13 +122,15 @@ export const billingSchema = z.object({
   visitReferenceCode: z.string().optional().default(""),
   billServices: z.array(BillServicesDtoSchema).default([]),
   billProducts: z.array(BillProductsDtoSchema).default([]),
-  billPaymentDetails: BillPaymentDetailsDtoSchema.default({
-    paymentMode: "",
-    paymentCode: "",
-    paymentName: "",
-    paidAmount: 0,
-    paymentNote: "",
-  }),
+  billPaymentDetails: z.array(BillPaymentDetailsDtoSchema).default([
+    {
+      paymentMode: "",
+      paymentCode: "",
+      paymentName: "",
+      paidAmount: 0,
+      paymentNote: "",
+    },
+  ]),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().optional().default("N"),
   rNotes: z.string().optional().default(""),
