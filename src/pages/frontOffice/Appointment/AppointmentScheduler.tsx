@@ -35,7 +35,7 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 // Mock data and interfaces
@@ -293,6 +293,7 @@ const SimpleFormField = ({ name, control, type, label, options, required, ...pro
 };
 
 const AppointmentScheduler = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("day");
   const [showBookingDialog, setShowBookingDialog] = useState(false);
@@ -301,6 +302,14 @@ const AppointmentScheduler = () => {
   const [breaks, setBreaks] = useState<BreakData[]>(mockBreaks);
   const [workHours, setWorkHours] = useState<WorkHoursData[]>(mockWorkHours);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Form controls using useForm
   const dateControl = useForm<DateSelectionForm>({
@@ -539,51 +548,97 @@ const AppointmentScheduler = () => {
   };
 
   // Compact appointment card
-  const renderCompactAppointmentCard = (appointment: AppointmentData, showDetails = true) => (
-    <Box
-      key={appointment.abID}
-      sx={{
-        mb: 0.25,
-        p: 0.5,
-        borderRadius: 1,
-        cursor: "pointer",
-        fontSize: "0.75rem",
-        backgroundColor:
-          getStatusColor(appointment.abStatus) === "success"
-            ? "#e8f5e8"
-            : getStatusColor(appointment.abStatus) === "warning"
-            ? "#fff3e0"
-            : getStatusColor(appointment.abStatus) === "error"
-            ? "#ffebee"
-            : "#e3f2fd",
-        borderLeft: `3px solid ${
-          getStatusColor(appointment.abStatus) === "success"
-            ? "#4caf50"
-            : getStatusColor(appointment.abStatus) === "warning"
-            ? "#ff9800"
-            : getStatusColor(appointment.abStatus) === "error"
-            ? "#f44336"
-            : "#2196f3"
-        }`,
-        "&:hover": { backgroundColor: "action.hover" },
-      }}
-      onClick={() => setSelectedAppointment(appointment)}
-    >
-      <Typography variant="caption" fontWeight="bold" display="block">
-        {appointment.abFName} {appointment.abLName}
-      </Typography>
-      {showDetails && (
-        <>
-          <Typography variant="caption" color="text.secondary" display="block">
-            {appointment.providerName}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {appointment.abDurDesc}
-          </Typography>
-        </>
-      )}
-    </Box>
-  );
+  const renderCompactAppointmentCard = (appointment: AppointmentData, showDetails = true) => {
+    const now = currentTime.getTime();
+    const start = new Date(appointment.abTime).getTime();
+    const end = new Date(appointment.abEndTime).getTime();
+    const isElapsed = now > start && now < end;
+    const elapsedTimePercentage = isElapsed ? ((now - start) / (end - start)) * 100 : 0;
+
+    return (
+      <Box
+        key={appointment.abID}
+        sx={{
+          mb: 0.25,
+          p: 0.5,
+          borderRadius: 1,
+          cursor: "pointer",
+          fontSize: "0.75rem",
+          backgroundColor:
+            getStatusColor(appointment.abStatus) === "success"
+              ? "#e8f5e8"
+              : getStatusColor(appointment.abStatus) === "warning"
+              ? "#fff3e0"
+              : getStatusColor(appointment.abStatus) === "error"
+              ? "#ffebee"
+              : "#e3f2fd",
+          borderLeft: `3px solid ${
+            getStatusColor(appointment.abStatus) === "success"
+              ? "#4caf50"
+              : getStatusColor(appointment.abStatus) === "warning"
+              ? "#ff9800"
+              : getStatusColor(appointment.abStatus) === "error"
+              ? "#f44336"
+              : "#2196f3"
+          }`,
+          "&:hover": { backgroundColor: "action.hover" },
+          position: "relative",
+        }}
+        onClick={() => setSelectedAppointment(appointment)}
+      >
+        {isElapsed && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              height: "100%",
+              width: `${elapsedTimePercentage}%`,
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
+              borderRadius: "4px 0 0 4px",
+            }}
+          />
+        )}
+        <Typography variant="caption" fontWeight="bold" display="block">
+          {appointment.abFName} {appointment.abLName}
+        </Typography>
+        {showDetails && (
+          <>
+            <Typography variant="caption" color="text.secondary" display="block">
+              {appointment.providerName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {appointment.abDurDesc}
+            </Typography>
+          </>
+        )}
+      </Box>
+    );
+  };
+
+  // Current time indicator line
+  const CurrentTimeIndicator = ({ date, height, ...props }) => {
+    const isToday = date.toDateString() === new Date().toDateString();
+    if (!isToday) return null;
+
+    const topPosition = ((currentTime.getHours() * 60 + currentTime.getMinutes()) / (24 * 60)) * (timeSlots.length * height);
+
+    return (
+      <Box
+        sx={{
+          position: "absolute",
+          width: "100%",
+          height: "2px",
+          backgroundColor: "red",
+          top: `${topPosition}px`,
+          zIndex: 2,
+          ...props.sx,
+        }}
+      >
+        <Box sx={{ position: "absolute", left: -6, top: -3, width: 8, height: 8, borderRadius: "50%", backgroundColor: "red" }} />
+      </Box>
+    );
+  };
 
   // Render Day View
   const renderDayView = () => (
@@ -603,7 +658,8 @@ const AppointmentScheduler = () => {
         ))}
       </Grid>
 
-      <Grid size={{ xs: 10 }}>
+      <Grid size={{ xs: 10 }} sx={{ position: "relative" }}>
+        <CurrentTimeIndicator date={currentDate} height={40} />
         <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
           <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
             {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
@@ -666,7 +722,8 @@ const AppointmentScheduler = () => {
         </Grid>
 
         {weekDates.map((date, index) => (
-          <Grid size={{ xs: 1.5 }} key={index}>
+          <Grid size={{ xs: 1.5 }} key={index} sx={{ position: "relative" }}>
+            <CurrentTimeIndicator date={date} height={30} />
             <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
               <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem", fontWeight: "bold" }}>
                 {date.toLocaleDateString("en-US", { weekday: "short" })}
