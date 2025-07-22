@@ -2,14 +2,12 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import {
   Add as AddIcon,
   Block,
-  Business as BusinessIcon,
   Cancel as CancelIcon,
   CheckCircle,
   Edit as EditIcon,
   Event as EventIcon,
   NavigateBefore,
   NavigateNext,
-  Person as PersonIcon,
   AccessTime as TimeIcon,
   Today,
   ViewDay,
@@ -27,19 +25,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   FormControlLabel,
   Grid,
   IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   Switch,
   Tab,
   Tabs,
-  TextField,
   Typography,
 } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
@@ -96,9 +89,29 @@ interface WorkHoursData {
   rActiveYN: string;
 }
 
-// Form interface for date selection
+// Form interfaces
 interface DateSelectionForm {
   selectedDate: Date;
+}
+
+interface BookingForm {
+  patientSearch: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  provider: number | string;
+  resource: number | string;
+  appointmentDate: Date;
+  appointmentTime: string;
+  duration: number;
+  notes: string;
+}
+
+interface FilterForm {
+  bookingMode: "physician" | "resource";
+  selectedProvider: number | string;
+  selectedResource: number | string;
 }
 
 // Mock data with more appointments for different dates
@@ -260,12 +273,28 @@ const mockResources = [
   { value: 3, label: "X-Ray", type: "equipment" },
 ];
 
+const durationOptions = [
+  { value: 15, label: "15 minutes" },
+  { value: 30, label: "30 minutes" },
+  { value: 45, label: "45 minutes" },
+  { value: 60, label: "1 hour" },
+  { value: 90, label: "1.5 hours" },
+  { value: 120, label: "2 hours" },
+];
+
+const bookingModeOptions = [
+  { value: "physician", label: "Physician" },
+  { value: "resource", label: "Resource" },
+];
+
+// Simple FormField component since we don't have the actual import
+const SimpleFormField = ({ name, control, type, label, options, required, ...props }) => {
+  return <FormField name={name} control={control} type={type} label={label} options={options} required={required} {...props} />;
+};
+
 const AppointmentScheduler = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("day");
-  const [selectedProvider, setSelectedProvider] = useState<number | "">("");
-  const [selectedResource, setSelectedResource] = useState<number | "">("");
-  const [bookingMode, setBookingMode] = useState<"physician" | "resource">("physician");
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
   const [appointments, setAppointments] = useState<AppointmentData[]>(mockAppointments);
@@ -273,17 +302,42 @@ const AppointmentScheduler = () => {
   const [workHours, setWorkHours] = useState<WorkHoursData[]>(mockWorkHours);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
 
-  // Form control for date selection
+  // Form controls using useForm
   const dateControl = useForm<DateSelectionForm>({
     defaultValues: {
       selectedDate: currentDate,
     },
   });
 
+  const filterControl = useForm<FilterForm>({
+    defaultValues: {
+      bookingMode: "physician",
+      selectedProvider: "",
+      selectedResource: "",
+    },
+  });
+
+  const bookingControl = useForm<BookingForm>({
+    defaultValues: {
+      patientSearch: "",
+      firstName: "",
+      lastName: "",
+      phone: "",
+      email: "",
+      provider: "",
+      resource: "",
+      appointmentDate: new Date(),
+      appointmentTime: "09:00",
+      duration: 30,
+      notes: "",
+    },
+  });
+
+  const filterValues = filterControl.watch();
+
   // Generate 15-minute time slots for a full 24-hour day
   const timeSlots = useMemo(() => {
     const slots = [];
-    // Loop from hour 0 to 23 to cover the entire day
     for (let hour = 0; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
         slots.push({
@@ -301,7 +355,7 @@ const AppointmentScheduler = () => {
     const week = [];
     const startDate = new Date(date);
     const day = startDate.getDay();
-    const diff = startDate.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
+    const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
     startDate.setDate(diff);
 
     for (let i = 0; i < 7; i++) {
@@ -321,12 +375,10 @@ const AppointmentScheduler = () => {
     const startDate = new Date(firstDay);
     const endDate = new Date(lastDay);
 
-    // Start from Monday of the first week
     const dayOfWeek = firstDay.getDay();
     const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     startDate.setDate(firstDay.getDate() - daysBack);
 
-    // End at Sunday of the last week
     const endDayOfWeek = lastDay.getDay();
     const daysForward = endDayOfWeek === 0 ? 0 : 7 - endDayOfWeek;
     endDate.setDate(lastDay.getDate() + daysForward);
@@ -360,9 +412,12 @@ const AppointmentScheduler = () => {
         return aptDate.getMonth() === currentDate.getMonth() && aptDate.getFullYear() === currentDate.getFullYear();
       }
 
-      return (selectedProvider === "" || apt.hplID === selectedProvider) && (selectedResource === "" || apt.rlID === selectedResource);
+      return (
+        (filterValues.selectedProvider === "" || apt.hplID === filterValues.selectedProvider) &&
+        (filterValues.selectedResource === "" || apt.rlID === filterValues.selectedResource)
+      );
     });
-  }, [appointments, currentDate, viewMode, selectedProvider, selectedResource, getWeekDates]);
+  }, [appointments, currentDate, viewMode, filterValues.selectedProvider, filterValues.selectedResource, getWeekDates]);
 
   // Get appointments for specific date and time slot
   const getAppointmentsForSlot = useCallback(
@@ -446,7 +501,6 @@ const AppointmentScheduler = () => {
     }
 
     setCurrentDate(newDate);
-    // Update the form date picker as well
     dateControl.setValue("selectedDate", newDate);
   };
 
@@ -455,6 +509,13 @@ const AppointmentScheduler = () => {
     if (selectedDate) {
       setCurrentDate(selectedDate);
     }
+  };
+
+  // Handle booking form submission
+  const handleBookingSubmit = (data: BookingForm) => {
+    console.log("Booking data:", data);
+    setShowBookingDialog(false);
+    bookingControl.reset();
   };
 
   // Appointment status colors
@@ -654,7 +715,6 @@ const AppointmentScheduler = () => {
 
     return (
       <Box>
-        {/* Month header */}
         <Grid container spacing={0.5} sx={{ mb: 1 }}>
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
             <Grid size={{ xs: 12 / 7 }} key={day}>
@@ -665,7 +725,6 @@ const AppointmentScheduler = () => {
           ))}
         </Grid>
 
-        {/* Month grid */}
         {weeks.map((week, weekIndex) => (
           <Grid container spacing={0.5} key={weekIndex} sx={{ mb: 0.5 }}>
             {week.map((date, dayIndex) => {
@@ -765,7 +824,6 @@ const AppointmentScheduler = () => {
 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" spacing={0.5} justifyContent="flex-end" flexWrap="wrap" alignItems="center">
-              {/* Inline Date Picker */}
               <Box sx={{ minWidth: 140 }}>
                 <FormField
                   name="selectedDate"
@@ -803,55 +861,37 @@ const AppointmentScheduler = () => {
         </Grid>
       </Paper>
 
-      {/* Compact Filters */}
+      {/* Enhanced Filters using FormField */}
       <Paper sx={{ p: 1, mb: 1 }}>
         <Grid container spacing={1} alignItems="center">
           <Grid size={{ xs: 6, sm: 3 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel sx={{ fontSize: "0.8rem" }}>Mode</InputLabel>
-              <Select value={bookingMode} label="Mode" onChange={(e) => setBookingMode(e.target.value as "physician" | "resource")} sx={{ fontSize: "0.8rem" }}>
-                <MenuItem value="physician">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <PersonIcon fontSize="small" />
-                    Physician
-                  </Box>
-                </MenuItem>
-                <MenuItem value="resource">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <BusinessIcon fontSize="small" />
-                    Resource
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
+            <FormField name="bookingMode" control={filterControl.control} type="select" label="Mode" options={bookingModeOptions} size="small" fullWidth />
           </Grid>
 
           <Grid size={{ xs: 6, sm: 3 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel sx={{ fontSize: "0.8rem" }}>Provider</InputLabel>
-              <Select value={selectedProvider} label="Provider" onChange={(e) => setSelectedProvider(e.target.value)} sx={{ fontSize: "0.8rem" }}>
-                <MenuItem value="">All</MenuItem>
-                {mockProviders.map((provider) => (
-                  <MenuItem key={provider.value} value={provider.value}>
-                    {provider.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <FormField
+              name="selectedProvider"
+              control={filterControl.control}
+              type="select"
+              label="Provider"
+              options={[{ value: "", label: "All Providers" }, ...mockProviders]}
+              size="small"
+              fullWidth
+              clearable
+            />
           </Grid>
 
           <Grid size={{ xs: 6, sm: 3 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel sx={{ fontSize: "0.8rem" }}>Resource</InputLabel>
-              <Select value={selectedResource} label="Resource" onChange={(e) => setSelectedResource(e.target.value)} sx={{ fontSize: "0.8rem" }}>
-                <MenuItem value="">All</MenuItem>
-                {mockResources.map((resource) => (
-                  <MenuItem key={resource.value} value={resource.value}>
-                    {resource.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <FormField
+              name="selectedResource"
+              control={filterControl.control}
+              type="select"
+              label="Resource"
+              options={[{ value: "", label: "All Resources" }, ...mockResources]}
+              size="small"
+              fullWidth
+              clearable
+            />
           </Grid>
 
           <Grid size={{ xs: 6, sm: 3 }}>
@@ -935,102 +975,78 @@ const AppointmentScheduler = () => {
         </Grid>
       </Paper>
 
-      {/* Compact Booking Dialog */}
+      {/* Enhanced Booking Dialog using FormField */}
       <Dialog open={showBookingDialog} onClose={() => setShowBookingDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
           <Typography variant="h6" sx={{ fontSize: "1rem" }}>
             Book Appointment
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {bookingMode === "physician" ? "Physician" : "Resource"} Booking
+            {filterValues.bookingMode === "physician" ? "Physician" : "Resource"} Booking
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
-          <Grid container spacing={1}>
-            <Grid size={{ xs: 12 }}>
-              <FormControlLabel
-                control={<Switch checked={isRegisteredPatient} onChange={(e) => setIsRegisteredPatient(e.target.checked)} size="small" />}
-                label={<Typography sx={{ fontSize: "0.8rem" }}>Registered Patient</Typography>}
-              />
-            </Grid>
-
-            {isRegisteredPatient ? (
+          <Box component="form" onSubmit={bookingControl.handleSubmit(handleBookingSubmit)}>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid size={{ xs: 12 }}>
-                <TextField fullWidth label="Search Patient" placeholder="Enter name or ID" variant="outlined" size="small" sx={{ fontSize: "0.8rem" }} />
+                <FormControlLabel
+                  control={<Switch checked={isRegisteredPatient} onChange={(e) => setIsRegisteredPatient(e.target.checked)} size="small" />}
+                  label={<Typography sx={{ fontSize: "0.8rem" }}>Registered Patient</Typography>}
+                />
               </Grid>
-            ) : (
-              <>
-                <Grid size={{ xs: 6 }}>
-                  <TextField fullWidth label="First Name" variant="outlined" size="small" required />
+
+              {isRegisteredPatient ? (
+                <Grid size={{ xs: 12 }}>
+                  <FormField name="patientSearch" control={bookingControl.control} type="text" label="Search Patient" placeholder="Enter name or ID" size="small" fullWidth />
                 </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <TextField fullWidth label="Last Name" variant="outlined" size="small" />
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <TextField fullWidth label="Phone" variant="outlined" size="small" required />
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <TextField fullWidth label="Email" type="email" variant="outlined" size="small" />
-                </Grid>
-              </>
-            )}
+              ) : (
+                <>
+                  <Grid size={{ xs: 6 }}>
+                    <FormField name="firstName" control={bookingControl.control} type="text" label="First Name" required size="small" fullWidth />
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <FormField name="lastName" control={bookingControl.control} type="text" label="Last Name" size="small" fullWidth />
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <FormField name="phone" control={bookingControl.control} type="tel" label="Phone" required size="small" fullWidth />
+                  </Grid>
+                  <Grid size={{ xs: 6 }}>
+                    <FormField name="email" control={bookingControl.control} type="email" label="Email" size="small" fullWidth />
+                  </Grid>
+                </>
+              )}
 
-            <Grid size={{ xs: 6 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Provider</InputLabel>
-                <Select label="Provider" required>
-                  {mockProviders.map((provider) => (
-                    <MenuItem key={provider.value} value={provider.value}>
-                      {provider.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FormField name="provider" control={bookingControl.control} type="select" label="Provider" options={mockProviders} required size="small" fullWidth />
+              </Grid>
 
-            <Grid size={{ xs: 6 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Resource</InputLabel>
-                <Select label="Resource" required>
-                  {mockResources.map((resource) => (
-                    <MenuItem key={resource.value} value={resource.value}>
-                      {resource.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+              <Grid size={{ xs: 6 }}>
+                <FormField name="resource" control={bookingControl.control} type="select" label="Resource" options={mockResources} required size="small" fullWidth />
+              </Grid>
 
-            <Grid size={{ xs: 4 }}>
-              <TextField fullWidth label="Date" type="date" variant="outlined" size="small" InputLabelProps={{ shrink: true }} required />
-            </Grid>
+              <Grid size={{ xs: 4 }}>
+                <FormField name="appointmentDate" control={bookingControl.control} type="datepicker" label="Date" required size="small" fullWidth />
+              </Grid>
 
-            <Grid size={{ xs: 4 }}>
-              <TextField fullWidth label="Time" type="time" variant="outlined" size="small" InputLabelProps={{ shrink: true }} required />
-            </Grid>
+              <Grid size={{ xs: 4 }}>
+                <FormField name="appointmentTime" control={bookingControl.control} type="timepicker" label="Time" required size="small" fullWidth />
+              </Grid>
 
-            <Grid size={{ xs: 4 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Duration</InputLabel>
-                <Select label="Duration" required>
-                  <MenuItem value={15}>15 min</MenuItem>
-                  <MenuItem value={30}>30 min</MenuItem>
-                  <MenuItem value={45}>45 min</MenuItem>
-                  <MenuItem value={60}>1 hour</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+              <Grid size={{ xs: 4 }}>
+                <FormField name="duration" control={bookingControl.control} type="select" label="Duration" options={durationOptions} required size="small" fullWidth />
+              </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <TextField fullWidth label="Notes" multiline rows={2} variant="outlined" size="small" />
+              <Grid size={{ xs: 12 }}>
+                <FormField name="notes" control={bookingControl.control} type="textarea" label="Notes" rows={2} size="small" fullWidth />
+              </Grid>
             </Grid>
-          </Grid>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ pt: 1 }}>
           <Button onClick={() => setShowBookingDialog(false)} size="small">
             Cancel
           </Button>
-          <Button variant="contained" size="small">
+          <Button variant="contained" onClick={bookingControl.handleSubmit(handleBookingSubmit)} size="small">
             Book
           </Button>
         </DialogActions>
