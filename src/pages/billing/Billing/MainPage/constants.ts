@@ -60,6 +60,13 @@ export const DEFAULT_FORM_VALUES: BillingFormData = {
   visitReferenceCode: "",
   billServices: [],
   billProducts: [],
+  billPaymentDetails: {
+    paymentMode: "",
+    paymentCode: "",
+    paymentName: "",
+    paidAmount: 0,
+    paymentNote: "",
+  },
   rActiveYN: "Y",
   rNotes: "",
 };

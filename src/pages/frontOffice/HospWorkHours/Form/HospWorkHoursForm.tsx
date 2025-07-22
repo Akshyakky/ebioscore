@@ -3,68 +3,68 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
+import { DAY_OPTIONS, HOLIDAY_OPTIONS, HospWorkHoursDto, LANGUAGE_OPTIONS, STATUS_OPTIONS } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { useAlert } from "@/providers/AlertProvider";
+import { formatTimeStringToDate } from "@/utils/Common/dateUtils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Cancel, Refresh, Save } from "@mui/icons-material";
-import { Alert, Box, Card, CardContent, CircularProgress, Divider, Grid, InputAdornment, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { Cancel, Save } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { usePaymentTypes } from "../hooks/usePaymentTypes";
+import { useHospWorkHoursOperations } from "../hooks/useHospWorkHoursOperations";
 
-interface PaymentTypesFormProps {
+interface HospWorkHoursFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: BPayTypeDto | null;
+  initialData: HospWorkHoursDto | null;
   viewOnly?: boolean;
 }
 
-const schema = z.object({
-  payID: z.number(),
-  payCode: z.string().nonempty("Payment code is required"),
-  payName: z.string().nonempty("Payment name is required"),
-  payMode: z.string().nonempty("Payment mode is required"),
-  bankCharge: z.any(),
-  rNotes: z.string().nullable().optional(),
-  rActiveYN: z.string(),
-  transferYN: z.string().optional(),
-});
+const schema = z
+  .object({
+    hwrkID: z.number(),
+    langType: z.string().nonempty("Language is required"),
+    daysDesc: z.string().nonempty("Day is required"),
+    startTime: z.date().nullable(),
+    endTime: z.date().nullable(),
+    wkHoliday: z.string().nonempty("Holiday status is required"),
+    rActiveYN: z.string(),
+    rNotes: z.string().nullable().optional(),
+    transferYN: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.startTime && data.endTime) {
+        return data.endTime > data.startTime;
+      }
+      return true;
+    },
+    { message: "End time must be after start time", path: ["endTime"] }
+  );
 
-type PaymentTypesFormData = z.infer<typeof schema>;
+type WorkHoursFormData = z.infer<typeof schema>;
 
-const paymentModeOptions = [
-  { value: "CASHP", label: "Cash" },
-  { value: "CRCDP", label: "Card" },
-  { value: "CHEQP", label: "Cheque" },
-  { value: "ADJUS", label: "Adjustment" },
-  { value: "BNKTR", label: "Bank Transfer" },
-  { value: "ONLP", label: "Online Payment" },
-  { value: "DSPAY", label: "Department Sales" },
-  { value: "INSUP", label: "Insurance Payment" },
-  { value: "OTCRP", label: "Other" },
-];
-
-const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const HospWorkHoursForm: React.FC<HospWorkHoursFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, savePaymentType } = usePaymentTypes();
   const { showAlert } = useAlert();
+
+  const { validateAndSaveWorkHours, checkWorkHoursExist } = useHospWorkHoursOperations();
+
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
-  const isAddMode = !initialData;
-
-  const defaultValues: PaymentTypesFormData = {
-    payID: 0,
-    payCode: "",
-    payName: "",
-    payMode: "CASH",
-    bankCharge: 0,
-    rNotes: "",
+  const defaultValues: HospWorkHoursDto = {
+    hwrkID: 0,
+    langType: "EN",
+    daysDesc: "MONDAY",
+    startTime: null,
+    endTime: null,
+    wkHoliday: "N",
     rActiveYN: "Y",
+    rNotes: "",
     transferYN: "N",
   };
 
@@ -74,73 +74,84 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
     reset,
     setValue,
     formState: { errors, isDirty, isValid },
-  } = useForm<PaymentTypesFormData>({
+    watch,
+  } = useForm<WorkHoursFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
-  const rActiveYN = useWatch({ control, name: "rActiveYN" });
-  const payMode = useWatch({ control, name: "payMode" });
-
-  const generatePaymentCode = async () => {
-    if (!isAddMode) return;
-
-    try {
-      setIsGeneratingCode(true);
-      const nextCode = await getNextCode("PAY", 3);
-      if (nextCode) {
-        setValue("payCode", nextCode, { shouldValidate: true, shouldDirty: true });
-      } else {
-        showAlert("Warning", "Failed to generate payment code", "warning");
-      }
-    } catch (error) {
-      console.error("Error generating payment code:", error);
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  };
+  const langType = useWatch({ control, name: "langType" });
+  const daysDesc = useWatch({ control, name: "daysDesc" });
+  const startTime = watch("startTime");
+  const endTime = watch("endTime");
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as PaymentTypesFormData);
+      const formData: WorkHoursFormData = {
+        ...initialData,
+        startTime: initialData.startTime ? new Date(initialData.startTime) : null,
+        endTime: initialData.endTime ? new Date(initialData.endTime) : null,
+      };
+      reset(formData);
     } else {
       reset(defaultValues);
-      generatePaymentCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: PaymentTypesFormData) => {
+  const validateUniqueRecord = useCallback(async () => {
+    if (!langType || !daysDesc || initialData?.hwrkID) {
+      return true; // Skip validation for edit mode or incomplete data
+    }
+
+    const exists = await checkWorkHoursExist(langType, daysDesc);
+    if (exists) {
+      setFormError(`Work hours already exist for ${langType} language on ${daysDesc}`);
+      showAlert("Validation Error", `Work hours already exist for ${langType} language on ${daysDesc}`, "warning");
+      return false;
+    }
+    return true;
+  }, [langType, daysDesc, initialData, checkWorkHoursExist, showAlert]);
+
+  const onSubmit = async (data: WorkHoursFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
+
+    // Validate unique combination
+    const isUnique = await validateUniqueRecord();
+    if (!isUnique) {
+      return;
+    }
 
     try {
       setIsSaving(true);
       setLoading(true);
 
-      const paymentData: BPayTypeDto = {
-        payID: data.payID,
-        payCode: data.payCode,
-        payName: data.payName,
-        payMode: data.payMode,
-        bankCharge: data.bankCharge,
-        rNotes: data.rNotes || "",
+      const workHoursData: HospWorkHoursDto = {
+        hwrkID: data.hwrkID || 0,
+        langType: data.langType,
+        daysDesc: data.daysDesc,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        wkHoliday: data.wkHoliday,
         rActiveYN: data.rActiveYN || "Y",
+        rNotes: data.rNotes || "",
         transferYN: data.transferYN || "N",
       };
 
-      const response = await savePaymentType(paymentData);
+      const response = await validateAndSaveWorkHours(workHoursData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Payment type created successfully" : "Payment type updated successfully", "success");
+        const actionText = data.hwrkID ? "updated" : "created";
+        showAlert("Success", `Work hours ${actionText} successfully`, "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save payment type");
+        throw new Error(response.errorMessage || "Failed to save work hours");
       }
     } catch (error) {
-      console.error("Error saving payment type:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save payment type";
+      console.error("Error saving work hours:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save work hours";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -150,12 +161,8 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
   };
 
   const performReset = () => {
-    reset(initialData ? (initialData as PaymentTypesFormData) : defaultValues);
+    reset(initialData ? (initialData as WorkHoursFormData) : defaultValues);
     setFormError(null);
-
-    if (isAddMode) {
-      generatePaymentCode();
-    }
   };
 
   const handleReset = () => {
@@ -192,7 +199,7 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
     setShowCancelConfirmation(false);
   };
 
-  const dialogTitle = viewOnly ? "View Payment Type Details" : isAddMode ? "Create New Payment Type" : `Edit Payment Type - ${initialData?.payName}`;
+  const dialogTitle = viewOnly ? "View Work Hours Details" : initialData ? "Edit Work Hours" : "Create New Work Hours";
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -202,26 +209,20 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Payment Type" : "Update Payment Type"}
+          text={initialData ? "Update Work Hours" : "Create Work Hours"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
           icon={Save}
           asynchronous={true}
           showLoadingIndicator={true}
-          loadingText={isAddMode ? "Creating..." : "Updating..."}
-          successText={isAddMode ? "Created!" : "Updated!"}
+          loadingText={initialData ? "Updating..." : "Creating..."}
+          successText={initialData ? "Updated!" : "Created!"}
           disabled={isSaving || !isValid}
         />
       </Box>
     </Box>
   );
-
-  const handleRefreshCode = () => {
-    if (isAddMode) {
-      generatePaymentCode();
-    }
-  };
 
   return (
     <>
@@ -244,16 +245,6 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
           )}
 
           <Grid container spacing={3}>
-            {/* Status Toggle - Prominent Position */}
-            <Grid size={{ sm: 12 }}>
-              <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Status:
-                </Typography>
-                <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
-              </Box>
-            </Grid>
-
             {/* Basic Information Section */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
@@ -265,74 +256,79 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="payCode"
-                        control={control}
-                        label="Payment Code"
-                        type="text"
-                        required
-                        disabled={viewOnly || !isAddMode}
-                        size="small"
-                        fullWidth
-                        InputProps={{
-                          endAdornment:
-                            isAddMode && !viewOnly ? (
-                              <InputAdornment position="end">
-                                {isGeneratingCode ? (
-                                  <CircularProgress size={20} />
-                                ) : (
-                                  <SmartButton icon={Refresh} variant="text" size="small" onClick={handleRefreshCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
-                                )}
-                              </InputAdornment>
-                            ) : null,
-                        }}
-                      />
+                      <FormField name="langType" control={control} label="Language" type="select" options={LANGUAGE_OPTIONS} required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="payName" control={control} label="Payment Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                      <FormField name="daysDesc" control={control} label="Day" type="select" options={DAY_OPTIONS} required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* Settings Section */}
+            {/* Time Information Section */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Payment Settings
+                    Time Schedule
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
-                        name="payMode"
+                        name="startTime"
                         control={control}
-                        label="Payment Mode"
-                        type="select"
-                        required
+                        label="Start Time"
+                        type="timepicker"
                         disabled={viewOnly}
                         size="small"
-                        options={paymentModeOptions}
                         fullWidth
+                        onChange={(item) => {
+                          const formattedTime = formatTimeStringToDate(item);
+                          setValue("startTime", formattedTime);
+                        }}
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
-                        name="bankCharge"
+                        name="endTime"
                         control={control}
-                        label="Bank Charge (%)"
-                        type="number"
-                        required
+                        label="End Time"
+                        type="timepicker"
                         disabled={viewOnly}
                         size="small"
-                        inputProps={{ min: 0, step: 0.01 }}
                         fullWidth
+                        onChange={(item) => {
+                          const formattedTime = formatTimeStringToDate(item);
+                          setValue("endTime", formattedTime);
+                        }}
                       />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Status Information Section */}
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Status Information
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="wkHoliday" control={control} label="Holiday" type="select" options={HOLIDAY_OPTIONS} required disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="rActiveYN" control={control} label="Status" type="select" options={STATUS_OPTIONS} required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -359,7 +355,7 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
                         size="small"
                         fullWidth
                         rows={4}
-                        placeholder="Enter any additional information about this payment type"
+                        placeholder="Enter any additional information about these work hours"
                       />
                     </Grid>
                   </Grid>
@@ -397,4 +393,4 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
   );
 };
 
-export default PaymentTypesForm;
+export default HospWorkHoursForm;

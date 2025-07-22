@@ -18,6 +18,7 @@ import {
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
+import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
@@ -25,7 +26,6 @@ import { deptUnitListService, roomGroupService, roomListService, wardCategorySer
 import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { AppModifyListService } from "@/services/NotGenericPaternServices/AppModifyListService";
-import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { BillingService } from "@/services/NotGenericPaternServices/BillingService";
 import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
@@ -583,7 +583,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         }));
       },
       appointmentConsultants: async () => {
-        const response = await AppointmentService.fetchAppointmentConsultants();
+        const response = await appointmentService.getAllAppointmentConsultants();
         return (response.data || []).map((item) => ({
           value: item.conID || 0,
           label: item.conFName + " " + item.conLName || "",

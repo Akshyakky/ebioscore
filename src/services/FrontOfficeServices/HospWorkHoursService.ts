@@ -1,7 +1,7 @@
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { PaginatedList } from "@/interfaces/Common/PaginatedList";
-import { HospWorkHoursDto, WorkHoursFilterDto } from "@/interfaces/FrontOffice/HospWorkHoursDt";
+import { HospWorkHoursDto, WorkHoursFilterDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 
@@ -35,111 +35,6 @@ class HospWorkHoursService extends GenericEntityService<HospWorkHoursDto> {
       return {
         success: false,
         errorMessage: error instanceof Error ? error.message : "Failed to retrieve work hours by language",
-        data: undefined,
-      };
-    }
-  }
-
-  /**
-   * Retrieves work hours by day description
-   * @param dayDesc The day description to filter by
-   * @returns Promise containing operation result with list of work hours
-   */
-  async getWorkHoursByDay(dayDesc: string): Promise<OperationResult<HospWorkHoursDto[]>> {
-    try {
-      if (!dayDesc || dayDesc.trim() === "") {
-        return {
-          success: false,
-          errorMessage: "Day description is required",
-          data: undefined,
-        };
-      }
-
-      return await this.apiService.get<OperationResult<HospWorkHoursDto[]>>(`${this.baseEndpoint}/GetByDay/${encodeURIComponent(dayDesc)}`, this.getToken());
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to retrieve work hours by day",
-        data: undefined,
-      };
-    }
-  }
-
-  /**
-   * Retrieves work hours for holidays
-   * @returns Promise containing operation result with list of holiday work hours
-   */
-  async getHolidayWorkHours(): Promise<OperationResult<HospWorkHoursDto[]>> {
-    try {
-      return await this.apiService.get<OperationResult<HospWorkHoursDto[]>>(`${this.baseEndpoint}/GetHolidayWorkHours`, this.getToken());
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to retrieve holiday work hours",
-        data: undefined,
-      };
-    }
-  }
-
-  /**
-   * Validates work hours for overlapping schedules
-   * @param dto The work hours data to validate
-   * @returns Promise containing operation result indicating if there are any overlaps
-   */
-  async validateWorkHoursOverlap(dto: HospWorkHoursDto): Promise<OperationResult<boolean>> {
-    try {
-      if (!dto) {
-        return {
-          success: false,
-          errorMessage: "Work hours data is required for validation",
-          data: undefined,
-        };
-      }
-
-      return await this.apiService.post<OperationResult<boolean>>(`${this.baseEndpoint}/ValidateOverlap`, dto, this.getToken());
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to validate work hours overlap",
-        data: undefined,
-      };
-    }
-  }
-
-  /**
-   * Retrieves work hours within a specified time range
-   * @param startTime Start time of the range
-   * @param endTime End time of the range
-   * @returns Promise containing operation result with list of work hours within the time range
-   */
-  async getWorkHoursByTimeRange(startTime: Date, endTime: Date): Promise<OperationResult<HospWorkHoursDto[]>> {
-    try {
-      if (!startTime || !endTime) {
-        return {
-          success: false,
-          errorMessage: "Both start time and end time are required",
-          data: undefined,
-        };
-      }
-
-      if (startTime >= endTime) {
-        return {
-          success: false,
-          errorMessage: "Start time must be earlier than end time",
-          data: undefined,
-        };
-      }
-
-      const params = new URLSearchParams({
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-      });
-
-      return await this.apiService.get<OperationResult<HospWorkHoursDto[]>>(`${this.baseEndpoint}/GetByTimeRange?${params.toString()}`, this.getToken());
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to retrieve work hours by time range",
         data: undefined,
       };
     }

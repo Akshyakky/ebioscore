@@ -62,6 +62,14 @@ export const BillProductsDtoSchema = z.object({
   rActiveYN: z.string().default("Y"),
 });
 
+export const BillPaymentDetailsDtoSchema = z.object({
+  paymentMode: z.string().min(1),
+  paymentCode: z.string(),
+  paymentName: z.string(),
+  paidAmount: z.number().min(0),
+  paymentNote: z.string().optional(),
+});
+
 // Main Billing Schema
 export const billingSchema = z.object({
   pChartID: z.number().min(1, "Patient selection is required"),
@@ -109,6 +117,13 @@ export const billingSchema = z.object({
   visitReferenceCode: z.string().optional().default(""),
   billServices: z.array(BillServicesDtoSchema).default([]),
   billProducts: z.array(BillProductsDtoSchema).default([]),
+  billPaymentDetails: BillPaymentDetailsDtoSchema.default({
+    paymentMode: "",
+    paymentCode: "",
+    paymentName: "",
+    paidAmount: 0,
+    paymentNote: "",
+  }),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().optional().default("N"),
   rNotes: z.string().optional().default(""),
@@ -117,6 +132,7 @@ export const billingSchema = z.object({
 export type BillingFormData = z.infer<typeof billingSchema>;
 export type BillServiceData = z.infer<typeof BillServicesDtoSchema>;
 export type BillProductData = z.infer<typeof BillProductsDtoSchema>;
+export type BillPaymentDetailsData = z.infer<typeof BillProductsDtoSchema>;
 
 // Grid row interfaces
 export interface BillServiceRow extends BillServiceData {

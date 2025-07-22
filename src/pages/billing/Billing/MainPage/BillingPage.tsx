@@ -21,11 +21,10 @@ import { useForm } from "react-hook-form";
 
 // Import new components and utilities
 import { useBilling } from "../hooks/useBilling";
-import { BillDetailsSection, BillSummarySection, ItemsSection, PatientSection, VisitReferenceCard } from "./components";
+import { BillDetailsSection, BillSummarySection, ItemsSection, PatientSection, PaymentSection, VisitReferenceCard } from "./components";
 import { DEFAULT_FORM_VALUES } from "./constants";
 import { BillingFormData, billingSchema } from "./types";
 import { calculateBillTotals, prepareBillSaveRequest } from "./utils/billingUtils";
-
 const BillingPage: React.FC = () => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
@@ -274,6 +273,11 @@ const BillingPage: React.FC = () => {
                 productCount={watchedBillProducts.length}
                 calculateDiscountFromPercent={calculateDiscountFromPercent}
               />
+            </Grid>
+
+            {/* Payment Section - ADD THIS NEW SECTION */}
+            <Grid size={{ sm: 12 }}>
+              <PaymentSection control={control} setValue={setValue} watch={watch} finalBillAmount={finalBillAmount} />
             </Grid>
 
             {/* Action Buttons */}

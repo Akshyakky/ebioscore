@@ -7,17 +7,22 @@ import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
   AccessTime as AccessTimeIcon,
+  CheckCircle as ActiveIcon,
   Add as AddIcon,
+  DateRange as AllDayIcon,
+  Assignment as AllocationIcon,
   Close as CloseIcon,
   Delete as DeleteIcon,
+  Business as DepartmentIcon,
   Edit as EditIcon,
   Person as PersonIcon,
   Refresh as RefreshIcon,
   Room as RoomIcon,
   Search as SearchIcon,
+  SupervisorAccount as UnitHeadIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DeptUnitAllocationForm from "../Form/DeptUnitAllocationForm";
 import { useDeptUnitAllocation } from "../hooks/useDeptUnitAllocation";
@@ -41,7 +46,7 @@ const DeptUnitAllocationPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   const { allocationList, isLoading, error, fetchAllocationList, deleteAllocation } = useDeptUnitAllocation();
 
@@ -209,44 +214,127 @@ const DeptUnitAllocationPage: React.FC = () => {
   }, [allocationList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Total Allocations</Typography>
-          <Typography variant="h4">{stats.totalAllocations}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeAllocations}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Departments</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.uniqueDepartments}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Faculty</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.uniqueFaculty}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">All Day</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.allDayAllocations}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Unit Heads</Typography>
-          <Typography variant="h4" color="primary.main">
-            {stats.unitHeads}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <AllocationIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalAllocations}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Allocations
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ActiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeAllocations}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <DepartmentIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.uniqueDepartments}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Departments
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <PersonIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.uniqueFaculty}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Faculty
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <AllDayIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {stats.allDayAllocations}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  All Day
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #607d8b" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#607d8b", width: 40, height: 40 }}>
+                <UnitHeadIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#607d8b" fontWeight="bold">
+                  {stats.unitHeads}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Unit Heads
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const formatWeekDays = (allocation: DeptUnitAllocationDto): string => {
@@ -439,37 +527,19 @@ const DeptUnitAllocationPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2 }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+          Department Unit Allocation
+        </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
 
+      {/* Statistics Dashboard */}
       {showStats && renderStatsDashboard()}
 
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
-              Department Unit Allocation
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={1}>
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
-                variant="outlined"
-                size="small"
-                disabled={isLoading}
-                loadingText="Refreshing..."
-                asynchronous={true}
-                showLoadingIndicator={true}
-              />
-              <SmartButton text="Add Allocation" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-            </Stack>
-          </Grid>
-
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
@@ -494,9 +564,9 @@ const DeptUnitAllocationPage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Tooltip title="Filter Allocations">
-              <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
                 <DropdownSelect
                   label="Status"
                   name="status"
@@ -531,6 +601,23 @@ const DeptUnitAllocationPage: React.FC = () => {
                 </Box>
               </Stack>
             </Tooltip>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <SmartButton
+                text="Refresh"
+                icon={RefreshIcon}
+                onClick={handleRefresh}
+                color="info"
+                variant="outlined"
+                size="small"
+                disabled={isLoading}
+                loadingText="Refreshing..."
+                asynchronous={true}
+                showLoadingIndicator={true}
+              />
+              <SmartButton text="Add Allocation" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+            </Stack>
           </Grid>
         </Grid>
       </Paper>

@@ -56,7 +56,12 @@ const InvestigationListPage = lazy(() => import("@/pages/laboratory/Investigatio
 const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 const GRNManagementPage = lazy(() => import("@/pages/inventoryManagement/GoodsRecieveNote/MainPage/GrnListPage"));
 const ProductIssualPage = lazy(() => import("@/pages/inventoryManagement/ProductIssual/MainPage/ProductIssualPage"));
+<<<<<<< HEAD
 const PhysicianIssualPage = lazy(() => import("@/pages/inventoryManagement/PhysicianIssual/MainPage/PhysicianIssualMainPage"));
+=======
+const HospWorkHoursPage = lazy(() => import("@/pages/frontOffice/HospWorkHours/MainPage/HospWorkHoursPage"));
+const AppointmentScheduler = lazy(() => import("@/pages/frontOffice/Appointment/AppointmentScheduler"));
+>>>>>>> e8fb469293f4dcc9a5227cefef3b20f099353021
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -607,6 +612,26 @@ const routeConfig: RouteConfig[] = [
     metadata: {
       title: "Billing",
       category: "billing",
+    },
+  },
+  {
+    path: "/WorkingHourSetupPage",
+    component: wrapWithSuspense(HospWorkHoursPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Working Hour Setup",
+      category: "default",
+    },
+  },
+  {
+    path: "/AppointmentPage",
+    component: wrapWithSuspense(AppointmentScheduler),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Appointment",
+      category: "default",
     },
   },
   // 404 Not Found route - must be placed last to catch all unmatched routes
