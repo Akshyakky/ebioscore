@@ -1,7 +1,7 @@
 import CustomButton from "@/components/Button/CustomButton";
 import { GrnDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
-import { ProductIssualDetailDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
+import { IssualType, ProductIssualDetailDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { BatchSelectionDialog, useBatchSelection } from "@/pages/inventoryManagement/CommonPage/BatchSelectionDialog";
 import { billingService } from "@/services/BillingServices/BillingService";
@@ -58,6 +58,7 @@ const issualDetailSchema = z.object({
 const schema = z.object({
   pisid: z.number(),
   pisDate: z.date(),
+  issualType: z.nativeEnum(IssualType).default(IssualType.Department),
   fromDeptID: z.number().min(1, "From department is required"),
   fromDeptName: z.string(),
   toDeptID: z.number().min(1, "To department is required"),
@@ -67,8 +68,6 @@ const schema = z.object({
   catValue: z.string().optional(),
   indentNo: z.string().optional(),
   pisCode: z.string().optional(),
-  recConID: z.number().optional(),
-  recConName: z.string().optional(),
   approvedYN: z.string(),
   approvedID: z.number().optional(),
   approvedBy: z.string().optional(),
@@ -123,6 +122,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
   const productSearchRef = useRef<ProductSearchRef>(null);
   const watchedDetails = useWatch({ control, name: "details" });
   const fromDeptID = useWatch({ control, name: "fromDeptID" });
+  const toDeptName = useWatch({ control, name: "toDeptName" });
 
   // Use the BatchSelectionDialog hook
   const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, openDialog: openBatchDialog, closeDialog: closeBatchDialog } = useBatchSelection();
@@ -139,14 +139,12 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     setClearProductSearchTrigger((prev) => prev + 1);
   }, []);
 
-  // Enhanced helper function to map complete ProductListDto to ProductIssualDetailDto
+  // Enhanced helper function to map complete ProductListDto to ProductIssualDetailDto for Department Transfer
   const mapCompleteProductListToIssualDetail = useCallback((completeProduct: ProductListDto, batch: ProductBatchDto, issuedQty: number = 0): ProductIssualDetailDto => {
     const safeIssuedQty = Math.max(0, issuedQty);
 
-    // Get requestedQty from ProductListDto - assuming there's a field like 'requestedQuantity' or 'orderQuantity'
-    // Replace 'requestedQuantity' with the actual field name from ProductListDto
-    // If no such field exists, you can use a default value or get it from another source
-    const requestedQtyFromProduct = completeProduct.requestedQuantity || completeProduct.orderQuantity || completeProduct.defaultQuantity || 1;
+    // For Department transfers, requested quantity equals issued quantity initially
+    const requestedQtyFromProduct = safeIssuedQty || completeProduct.requestedQuantity || completeProduct.orderQuantity || completeProduct.defaultQuantity || 1;
 
     return {
       pisDetID: 0,
@@ -168,7 +166,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       unitPrice: batch.sellingPrice || completeProduct.defaultPrice || 0,
       tax: completeProduct.gstPerValue || 0,
       sellUnitPrice: batch.sellingPrice || completeProduct.defaultPrice || 0,
-      requestedQty: requestedQtyFromProduct, // Non-editable, comes from ProductListDto
+      requestedQty: requestedQtyFromProduct,
       issuedQty: safeIssuedQty,
       availableQty: batch.productQOH || 0,
       expiryYN: completeProduct.expiry || "N",
@@ -208,11 +206,10 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     [fromDeptID]
   );
 
-  // Enhanced handleBatchSelect to fetch complete ProductListDto by productID
+  // Enhanced handleBatchSelect to fetch complete ProductListDto by productID for Department Transfer
   const handleBatchSelect = useCallback(
     async (batch: ProductBatchDto) => {
       try {
-        debugger;
         setIsLoadingBatches(true);
         closeBatchDialog();
 
@@ -231,17 +228,17 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             shouldValidate: true,
             shouldDirty: true,
           });
-          showAlert("Success", `Product "${completeProductData.productName}" updated successfully`, "success");
+          showAlert("Success", `Department transfer product "${completeProductData.productName}" updated successfully`, "success");
         } else {
           // Add new product only if not editing
           append(newProductDetail);
-          showAlert("Success", `Product "${completeProductData.productName}" added for batch: ${batch.batchNo}`, "success");
+          showAlert("Success", `Product "${completeProductData.productName}" added for department transfer, batch: ${batch.batchNo}`, "success");
         }
 
         clearTemporaryFields();
       } catch (error) {
         console.error("Error in handleBatchSelect:", error);
-        showAlert("Error", `Failed to fetch product data. Please try again.`, "error");
+        showAlert("Error", `Failed to fetch product data for department transfer. Please try again.`, "error");
         clearTemporaryFields();
       } finally {
         setIsLoadingBatches(false);
@@ -268,13 +265,13 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       }
 
       if (!fromDeptID) {
-        showAlert("Warning", "Please select a from department first", "warning");
+        showAlert("Warning", "Please select a from department first for the department transfer", "warning");
         return;
       }
 
       // Only check for duplicate products when adding new (not when editing existing)
       if (!isEditingExistingProduct && fields.find((d) => d.productID === product.productID)) {
-        showAlert("Warning", `"${product.productName}" is already added to the list.`, "warning");
+        showAlert("Warning", `"${product.productName}" is already added to the department transfer list.`, "warning");
         productSearchRef.current?.clearSelection();
         return;
       }
@@ -289,17 +286,17 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
           const batches = response.data;
 
           if (batches.length === 0) {
-            showAlert("Warning", "No batches available for this product", "warning");
+            showAlert("Warning", "No batches available for this product in the source department", "warning");
             clearTemporaryFields();
           } else {
             openBatchDialog(batches);
           }
         } else {
-          showAlert("Warning", "Failed to fetch product batches", "warning");
+          showAlert("Warning", "Failed to fetch product batches for department transfer", "warning");
           clearTemporaryFields();
         }
       } catch (error) {
-        showAlert("Error", "Failed to fetch product batches", "error");
+        showAlert("Error", "Failed to fetch product batches for department transfer", "error");
         clearTemporaryFields();
       } finally {
         setIsLoadingBatches(false);
@@ -324,7 +321,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
 
         const productResponse = await productListService.getById(productDetail.productID);
         if (!productResponse.success || !productResponse.data) {
-          throw new Error("Failed to fetch complete ProductListDto for editing");
+          throw new Error("Failed to fetch complete ProductListDto for editing department transfer");
         }
 
         const fullProductData = productResponse.data;
@@ -351,7 +348,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
           }
         }
       } catch (error) {
-        showAlert("Error", "Failed to load product data for editing", "error");
+        showAlert("Error", "Failed to load product data for editing department transfer", "error");
         clearTemporaryFields();
       } finally {
         setIsAddingProduct(false);
@@ -598,23 +595,69 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       width: 130,
       sortable: false,
       filterable: false,
-      renderCell: (params) => (
-        <Typography
-          variant="body2"
-          sx={{
-            fontSize: "0.875rem",
-            textAlign: "right",
-            fontWeight: 500,
-            color: "primary.main",
-          }}
-        >
-          {params.row.requestedQty || 0}
-        </Typography>
-      ),
+      renderCell: (params) => {
+        const index = fields.findIndex((field) => {
+          if (field.pisDetID && params.row.pisDetID) {
+            return field.pisDetID === params.row.pisDetID;
+          }
+          return field.productID === params.row.productID;
+        });
+
+        if (index === -1) {
+          return (
+            <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
+              {params.row.requestedQty || 0}
+            </Typography>
+          );
+        }
+
+        const currentValue = watchedDetails?.[index]?.requestedQty || params.row.requestedQty || 0;
+        const availableQty = watchedDetails?.[index]?.availableQty || params.row.availableQty || 0;
+
+        return (
+          <TextField
+            size="small"
+            type="number"
+            value={currentValue}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value) || 0;
+
+              if (value > availableQty) {
+                showAlert("Warning", `Requested quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
+                return;
+              }
+
+              setValue(`details.${index}.requestedQty`, value, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+
+              // For department transfers, sync issued quantity with requested quantity initially
+              setValue(`details.${index}.issuedQty`, value, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
+            disabled={isViewMode}
+            inputProps={{ min: 0, max: availableQty, step: 0.01 }}
+            error={!!errors.details?.[index]?.requestedQty || currentValue > availableQty}
+            helperText={currentValue > availableQty ? "Cannot exceed available qty" : ""}
+            sx={{
+              width: "100px",
+              "& .MuiInputBase-input": {
+                cursor: "text",
+                textAlign: "right",
+              },
+            }}
+          />
+        );
+      },
     },
     {
       field: "availableQty",
-      headerName: "QOH(Units)",
+      headerName: "Available Qty",
       width: 120,
       sortable: false,
       filterable: false,
@@ -656,6 +699,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
 
         const currentValue = watchedDetails?.[index]?.issuedQty || params.row.issuedQty || 0;
         const availableQty = watchedDetails?.[index]?.availableQty || params.row.availableQty || 0;
+        const requestedQty = watchedDetails?.[index]?.requestedQty || params.row.requestedQty || 0;
 
         return (
           <TextField
@@ -665,9 +709,13 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
 
-              // Check against availableQty instead of requestedQty
               if (value > availableQty) {
-                showAlert("Warning", `Issued quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
+                showAlert("Warning", `Transfer quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
+                return;
+              }
+
+              if (value > requestedQty) {
+                showAlert("Warning", `Transfer quantity (${value}) cannot exceed requested quantity (${requestedQty})`, "warning");
                 return;
               }
 
@@ -679,9 +727,9 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             onClick={(e) => e.stopPropagation()}
             onFocus={(e) => e.stopPropagation()}
             disabled={isViewMode}
-            inputProps={{ min: 0, max: availableQty, step: 0.01 }} // Use availableQty as max
-            error={!!errors.details?.[index]?.issuedQty || currentValue > availableQty}
-            helperText={currentValue > availableQty ? "Cannot exceed available qty" : ""}
+            inputProps={{ min: 0, max: Math.min(availableQty, requestedQty), step: 0.01 }}
+            error={!!errors.details?.[index]?.issuedQty || currentValue > availableQty || currentValue > requestedQty}
+            helperText={currentValue > availableQty ? "Cannot exceed available qty" : currentValue > requestedQty ? "Cannot exceed requested qty" : ""}
             sx={{
               width: "100px",
               "& .MuiInputBase-input": {
@@ -803,14 +851,14 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Delete Product">
+            <Tooltip title="Remove from Transfer">
               <IconButton
                 size="small"
                 color="error"
                 onClick={(e) => {
                   e.stopPropagation();
                   remove(index);
-                  showAlert("Info", `Product "${params.row.productName}" removed from list`, "info");
+                  showAlert("Info", `Product "${params.row.productName}" removed from department transfer`, "info");
                 }}
                 sx={{
                   bgcolor: "rgba(211, 47, 47, 0.08)",
@@ -834,12 +882,12 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             {isEditingExistingProduct ? (
               <>
                 <EditIcon color="primary" />
-                Edit Product
+                Edit Product for Department Transfer
               </>
             ) : (
               <>
                 <AddIcon color="primary" />
-                Add Products
+                Add Products for Department Transfer
               </>
             )}
           </Typography>
@@ -850,8 +898,8 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 ref={productSearchRef}
                 onProductSelect={handleProductSelect}
                 clearTrigger={clearProductSearchTrigger}
-                label="Search Product"
-                placeholder="Scan barcode or search product name..."
+                label="Search Product for Transfer"
+                placeholder="Scan barcode or search product name for department transfer..."
                 disabled={isViewMode || isAddingProduct}
                 className="product-search-field"
                 initialSelection={productSearchSelection}
@@ -862,7 +910,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
                   <CircularProgress size={16} sx={{ mr: 1 }} />
                   <Typography variant="caption" color="text.secondary">
-                    Loading product data...
+                    Loading product data for department transfer...
                   </Typography>
                 </Box>
               )}
@@ -870,7 +918,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
 
             <Grid size={{ sm: 6, md: 3 }}>
               <TextField
-                label="Issue Quantity"
+                label="Transfer Quantity"
                 type="number"
                 value={selectedProductIssuedQty || ""}
                 onChange={(e) => setSelectedProductIssuedQty(parseFloat(e.target.value) || undefined)}
@@ -878,7 +926,7 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                 size="small"
                 fullWidth
                 inputProps={{ min: 0, step: 0.01 }}
-                placeholder="Enter quantity to issue"
+                placeholder="Enter quantity to transfer"
               />
             </Grid>
 
@@ -895,11 +943,11 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
           {selectedProduct && (
             <Alert severity="success" sx={{ mt: 2 }}>
               <Typography variant="body2">
-                <strong>Product Selected:</strong> {selectedProduct.productName}
+                <strong>Product Selected for Transfer:</strong> {selectedProduct.productName}
                 <br />
                 <strong>Product Code:</strong> {selectedProduct.productCode || "N/A"}
                 <br />
-                <strong>Status:</strong> Waiting for batch selection...
+                <strong>Status:</strong> Waiting for batch selection for department transfer...
               </Typography>
             </Alert>
           )}
@@ -909,12 +957,13 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
       <Paper elevation={1} sx={{ mb: 3 }}>
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
-            Product Details ({fields.length} items)
+            Department Transfer Products ({fields.length} items)
+            {toDeptName && <Chip label={`Transferring to: ${toDeptName}`} size="small" color="success" variant="outlined" sx={{ ml: 2 }} />}
           </Typography>
 
           {fields.length === 0 ? (
             <Alert severity="info" sx={{ mb: 2 }}>
-              No products added yet. {!isViewMode && "Select a product above to get started."}
+              No products added for department transfer yet. {!isViewMode && "Select products above to begin the transfer process."}
             </Alert>
           ) : (
             <Box sx={{ height: 500, width: "100%" }}>
@@ -950,13 +999,13 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
 
           {errors.details && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              At least one product detail is required
+              At least one product detail is required for department transfer
             </Alert>
           )}
 
           <Box sx={{ mt: 2, p: 2, bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
             <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-              Summary
+              Department Transfer Summary
             </Typography>
 
             <Grid container spacing={2}>
@@ -973,11 +1022,22 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
 
               <Grid size={{ sm: 3, xs: 3 }}>
                 <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h6" color="primary">
+                  <Typography variant="h6" color="info.main">
+                    {statistics.totalRequestedQty}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Requested Qty
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid size={{ sm: 3, xs: 3 }}>
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography variant="h6" color="success.main">
                     {statistics.totalIssuedQty}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Total Issue Qty
+                    Issued Qty
                   </Typography>
                 </Box>
               </Grid>
@@ -992,17 +1052,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
                   </Typography>
                 </Box>
               </Grid>
-
-              <Grid size={{ sm: 3, xs: 3 }}>
-                <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h6" color={statistics.expiredItems > 0 ? "error.main" : "text.primary"}>
-                    {statistics.expiredItems}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Expired Items
-                  </Typography>
-                </Box>
-              </Grid>
             </Grid>
 
             <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -1010,7 +1059,15 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
               {statistics.zeroQohItems > 0 && <Chip label={`${statistics.zeroQohItems} Zero Stock`} color="warning" size="small" icon={<WarningIcon />} />}
               {statistics.expiring30Days > 0 && <Chip label={`${statistics.expiring30Days} Expiring ≤30 Days`} color="error" size="small" icon={<ErrorIcon />} />}
               {statistics.expiring90Days > 0 && <Chip label={`${statistics.expiring90Days} Expiring ≤90 Days`} color="info" size="small" icon={<InfoIcon />} />}
-              {statistics.totalProducts === 0 && <Chip label="No products added yet" color="default" size="small" icon={<InfoIcon />} />}
+              {statistics.totalProducts === 0 && <Chip label="No products added for transfer yet" color="default" size="small" icon={<InfoIcon />} />}
+              {statistics.totalProducts > 0 && (
+                <Chip
+                  label={`Transfer Efficiency: ${statistics.totalRequestedQty > 0 ? ((statistics.totalIssuedQty / statistics.totalRequestedQty) * 100).toFixed(1) : 0}%`}
+                  color="primary"
+                  size="small"
+                  icon={<InfoIcon />}
+                />
+              )}
             </Box>
           </Box>
         </Box>

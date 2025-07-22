@@ -1,8 +1,8 @@
 import { useLoading } from "@/hooks/Common/useLoading";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { PaginatedList } from "@/interfaces/Common/PaginatedList";
-import { ProductIssualCompositeDto, ProductIssualDto, ProductIssualSearchRequest, ProductStockBalance } from "@/interfaces/InventoryManagement/ProductIssualDto";
+import { IssualType, ProductIssualCompositeDto, ProductIssualDto, ProductIssualSearchRequest, ProductStockBalance } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { useAlert } from "@/providers/AlertProvider";
-import { OperationResult } from "@/services/GenericEntityService/GenericEntityService";
 import { productIssualService } from "@/services/InventoryManagementService/ProductIssualService/ProductIssualService";
 import { useCallback, useState } from "react";
 
@@ -17,17 +17,43 @@ export interface ProductIssualHookReturn {
   paginatedIssuals: PaginatedList<ProductIssualDto>;
   isLoading: boolean;
   error: string | null;
-  issualSearch: (searchRequest: ProductIssualSearchRequest) => Promise<PaginatedList<ProductIssualDto>>;
+
+  // Generic and Type-Specific Search
+  genericIssualSearch: (searchRequest: ProductIssualSearchRequest) => Promise<PaginatedList<ProductIssualDto>>;
+  departmentIssualSearch: (searchRequest: ProductIssualSearchRequest) => Promise<PaginatedList<ProductIssualDto>>;
+  physicianIssualSearch: (searchRequest: ProductIssualSearchRequest) => Promise<PaginatedList<ProductIssualDto>>;
+
+  // Get and Save Operations
   getIssualWithDetailsById: (issualId: number) => Promise<ProductIssualCompositeDto | null>;
   saveIssualWithDetails: (issualData: ProductIssualCompositeDto) => Promise<OperationResult<ProductIssualCompositeDto>>;
+  saveDepartmentIssual: (issualData: ProductIssualCompositeDto) => Promise<OperationResult<ProductIssualCompositeDto>>;
+  savePhysicianIssual: (issualData: ProductIssualCompositeDto) => Promise<OperationResult<ProductIssualCompositeDto>>;
+
+  // Action Operations
   deleteIssual: (issualId: number) => Promise<boolean>;
   approveIssual: (issualId: number) => Promise<boolean>;
-  generateIssualCode: (fromDepartmentId: number) => Promise<string | null>;
+
+  // Code Generation
+  genericGenerateIssualCode: (fromDepartmentId: number, issualType: IssualType) => Promise<string | null>;
+  generateDepartmentIssualCode: (fromDepartmentId: number) => Promise<string | null>;
+  generatePhysicianIssualCode: (fromDepartmentId: number) => Promise<string | null>;
+
+  // Stock and Validation
   getAvailableStock: (departmentId: number, productId?: number) => Promise<ProductStockBalance[]>;
   validateStockAvailability: (departmentId: number, productId: number, requiredQty: number, batchNo?: string) => Promise<boolean>;
+
+  // Utility and Summary
+  getIssualSummary: (startDate?: Date, endDate?: Date) => Promise<any>;
+  getIssualTypes: () => Promise<any[]>;
+  getPendingIssuals: (issualType?: IssualType, pageIndex?: number, pageSize?: number) => Promise<PaginatedList<ProductIssualDto>>;
+  getApprovedIssuals: (issualType?: IssualType, pageIndex?: number, pageSize?: number) => Promise<PaginatedList<ProductIssualDto>>;
+
+  // Permission Checks
   canEditIssual: (issual: ProductIssualDto) => boolean;
   canApproveIssual: (issual: ProductIssualDto) => boolean;
   canDeleteIssual: (issual: ProductIssualDto) => boolean;
+
+  // State Management
   clearError: () => void;
   refreshCurrentPage: () => Promise<void>;
 }
@@ -44,308 +70,207 @@ export const useProductIssual = (): ProductIssualHookReturn => {
     setError(null);
   }, []);
 
-  const issualSearch = useCallback(
-    async (searchRequest: ProductIssualSearchRequest): Promise<PaginatedList<ProductIssualDto>> => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        setLastSearchRequest(searchRequest);
+  const handleApiCall = async <T>(apiCall: () => Promise<OperationResult<T>>, successMessage?: string, refresh = false): Promise<OperationResult<T>> => {
+    try {
+      setLoading(true);
+      setIsLoading(true);
+      clearError();
 
-        const response = await productIssualService.issualSearch(searchRequest);
+      const response = await apiCall();
 
-        if (response.success && response.data) {
-          setPaginatedIssuals(response.data);
-          return response.data;
-        } else {
-          throw new Error(response.errorMessage || "Failed to search for product issuals");
+      if (response.success) {
+        if (successMessage) {
+          showAlert("Success", successMessage, "success");
         }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during search";
-        setError(errorMessage);
-        showAlert("Error", errorMessage, "error");
-        setPaginatedIssuals(defaultPaginatedList);
-        return defaultPaginatedList;
-      } finally {
-        setIsLoading(false);
+        if (refresh) {
+          await refreshCurrentPage();
+        }
+        return response;
+      } else {
+        throw new Error(response.errorMessage || "An unexpected error occurred");
       }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
+      showAlert("Error", errorMessage, "error");
+      return { success: false, errorMessage };
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
+    }
+  };
+
+  const genericIssualSearch = useCallback(
+    async (searchRequest: ProductIssualSearchRequest): Promise<PaginatedList<ProductIssualDto>> => {
+      setLastSearchRequest(searchRequest);
+      const response = await handleApiCall(() => productIssualService.issualSearch(searchRequest));
+      if (response.success && response.data) {
+        setPaginatedIssuals(response.data);
+        return response.data;
+      }
+      setPaginatedIssuals(defaultPaginatedList);
+      return defaultPaginatedList;
     },
-    [showAlert]
+    [] // handleApiCall is not a dependency
+  );
+
+  const departmentIssualSearch = useCallback(
+    async (searchRequest: ProductIssualSearchRequest): Promise<PaginatedList<ProductIssualDto>> => {
+      debugger;
+      searchRequest.issualType = IssualType.Department;
+      return genericIssualSearch(searchRequest);
+    },
+    [genericIssualSearch]
+  );
+
+  const physicianIssualSearch = useCallback(
+    async (searchRequest: ProductIssualSearchRequest): Promise<PaginatedList<ProductIssualDto>> => {
+      searchRequest.issualType = IssualType.Physician;
+      return genericIssualSearch(searchRequest);
+    },
+    [genericIssualSearch]
   );
 
   const refreshCurrentPage = useCallback(async () => {
     if (lastSearchRequest) {
-      await issualSearch(lastSearchRequest);
+      await genericIssualSearch(lastSearchRequest);
     }
-  }, [lastSearchRequest, issualSearch]);
+  }, [lastSearchRequest, genericIssualSearch]);
 
-  const getIssualWithDetailsById = useCallback(
-    async (issualId: number): Promise<ProductIssualCompositeDto | null> => {
-      try {
-        setLoading(true);
-        clearError();
-
-        if (!issualId || issualId <= 0) {
-          throw new Error("Valid issual ID is required");
-        }
-
-        const response = await productIssualService.getIssualWithDetailsById(issualId);
-
-        if (response.success && response.data) {
-          return response.data;
-        } else {
-          throw new Error(response.errorMessage || "Failed to fetch product issual details");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch details";
-        setError(errorMessage);
-        showAlert("Error", errorMessage, "error");
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, showAlert, clearError]
-  );
-
-  // Helper function to validate ProductIssualCompositeDto structure
-  const validateIssualComposite = (issualData: ProductIssualCompositeDto): void => {
-    const { productIssual, details } = issualData;
-
-    // Validate main issual object
-    if (!productIssual.fromDeptID) {
-      throw new Error("From department is required");
+  const getIssualWithDetailsById = useCallback(async (issualId: number): Promise<ProductIssualCompositeDto | null> => {
+    if (!issualId || issualId <= 0) {
+      showAlert("Error", "A valid issual ID is required.", "error");
+      return null;
     }
-    if (!productIssual.toDeptID) {
-      throw new Error("To department is required");
-    }
-    if (productIssual.fromDeptID === productIssual.toDeptID) {
-      throw new Error("From department and To department cannot be the same");
-    }
+    const response = await handleApiCall(() => productIssualService.getIssualWithDetailsById(issualId));
+    return response.data ?? null;
+  }, []);
 
-    // Validate details array
-    if (!details || details.length === 0) {
-      throw new Error("At least one product detail is required");
-    }
+  const saveDepartmentIssual = useCallback(async (issualData: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> => {
+    const isEdit = issualData.productIssual.pisid > 0;
+    return handleApiCall(() => productIssualService.createDepartmentIssual(issualData), `Department Issual ${isEdit ? "updated" : "created"} successfully!`, true);
+  }, []);
 
-    // Validate each detail item
-    details.forEach((detail, index) => {
-      if (!detail.productID || detail.productID <= 0) {
-        throw new Error(`Product is required for detail item ${index + 1}`);
-      }
-      if (!detail.issuedQty || detail.issuedQty <= 0) {
-        throw new Error(`Invalid issued quantity for product ${detail.productName || "Unknown"}`);
-      }
-      if (!detail.requestedQty || detail.requestedQty <= 0) {
-        throw new Error(`Invalid requested quantity for product ${detail.productName || "Unknown"}`);
-      }
-      if (detail.issuedQty > detail.requestedQty) {
-        throw new Error(`Issued quantity cannot exceed requested quantity for product ${detail.productName || "Unknown"}`);
-      }
-      if (detail.availableQty !== undefined && detail.issuedQty > detail.availableQty) {
-        throw new Error(`Insufficient stock for product ${detail.productName || "Unknown"}. Available: ${detail.availableQty}, Requested: ${detail.issuedQty}`);
-      }
-    });
-  };
+  const savePhysicianIssual = useCallback(async (issualData: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> => {
+    const isEdit = issualData.productIssual.pisid > 0;
+    return handleApiCall(() => productIssualService.createPhysicianIssual(issualData), `Physician Issual ${isEdit ? "updated" : "created"} successfully!`, true);
+  }, []);
 
   const saveIssualWithDetails = useCallback(
     async (issualData: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> => {
-      try {
-        setLoading(true);
-        clearError();
-
-        // Use the extracted validation function
-        validateIssualComposite(issualData);
-
-        const response = await productIssualService.createIssualWithDetails(issualData);
-
-        if (response.success) {
-          const isEdit = issualData.productIssual.pisid > 0;
-          showAlert("Success", `Product Issual ${isEdit ? "updated" : "created"} successfully!`, "success");
-
-          if (lastSearchRequest) {
-            await refreshCurrentPage();
-          }
-
-          return response;
-        } else {
-          throw new Error(response.errorMessage || "Failed to save product issual");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-        setError(errorMessage);
-        showAlert("Error", errorMessage, "error");
-        return { success: false, errorMessage, data: undefined };
-      } finally {
-        setLoading(false);
+      if (issualData.productIssual.issualType === IssualType.Physician) {
+        return savePhysicianIssual(issualData);
       }
+      return saveDepartmentIssual(issualData);
     },
-    [setLoading, showAlert, clearError, lastSearchRequest, refreshCurrentPage]
+    [saveDepartmentIssual, savePhysicianIssual]
   );
 
-  const deleteIssual = useCallback(
-    async (issualId: number): Promise<boolean> => {
-      try {
-        setLoading(true);
-        clearError();
+  const deleteIssual = useCallback(async (issualId: number): Promise<boolean> => {
+    const response = await handleApiCall(() => productIssualService.deleteIssual(issualId), "Issual deleted successfully", true);
+    return response.success;
+  }, []);
 
-        if (!issualId || issualId <= 0) {
-          throw new Error("Valid issual ID is required");
-        }
+  const approveIssual = useCallback(async (issualId: number): Promise<boolean> => {
+    const response = await handleApiCall(() => productIssualService.approveIssual(issualId), "Issual approved successfully", true);
+    return response.success;
+  }, []);
 
-        const response = await productIssualService.deleteIssual(issualId);
+  const genericGenerateIssualCode = useCallback(async (fromDepartmentId: number, issualType: IssualType): Promise<string | null> => {
+    const response = await handleApiCall(() => productIssualService.generateIssualCode(fromDepartmentId, issualType));
+    return response.data ?? null;
+  }, []);
 
-        if (response.success) {
-          showAlert("Success", "Product Issual deleted successfully", "success");
-          await refreshCurrentPage();
-          return true;
-        } else {
-          throw new Error(response.errorMessage || "Failed to delete product issual");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to delete";
-        setError(errorMessage);
-        showAlert("Error", errorMessage, "error");
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, showAlert, clearError, refreshCurrentPage]
-  );
+  const generateDepartmentIssualCode = useCallback((fromDepartmentId: number) => genericGenerateIssualCode(fromDepartmentId, IssualType.Department), [genericGenerateIssualCode]);
 
-  const generateIssualCode = useCallback(
-    async (fromDepartmentId: number): Promise<string | null> => {
-      try {
-        setLoading(true);
-        const response = await productIssualService.generateIssualCode(fromDepartmentId);
-        if (response.success && response.data) {
-          return response.data;
-        } else {
-          throw new Error(response.errorMessage || "Failed to generate issual code");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Code generation failed";
-        showAlert("Error", errorMessage, "error");
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, showAlert]
-  );
+  const generatePhysicianIssualCode = useCallback((fromDepartmentId: number) => genericGenerateIssualCode(fromDepartmentId, IssualType.Physician), [genericGenerateIssualCode]);
 
-  const approveIssual = useCallback(
-    async (issualId: number): Promise<boolean> => {
-      try {
-        setLoading(true);
-        clearError();
-
-        if (!issualId || issualId <= 0) {
-          throw new Error("Valid issual ID is required");
-        }
-
-        const response = await productIssualService.approveIssual(issualId);
-        if (response.success) {
-          showAlert("Success", "Product Issual approved successfully", "success");
-          await refreshCurrentPage();
-          return true;
-        } else {
-          throw new Error(response.errorMessage || "Failed to approve product issual");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Approval failed";
-        setError(errorMessage);
-        showAlert("Error", errorMessage, "error");
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, showAlert, clearError, refreshCurrentPage]
-  );
-
-  const getAvailableStock = useCallback(
-    async (departmentId: number, productId?: number): Promise<ProductStockBalance[]> => {
-      try {
-        setIsLoading(true);
-        clearError();
-
-        if (!departmentId || departmentId <= 0) {
-          throw new Error("Valid department ID is required");
-        }
-
-        const response = await productIssualService.getAvailableStock(departmentId, productId);
-        if (response.success && response.data) {
-          const availableProducts = response.data.filter((product) => (product.productQuantityOnHand || 0) > 0);
-          return availableProducts;
-        }
-
-        throw new Error(response.errorMessage || "Failed to fetch available stock");
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Could not retrieve stock";
-        setError(errorMessage);
-        showAlert("Error", errorMessage, "error");
-        return [];
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [setIsLoading, showAlert, clearError]
-  );
+  const getAvailableStock = useCallback(async (departmentId: number, productId?: number): Promise<ProductStockBalance[]> => {
+    const response = await handleApiCall(() => productIssualService.getAvailableStock(departmentId, productId));
+    return response.data ?? [];
+  }, []);
 
   const validateStockAvailability = useCallback(
     async (departmentId: number, productId: number, requiredQty: number, batchNo?: string): Promise<boolean> => {
-      try {
-        clearError();
-
-        const response = await productIssualService.validateStockAvailability(departmentId, productId, requiredQty, batchNo);
-
-        if (response.success) {
-          return true;
-        } else {
-          setError(response.errorMessage || "Stock validation failed");
-          return false;
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Stock validation failed";
-        setError(errorMessage);
+      const stockResult = await getAvailableStock(departmentId, productId);
+      const stockItem = stockResult.find((s) => !batchNo || s.batchNumber === batchNo);
+      if (!stockItem) {
+        showAlert("Validation Error", "Product not found in stock for the specified batch.", "warning");
         return false;
       }
+      const availableQty = stockItem.productUnitQuantityOnHand ?? 0;
+      if (availableQty < requiredQty) {
+        showAlert("Validation Error", `Insufficient stock. Available: ${availableQty}, Required: ${requiredQty}`, "warning");
+        return false;
+      }
+      return true;
     },
-    [clearError]
+    [getAvailableStock, showAlert]
   );
 
-  const canEditIssual = useCallback((issual: ProductIssualDto): boolean => {
-    if (!issual) return false;
-    return issual.approvedYN !== "Y";
+  const getIssualSummary = useCallback(async (startDate?: Date, endDate?: Date) => {
+    const response = await handleApiCall(() => productIssualService.getIssualSummaryByType(startDate, endDate));
+    return response.data ?? null;
   }, []);
 
-  const canApproveIssual = useCallback((issual: ProductIssualDto): boolean => {
-    if (!issual) return false;
-    return issual.approvedYN !== "Y";
+  const getIssualTypes = useCallback(async () => {
+    const response = await handleApiCall(() => productIssualService.getIssualTypes());
+    return response.data ?? [];
   }, []);
 
-  const canDeleteIssual = useCallback((issual: ProductIssualDto): boolean => {
-    if (!issual) return false;
-    return issual.approvedYN !== "Y";
-  }, []);
+  const getIssualsByStatus = useCallback(
+    async (isApproved: boolean, issualType?: IssualType, pageIndex = 1, pageSize = 20): Promise<PaginatedList<ProductIssualDto>> => {
+      const searchRequest: ProductIssualSearchRequest = {
+        pageIndex,
+        pageSize,
+        issualType,
+        approvedStatus: isApproved ? "Y" : "N",
+      };
+      return genericIssualSearch(searchRequest);
+    },
+    [genericIssualSearch]
+  );
+
+  const getPendingIssuals = useCallback(
+    (issualType?: IssualType, pageIndex = 1, pageSize = 20) => getIssualsByStatus(false, issualType, pageIndex, pageSize),
+    [getIssualsByStatus]
+  );
+
+  const getApprovedIssuals = useCallback(
+    (issualType?: IssualType, pageIndex = 1, pageSize = 20) => getIssualsByStatus(true, issualType, pageIndex, pageSize),
+    [getIssualsByStatus]
+  );
+
+  const canEditIssual = (issual: ProductIssualDto) => issual?.approvedYN !== "Y";
+  const canApproveIssual = (issual: ProductIssualDto) => issual?.approvedYN !== "Y";
+  const canDeleteIssual = (issual: ProductIssualDto) => issual?.approvedYN !== "Y";
 
   return {
     paginatedIssuals,
     isLoading,
     error,
-    issualSearch,
+    clearError,
+    refreshCurrentPage,
+    genericIssualSearch,
+    departmentIssualSearch,
+    physicianIssualSearch,
     getIssualWithDetailsById,
     saveIssualWithDetails,
+    saveDepartmentIssual,
+    savePhysicianIssual,
     deleteIssual,
     approveIssual,
-    generateIssualCode,
+    genericGenerateIssualCode,
+    generateDepartmentIssualCode,
+    generatePhysicianIssualCode,
     getAvailableStock,
     validateStockAvailability,
+    getIssualSummary,
+    getIssualTypes,
+    getPendingIssuals,
+    getApprovedIssuals,
     canEditIssual,
     canApproveIssual,
     canDeleteIssual,
-    clearError,
-    refreshCurrentPage,
   };
 };
