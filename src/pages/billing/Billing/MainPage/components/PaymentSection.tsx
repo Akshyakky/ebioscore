@@ -1,5 +1,6 @@
 // src/pages/billing/Billing/MainPage/components/PaymentSection.tsx
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
 import { paymentTypeService } from "@/services/BillingServices/BillingGenericService";
 import { AttachMoney as AttachMoneyIcon, CreditCard as CreditCardIcon, Info as InfoIcon } from "@mui/icons-material";
 import { Alert, AlertTitle, Box, Card, CardContent, Chip, Divider, Grid, Stack, Typography } from "@mui/material";
@@ -7,17 +8,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { BillingFormData, DropdownOption } from "../types";
 import { formatCurrency } from "../utils/billingUtils";
-
-interface PaymentType {
-  payID: number;
-  payCode: string;
-  payName: string;
-  payMode: string;
-  bankCharge: number;
-  rActiveYN: string;
-  transferYN: string;
-  rNotes: string;
-}
 
 interface PaymentSectionProps {
   control: Control<BillingFormData>;
@@ -27,9 +17,9 @@ interface PaymentSectionProps {
 }
 
 export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValue, watch, finalBillAmount }) => {
-  const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
+  const [paymentTypes, setPaymentTypes] = useState<BPayTypeDto[]>([]);
   const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
-  const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentType | null>(null);
+  const [selectedPaymentType, setSelectedPaymentType] = useState<BPayTypeDto | null>(null);
 
   const watchedPaymentDetails = watch("billPaymentDetails");
   const paidAmount = watchedPaymentDetails?.paidAmount || 0;
@@ -67,6 +57,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
         const selected = paymentTypes.find((type) => type.payID === data.value);
         if (selected) {
           setSelectedPaymentType(selected);
+          setValue("billPaymentDetails.paymentID", selected.payMode, { shouldDirty: true });
           setValue("billPaymentDetails.paymentMode", selected.payMode, { shouldDirty: true });
           setValue("billPaymentDetails.paymentCode", selected.payCode, { shouldDirty: true });
           setValue("billPaymentDetails.paymentName", selected.payName, { shouldDirty: true });
