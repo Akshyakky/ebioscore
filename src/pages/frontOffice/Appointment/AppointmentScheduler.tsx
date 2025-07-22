@@ -21,7 +21,6 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
   Chip,
   Dialog,
   DialogActions,
@@ -44,7 +43,7 @@ import {
 } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 
-// Mock data and interfaces based on your existing DTOs
+// Mock data and interfaces
 interface AppointmentData {
   abID: number;
   abFName: string;
@@ -95,7 +94,7 @@ interface WorkHoursData {
   rActiveYN: string;
 }
 
-// Mock data
+// Mock data with more appointments for different dates
 const mockAppointments: AppointmentData[] = [
   {
     abID: 1,
@@ -104,12 +103,12 @@ const mockAppointments: AppointmentData[] = [
     hplID: 1,
     providerName: "Dr. Smith",
     rlID: 1,
-    rlName: "Consultation Room 1",
+    rlName: "Room 1",
     abDuration: 30,
-    abDurDesc: "30 minutes",
-    abDate: new Date(2025, 7, 22),
-    abTime: new Date(2025, 7, 22, 9, 0),
-    abEndTime: new Date(2025, 7, 22, 9, 30),
+    abDurDesc: "30m",
+    abDate: new Date(2025, 6, 22),
+    abTime: new Date(2025, 6, 22, 9, 0),
+    abEndTime: new Date(2025, 6, 22, 9, 30),
     pChartID: 123,
     pChartCode: "P001",
     abPType: "OP",
@@ -124,29 +123,69 @@ const mockAppointments: AppointmentData[] = [
     hplID: 1,
     providerName: "Dr. Smith",
     rlID: 2,
-    rlName: "Consultation Room 2",
+    rlName: "Room 2",
     abDuration: 45,
-    abDurDesc: "45 minutes",
-    abDate: new Date(2025, 7, 22),
-    abTime: new Date(2025, 7, 22, 10, 0),
-    abEndTime: new Date(2025, 7, 22, 10, 45),
+    abDurDesc: "45m",
+    abDate: new Date(2025, 6, 22),
+    abTime: new Date(2025, 6, 22, 10, 0),
+    abEndTime: new Date(2025, 6, 22, 10, 45),
     pChartID: 124,
     pChartCode: "P002",
     abPType: "OP",
     abStatus: "Confirmed",
     patRegisterYN: "Y",
-    procNotes: "Follow-up consultation",
+    procNotes: "Follow-up",
+  },
+  {
+    abID: 3,
+    abFName: "Bob",
+    abLName: "Wilson",
+    hplID: 2,
+    providerName: "Dr. Johnson",
+    rlID: 1,
+    rlName: "Room 1",
+    abDuration: 15,
+    abDurDesc: "15m",
+    abDate: new Date(2025, 6, 23),
+    abTime: new Date(2025, 6, 23, 14, 15),
+    abEndTime: new Date(2025, 6, 23, 14, 30),
+    pChartID: 125,
+    pChartCode: "P003",
+    abPType: "OP",
+    abStatus: "Confirmed",
+    patRegisterYN: "Y",
+    procNotes: "Quick consultation",
+  },
+  {
+    abID: 4,
+    abFName: "Alice",
+    abLName: "Brown",
+    hplID: 1,
+    providerName: "Dr. Smith",
+    rlID: 1,
+    rlName: "Room 1",
+    abDuration: 60,
+    abDurDesc: "1h",
+    abDate: new Date(2025, 6, 24),
+    abTime: new Date(2025, 6, 24, 11, 0),
+    abEndTime: new Date(2025, 6, 24, 12, 0),
+    pChartID: 126,
+    pChartCode: "P004",
+    abPType: "OP",
+    abStatus: "Scheduled",
+    patRegisterYN: "Y",
+    procNotes: "Comprehensive exam",
   },
 ];
 
 const mockBreaks: BreakData[] = [
   {
     bLID: 1,
-    bLName: "Lunch Break",
-    bLStartTime: new Date(2025, 7, 22, 12, 0),
-    bLEndTime: new Date(2025, 7, 22, 13, 0),
-    bLStartDate: new Date(2025, 7, 22),
-    bLEndDate: new Date(2025, 7, 22),
+    bLName: "Lunch",
+    bLStartTime: new Date(2025, 6, 22, 12, 0),
+    bLEndTime: new Date(2025, 6, 22, 13, 0),
+    bLStartDate: new Date(2025, 6, 22),
+    bLEndDate: new Date(2025, 6, 22),
     hPLID: 1,
     assignedName: "Dr. Smith",
     isPhyResYN: "Y",
@@ -159,8 +198,44 @@ const mockWorkHours: WorkHoursData[] = [
     hwrkID: 1,
     langType: "EN",
     daysDesc: "MONDAY",
-    startTime: new Date(2025, 7, 22, 8, 0),
-    endTime: new Date(2025, 7, 22, 17, 0),
+    startTime: new Date(2025, 6, 22, 8, 0),
+    endTime: new Date(2025, 6, 22, 17, 0),
+    wkHoliday: "N",
+    rActiveYN: "Y",
+  },
+  {
+    hwrkID: 2,
+    langType: "EN",
+    daysDesc: "TUESDAY",
+    startTime: new Date(2025, 6, 22, 8, 0),
+    endTime: new Date(2025, 6, 22, 17, 0),
+    wkHoliday: "N",
+    rActiveYN: "Y",
+  },
+  {
+    hwrkID: 3,
+    langType: "EN",
+    daysDesc: "WEDNESDAY",
+    startTime: new Date(2025, 6, 22, 8, 0),
+    endTime: new Date(2025, 6, 22, 17, 0),
+    wkHoliday: "N",
+    rActiveYN: "Y",
+  },
+  {
+    hwrkID: 4,
+    langType: "EN",
+    daysDesc: "THURSDAY",
+    startTime: new Date(2025, 6, 22, 8, 0),
+    endTime: new Date(2025, 6, 22, 17, 0),
+    wkHoliday: "N",
+    rActiveYN: "Y",
+  },
+  {
+    hwrkID: 5,
+    langType: "EN",
+    daysDesc: "FRIDAY",
+    startTime: new Date(2025, 6, 22, 8, 0),
+    endTime: new Date(2025, 6, 22, 17, 0),
     wkHoliday: "N",
     rActiveYN: "Y",
   },
@@ -173,14 +248,14 @@ const mockProviders = [
 ];
 
 const mockResources = [
-  { value: 1, label: "Consultation Room 1", type: "room" },
-  { value: 2, label: "Consultation Room 2", type: "room" },
-  { value: 3, label: "X-Ray Machine", type: "equipment" },
+  { value: 1, label: "Room 1", type: "room" },
+  { value: 2, label: "Room 2", type: "room" },
+  { value: 3, label: "X-Ray", type: "equipment" },
 ];
 
 const AppointmentScheduler = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState("day"); // 'day', 'week', 'month'
+  const [viewMode, setViewMode] = useState("day");
   const [selectedProvider, setSelectedProvider] = useState<number | "">("");
   const [selectedResource, setSelectedResource] = useState<number | "">("");
   const [bookingMode, setBookingMode] = useState<"physician" | "resource">("physician");
@@ -189,10 +264,9 @@ const AppointmentScheduler = () => {
   const [appointments, setAppointments] = useState<AppointmentData[]>(mockAppointments);
   const [breaks, setBreaks] = useState<BreakData[]>(mockBreaks);
   const [workHours, setWorkHours] = useState<WorkHoursData[]>(mockWorkHours);
-  const [showPatientSearch, setShowPatientSearch] = useState(false);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
 
-  // Time slots generation
+  // Generate 15-minute time slots
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = 8; hour < 18; hour++) {
@@ -207,58 +281,110 @@ const AppointmentScheduler = () => {
     return slots;
   }, []);
 
+  // Get week dates
+  const getWeekDates = useCallback((date: Date) => {
+    const week = [];
+    const startDate = new Date(date);
+    const day = startDate.getDay();
+    const diff = startDate.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
+    startDate.setDate(diff);
+
+    for (let i = 0; i < 7; i++) {
+      const weekDate = new Date(startDate);
+      weekDate.setDate(startDate.getDate() + i);
+      week.push(weekDate);
+    }
+    return week;
+  }, []);
+
+  // Get month dates
+  const getMonthDates = useCallback((date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    const endDate = new Date(lastDay);
+
+    // Start from Monday of the first week
+    const dayOfWeek = firstDay.getDay();
+    const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(firstDay.getDate() - daysBack);
+
+    // End at Sunday of the last week
+    const endDayOfWeek = lastDay.getDay();
+    const daysForward = endDayOfWeek === 0 ? 0 : 7 - endDayOfWeek;
+    endDate.setDate(lastDay.getDate() + daysForward);
+
+    const dates = [];
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  }, []);
+
   // Filter appointments for current view
   const filteredAppointments = useMemo(() => {
     return appointments.filter((apt) => {
       const aptDate = new Date(apt.abDate);
-      const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-      const aptDateOnly = new Date(aptDate.getFullYear(), aptDate.getMonth(), aptDate.getDate());
 
       if (viewMode === "day") {
-        return (
-          aptDateOnly.getTime() === currentDateOnly.getTime() &&
-          (selectedProvider === "" || apt.hplID === selectedProvider) &&
-          (selectedResource === "" || apt.rlID === selectedResource)
-        );
+        const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+        const aptDateOnly = new Date(aptDate.getFullYear(), aptDate.getMonth(), aptDate.getDate());
+        return aptDateOnly.getTime() === currentDateOnly.getTime();
+      } else if (viewMode === "week") {
+        const weekDates = getWeekDates(currentDate);
+        return weekDates.some((date) => {
+          const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          const aptDateOnly = new Date(aptDate.getFullYear(), aptDate.getMonth(), aptDate.getDate());
+          return dateOnly.getTime() === aptDateOnly.getTime();
+        });
+      } else if (viewMode === "month") {
+        return aptDate.getMonth() === currentDate.getMonth() && aptDate.getFullYear() === currentDate.getFullYear();
       }
-      return true;
-    });
-  }, [appointments, currentDate, viewMode, selectedProvider, selectedResource]);
 
-  // Get appointments for a specific time slot
+      return (selectedProvider === "" || apt.hplID === selectedProvider) && (selectedResource === "" || apt.rlID === selectedResource);
+    });
+  }, [appointments, currentDate, viewMode, selectedProvider, selectedResource, getWeekDates]);
+
+  // Get appointments for specific date and time slot
   const getAppointmentsForSlot = useCallback(
-    (hour: number, minute: number) => {
+    (date: Date, hour: number, minute: number) => {
       return filteredAppointments.filter((apt) => {
+        const aptDate = new Date(apt.abDate);
         const aptTime = new Date(apt.abTime);
         const aptEndTime = new Date(apt.abEndTime);
-        const slotTime = new Date(currentDate);
+
+        const dateMatches = aptDate.getDate() === date.getDate() && aptDate.getMonth() === date.getMonth() && aptDate.getFullYear() === date.getFullYear();
+
+        if (!dateMatches) return false;
+
+        const slotTime = new Date(date);
         slotTime.setHours(hour, minute, 0, 0);
 
         return slotTime >= aptTime && slotTime < aptEndTime;
       });
     },
-    [filteredAppointments, currentDate]
+    [filteredAppointments]
   );
 
-  // Get breaks for a specific time slot
-  const getBreaksForSlot = useCallback(
-    (hour: number, minute: number) => {
-      return breaks.filter((brk) => {
-        const brkStartTime = new Date(brk.bLStartTime);
-        const brkEndTime = new Date(brk.bLEndTime);
-        const slotTime = new Date(currentDate);
-        slotTime.setHours(hour, minute, 0, 0);
-
-        return slotTime >= brkStartTime && slotTime < brkEndTime && (selectedProvider === "" || brk.hPLID === selectedProvider);
+  // Get appointments for a specific date (month view)
+  const getAppointmentsForDate = useCallback(
+    (date: Date) => {
+      return filteredAppointments.filter((apt) => {
+        const aptDate = new Date(apt.abDate);
+        return aptDate.getDate() === date.getDate() && aptDate.getMonth() === date.getMonth() && aptDate.getFullYear() === date.getFullYear();
       });
     },
-    [breaks, currentDate, selectedProvider]
+    [filteredAppointments]
   );
 
   // Check if time slot is within working hours
   const isWithinWorkingHours = useCallback(
-    (hour: number, minute: number) => {
-      const dayName = currentDate.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+    (date: Date, hour: number, minute: number) => {
+      const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
       const workHour = workHours.find((wh) => wh.daysDesc === dayName && wh.rActiveYN === "Y");
 
       if (!workHour || !workHour.startTime || !workHour.endTime) return false;
@@ -274,7 +400,7 @@ const AppointmentScheduler = () => {
 
       return slotMinutes >= startMinutes && slotMinutes < endMinutes;
     },
-    [workHours, currentDate]
+    [workHours]
   );
 
   // Navigation functions
@@ -307,12 +433,6 @@ const AppointmentScheduler = () => {
     setCurrentDate(newDate);
   };
 
-  // Appointment booking handler
-  const handleBookAppointment = (timeSlot?: { hour: number; minute: number }) => {
-    setSelectedAppointment(null);
-    setShowBookingDialog(true);
-  };
-
   // Appointment status colors
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -333,15 +453,25 @@ const AppointmentScheduler = () => {
     }
   };
 
-  // Render appointment card
-  const renderAppointmentCard = (appointment: AppointmentData) => (
-    <Card
+  // Compact appointment card
+  const renderCompactAppointmentCard = (appointment: AppointmentData, showDetails = true) => (
+    <Box
       key={appointment.abID}
       sx={{
-        mb: 0.5,
+        mb: 0.25,
+        p: 0.5,
+        borderRadius: 1,
         cursor: "pointer",
-        "&:hover": { elevation: 4 },
-        borderLeft: `4px solid ${
+        fontSize: "0.75rem",
+        backgroundColor:
+          getStatusColor(appointment.abStatus) === "success"
+            ? "#e8f5e8"
+            : getStatusColor(appointment.abStatus) === "warning"
+            ? "#fff3e0"
+            : getStatusColor(appointment.abStatus) === "error"
+            ? "#ffebee"
+            : "#e3f2fd",
+        borderLeft: `3px solid ${
           getStatusColor(appointment.abStatus) === "success"
             ? "#4caf50"
             : getStatusColor(appointment.abStatus) === "warning"
@@ -350,116 +480,322 @@ const AppointmentScheduler = () => {
             ? "#f44336"
             : "#2196f3"
         }`,
+        "&:hover": { backgroundColor: "action.hover" },
       }}
       onClick={() => setSelectedAppointment(appointment)}
     >
-      <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-        <Typography variant="body2" fontWeight="bold">
-          {appointment.abFName} {appointment.abLName}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {appointment.providerName} • {appointment.rlName}
-        </Typography>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
-          <Chip size="small" label={appointment.abStatus} color={getStatusColor(appointment.abStatus) as any} />
-          <Typography variant="caption">{appointment.abDurDesc}</Typography>
-        </Box>
-      </CardContent>
-    </Card>
+      <Typography variant="caption" fontWeight="bold" display="block">
+        {appointment.abFName} {appointment.abLName}
+      </Typography>
+      {showDetails && (
+        <>
+          <Typography variant="caption" color="text.secondary" display="block">
+            {appointment.providerName}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {appointment.abDurDesc}
+          </Typography>
+        </>
+      )}
+    </Box>
   );
 
-  // Render break card
-  const renderBreakCard = (breakData: BreakData) => (
-    <Card
-      key={breakData.bLID}
-      sx={{
-        mb: 0.5,
-        backgroundColor: "#fff3e0",
-        borderLeft: "4px solid #ff9800",
-      }}
-    >
-      <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
-        <Typography variant="body2" fontWeight="bold">
-          {breakData.bLName}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {breakData.assignedName}
-        </Typography>
-      </CardContent>
-    </Card>
+  // Render Day View
+  const renderDayView = () => (
+    <Grid container spacing={1}>
+      <Grid size={{ xs: 2 }}>
+        <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
+            Time
+          </Typography>
+        </Box>
+        {timeSlots
+          .filter((_, index) => index % 4 === 0)
+          .map((slot) => (
+            <Box key={slot.time} sx={{ height: 60, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+                {slot.time}
+              </Typography>
+            </Box>
+          ))}
+      </Grid>
+
+      <Grid size={{ xs: 10 }}>
+        <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
+            {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+          </Typography>
+        </Box>
+
+        {timeSlots
+          .filter((_, index) => index % 4 === 0)
+          .map((slot) => {
+            const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
+            const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
+
+            return (
+              <Box
+                key={slot.time}
+                sx={{
+                  height: 60,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  backgroundColor: !withinWorkingHours ? "#f5f5f5" : "transparent",
+                  p: 0.5,
+                  cursor: withinWorkingHours ? "pointer" : "not-allowed",
+                  "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
+                }}
+                onClick={() => withinWorkingHours && setShowBookingDialog(true)}
+              >
+                {!withinWorkingHours && (
+                  <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
+                    <Block fontSize="small" sx={{ mr: 0.5 }} />
+                    <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                      Outside hours
+                    </Typography>
+                  </Box>
+                )}
+                {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment))}
+              </Box>
+            );
+          })}
+      </Grid>
+    </Grid>
   );
+
+  // Render Week View
+  const renderWeekView = () => {
+    const weekDates = getWeekDates(currentDate);
+
+    return (
+      <Grid container spacing={0.5}>
+        <Grid size={{ xs: 1.5 }}>
+          <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+            <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem" }}>
+              Time
+            </Typography>
+          </Box>
+          {timeSlots
+            .filter((_, index) => index % 8 === 0)
+            .map((slot) => (
+              <Box key={slot.time} sx={{ height: 40, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", px: 0.5 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.6rem" }}>
+                  {slot.time}
+                </Typography>
+              </Box>
+            ))}
+        </Grid>
+
+        {weekDates.map((date, index) => (
+          <Grid size={{ xs: 1.5 }} key={index}>
+            <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem", fontWeight: "bold" }}>
+                {date.toLocaleDateString("en-US", { weekday: "short" })}
+              </Typography>
+              <Typography variant="caption" align="center" sx={{ fontSize: "0.6rem", color: "text.secondary", display: "block" }}>
+                {date.getDate()}
+              </Typography>
+            </Box>
+
+            {timeSlots
+              .filter((_, idx) => idx % 8 === 0)
+              .map((slot) => {
+                const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);
+                const withinWorkingHours = isWithinWorkingHours(date, slot.hour, slot.minute);
+
+                return (
+                  <Box
+                    key={`${index}-${slot.time}`}
+                    sx={{
+                      height: 40,
+                      borderBottom: 1,
+                      borderRight: index < weekDates.length - 1 ? 1 : 0,
+                      borderColor: "divider",
+                      backgroundColor: !withinWorkingHours ? "#f9f9f9" : "transparent",
+                      p: 0.25,
+                      cursor: withinWorkingHours ? "pointer" : "not-allowed",
+                      "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
+                    }}
+                    onClick={() => withinWorkingHours && setShowBookingDialog(true)}
+                  >
+                    {slotAppointments.map((appointment) => renderCompactAppointmentCard(appointment, false))}
+                  </Box>
+                );
+              })}
+          </Grid>
+        ))}
+      </Grid>
+    );
+  };
+
+  // Render Month View
+  const renderMonthView = () => {
+    const monthDates = getMonthDates(currentDate);
+    const weeks = [];
+    for (let i = 0; i < monthDates.length; i += 7) {
+      weeks.push(monthDates.slice(i, i + 7));
+    }
+
+    return (
+      <Box>
+        {/* Month header */}
+        <Grid container spacing={0.5} sx={{ mb: 1 }}>
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+            <Grid size={{ xs: 12 / 7 }} key={day}>
+              <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem", fontWeight: "bold", py: 0.5 }}>
+                {day}
+              </Typography>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Month grid */}
+        {weeks.map((week, weekIndex) => (
+          <Grid container spacing={0.5} key={weekIndex} sx={{ mb: 0.5 }}>
+            {week.map((date, dayIndex) => {
+              const dayAppointments = getAppointmentsForDate(date);
+              const isCurrentMonth = date.getMonth() === currentDate.getMonth();
+              const isToday = new Date().toDateString() === date.toDateString();
+
+              return (
+                <Grid size={{ xs: 12 / 7 }} key={dayIndex}>
+                  <Paper
+                    sx={{
+                      height: 100,
+                      p: 0.5,
+                      backgroundColor: !isCurrentMonth ? "#f5f5f5" : isToday ? "#e3f2fd" : "white",
+                      cursor: "pointer",
+                      "&:hover": { backgroundColor: "#f0f0f0" },
+                      overflow: "hidden",
+                    }}
+                    onClick={() => setShowBookingDialog(true)}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: "0.7rem",
+                        fontWeight: isToday ? "bold" : "normal",
+                        color: !isCurrentMonth ? "text.disabled" : "text.primary",
+                        display: "block",
+                        mb: 0.5,
+                      }}
+                    >
+                      {date.getDate()}
+                    </Typography>
+
+                    <Box sx={{ maxHeight: 70, overflow: "hidden" }}>
+                      {dayAppointments.slice(0, 3).map((appointment) => (
+                        <Box
+                          key={appointment.abID}
+                          sx={{
+                            mb: 0.25,
+                            p: 0.25,
+                            borderRadius: 0.5,
+                            fontSize: "0.6rem",
+                            backgroundColor:
+                              getStatusColor(appointment.abStatus) === "success"
+                                ? "#4caf50"
+                                : getStatusColor(appointment.abStatus) === "warning"
+                                ? "#ff9800"
+                                : getStatusColor(appointment.abStatus) === "error"
+                                ? "#f44336"
+                                : "#2196f3",
+                            color: "white",
+                            cursor: "pointer",
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment(appointment);
+                          }}
+                        >
+                          <Typography variant="caption" sx={{ fontSize: "0.6rem", color: "white" }}>
+                            {new Date(appointment.abTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} {appointment.abFName}
+                          </Typography>
+                        </Box>
+                      ))}
+                      {dayAppointments.length > 3 && (
+                        <Typography variant="caption" sx={{ fontSize: "0.6rem", color: "text.secondary" }}>
+                          +{dayAppointments.length - 3} more
+                        </Typography>
+                      )}
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        ))}
+      </Box>
+    );
+  };
 
   return (
-    <Box sx={{ p: 2 }}>
-      {/* Header */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center">
+    <Box sx={{ p: 1 }}>
+      {/* Compact Header */}
+      <Paper sx={{ p: 1, mb: 1 }}>
+        <Grid container spacing={1} alignItems="center">
           <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
+            <Typography variant="h6" component="h1" sx={{ fontSize: "1.1rem", mb: 0.5 }}>
               Appointment Scheduler
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {currentDate.toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+            <Typography variant="caption" color="text.secondary">
+              {viewMode === "month"
+                ? currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+                : viewMode === "week"
+                ? `Week of ${getWeekDates(currentDate)[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                : currentDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
             </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap">
-              <Button variant="outlined" startIcon={<Today />} onClick={() => navigateDate("today")} size="small">
+            <Stack direction="row" spacing={0.5} justifyContent="flex-end" flexWrap="wrap">
+              <Button variant="outlined" startIcon={<Today />} onClick={() => navigateDate("today")} size="small" sx={{ minWidth: "auto", px: 1 }}>
                 Today
               </Button>
-
               <IconButton onClick={() => navigateDate("prev")} size="small">
                 <NavigateBefore />
               </IconButton>
-
               <IconButton onClick={() => navigateDate("next")} size="small">
                 <NavigateNext />
               </IconButton>
-
-              <Tabs value={viewMode} onChange={(_, value) => setViewMode(value)}>
-                <Tab icon={<ViewDay />} value="day" label="Day" />
-                <Tab icon={<ViewWeek />} value="week" label="Week" />
-                <Tab icon={<ViewModule />} value="month" label="Month" />
+              <Tabs value={viewMode} onChange={(_, value) => setViewMode(value)} variant="scrollable">
+                <Tab icon={<ViewDay />} value="day" label="Day" sx={{ minWidth: "auto", px: 1 }} />
+                <Tab icon={<ViewWeek />} value="week" label="Week" sx={{ minWidth: "auto", px: 1 }} />
+                <Tab icon={<ViewModule />} value="month" label="Month" sx={{ minWidth: "auto", px: 1 }} />
               </Tabs>
             </Stack>
           </Grid>
         </Grid>
       </Paper>
 
-      {/* Filters */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      {/* Compact Filters */}
+      <Paper sx={{ p: 1, mb: 1 }}>
+        <Grid container spacing={1} alignItems="center">
+          <Grid size={{ xs: 6, sm: 3 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Booking Mode</InputLabel>
-              <Select value={bookingMode} label="Booking Mode" onChange={(e) => setBookingMode(e.target.value as "physician" | "resource")}>
+              <InputLabel sx={{ fontSize: "0.8rem" }}>Mode</InputLabel>
+              <Select value={bookingMode} label="Mode" onChange={(e) => setBookingMode(e.target.value as "physician" | "resource")} sx={{ fontSize: "0.8rem" }}>
                 <MenuItem value="physician">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <PersonIcon fontSize="small" />
-                    Physician Booking
+                    Physician
                   </Box>
                 </MenuItem>
                 <MenuItem value="resource">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <BusinessIcon fontSize="small" />
-                    Resource Booking
+                    Resource
                   </Box>
                 </MenuItem>
               </Select>
             </FormControl>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Provider</InputLabel>
-              <Select value={selectedProvider} label="Provider" onChange={(e) => setSelectedProvider(e.target.value)}>
-                <MenuItem value="">All Providers</MenuItem>
+              <InputLabel sx={{ fontSize: "0.8rem" }}>Provider</InputLabel>
+              <Select value={selectedProvider} label="Provider" onChange={(e) => setSelectedProvider(e.target.value)} sx={{ fontSize: "0.8rem" }}>
+                <MenuItem value="">All</MenuItem>
                 {mockProviders.map((provider) => (
                   <MenuItem key={provider.value} value={provider.value}>
                     {provider.label}
@@ -469,11 +805,11 @@ const AppointmentScheduler = () => {
             </FormControl>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Resource</InputLabel>
-              <Select value={selectedResource} label="Resource" onChange={(e) => setSelectedResource(e.target.value)}>
-                <MenuItem value="">All Resources</MenuItem>
+              <InputLabel sx={{ fontSize: "0.8rem" }}>Resource</InputLabel>
+              <Select value={selectedResource} label="Resource" onChange={(e) => setSelectedResource(e.target.value)} sx={{ fontSize: "0.8rem" }}>
+                <MenuItem value="">All</MenuItem>
                 {mockResources.map((resource) => (
                   <MenuItem key={resource.value} value={resource.value}>
                     {resource.label}
@@ -483,133 +819,80 @@ const AppointmentScheduler = () => {
             </FormControl>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Stack direction="row" spacing={1}>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleBookAppointment()} fullWidth>
-                Book Appointment
-              </Button>
-            </Stack>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setShowBookingDialog(true)} fullWidth size="small" sx={{ fontSize: "0.8rem" }}>
+              Book
+            </Button>
           </Grid>
         </Grid>
       </Paper>
 
-      {/* Scheduler Grid */}
-      <Paper sx={{ p: 2 }}>
-        <Box sx={{ height: "calc(100vh - 400px)", overflow: "auto" }}>
-          <Grid container>
-            {/* Time column */}
-            <Grid size={{ xs: 2 }}>
-              <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, pb: 1 }}>
-                <Typography variant="h6" align="center">
-                  Time
-                </Typography>
-              </Box>
-              {timeSlots
-                .filter((_, index) => index % 4 === 0)
-                .map((slot) => (
-                  <Box key={slot.time} sx={{ height: 80, display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider" }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {slot.time}
-                    </Typography>
-                  </Box>
-                ))}
-            </Grid>
-
-            {/* Schedule column */}
-            <Grid size={{ xs: 10 }}>
-              <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, pb: 1 }}>
-                <Typography variant="h6" align="center">
-                  Schedule ({bookingMode === "physician" ? "Physician" : "Resource"} View)
-                </Typography>
-              </Box>
-
-              {timeSlots
-                .filter((_, index) => index % 4 === 0)
-                .map((slot) => {
-                  const slotAppointments = getAppointmentsForSlot(slot.hour, slot.minute);
-                  const slotBreaks = getBreaksForSlot(slot.hour, slot.minute);
-                  const withinWorkingHours = isWithinWorkingHours(slot.hour, slot.minute);
-
-                  return (
-                    <Box
-                      key={slot.time}
-                      sx={{
-                        height: 80,
-                        borderBottom: 1,
-                        borderColor: "divider",
-                        backgroundColor: !withinWorkingHours ? "#f5f5f5" : "transparent",
-                        p: 1,
-                        cursor: withinWorkingHours ? "pointer" : "not-allowed",
-                        "&:hover": withinWorkingHours ? { backgroundColor: "#f0f0f0" } : {},
-                      }}
-                      onClick={() => withinWorkingHours && handleBookAppointment({ hour: slot.hour, minute: slot.minute })}
-                    >
-                      {!withinWorkingHours && (
-                        <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
-                          <Block fontSize="small" sx={{ mr: 1 }} />
-                          <Typography variant="caption">Outside working hours</Typography>
-                        </Box>
-                      )}
-
-                      {slotBreaks.map((breakData) => renderBreakCard(breakData))}
-                      {slotAppointments.map((appointment) => renderAppointmentCard(appointment))}
-                    </Box>
-                  );
-                })}
-            </Grid>
-          </Grid>
+      {/* Scheduler Views */}
+      <Paper sx={{ p: 1, mb: 1 }}>
+        <Box sx={{ height: "calc(100vh - 300px)", overflow: "auto" }}>
+          {viewMode === "day" && renderDayView()}
+          {viewMode === "week" && renderWeekView()}
+          {viewMode === "month" && renderMonthView()}
         </Box>
       </Paper>
 
-      {/* Statistics Panel */}
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
+      {/* Compact Statistics */}
+      <Paper sx={{ p: 1 }}>
+        <Typography variant="subtitle2" gutterBottom sx={{ fontSize: "0.9rem" }}>
           Today's Statistics
         </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ textAlign: "center", p: 2 }}>
-              <Avatar sx={{ bgcolor: "primary.main", mx: "auto", mb: 1 }}>
-                <EventIcon />
+        <Grid container spacing={1}>
+          <Grid size={{ xs: 3 }}>
+            <Card sx={{ textAlign: "center", p: 1 }}>
+              <Avatar sx={{ bgcolor: "primary.main", mx: "auto", mb: 0.5, width: 32, height: 32 }}>
+                <EventIcon fontSize="small" />
               </Avatar>
-              <Typography variant="h4">{filteredAppointments.length}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Appointments
+              <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+                {filteredAppointments.length}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+                Total
               </Typography>
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ textAlign: "center", p: 2 }}>
-              <Avatar sx={{ bgcolor: "success.main", mx: "auto", mb: 1 }}>
-                <CheckCircle />
+          <Grid size={{ xs: 3 }}>
+            <Card sx={{ textAlign: "center", p: 1 }}>
+              <Avatar sx={{ bgcolor: "success.main", mx: "auto", mb: 0.5, width: 32, height: 32 }}>
+                <CheckCircle fontSize="small" />
               </Avatar>
-              <Typography variant="h4">{filteredAppointments.filter((apt) => apt.abStatus === "Confirmed").length}</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+                {filteredAppointments.filter((apt) => apt.abStatus === "Confirmed").length}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
                 Confirmed
               </Typography>
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ textAlign: "center", p: 2 }}>
-              <Avatar sx={{ bgcolor: "warning.main", mx: "auto", mb: 1 }}>
-                <Warning />
+          <Grid size={{ xs: 3 }}>
+            <Card sx={{ textAlign: "center", p: 1 }}>
+              <Avatar sx={{ bgcolor: "warning.main", mx: "auto", mb: 0.5, width: 32, height: 32 }}>
+                <Warning fontSize="small" />
               </Avatar>
-              <Typography variant="h4">{filteredAppointments.filter((apt) => apt.abStatus === "Scheduled").length}</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+                {filteredAppointments.filter((apt) => apt.abStatus === "Scheduled").length}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
                 Pending
               </Typography>
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ textAlign: "center", p: 2 }}>
-              <Avatar sx={{ bgcolor: "info.main", mx: "auto", mb: 1 }}>
-                <TimeIcon />
+          <Grid size={{ xs: 3 }}>
+            <Card sx={{ textAlign: "center", p: 1 }}>
+              <Avatar sx={{ bgcolor: "info.main", mx: "auto", mb: 0.5, width: 32, height: 32 }}>
+                <TimeIcon fontSize="small" />
               </Avatar>
-              <Typography variant="h4">{breaks.length}</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+                {breaks.length}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
                 Breaks
               </Typography>
             </Card>
@@ -617,42 +900,47 @@ const AppointmentScheduler = () => {
         </Grid>
       </Paper>
 
-      {/* Booking Dialog */}
-      <Dialog open={showBookingDialog} onClose={() => setShowBookingDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          Book New Appointment
-          <Typography variant="body2" color="text.secondary">
+      {/* Compact Booking Dialog */}
+      <Dialog open={showBookingDialog} onClose={() => setShowBookingDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+            Book Appointment
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
             {bookingMode === "physician" ? "Physician" : "Resource"} Booking
           </Typography>
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+        <DialogContent sx={{ pt: 1 }}>
+          <Grid container spacing={1}>
             <Grid size={{ xs: 12 }}>
-              <FormControlLabel control={<Switch checked={isRegisteredPatient} onChange={(e) => setIsRegisteredPatient(e.target.checked)} />} label="Registered Patient" />
+              <FormControlLabel
+                control={<Switch checked={isRegisteredPatient} onChange={(e) => setIsRegisteredPatient(e.target.checked)} size="small" />}
+                label={<Typography sx={{ fontSize: "0.8rem" }}>Registered Patient</Typography>}
+              />
             </Grid>
 
             {isRegisteredPatient ? (
               <Grid size={{ xs: 12 }}>
-                <TextField fullWidth label="Search Patient" placeholder="Enter patient name or ID" variant="outlined" size="small" />
+                <TextField fullWidth label="Search Patient" placeholder="Enter name or ID" variant="outlined" size="small" sx={{ fontSize: "0.8rem" }} />
               </Grid>
             ) : (
               <>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 6 }}>
                   <TextField fullWidth label="First Name" variant="outlined" size="small" required />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 6 }}>
                   <TextField fullWidth label="Last Name" variant="outlined" size="small" />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField fullWidth label="Phone Number" variant="outlined" size="small" required />
+                <Grid size={{ xs: 6 }}>
+                  <TextField fullWidth label="Phone" variant="outlined" size="small" required />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 6 }}>
                   <TextField fullWidth label="Email" type="email" variant="outlined" size="small" />
                 </Grid>
               </>
             )}
 
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 6 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Provider</InputLabel>
                 <Select label="Provider" required>
@@ -665,7 +953,7 @@ const AppointmentScheduler = () => {
               </FormControl>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 6 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Resource</InputLabel>
                 <Select label="Resource" required>
@@ -678,118 +966,122 @@ const AppointmentScheduler = () => {
               </FormControl>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 4 }}>
               <TextField fullWidth label="Date" type="date" variant="outlined" size="small" InputLabelProps={{ shrink: true }} required />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 4 }}>
               <TextField fullWidth label="Time" type="time" variant="outlined" size="small" InputLabelProps={{ shrink: true }} required />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 4 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Duration</InputLabel>
                 <Select label="Duration" required>
-                  <MenuItem value={15}>15 minutes</MenuItem>
-                  <MenuItem value={30}>30 minutes</MenuItem>
-                  <MenuItem value={45}>45 minutes</MenuItem>
+                  <MenuItem value={15}>15 min</MenuItem>
+                  <MenuItem value={30}>30 min</MenuItem>
+                  <MenuItem value={45}>45 min</MenuItem>
                   <MenuItem value={60}>1 hour</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Patient Type</InputLabel>
-                <Select label="Patient Type" required>
-                  <MenuItem value="OP">Outpatient</MenuItem>
-                  <MenuItem value="IP">Inpatient</MenuItem>
-                  <MenuItem value="ER">Emergency</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
             <Grid size={{ xs: 12 }}>
-              <TextField fullWidth label="Procedure Notes" multiline rows={3} variant="outlined" size="small" />
+              <TextField fullWidth label="Notes" multiline rows={2} variant="outlined" size="small" />
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowBookingDialog(false)}>Cancel</Button>
-          <Button variant="contained">Book Appointment</Button>
+        <DialogActions sx={{ pt: 1 }}>
+          <Button onClick={() => setShowBookingDialog(false)} size="small">
+            Cancel
+          </Button>
+          <Button variant="contained" size="small">
+            Book
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Appointment Details Dialog */}
-      <Dialog open={!!selectedAppointment} onClose={() => setSelectedAppointment(null)} maxWidth="sm" fullWidth>
+      <Dialog open={!!selectedAppointment} onClose={() => setSelectedAppointment(null)} maxWidth="xs" fullWidth>
         {selectedAppointment && (
           <>
-            <DialogTitle>
-              Appointment Details
-              <Chip label={selectedAppointment.abStatus} color={getStatusColor(selectedAppointment.abStatus) as any} size="small" sx={{ ml: 2 }} />
+            <DialogTitle sx={{ pb: 1 }}>
+              <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+                Appointment Details
+              </Typography>
+              <Chip label={selectedAppointment.abStatus} color={getStatusColor(selectedAppointment.abStatus) as any} size="small" />
             </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={2}>
+            <DialogContent sx={{ pt: 1 }}>
+              <Grid container spacing={1}>
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="h6">
+                  <Typography variant="subtitle1" sx={{ fontSize: "0.9rem", fontWeight: "bold" }}>
                     {selectedAppointment.abFName} {selectedAppointment.abLName}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedAppointment.patRegisterYN === "Y" ? "Registered Patient" : "Walk-in Patient"}
-                    {selectedAppointment.pChartCode && ` • ${selectedAppointment.pChartCode}`}
+                  <Typography variant="caption" color="text.secondary">
+                    {selectedAppointment.pChartCode}
                   </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="subtitle2">Provider</Typography>
-                  <Typography variant="body2">{selectedAppointment.providerName}</Typography>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Provider
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                    {selectedAppointment.providerName}
+                  </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="subtitle2">Resource</Typography>
-                  <Typography variant="body2">{selectedAppointment.rlName}</Typography>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Resource
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                    {selectedAppointment.rlName}
+                  </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="subtitle2">Date & Time</Typography>
-                  <Typography variant="body2">
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Date & Time
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
                     {new Date(selectedAppointment.abDate).toLocaleDateString()}
                     {" at "}
-                    {new Date(selectedAppointment.abTime).toLocaleTimeString()}
+                    {new Date(selectedAppointment.abTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="subtitle2">Duration</Typography>
-                  <Typography variant="body2">{selectedAppointment.abDurDesc}</Typography>
-                </Grid>
-
-                {selectedAppointment.appPhone1 && (
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant="subtitle2">Phone</Typography>
-                    <Typography variant="body2">{selectedAppointment.appPhone1}</Typography>
-                  </Grid>
-                )}
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="subtitle2">Patient Type</Typography>
-                  <Typography variant="body2">{selectedAppointment.abPType}</Typography>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Duration
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                    {selectedAppointment.abDurDesc}
+                  </Typography>
                 </Grid>
 
                 {selectedAppointment.procNotes && (
                   <Grid size={{ xs: 12 }}>
-                    <Typography variant="subtitle2">Notes</Typography>
-                    <Typography variant="body2">{selectedAppointment.procNotes}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Notes
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                      {selectedAppointment.procNotes}
+                    </Typography>
                   </Grid>
                 )}
               </Grid>
             </DialogContent>
-            <DialogActions>
-              <Button startIcon={<EditIcon />}>Edit</Button>
-              <Button startIcon={<CancelIcon />} color="warning">
+            <DialogActions sx={{ pt: 1 }}>
+              <Button startIcon={<EditIcon />} size="small">
+                Edit
+              </Button>
+              <Button startIcon={<CancelIcon />} color="warning" size="small">
                 Cancel
               </Button>
-              <Button onClick={() => setSelectedAppointment(null)}>Close</Button>
+              <Button onClick={() => setSelectedAppointment(null)} size="small">
+                Close
+              </Button>
             </DialogActions>
           </>
         )}
