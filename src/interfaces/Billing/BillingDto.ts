@@ -105,9 +105,16 @@ export interface BillProductsDto extends BaseDto {
   packName?: string;
   rActiveYN?: string;
 }
-
+export interface BillPaymentDetailsDto {
+  paymentMode?: string;
+  paymentCode?: string;
+  paymentName?: string;
+  paidAmount: number;
+  paymentNote?: string;
+}
 export interface BillSaveRequest {
   bill: BillsDto;
   billServices: BillServicesDto[];
   billProducts: BillProductsDto[];
+  billPaymentDetails?: BillPaymentDetailsDto;
 }
