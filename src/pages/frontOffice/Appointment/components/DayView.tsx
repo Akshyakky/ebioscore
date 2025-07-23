@@ -1,4 +1,4 @@
-// src/frontOffice/components/DayView.tsx
+// src/pages/frontOffice/Appointment/components/DayView.tsx
 import { Block } from "@mui/icons-material";
 import { Box, Grid, Typography } from "@mui/material";
 import React from "react";
@@ -13,11 +13,21 @@ interface DayViewProps {
   appointments: AppointmentData[];
   workHours: WorkHoursData[];
   currentTime: Date;
-  onSlotClick: () => void;
+  onSlotDoubleClick: (date: Date, hour: number, minute: number) => void;
   onAppointmentClick: (appointment: AppointmentData) => void;
+  onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
 }
 
-export const DayView: React.FC<DayViewProps> = ({ currentDate, timeSlots, appointments, workHours, currentTime, onSlotClick, onAppointmentClick }) => {
+export const DayView: React.FC<DayViewProps> = ({
+  currentDate,
+  timeSlots,
+  appointments,
+  workHours,
+  currentTime,
+  onSlotDoubleClick,
+  onAppointmentClick,
+  onElapsedSlotConfirmation,
+}) => {
   const isWithinWorkingHours = (date: Date, hour: number, minute: number) => {
     const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
     const workHour = workHours.find((wh) => wh.daysDesc === dayName && wh.rActiveYN === "Y");
@@ -83,6 +93,27 @@ export const DayView: React.FC<DayViewProps> = ({ currentDate, timeSlots, appoin
 
   const appointmentLayout = calculateAppointmentLayout(currentDate, dayAppointments);
 
+  const handleSlotClick = (date: Date, hour: number, minute: number) => {
+    const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+    const isElapsed = isTimeSlotElapsed(date, hour, minute);
+    const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+    // Only handle single clicks for elapsed slots (to show confirmation)
+    if (withinWorkingHours && isElapsed && slotAppointments.length === 0) {
+      onElapsedSlotConfirmation(date, hour, minute);
+    }
+  };
+
+  const handleSlotDoubleClick = (date: Date, hour: number, minute: number) => {
+    const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+    const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+    // Allow double-click booking for any working hours slot without appointments
+    if (withinWorkingHours && slotAppointments.length === 0) {
+      onSlotDoubleClick(date, hour, minute);
+    }
+  };
+
   return (
     <Grid container spacing={1}>
       <Grid size={{ xs: 1 }}>
@@ -134,12 +165,20 @@ export const DayView: React.FC<DayViewProps> = ({ currentDate, timeSlots, appoin
                 borderColor: "divider",
                 backgroundColor,
                 p: 0.5,
-                cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
-                "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
-                opacity: isElapsed ? 0.7 : 1,
+                cursor: withinWorkingHours ? (slotAppointments.length > 0 ? "default" : "pointer") : "not-allowed",
+                "&:hover":
+                  withinWorkingHours && slotAppointments.length === 0
+                    ? {
+                        backgroundColor: isElapsed ? "#f5f5f5" : "#f0f0f0",
+                        "& .slot-hint": { opacity: 1 },
+                      }
+                    : {},
+                opacity: !withinWorkingHours ? 0.5 : isElapsed ? 0.8 : 1,
                 position: "relative",
+                userSelect: "none",
               }}
-              onClick={() => withinWorkingHours && !isElapsed && onSlotClick()}
+              onClick={() => handleSlotClick(currentDate, slot.hour, slot.minute)}
+              onDoubleClick={() => handleSlotDoubleClick(currentDate, slot.hour, slot.minute)}
             >
               {!withinWorkingHours && !slotAppointments.length && (
                 <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
@@ -150,12 +189,25 @@ export const DayView: React.FC<DayViewProps> = ({ currentDate, timeSlots, appoin
                 </Box>
               )}
 
-              {isElapsed && withinWorkingHours && slotAppointments.length === 0 && (
-                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
-                  <Typography variant="caption" sx={{ fontSize: "0.6rem", fontStyle: "italic" }}>
-                    Elapsed
-                  </Typography>
-                </Box>
+              {withinWorkingHours && slotAppointments.length === 0 && (
+                <Typography
+                  variant="caption"
+                  className="slot-hint"
+                  sx={{
+                    fontSize: "0.6rem",
+                    color: "text.secondary",
+                    opacity: 0,
+                    transition: "opacity 0.2s",
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    pointerEvents: "none",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {isElapsed ? "Click for elapsed booking" : "Double-click to book"}
+                </Typography>
               )}
 
               {slotAppointments.map((appointment) => {
@@ -167,7 +219,8 @@ export const DayView: React.FC<DayViewProps> = ({ currentDate, timeSlots, appoin
                 if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
                   const slotHeight = 40;
                   const durationInSlots = appointment.abDuration / 15;
-                  const appointmentHeight = durationInSlots * slotHeight - 2;
+                  // Enhanced minimum height for better visibility of short appointments
+                  const appointmentHeight = Math.max(durationInSlots * slotHeight - 2, appointment.abDuration <= 15 ? 18 : 24);
 
                   const minuteOffset = appointmentStartMinutes - slotStartMinutes;
                   const topOffset = (minuteOffset / 15) * slotHeight;
@@ -185,7 +238,7 @@ export const DayView: React.FC<DayViewProps> = ({ currentDate, timeSlots, appoin
                         left: "4px",
                         right: "4px",
                         height: `${appointmentHeight}px`,
-                        zIndex: 1,
+                        zIndex: 5,
                       }}
                     >
                       <AppointmentCard appointment={appointment} showDetails={true} column={column} totalColumns={totalColumns} onClick={onAppointmentClick} />

@@ -1,4 +1,4 @@
-// src/frontOffice/components/WeekView.tsx
+// src/pages/frontOffice/Appointment/components/WeekView.tsx
 import { Box, Grid, Typography } from "@mui/material";
 import React from "react";
 import { AppointmentData, TimeSlot, WorkHoursData } from "../types";
@@ -13,11 +13,22 @@ interface WeekViewProps {
   workHours: WorkHoursData[];
   currentTime: Date;
   getWeekDates: (date: Date) => Date[];
-  onSlotClick: () => void;
+  onSlotDoubleClick: (date: Date, hour: number, minute: number) => void;
   onAppointmentClick: (appointment: AppointmentData) => void;
+  onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
 }
 
-export const WeekView: React.FC<WeekViewProps> = ({ currentDate, timeSlots, appointments, workHours, currentTime, getWeekDates, onSlotClick, onAppointmentClick }) => {
+export const WeekView: React.FC<WeekViewProps> = ({
+  currentDate,
+  timeSlots,
+  appointments,
+  workHours,
+  currentTime,
+  getWeekDates,
+  onSlotDoubleClick,
+  onAppointmentClick,
+  onElapsedSlotConfirmation,
+}) => {
   const weekDates = getWeekDates(currentDate);
 
   const isWithinWorkingHours = (date: Date, hour: number, minute: number) => {
@@ -81,6 +92,27 @@ export const WeekView: React.FC<WeekViewProps> = ({ currentDate, timeSlots, appo
 
       return slotTime >= aptTime && slotTime < aptEndTime;
     });
+  };
+
+  const handleSlotClick = (date: Date, hour: number, minute: number) => {
+    const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+    const isElapsed = isTimeSlotElapsed(date, hour, minute);
+    const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+    // Only handle single clicks for elapsed slots (to show confirmation)
+    if (withinWorkingHours && isElapsed && slotAppointments.length === 0) {
+      onElapsedSlotConfirmation(date, hour, minute);
+    }
+  };
+
+  const handleSlotDoubleClick = (date: Date, hour: number, minute: number) => {
+    const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+    const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+    // Allow double-click booking for any working hours slot without appointments
+    if (withinWorkingHours && slotAppointments.length === 0) {
+      onSlotDoubleClick(date, hour, minute);
+    }
   };
 
   return (
@@ -161,13 +193,46 @@ export const WeekView: React.FC<WeekViewProps> = ({ currentDate, timeSlots, appo
                     borderColor: "divider",
                     backgroundColor,
                     p: 0.25,
-                    cursor: withinWorkingHours && !isElapsed ? "pointer" : "not-allowed",
-                    "&:hover": withinWorkingHours && !isElapsed ? { backgroundColor: "#f0f0f0" } : {},
-                    opacity: isElapsed ? 0.7 : 1,
+                    cursor: withinWorkingHours ? (slotAppointments.length > 0 ? "default" : "pointer") : "not-allowed",
+                    "&:hover":
+                      withinWorkingHours && slotAppointments.length === 0
+                        ? {
+                            backgroundColor: isElapsed ? "#f5f5f5" : "#f0f0f0",
+                            "& .slot-hint": { opacity: 1 },
+                          }
+                        : {},
+                    opacity: !withinWorkingHours ? 0.5 : isElapsed ? 0.8 : 1,
                     position: "relative",
+                    userSelect: "none",
                   }}
-                  onClick={() => withinWorkingHours && !isElapsed && onSlotClick()}
+                  onClick={() => handleSlotClick(date, slot.hour, slot.minute)}
+                  onDoubleClick={() => handleSlotDoubleClick(date, slot.hour, slot.minute)}
                 >
+                  {/* Hover hint for booking */}
+                  {withinWorkingHours && slotAppointments.length === 0 && (
+                    <Typography
+                      variant="caption"
+                      className="slot-hint"
+                      sx={{
+                        fontSize: "0.5rem",
+                        color: "text.secondary",
+                        opacity: 0,
+                        transition: "opacity 0.2s",
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        pointerEvents: "none",
+                        fontStyle: "italic",
+                        textAlign: "center",
+                        lineHeight: 1,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {isElapsed ? "Click" : "2x Click"}
+                    </Typography>
+                  )}
+
                   {slotAppointments.map((appointment) => {
                     const appointmentStart = new Date(appointment.abTime);
                     const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
@@ -177,7 +242,8 @@ export const WeekView: React.FC<WeekViewProps> = ({ currentDate, timeSlots, appo
                     if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
                       const slotHeight = 30;
                       const durationInSlots = appointment.abDuration / 15;
-                      const appointmentHeight = durationInSlots * slotHeight - 1;
+                      // Enhanced minimum height for better visibility in week view
+                      const appointmentHeight = Math.max(durationInSlots * slotHeight - 1, appointment.abDuration <= 15 ? 16 : 20);
 
                       const minuteOffset = appointmentStartMinutes - slotStartMinutes;
                       const topOffset = (minuteOffset / 15) * slotHeight;
@@ -195,10 +261,16 @@ export const WeekView: React.FC<WeekViewProps> = ({ currentDate, timeSlots, appo
                             left: "2px",
                             right: "2px",
                             height: `${appointmentHeight}px`,
-                            zIndex: 1,
+                            zIndex: 5,
                           }}
                         >
-                          <AppointmentCard appointment={appointment} showDetails={false} column={column} totalColumns={totalColumns} onClick={onAppointmentClick} />
+                          <AppointmentCard
+                            appointment={appointment}
+                            showDetails={appointment.abDuration > 15} // Show details only for longer appointments in week view
+                            column={column}
+                            totalColumns={totalColumns}
+                            onClick={onAppointmentClick}
+                          />
                         </Box>
                       );
                     }
