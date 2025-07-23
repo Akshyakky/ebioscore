@@ -403,7 +403,6 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
   }, [open, isViewMode, canSave, isDirty, handleSubmit, onClose]);
 
   const onSubmit = async (data: PhysicianIssualFormData) => {
-    debugger;
     if (isViewMode) return;
     setFormError(null);
     try {
@@ -415,9 +414,10 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
       if (validDetails.length === 0) throw new Error("At least one product must have an issued quantity greater than 0");
       const fromDept = memoizedDepartmentOptions?.find((d) => Number(d.value) === data.fromDeptID);
       const selectedPhysician = memoizedPhysicianOptions?.find((p) => Number(p.value) === data.recConID);
+      const pisid = isAddMode || isCopyMode ? 0 : data.pisid;
       const transformedDetails: ProductIssualDetailDto[] = validDetails.map((detail) => ({
-        pisDetID: detail.pisDetID || 0,
-        pisid: detail.pisid || 0,
+        pisDetID: isCopyMode ? 0 : detail.pisDetID || 0,
+        pisid: isCopyMode ? 0 : detail.pisid || 0,
         productID: detail.productID || 0,
         productCode: detail.productCode || "",
         productName: detail.productName || "",
@@ -453,19 +453,43 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
         manufacturerName: detail.manufacturerName,
         psbid: detail.psbid,
         remarks: detail.remarks || "",
+        rActiveYN: "Y",
+        transferYN: "N",
       }));
 
+      const calculatedTotalItems = calculateTotalItems(transformedDetails);
+      const calculatedTotalRequestedQty = calculateTotalRequestedQty(transformedDetails);
+      const calculatedTotalIssuedQty = calculateTotalIssuedQty(transformedDetails);
+      const calculatedIssualTypeName = getIssualTypeName(issualType);
+      const calculatedIssualCodePrefix = getIssualCodePrefix(issualType);
       const issualCompositeDto: ProductIssualCompositeDto = {
         productIssual: {
-          ...data,
+          pisid: pisid,
+          pisDate: data.pisDate,
+          issualType: issualType,
+          fromDeptID: data.fromDeptID,
           fromDeptName: fromDept?.label || data.fromDeptName,
-          recConName: selectedPhysician?.label || data.recConName,
-          totalItems: calculateTotalItems(transformedDetails),
-          totalRequestedQty: calculateTotalRequestedQty(transformedDetails),
-          totalIssuedQty: calculateTotalIssuedQty(transformedDetails),
-          issualTypeName: getIssualTypeName(issualType),
-          issualCodePrefix: getIssualCodePrefix(issualType),
-        } as ProductIssualDto,
+          toDeptID: data.toDeptID || 0,
+          toDeptName: data.toDeptName || "",
+          recConID: data.recConID,
+          recConName: selectedPhysician?.label || data.recConName || "",
+          auGrpID: data.auGrpID,
+          catDesc: data.catDesc || "REVENUE",
+          catValue: data.catValue || "MEDI",
+          indentNo: data.indentNo || "",
+          pisCode: data.pisCode || "",
+          approvedYN: data.approvedYN || "N",
+          approvedID: data.approvedID || 0,
+          approvedBy: data.approvedBy || "",
+          totalItems: calculatedTotalItems,
+          totalRequestedQty: calculatedTotalRequestedQty,
+          totalIssuedQty: calculatedTotalIssuedQty,
+          issualTypeName: calculatedIssualTypeName,
+          issualCodePrefix: calculatedIssualCodePrefix,
+          destinationInfo: data.recConName || "",
+          destinationID: data.recConID || null,
+          rActiveYN: "Y",
+        },
         details: transformedDetails,
       };
 
