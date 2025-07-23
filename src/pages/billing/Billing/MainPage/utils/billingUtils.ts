@@ -119,7 +119,8 @@ export const prepareBillSaveRequest = (data: BillingFormData): BillSaveRequest =
     },
     billServices: data.billServices,
     billProducts: data.billProducts,
-  };
+    billPaymentDetails: data.billPaymentDetails,
+  } as unknown as BillSaveRequest;
 };
 
 /**
