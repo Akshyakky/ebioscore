@@ -8,8 +8,6 @@ import { AppointmentDetailsDialog } from "./components/AppointmentDetailsDialog"
 import { BookingDialog } from "./components/BookingDialog";
 import { DayView } from "./components/DayView";
 import { MonthView } from "./components/MonthView";
-import { SchedulerFilters } from "./components/SchedulerFilters";
-import { SchedulerHeader } from "./components/SchedulerHeader";
 import { SchedulerStatistics } from "./components/SchedulerStatistics";
 import { TimeLegend } from "./components/TimeLegend";
 import { WeekView } from "./components/WeekView";
@@ -19,6 +17,7 @@ import { useSchedulerData } from "./hooks/useSchedulerData";
 import { useTimeSlots } from "./hooks/useTimeSlots";
 
 // Types
+import { SchedulerHeader } from "./components/SchedulerHeader";
 import { AppointmentData, BookingFormData } from "./types";
 
 // Mock data for providers and resources (move to separate constants file)
@@ -287,32 +286,27 @@ const AppointmentScheduler: React.FC = () => {
 
   return (
     <Box sx={{ p: 1 }}>
-      {/* Header */}
       <SchedulerHeader
         currentDate={currentDate}
         viewMode={viewMode}
-        onDateChange={setCurrentDate}
-        onViewModeChange={setViewMode}
-        onNavigate={handleNavigateDate}
-        getWeekDates={getWeekDates}
-      />
-
-      {/* Filters */}
-      <SchedulerFilters
         bookingMode={bookingMode}
         selectedProvider={selectedProvider}
         selectedResource={selectedResource}
+        onDateChange={setCurrentDate}
+        onViewModeChange={setViewMode}
+        onNavigate={handleNavigateDate}
         onBookingModeChange={setBookingMode}
         onProviderChange={setSelectedProvider}
         onResourceChange={setSelectedResource}
         onBookingClick={() => setShowBookingDialog(true)}
         providers={mockProviders}
         resources={mockResources}
+        getWeekDates={getWeekDates}
       />
 
       {/* Main Scheduler View */}
       <Paper sx={{ p: 1, mb: 1 }}>
-        <Box sx={{ height: "calc(100vh - 275px)", overflow: "auto" }}>{renderCurrentView()}</Box>
+        <Box sx={{ height: "calc(100vh - 225px)", overflow: "auto" }}>{renderCurrentView()}</Box>
       </Paper>
 
       {/* Time Legend */}
