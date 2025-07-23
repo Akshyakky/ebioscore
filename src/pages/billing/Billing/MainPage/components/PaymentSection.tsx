@@ -69,6 +69,24 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
     fetchPaymentTypes();
   }, []);
 
+  // Add default payment method on mount if none exists
+  useEffect(() => {
+    if (paymentFields.length === 0) {
+      appendPayment({
+        paymentID: 0,
+        paymentMode: "",
+        paymentCode: "",
+        paymentName: "",
+        paidAmount: 0,
+        paymentNote: "",
+        referenceNumber: "",
+        bank: "",
+        branch: "",
+        transactionNumber: undefined,
+      });
+    }
+  }, [paymentFields.length, appendPayment]);
+
   // Add new payment method
   const handleAddPayment = useCallback(() => {
     appendPayment({
@@ -139,23 +157,36 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
           const payment = watchedPaymentDetails[index];
           const selectedPaymentType = payment ? getSelectedPaymentType(payment.paymentMode) : null;
           const bankChargeAmount = selectedPaymentType && payment ? (payment.paidAmount * selectedPaymentType.bankCharge) / 100 : 0;
+          const showPaymentMethodLabel = paymentFields.length > 1;
 
           return (
             <Box key={field.id} mb={3}>
               {index > 0 && <Divider sx={{ mb: 2 }} />}
 
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Payment Method {index + 1}
-                </Typography>
-                {paymentFields.length > 1 && (
+              {/* Only show payment method label when there are multiple payment methods */}
+              {showPaymentMethodLabel && (
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Payment Method {index + 1}
+                  </Typography>
                   <Tooltip title="Remove Payment Method">
                     <IconButton size="small" color="error" onClick={() => removePayment(index)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                )}
-              </Box>
+                </Box>
+              )}
+
+              {/* Show remove button for single payment method without label */}
+              {!showPaymentMethodLabel && paymentFields.length === 1 && (
+                <Box display="flex" justifyContent="flex-end" mb={2}>
+                  <Tooltip title="Remove Payment Method">
+                    <IconButton size="small" color="error" onClick={() => removePayment(index)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
 
               <Grid container spacing={2}>
                 <Grid size={{ sm: 12, md: 4 }}>
@@ -194,16 +225,16 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
                   <FormField
                     name={`billPaymentDetails.${index}.paymentNote`}
                     control={control}
-                    label="Payment Note/Reference"
+                    label="Payment Note"
                     type="text"
                     size="small"
                     fullWidth
-                    placeholder="Enter payment reference or note"
+                    placeholder="Enter payment note"
                   />
                 </Grid>
 
                 {/* Additional fields for non-cash payments */}
-                {selectedPaymentType && selectedPaymentType.payMode !== "CASHP" && (
+                {selectedPaymentType && selectedPaymentType.payCode !== "CASH" && (
                   <>
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField
@@ -278,7 +309,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
                   <Typography fontWeight="medium">{formatCurrency(finalBillAmount)}</Typography>
                 </Box>
 
-                {/* Individual payment breakdown */}
+                {/* Individual payment breakdown - only show when multiple payments */}
                 {watchedPaymentDetails.length > 1 &&
                   watchedPaymentDetails.map((payment, index) => (
                     <Box key={index} display="flex" justifyContent="space-between" alignItems="center">

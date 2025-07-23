@@ -231,7 +231,7 @@ const BillingPage: React.FC = () => {
               <PatientSection selectedPChartID={selectedPChartID} clearSearchTrigger={clearSearchTrigger} onPatientSelect={handlePatientSelect} />
             </Grid>
             {/* Visit Reference Section */}
-            <Grid size={{ xs: 12, sm: 12, md: 4 }}>{watchedVisitReference && <VisitReferenceCard visitReference={watchedVisitReference} onChangeVisit={handleChangeVisit} />}</Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 4 }}>{selectedPChartID > 0 && <VisitReferenceCard visitReference={watchedVisitReference} onChangeVisit={handleChangeVisit} />}</Grid>
             {/* Bill Details Section */}
             <Grid size={{ sm: 12 }}>
               <BillDetailsSection control={control} dropdownValues={dropdownValues} physicians={physicians} referals={referals} setValue={setValue} />

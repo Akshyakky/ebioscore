@@ -15,7 +15,7 @@ export const VisitReferenceCard: React.FC<VisitReferenceCardProps> = ({ visitRef
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={2}>
             <HistoryIcon color="primary" />
-            <Typography variant="h6">Selected Visit</Typography>
+            <Typography variant="h6">{visitReference ? "Selected Visit" : "Select Visit"}</Typography>
           </Box>
           <Tooltip title="Change Visit">
             <IconButton
@@ -31,13 +31,17 @@ export const VisitReferenceCard: React.FC<VisitReferenceCardProps> = ({ visitRef
             </IconButton>
           </Tooltip>
         </Box>
-        <Divider sx={{ my: 1 }} />
-        <Box display="flex" alignItems="center" gap={2}>
-          <Typography variant="body2" color="text.secondary">
-            Reference Code:
-          </Typography>
-          <Chip label={visitReference} color="primary" variant="outlined" size="medium" />
-        </Box>
+        {visitReference && (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography variant="body2" color="text.secondary">
+                Reference Code:
+              </Typography>
+              <Chip label={visitReference} color="primary" variant="outlined" size="medium" />
+            </Box>
+          </>
+        )}
       </CardContent>
     </Card>
   );
