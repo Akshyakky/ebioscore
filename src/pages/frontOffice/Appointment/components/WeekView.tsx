@@ -64,7 +64,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
     }
 
     if (isElapsed) {
-      return "#e8e8e8";
+      return "#f0f0f0"; // Lighter background for better appointment visibility
     }
 
     return "transparent";
@@ -118,7 +118,19 @@ export const WeekView: React.FC<WeekViewProps> = ({
   return (
     <Grid container spacing={0.5}>
       <Grid size={{ xs: 1.5 }}>
-        <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+        {/* Fixed sticky header positioning */}
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            background: "white",
+            zIndex: 10, // Higher z-index to ensure it stays above content
+            py: 0.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            mb: 0.5,
+          }}
+        >
           <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem" }}>
             Time
           </Typography>
@@ -150,15 +162,17 @@ export const WeekView: React.FC<WeekViewProps> = ({
           <Grid size={{ xs: 1.5 }} key={index} sx={{ position: "relative" }}>
             <CurrentTimeIndicator date={date} height={30} timeSlots={timeSlots} currentTime={currentTime} />
 
+            {/* Fixed sticky header positioning */}
             <Box
               sx={{
                 position: "sticky",
                 top: 0,
                 background: "white",
-                zIndex: 1,
+                zIndex: 10, // Higher z-index to ensure it stays above content
                 py: 0.5,
                 borderBottom: 1,
                 borderColor: "divider",
+                mb: 0.5,
               }}
             >
               <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem", fontWeight: "bold" }}>
@@ -201,7 +215,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                             "& .slot-hint": { opacity: 1 },
                           }
                         : {},
-                    opacity: !withinWorkingHours ? 0.5 : isElapsed ? 0.8 : 1,
+                    opacity: !withinWorkingHours ? 0.5 : 1, // Removed opacity reduction for elapsed slots
                     position: "relative",
                     userSelect: "none",
                   }}
@@ -261,7 +275,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                             left: "2px",
                             right: "2px",
                             height: `${appointmentHeight}px`,
-                            zIndex: 5,
+                            zIndex: 15, // Higher z-index to ensure appointments are above slot backgrounds
                           }}
                         >
                           <AppointmentCard
@@ -270,6 +284,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                             column={column}
                             totalColumns={totalColumns}
                             onClick={onAppointmentClick}
+                            isElapsed={isElapsed} // Pass elapsed state for better styling
                           />
                         </Box>
                       );

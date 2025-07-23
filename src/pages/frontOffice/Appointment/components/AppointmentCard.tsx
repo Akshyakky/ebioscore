@@ -9,16 +9,61 @@ interface AppointmentCardProps {
   showDetails?: boolean;
   column?: number;
   totalColumns?: number;
+  isElapsed?: boolean;
   onClick?: (appointment: AppointmentData) => void;
 }
 
-export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, showDetails = true, column = 0, totalColumns = 1, onClick }) => {
+export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, showDetails = true, column = 0, totalColumns = 1, isElapsed = false, onClick }) => {
   const widthPercentage = 100 / totalColumns;
   const leftPercentage = (column * 100) / totalColumns;
 
   const statusColor = getStatusColor(appointment.abStatus);
-  const backgroundColor = statusColor === "success" ? "#e8f5e8" : statusColor === "warning" ? "#fff3e0" : statusColor === "error" ? "#ffebee" : "#e3f2fd";
-  const borderColor = statusColor === "success" ? "#4caf50" : statusColor === "warning" ? "#ff9800" : statusColor === "error" ? "#f44336" : "#2196f3";
+
+  // Enhanced color scheme for better visibility, especially in elapsed slots
+  const getBackgroundColor = () => {
+    if (isElapsed) {
+      // Enhanced contrast for elapsed appointments
+      switch (statusColor) {
+        case "success":
+          return "#c8e6c9"; // Lighter but more visible green
+        case "warning":
+          return "#ffe0b2"; // Lighter but more visible orange
+        case "error":
+          return "#ffcdd2"; // Lighter but more visible red
+        default:
+          return "#e1f5fe"; // Lighter but more visible blue
+      }
+    } else {
+      // Original colors for non-elapsed appointments
+      switch (statusColor) {
+        case "success":
+          return "#e8f5e8";
+        case "warning":
+          return "#fff3e0";
+        case "error":
+          return "#ffebee";
+        default:
+          return "#e3f2fd";
+      }
+    }
+  };
+
+  const getBorderColor = () => {
+    // Enhanced border colors for better definition
+    switch (statusColor) {
+      case "success":
+        return "#4caf50";
+      case "warning":
+        return "#ff9800";
+      case "error":
+        return "#f44336";
+      default:
+        return "#2196f3";
+    }
+  };
+
+  const backgroundColor = getBackgroundColor();
+  const borderColor = getBorderColor();
 
   // Enhanced styling for short appointments (15 minutes or less)
   const isShortAppointment = appointment.abDuration <= 15;
@@ -41,17 +86,24 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, s
         flexDirection: "column",
         backgroundColor,
         borderLeft: `3px solid ${borderColor}`,
+        // Enhanced shadow and contrast for elapsed appointments
+        boxShadow: isElapsed ? "0 2px 4px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.1)",
         "&:hover": {
-          backgroundColor: "action.hover",
+          backgroundColor: isElapsed
+            ? "rgba(255,255,255,0.9)" // White overlay for better hover contrast on elapsed
+            : "action.hover",
           transform: "scale(1.02)",
-          boxShadow: 2,
+          boxShadow: isElapsed ? "0 4px 8px rgba(0,0,0,0.3)" : 2,
         },
         width: `${widthPercentage - 1}%`,
         left: `${leftPercentage}%`,
         position: "absolute",
         transition: "all 0.2s ease-in-out",
         minHeight: isShortAppointment ? "18px" : "24px", // Ensure minimum height for visibility
-        zIndex: 10, // Higher z-index to ensure clickability
+        zIndex: 20, // Even higher z-index for appointment cards
+        // Enhanced text contrast for elapsed appointments
+        color: isElapsed ? "#1a1a1a" : "inherit",
+        fontWeight: isElapsed ? "500" : "normal",
       }}
       onClick={handleClick}
     >
@@ -66,6 +118,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, s
           lineHeight: isShortAppointment ? 1.1 : 1.2,
           fontSize: "inherit",
           mb: isShortAppointment ? 0 : 0.25,
+          // Enhanced text styling for elapsed appointments
+          color: isElapsed ? "#1a1a1a" : "inherit",
+          textShadow: isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
         }}
       >
         {appointment.abFName} {appointment.abLName}
@@ -83,6 +138,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, s
               textOverflow: "ellipsis",
               fontSize: "0.65rem",
               lineHeight: 1.1,
+              // Enhanced contrast for elapsed appointments
+              color: isElapsed ? "#424242" : "text.secondary",
+              textShadow: isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
             }}
           >
             {appointment.providerName}
@@ -93,6 +151,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, s
             sx={{
               fontSize: "0.6rem",
               lineHeight: 1,
+              // Enhanced contrast for elapsed appointments
+              color: isElapsed ? "#424242" : "text.secondary",
+              textShadow: isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
             }}
           >
             {appointment.abDurDesc}
@@ -109,6 +170,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, s
             fontSize: "0.6rem",
             lineHeight: 1,
             fontWeight: "medium",
+            // Enhanced contrast for elapsed appointments
+            color: isElapsed ? "#424242" : "text.secondary",
+            textShadow: isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
           }}
         >
           {appointment.abDurDesc}

@@ -61,7 +61,7 @@ export const DayView: React.FC<DayViewProps> = ({
     }
 
     if (isElapsed) {
-      return "#e8e8e8";
+      return "#f0f0f0"; // Lighter background for better appointment visibility
     }
 
     return "transparent";
@@ -117,7 +117,19 @@ export const DayView: React.FC<DayViewProps> = ({
   return (
     <Grid container spacing={1}>
       <Grid size={{ xs: 1 }}>
-        <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+        {/* Fixed sticky header positioning */}
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            background: "white",
+            zIndex: 10, // Higher z-index to ensure it stays above content
+            py: 0.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            mb: 0.5,
+          }}
+        >
           <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
             Time
           </Typography>
@@ -144,7 +156,19 @@ export const DayView: React.FC<DayViewProps> = ({
       <Grid size={{ xs: 11 }} sx={{ position: "relative" }}>
         <CurrentTimeIndicator date={currentDate} height={40} timeSlots={timeSlots} currentTime={currentTime} />
 
-        <Box sx={{ position: "sticky", top: 0, background: "white", zIndex: 1, py: 0.5 }}>
+        {/* Fixed sticky header positioning */}
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            background: "white",
+            zIndex: 10, // Higher z-index to ensure it stays above content
+            py: 0.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            mb: 0.5,
+          }}
+        >
           <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
             {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </Typography>
@@ -173,7 +197,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         "& .slot-hint": { opacity: 1 },
                       }
                     : {},
-                opacity: !withinWorkingHours ? 0.5 : isElapsed ? 0.8 : 1,
+                opacity: !withinWorkingHours ? 0.5 : 1, // Removed opacity reduction for elapsed slots
                 position: "relative",
                 userSelect: "none",
               }}
@@ -238,10 +262,17 @@ export const DayView: React.FC<DayViewProps> = ({
                         left: "4px",
                         right: "4px",
                         height: `${appointmentHeight}px`,
-                        zIndex: 5,
+                        zIndex: 15, // Higher z-index to ensure appointments are above slot backgrounds
                       }}
                     >
-                      <AppointmentCard appointment={appointment} showDetails={true} column={column} totalColumns={totalColumns} onClick={onAppointmentClick} />
+                      <AppointmentCard
+                        appointment={appointment}
+                        showDetails={true}
+                        column={column}
+                        totalColumns={totalColumns}
+                        onClick={onAppointmentClick}
+                        isElapsed={isElapsed} // Pass elapsed state for better styling
+                      />
                     </Box>
                   );
                 }
