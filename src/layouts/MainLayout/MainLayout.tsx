@@ -5,7 +5,6 @@ import { ArrowUpwardSharp } from "@mui/icons-material";
 import { Alert, Box, Button, Fab, Paper, Snackbar, Typography, Zoom, useMediaQuery, useTheme } from "@mui/material";
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import BreadcrumbsNavigation from "../BreadcrumbsNavigations";
 import SideBar from "../SideBar/SideBar";
 
 // Density Context for application-wide density control
@@ -148,13 +147,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             flexDirection="column"
           >
             {/* Density Control Toolbar */}
-            {!isDashboard && (
+            {/* {!isDashboard && (
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={spacing} flexWrap="wrap" gap={1}>
                 <Box flex={1}>
                   <BreadcrumbsNavigation />
                 </Box>
 
-                {/* <Box display="flex" gap={1} alignItems="center">
+                <Box display="flex" gap={1} alignItems="center">
                   <ToggleButtonGroup
                     value={density}
                     exclusive
@@ -178,9 +177,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       </Tooltip>
                     </ToggleButton>
                   </ToggleButtonGroup>
-                </Box> */}
+                </Box>
               </Box>
-            )}
+            )} */}
 
             {/* Main content area with dynamic spacing */}
             <Box
