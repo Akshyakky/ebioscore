@@ -264,7 +264,7 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
       const formData: ProductIssualFormData = {
         pisid: isCopyMode ? 0 : compositeDto.productIssual.pisid,
         pisDate: isCopyMode ? new Date() : new Date(compositeDto.productIssual.pisDate),
-        issualType: IssualType.Department, // Always Department type
+        issualType: IssualType.Department,
         fromDeptID: compositeDto.productIssual.fromDeptID,
         fromDeptName: compositeDto.productIssual.fromDeptName,
         toDeptID: compositeDto.productIssual.toDeptID,
@@ -274,6 +274,7 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
         catValue: compositeDto.productIssual.catValue || "MEDI",
         indentNo: isCopyMode ? "" : compositeDto.productIssual.indentNo || "",
         pisCode: isCopyMode ? "" : compositeDto.productIssual.pisCode || "",
+
         approvedYN: isCopyMode ? "N" : compositeDto.productIssual.approvedYN,
         approvedID: isCopyMode ? 0 : compositeDto.productIssual.approvedID || 0,
         approvedBy: isCopyMode ? "" : compositeDto.productIssual.approvedBy || "",
@@ -365,13 +366,11 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
 
       const fromDept = department?.find((d) => Number(d.value) === data.fromDeptID);
       const toDept = department?.find((d) => Number(d.value) === data.toDeptID);
-
-      // Create the composite DTO for Department Issual
       const departmentIssualCompositeDto: ProductIssualCompositeDto = {
         productIssual: {
           pisid: data.pisid,
           pisDate: data.pisDate,
-          issualType: IssualType.Department, // Ensure it's Department type
+          issualType: IssualType.Department,
           fromDeptID: data.fromDeptID,
           fromDeptName: fromDept?.label || data.fromDeptName,
           toDeptID: data.toDeptID,
@@ -437,7 +436,6 @@ const ProductIssualForm: React.FC<ProductIssualFormProps> = ({ open, onClose, in
         ),
       };
 
-      // Use the Department Issual service method
       const response = await saveDepartmentIssual(departmentIssualCompositeDto);
       if (response.success) {
         const actionText = isCopyMode ? "copied" : isAddMode ? "created" : "updated";
