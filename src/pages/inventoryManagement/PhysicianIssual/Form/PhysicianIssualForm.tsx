@@ -23,8 +23,8 @@ import React, { ErrorInfo, useCallback, useEffect, useMemo, useState } from "rea
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import ProductBillingSection from "../../ProductIssual/Form/ProductBillingSection";
-import ProductDetailsSection from "../../ProductIssual/Form/ProductManagementSection";
 import { useProductIssual } from "../../ProductIssual/hooks/useProductIssual";
+import PhysicianProductDetailsSection from "./PhysicianProductDetailsSection";
 
 // Error Boundary Component for form-level error handling
 interface ErrorBoundaryProps {
@@ -743,7 +743,7 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
             </Grid>
           </Paper>
 
-          <ProductDetailsSection
+          <PhysicianProductDetailsSection
             control={control}
             fields={fields}
             append={append}
