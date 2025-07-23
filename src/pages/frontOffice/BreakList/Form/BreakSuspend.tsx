@@ -3,7 +3,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { BreakConSuspendData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConSuspendDto, BreakListData } from "@/interfaces/FrontOffice/BreakListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Close } from "@mui/icons-material";
@@ -41,8 +41,8 @@ type SuspendFormData = z.infer<typeof suspendSchema>;
 
 interface BreakSuspendProps {
   open: boolean;
-  onClose: (isSaved: boolean, updatedData?: BreakConSuspendData) => void;
-  breakData: BreakConSuspendData | null;
+  onClose: (isSaved: boolean, updatedData?: BreakConSuspendDto) => void;
+  breakData: BreakConSuspendDto | null;
 }
 
 const formatToDDMMYYYY = (date: Date | string): string => {
@@ -93,7 +93,7 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
     async (formData: SuspendFormData) => {
       if (!breakData) return;
 
-      const updatedSuspendData: BreakConSuspendData = {
+      const updatedSuspendData: BreakConSuspendDto = {
         ...breakData,
         hPLID: breakData.hPLID,
         bCSStartDate: formData.bCSStartDate,

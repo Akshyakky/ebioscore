@@ -2,7 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
+import { ReasonListDto } from "@/interfaces/FrontOffice/ReasonListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
@@ -37,7 +37,7 @@ const ReasonListPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
-  const [selectedReason, setSelectedReason] = useState<ReasonListData | null>(null);
+  const [selectedReason, setSelectedReason] = useState<ReasonListDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
@@ -86,19 +86,19 @@ const ReasonListPage: React.FC = () => {
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((reason: ReasonListData) => {
+  const handleEdit = useCallback((reason: ReasonListDto) => {
     setSelectedReason(reason);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleView = useCallback((reason: ReasonListData) => {
+  const handleView = useCallback((reason: ReasonListDto) => {
     setSelectedReason(reason);
     setIsViewMode(true);
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteClick = useCallback((reason: ReasonListData) => {
+  const handleDeleteClick = useCallback((reason: ReasonListDto) => {
     setSelectedReason(reason);
     setIsDeleteConfirmOpen(true);
   }, []);
@@ -322,7 +322,7 @@ const ReasonListPage: React.FC = () => {
     </Grid>
   );
 
-  const columns: Column<ReasonListData>[] = [
+  const columns: Column<ReasonListDto>[] = [
     {
       key: "arlCode",
       header: "Code",

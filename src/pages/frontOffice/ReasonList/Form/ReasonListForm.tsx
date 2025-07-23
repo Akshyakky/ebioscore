@@ -4,7 +4,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
+import { ReasonListDto } from "@/interfaces/FrontOffice/ReasonListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel, Refresh, Save } from "@mui/icons-material";
@@ -17,7 +17,7 @@ import { useReasonList } from "../hooks/useReasonList";
 interface ReasonListFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: ReasonListData | null;
+  initialData: ReasonListDto | null;
   viewOnly?: boolean;
 }
 
@@ -113,7 +113,7 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
       setIsSaving(true);
       setLoading(true);
 
-      const reasonData: ReasonListData = {
+      const reasonData: ReasonListDto = {
         arlID: data.arlID,
         arlCode: data.arlCode,
         arlName: data.arlName,

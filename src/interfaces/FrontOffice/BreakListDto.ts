@@ -25,7 +25,7 @@ export interface BreakDto extends BreakListData {
   bCSEndDate?: Date | string;
 }
 
-export interface BreakConDetailData extends BaseDto {
+export interface BreakConDetailDto extends BaseDto {
   bCDID: number;
   blID: number;
   hPLID: number | null;
@@ -36,17 +36,17 @@ export interface BreakConDetailData extends BaseDto {
 
 export interface BreakListDto extends BaseDto {
   breakList: BreakListData;
-  breakConDetails: BreakConDetailData[];
+  breakConDetails: BreakConDetailDto[];
 }
 
-export interface FrequencyData {
+export interface FrequencyDto {
   frequency: string;
   endDate: string;
   interval: number;
   weekDays: string[];
 }
 
-export interface BreakConSuspendData extends BaseDto {
+export interface BreakConSuspendDto extends BaseDto {
   bCSID: number;
   bLID: number;
   hPLID: number | null;

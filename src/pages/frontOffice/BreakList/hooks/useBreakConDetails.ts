@@ -1,8 +1,8 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
-import { BreakConDetailData } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConDetailDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { breakConDetailsService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 
-const useGenericBreakConDetails = createEntityHook<BreakConDetailData>(breakConDetailsService, "bCDID");
+const useGenericBreakConDetails = createEntityHook<BreakConDetailDto>(breakConDetailsService, "bCDID");
 
 export const useBreakConDetails = () => {
   const hook = useGenericBreakConDetails();

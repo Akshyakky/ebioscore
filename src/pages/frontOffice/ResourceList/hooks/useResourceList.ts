@@ -1,8 +1,8 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { ResourceListDto } from "@/interfaces/FrontOffice/ResourceListDto";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 
-const useGenericReasonList = createEntityHook<ResourceListData>(resourceListService, "arlID");
+const useGenericReasonList = createEntityHook<ResourceListDto>(resourceListService, "arlID");
 
 export const useResourceList = () => {
   const hook = useGenericReasonList();
