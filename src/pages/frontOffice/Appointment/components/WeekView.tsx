@@ -1,7 +1,9 @@
 // src/pages/frontOffice/Appointment/components/WeekView.tsx
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { Box, Grid, Typography, useTheme } from "@mui/material";
 import React from "react";
-import { AppointmentData, TimeSlot, WorkHoursData } from "../types";
+import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
 import { AppointmentCard } from "./AppointmentCard";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
@@ -9,12 +11,12 @@ import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 interface WeekViewProps {
   currentDate: Date;
   timeSlots: TimeSlot[];
-  appointments: AppointmentData[];
-  workHours: WorkHoursData[];
+  appointments: AppointBookingDto[];
+  workHours: HospWorkHoursDto[];
   currentTime: Date;
   getWeekDates: (date: Date) => Date[];
   onSlotDoubleClick: (date: Date, hour: number, minute: number) => void;
-  onAppointmentClick: (appointment: AppointmentData) => void;
+  onAppointmentClick: (appointment: AppointBookingDto) => void;
   onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
 }
 

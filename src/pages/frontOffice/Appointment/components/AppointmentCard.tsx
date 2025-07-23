@@ -1,16 +1,16 @@
 // src/pages/frontOffice/Appointment/components/AppointmentCard.tsx
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { Box, Typography, useTheme } from "@mui/material";
 import React from "react";
-import { AppointmentData } from "../types";
 import { getStatusColor } from "../utils/appointmentUtils";
 
 interface AppointmentCardProps {
-  appointment: AppointmentData;
+  appointment: AppointBookingDto;
   showDetails?: boolean;
   column?: number;
   totalColumns?: number;
   isElapsed?: boolean;
-  onClick?: (appointment: AppointmentData) => void;
+  onClick?: (appointment: AppointBookingDto) => void;
 }
 
 export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, showDetails = true, column = 0, totalColumns = 1, isElapsed = false, onClick }) => {

@@ -1,4 +1,5 @@
 // src/frontOffice/components/BookingDialog.tsx
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import {
   Button,
   Dialog,
@@ -16,17 +17,16 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
-import { BookingFormData } from "../types";
 
 interface BookingDialogProps {
   open: boolean;
-  bookingForm: BookingFormData;
+  bookingForm: AppointBookingDto;
   isRegisteredPatient: boolean;
   providers: Array<{ value: number; label: string; type: string }>;
   resources: Array<{ value: number; label: string; type: string }>;
   onClose: () => void;
   onSubmit: () => void;
-  onFormChange: (form: BookingFormData) => void;
+  onFormChange: (form: AppointBookingDto) => void;
   onRegisteredPatientChange: (isRegistered: boolean) => void;
 }
 
@@ -50,7 +50,7 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
   onFormChange,
   onRegisteredPatientChange,
 }) => {
-  const handleFieldChange = (field: keyof BookingFormData, value: any) => {
+  const handleFieldChange = (field: keyof AppointBookingDto, value: any) => {
     onFormChange({ ...bookingForm, [field]: value });
   };
 

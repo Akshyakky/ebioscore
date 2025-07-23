@@ -1,15 +1,15 @@
 // src/frontOffice/components/MonthView.tsx
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { Box, Grid, Paper, Typography, useTheme } from "@mui/material";
 import React from "react";
-import { AppointmentData } from "../types";
 import { getStatusColor } from "../utils/appointmentUtils";
 
 interface MonthViewProps {
   currentDate: Date;
-  appointments: AppointmentData[];
+  appointments: AppointBookingDto[];
   getMonthDates: (date: Date) => Date[];
   onSlotClick: () => void;
-  onAppointmentClick: (appointment: AppointmentData) => void;
+  onAppointmentClick: (appointment: AppointBookingDto) => void;
 }
 
 export const MonthView: React.FC<MonthViewProps> = ({ currentDate, appointments, getMonthDates, onSlotClick, onAppointmentClick }) => {

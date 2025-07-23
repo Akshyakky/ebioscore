@@ -17,8 +17,8 @@ import { useSchedulerData } from "./hooks/useSchedulerData";
 import { useTimeSlots } from "./hooks/useTimeSlots";
 
 // Types
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { SchedulerHeader } from "./components/SchedulerHeader";
-import { AppointmentData, BookingFormData } from "./types";
 
 // Mock data for providers and resources (move to separate constants file)
 const mockProviders = [
@@ -39,7 +39,7 @@ const AppointmentScheduler: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("day");
   const [showBookingDialog, setShowBookingDialog] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointBookingDto | null>(null);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
   const [bookingMode, setBookingMode] = useState("physician");
   const [selectedProvider, setSelectedProvider] = useState("");
@@ -58,19 +58,26 @@ const AppointmentScheduler: React.FC = () => {
   const timeSlots = useTimeSlots();
 
   // Booking form state
-  const [bookingForm, setBookingForm] = useState<BookingFormData>({
-    patientSearch: "",
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    provider: "",
-    resource: "",
-    appointmentDate: new Date(),
-    appointmentTime: "09:00",
-    duration: 30,
-    notes: "",
-  });
+  const initialBookingForm: AppointBookingDto = {
+    abID: 0,
+    abFName: "",
+    hplID: 0,
+    providerName: "",
+    rlID: 0,
+    rlName: "",
+    abDuration: 30,
+    abDurDesc: "",
+    abDate: new Date(),
+    abTime: new Date(),
+    abPType: "",
+    abStatus: "",
+    patRegisterYN: "Y",
+    otBookNo: 0,
+    patOPIP: "",
+    abEndTime: new Date(),
+  };
+
+  const [bookingForm, setBookingForm] = useState<AppointBookingDto>(initialBookingForm);
 
   // Update current time every minute
   useEffect(() => {
@@ -217,19 +224,7 @@ const AppointmentScheduler: React.FC = () => {
     setShowBookingDialog(false);
 
     // Reset form
-    setBookingForm({
-      patientSearch: "",
-      firstName: "",
-      lastName: "",
-      phone: "",
-      email: "",
-      provider: "",
-      resource: "",
-      appointmentDate: new Date(),
-      appointmentTime: "09:00",
-      duration: 30,
-      notes: "",
-    });
+    setBookingForm(initialBookingForm);
   };
 
   const handleSlotClick = () => {
@@ -237,17 +232,17 @@ const AppointmentScheduler: React.FC = () => {
     setShowBookingDialog(true);
   };
 
-  const handleAppointmentClick = (appointment: AppointmentData) => {
+  const handleAppointmentClick = (appointment: AppointBookingDto) => {
     setSelectedAppointment(appointment);
   };
 
-  const handleAppointmentEdit = (appointment: AppointmentData) => {
+  const handleAppointmentEdit = (appointment: AppointBookingDto) => {
     // Implement edit functionality
     console.log("Edit appointment:", appointment);
     setSelectedAppointment(null);
   };
 
-  const handleAppointmentCancel = (appointment: AppointmentData) => {
+  const handleAppointmentCancel = (appointment: AppointBookingDto) => {
     // Implement cancel functionality
     console.log("Cancel appointment:", appointment);
     setSelectedAppointment(null);

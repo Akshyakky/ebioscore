@@ -1,12 +1,13 @@
 // src/frontOffice/components/SchedulerStatistics.tsx
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { BreakListData } from "@/interfaces/FrontOffice/BreakListDto";
 import { CheckCircle, Event as EventIcon, AccessTime as TimeIcon, Warning } from "@mui/icons-material";
 import { Avatar, Card, Grid, Paper, Typography } from "@mui/material";
 import React from "react";
-import { AppointmentData, BreakData } from "../types";
 
 interface SchedulerStatisticsProps {
-  appointments: AppointmentData[];
-  breaks: BreakData[];
+  appointments: AppointBookingDto[];
+  breaks: BreakListData[];
 }
 
 export const SchedulerStatistics: React.FC<SchedulerStatisticsProps> = ({ appointments, breaks }) => {
