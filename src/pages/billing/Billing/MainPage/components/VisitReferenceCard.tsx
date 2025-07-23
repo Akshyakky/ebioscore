@@ -38,7 +38,7 @@ export const VisitReferenceCard: React.FC<VisitReferenceCardProps> = ({ visitRef
               <Typography variant="body2" color="text.secondary">
                 Reference Code:
               </Typography>
-              <Chip label={visitReference} color="primary" variant="outlined" size="medium" />
+              <Chip label={visitReference} color={visitReference.includes("OP") ? "primary" : "error"} variant="outlined" size="medium" />
             </Box>
           </>
         )}
