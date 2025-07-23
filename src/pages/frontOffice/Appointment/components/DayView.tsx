@@ -122,15 +122,16 @@ export const DayView: React.FC<DayViewProps> = ({
           sx={{
             position: "sticky",
             top: 0,
-            background: "white",
-            zIndex: 10, // Higher z-index to ensure it stays above content
+            background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+            zIndex: 30, // Much higher z-index to ensure it stays above all content
             py: 0.5,
-            borderBottom: 1,
-            borderColor: "divider",
+            borderBottom: 2,
+            borderColor: "primary.main",
             mb: 0.5,
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
           }}
         >
-          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
+          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem", fontWeight: "bold", color: "primary.main" }}>
             Time
           </Typography>
         </Box>
@@ -161,12 +162,13 @@ export const DayView: React.FC<DayViewProps> = ({
           sx={{
             position: "sticky",
             top: 0,
-            background: "white",
-            zIndex: 10, // Higher z-index to ensure it stays above content
+            background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+            zIndex: 30, // Much higher z-index to ensure it stays above all content
             py: 0.5,
-            borderBottom: 1,
-            borderColor: "divider",
+            borderBottom: 2,
+            borderColor: "primary.main",
             mb: 0.5,
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
           }}
         >
           <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>

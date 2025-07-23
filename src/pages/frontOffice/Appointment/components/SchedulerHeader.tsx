@@ -1,5 +1,5 @@
 // src/frontOffice/components/SchedulerHeader.tsx
-import { NavigateBefore, NavigateNext, Today, ViewDay, ViewModule, ViewWeek } from "@mui/icons-material";
+import { NavigateBefore, NavigateNext, Today } from "@mui/icons-material";
 import { Button, Grid, IconButton, Paper, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import React from "react";
 
@@ -28,9 +28,6 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ currentDate, v
     <Paper sx={{ p: 1, mb: 1 }}>
       <Grid container spacing={1} alignItems="center">
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="h6" component="h1" sx={{ fontSize: "1.1rem", mb: 0.5 }}>
-            Appointment Scheduler
-          </Typography>
           <Typography variant="caption" color="text.secondary">
             {getDateDisplay()}
           </Typography>
@@ -53,9 +50,9 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ currentDate, v
             </IconButton>
 
             <Tabs value={viewMode} onChange={(_, value) => onViewModeChange(value)} variant="scrollable">
-              <Tab icon={<ViewDay />} value="day" label="Day" sx={{ minWidth: "auto", px: 1 }} />
-              <Tab icon={<ViewWeek />} value="week" label="Week" sx={{ minWidth: "auto", px: 1 }} />
-              <Tab icon={<ViewModule />} value="month" label="Month" sx={{ minWidth: "auto", px: 1 }} />
+              <Tab value="day" label="Day" sx={{ minWidth: "auto", px: 1 }} />
+              <Tab value="week" label="Week" sx={{ minWidth: "auto", px: 1 }} />
+              <Tab value="month" label="Month" sx={{ minWidth: "auto", px: 1 }} />
             </Tabs>
           </Stack>
         </Grid>
