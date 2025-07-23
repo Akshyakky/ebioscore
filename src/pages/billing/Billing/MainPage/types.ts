@@ -120,12 +120,12 @@ export const billingSchema = z.object({
   billGrossAmt: z.number().default(0),
   billDiscAmt: z.number().default(0),
   visitReferenceCode: z.string().optional().default(""),
-  billServices: z.array(BillServicesDtoSchema).default([]),
-  billProducts: z.array(BillProductsDtoSchema).default([]),
-  billPaymentDetails: z.array(BillPaymentDetailsDtoSchema).default([]),
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().optional().default("N"),
   rNotes: z.string().optional().default(""),
+  billServices: z.array(BillServicesDtoSchema).default([]),
+  billProducts: z.array(BillProductsDtoSchema).default([]),
+  billPaymentDetails: z.array(BillPaymentDetailsDtoSchema).default([]),
 });
 
 export type BillingFormData = z.infer<typeof billingSchema>;
