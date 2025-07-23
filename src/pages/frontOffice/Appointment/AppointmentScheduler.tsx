@@ -310,13 +310,13 @@ const AppointmentScheduler: React.FC = () => {
         resources={mockResources}
       />
 
-      {/* Time Legend */}
-      <TimeLegend />
-
       {/* Main Scheduler View */}
       <Paper sx={{ p: 1, mb: 1 }}>
-        <Box sx={{ height: "calc(100vh - 400px)", overflow: "auto" }}>{renderCurrentView()}</Box>
+        <Box sx={{ height: "calc(100vh - 275px)", overflow: "auto" }}>{renderCurrentView()}</Box>
       </Paper>
+
+      {/* Time Legend */}
+      <TimeLegend />
 
       {/* Statistics */}
       <SchedulerStatistics appointments={filteredAppointments} breaks={breaks} />
