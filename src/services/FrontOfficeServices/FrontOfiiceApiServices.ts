@@ -1,11 +1,11 @@
-import { BreakConDetailData, BreakConSuspendData, BreakListData, BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
-import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { BreakConDetailDto, BreakConSuspendDto, BreakListData, BreakListDto } from "@/interfaces/FrontOffice/BreakListDto";
+import { ReasonListDto } from "@/interfaces/FrontOffice/ReasonListDto";
+import { ResourceListDto } from "@/interfaces/FrontOffice/ResourceListDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
-export const reasonListService = createEntityService<ReasonListData>("ReasonList", "frontOffice");
-export const resourceListService = createEntityService<ResourceListData>("ResourceList", "frontOffice");
-export const breakConSuspendService = createEntityService<BreakConSuspendData>("BreakConSuspend", "frontOffice");
-export const breakConDetailsService = createEntityService<BreakConDetailData>("BreakConDetail", "frontOffice");
+export const reasonListService = createEntityService<ReasonListDto>("ReasonList", "frontOffice");
+export const resourceListService = createEntityService<ResourceListDto>("ResourceList", "frontOffice");
+export const breakConSuspendService = createEntityService<BreakConSuspendDto>("BreakConSuspend", "frontOffice");
+export const breakConDetailsService = createEntityService<BreakConDetailDto>("BreakConDetail", "frontOffice");
 export const breakListService = createEntityService<BreakListData>("BreakList", "frontOffice");
 export const breakService = createEntityService<BreakListDto>("Break", "frontOffice");

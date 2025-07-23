@@ -5,7 +5,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { BreakConDetailData, BreakListData, BreakListDto, FrequencyData } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConDetailDto, BreakListData, BreakListDto, FrequencyDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { Cancel, ChangeCircle, Save } from "@mui/icons-material";
 import {
@@ -97,7 +97,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   const [consultantData, setConsultantData] = useState<any[]>([]);
   const [resourceData, setResourceData] = useState<any[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [frequencyData, setFrequencyData] = useState<FrequencyData>({
+  const [frequencyData, setFrequencyData] = useState<FrequencyDto>({
     frequency: "none",
     endDate: serverDate?.toISOString().split("T")[0] || "",
     interval: 1,
@@ -142,7 +142,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   const endTime = watch("bLEndTime");
   const isPhyResYN = watch("isPhyResYN");
   const isSuspended = initialData?.status === "Suspended";
-  const generateFrequencyDescription = (data: FrequencyData): string => {
+  const generateFrequencyDescription = (data: FrequencyDto): string => {
     const formattedEndDate = formatDate(data.endDate);
     switch (data.frequency) {
       case "daily":
@@ -188,7 +188,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       setSelectedOption(initialData.isPhyResYN === "Y" ? "physician" : "resource");
 
       const frequencyKey = Object.keys(frequencyCodeMap).find((key) => frequencyCodeMap[key as keyof typeof frequencyCodeMap] === initialData.bLFrqDesc);
-      const freqData: FrequencyData = {
+      const freqData: FrequencyDto = {
         frequency: frequencyKey || "none",
         endDate: new Date(initialData.bLEndDate).toISOString().split("T")[0] || "",
         interval: initialData.bLFrqNo || 1,
@@ -212,7 +212,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       const filteredConDetails = breakConDetailsList.filter((bcd: any) => bcd.bLID === bLID);
 
       if (filteredConDetails.length > 0) {
-        const selectedHPLIDs = filteredConDetails.map((detail: BreakConDetailData) => detail.hPLID);
+        const selectedHPLIDs = filteredConDetails.map((detail: BreakConDetailDto) => detail.hPLID);
         setSelectedItems(selectedHPLIDs.filter((id): id is number => id !== null));
       }
     } catch (error) {
@@ -303,7 +303,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   }, [startDate, endDate, startTime, endTime, setValue, isOneDay, serverDate]);
 
   const handleSaveFrequency = useCallback(
-    (data: FrequencyData) => {
+    (data: FrequencyDto) => {
       setFrequencyData(data);
       setValue("bLEndDate", new Date(data.endDate));
       setValue("bLFrqDesc", generateFrequencyDescription(data));
@@ -354,7 +354,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
         transferYN: data.transferYN || "N",
       };
       const breakConDetails = selectedItems.map((itemID) => {
-        const breakConDetailData: BreakConDetailData = {
+        const breakConDetailData: BreakConDetailDto = {
           bCDID: 0,
           blID: 0,
           hPLID: itemID,

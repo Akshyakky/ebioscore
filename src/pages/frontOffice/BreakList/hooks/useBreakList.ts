@@ -1,5 +1,5 @@
 import { useLoading } from "@/hooks/Common/useLoading";
-import { BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakListDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { breakService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useCallback, useEffect, useRef, useState } from "react";
 

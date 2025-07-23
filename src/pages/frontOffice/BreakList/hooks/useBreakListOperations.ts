@@ -1,4 +1,4 @@
-import { BreakConSuspendData, BreakDto } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConSuspendDto, BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { useCallback, useState } from "react";
 import { useBreakConDetails } from "./useBreakConDetails";
@@ -45,7 +45,7 @@ export const useBreakListOperations = () => {
       try {
         const suspendData = await breakConSuspendHook.getSuspendDataByBreakAndHP(breakItem.bLID, breakItem.hPLID);
 
-        const newSuspendData: BreakConSuspendData = {
+        const newSuspendData: BreakConSuspendDto = {
           bCSID: suspendData.length > 0 ? suspendData[0]?.bCSID || 0 : 0,
           bLID: breakItem.bLID,
           hPLID: breakItem.hPLID,

@@ -2,7 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import { BreakConSuspendData, BreakDto } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConSuspendDto, BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { debounce } from "@/utils/Common/debounceUtils";
@@ -58,7 +58,7 @@ const BreakListPage: React.FC = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [isResumeConfirmOpen, setIsResumeConfirmOpen] = useState<boolean>(false);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [suspendData, setSuspendData] = useState<BreakConSuspendData | null>(null);
+  const [suspendData, setSuspendData] = useState<BreakConSuspendDto | null>(null);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
   const { showAlert } = useAlert();
@@ -162,7 +162,7 @@ const BreakListPage: React.FC = () => {
   );
 
   const handleSuspendDialogClose = useCallback(
-    async (isSaved: boolean, updatedData?: BreakConSuspendData) => {
+    async (isSaved: boolean, updatedData?: BreakConSuspendDto) => {
       setIsSuspendDialogOpen(false);
       if (isSaved && updatedData) {
         try {

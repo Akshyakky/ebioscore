@@ -1,7 +1,7 @@
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { ResourceListDto } from "@/interfaces/FrontOffice/ResourceListDto";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
@@ -568,7 +568,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       resourceList: async () => {
         const response = await resourceListService.getAll();
-        return (response.data || []).map((item: ResourceListData) => ({
+        return (response.data || []).map((item: ResourceListDto) => ({
           value: item.rLID || 0,
           label: item.rLName || "",
           ...item,

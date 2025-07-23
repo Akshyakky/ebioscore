@@ -2,7 +2,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { ResourceListDto } from "@/interfaces/FrontOffice/ResourceListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
@@ -43,7 +43,7 @@ const ResourceListPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
-  const [selectedResource, setSelectedResource] = useState<ResourceListData | null>(null);
+  const [selectedResource, setSelectedResource] = useState<ResourceListDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
@@ -94,19 +94,19 @@ const ResourceListPage: React.FC = () => {
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((resource: ResourceListData) => {
+  const handleEdit = useCallback((resource: ResourceListDto) => {
     setSelectedResource(resource);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleView = useCallback((resource: ResourceListData) => {
+  const handleView = useCallback((resource: ResourceListDto) => {
     setSelectedResource(resource);
     setIsViewMode(true);
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteClick = useCallback((resource: ResourceListData) => {
+  const handleDeleteClick = useCallback((resource: ResourceListDto) => {
     setSelectedResource(resource);
     setIsDeleteConfirmOpen(true);
   }, []);
@@ -311,7 +311,7 @@ const ResourceListPage: React.FC = () => {
     </Grid>
   );
 
-  const columns: Column<ResourceListData>[] = [
+  const columns: Column<ResourceListDto>[] = [
     {
       key: "rLCode",
       header: "Code",

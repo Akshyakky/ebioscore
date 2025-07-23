@@ -1,22 +1,22 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConSuspendDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useCallback, useState } from "react";
 
-const useGenericBreakConSuspend = createEntityHook<BreakConSuspendData>(breakConSuspendService, "bCSID");
+const useGenericBreakConSuspend = createEntityHook<BreakConSuspendDto>(breakConSuspendService, "bCSID");
 
 export const useBreakConSuspend = () => {
   const hook = useGenericBreakConSuspend();
   const { setLoading } = useLoading();
-  const [suspendData, setSuspendData] = useState<BreakConSuspendData[]>([]);
+  const [suspendData, setSuspendData] = useState<BreakConSuspendDto[]>([]);
 
   const getSuspendDataByBreakAndHP = useCallback(async (bLID: number, hPLID: number | null) => {
     try {
       setLoading(true);
       const result = await breakConSuspendService.getAll();
       if (result.success && result.data) {
-        const filtered = result.data.filter((item: BreakConSuspendData) => item.bLID === bLID && item.hPLID === hPLID);
+        const filtered = result.data.filter((item: BreakConSuspendDto) => item.bLID === bLID && item.hPLID === hPLID);
         setSuspendData(filtered);
         return filtered;
       }
