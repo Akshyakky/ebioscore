@@ -1,14 +1,13 @@
-// src/frontOffice/AppointmentScheduler.tsx
+// src/pages/frontOffice/Appointment/AppointmentScheduler.tsx
 import { Box, Paper } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 
 // Component imports
+import ConfirmationDialog from "../../../components/Dialog/ConfirmationDialog";
 import { AppointmentDetailsDialog } from "./components/AppointmentDetailsDialog";
 import { BookingDialog } from "./components/BookingDialog";
 import { DayView } from "./components/DayView";
 import { MonthView } from "./components/MonthView";
-import { SchedulerFilters } from "./components/SchedulerFilters";
-import { SchedulerHeader } from "./components/SchedulerHeader";
 import { SchedulerStatistics } from "./components/SchedulerStatistics";
 import { TimeLegend } from "./components/TimeLegend";
 import { WeekView } from "./components/WeekView";
@@ -18,6 +17,7 @@ import { useSchedulerData } from "./hooks/useSchedulerData";
 import { useTimeSlots } from "./hooks/useTimeSlots";
 
 // Types
+import { SchedulerHeader } from "./components/SchedulerHeader";
 import { AppointmentData, BookingFormData } from "./types";
 
 // Mock data for providers and resources (move to separate constants file)
@@ -44,6 +44,14 @@ const AppointmentScheduler: React.FC = () => {
   const [bookingMode, setBookingMode] = useState("physician");
   const [selectedProvider, setSelectedProvider] = useState("");
   const [selectedResource, setSelectedResource] = useState("");
+
+  // New state for elapsed slot confirmation
+  const [showElapsedConfirmation, setShowElapsedConfirmation] = useState(false);
+  const [pendingElapsedSlot, setPendingElapsedSlot] = useState<{
+    date: Date;
+    hour: number;
+    minute: number;
+  } | null>(null);
 
   // Custom hooks
   const { appointments, setAppointments, breaks, workHours } = useSchedulerData();
@@ -173,7 +181,37 @@ const AppointmentScheduler: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // Event handlers
+  // Enhanced event handlers for the new functionality
+  const handleSlotDoubleClick = (date: Date, hour: number, minute: number) => {
+    // Pre-populate the booking form with the selected date and time
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(hour, minute, 0, 0);
+
+    setBookingForm((prev) => ({
+      ...prev,
+      appointmentDate: date,
+      appointmentTime: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+    }));
+
+    setShowBookingDialog(true);
+  };
+
+  const handleElapsedSlotConfirmation = (date: Date, hour: number, minute: number) => {
+    setPendingElapsedSlot({ date, hour, minute });
+    setShowElapsedConfirmation(true);
+  };
+
+  const handleElapsedSlotConfirmed = () => {
+    if (pendingElapsedSlot) {
+      handleSlotDoubleClick(pendingElapsedSlot.date, pendingElapsedSlot.hour, pendingElapsedSlot.minute);
+    }
+    setPendingElapsedSlot(null);
+  };
+
+  const handleElapsedSlotCancelled = () => {
+    setPendingElapsedSlot(null);
+  };
+
   const handleBookingSubmit = () => {
     console.log("Booking data:", bookingForm);
     setShowBookingDialog(false);
@@ -195,6 +233,7 @@ const AppointmentScheduler: React.FC = () => {
   };
 
   const handleSlotClick = () => {
+    // This is now only used for the Book button in filters
     setShowBookingDialog(true);
   };
 
@@ -214,7 +253,7 @@ const AppointmentScheduler: React.FC = () => {
     setSelectedAppointment(null);
   };
 
-  // Render the appropriate view
+  // Enhanced view rendering with new event handlers
   const renderCurrentView = () => {
     const commonProps = {
       currentDate,
@@ -222,15 +261,14 @@ const AppointmentScheduler: React.FC = () => {
       appointments: filteredAppointments,
       workHours,
       currentTime,
-      onSlotClick: handleSlotClick,
       onAppointmentClick: handleAppointmentClick,
     };
 
     switch (viewMode) {
       case "day":
-        return <DayView {...commonProps} />;
+        return <DayView {...commonProps} onSlotDoubleClick={handleSlotDoubleClick} onElapsedSlotConfirmation={handleElapsedSlotConfirmation} />;
       case "week":
-        return <WeekView {...commonProps} getWeekDates={getWeekDates} />;
+        return <WeekView {...commonProps} getWeekDates={getWeekDates} onSlotDoubleClick={handleSlotDoubleClick} onElapsedSlotConfirmation={handleElapsedSlotConfirmation} />;
       case "month":
         return (
           <MonthView
@@ -242,42 +280,37 @@ const AppointmentScheduler: React.FC = () => {
           />
         );
       default:
-        return <DayView {...commonProps} />;
+        return <DayView {...commonProps} onSlotDoubleClick={handleSlotDoubleClick} onElapsedSlotConfirmation={handleElapsedSlotConfirmation} />;
     }
   };
 
   return (
     <Box sx={{ p: 1 }}>
-      {/* Header */}
       <SchedulerHeader
         currentDate={currentDate}
         viewMode={viewMode}
-        onDateChange={setCurrentDate}
-        onViewModeChange={setViewMode}
-        onNavigate={handleNavigateDate}
-        getWeekDates={getWeekDates}
-      />
-
-      {/* Filters */}
-      <SchedulerFilters
         bookingMode={bookingMode}
         selectedProvider={selectedProvider}
         selectedResource={selectedResource}
+        onDateChange={setCurrentDate}
+        onViewModeChange={setViewMode}
+        onNavigate={handleNavigateDate}
         onBookingModeChange={setBookingMode}
         onProviderChange={setSelectedProvider}
         onResourceChange={setSelectedResource}
         onBookingClick={() => setShowBookingDialog(true)}
         providers={mockProviders}
         resources={mockResources}
+        getWeekDates={getWeekDates}
       />
-
-      {/* Time Legend */}
-      <TimeLegend />
 
       {/* Main Scheduler View */}
       <Paper sx={{ p: 1, mb: 1 }}>
-        <Box sx={{ height: "calc(100vh - 400px)", overflow: "auto" }}>{renderCurrentView()}</Box>
+        <Box sx={{ height: "calc(100vh - 225px)", overflow: "auto" }}>{renderCurrentView()}</Box>
       </Paper>
+
+      {/* Time Legend */}
+      <TimeLegend />
 
       {/* Statistics */}
       <SchedulerStatistics appointments={filteredAppointments} breaks={breaks} />
@@ -296,6 +329,20 @@ const AppointmentScheduler: React.FC = () => {
       />
 
       <AppointmentDetailsDialog appointment={selectedAppointment} onClose={() => setSelectedAppointment(null)} onEdit={handleAppointmentEdit} onCancel={handleAppointmentCancel} />
+
+      {/* Elapsed Slot Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showElapsedConfirmation}
+        onClose={handleElapsedSlotCancelled}
+        onConfirm={handleElapsedSlotConfirmed}
+        title="Book Past Time Slot"
+        message="You are attempting to book an appointment for a time that has already passed. This may require special approval or documentation. Do you want to proceed with this booking?"
+        confirmText="Yes, Book Anyway"
+        cancelText="Cancel"
+        type="warning"
+        maxWidth="sm"
+        disableBackdropClick={true}
+      />
     </Box>
   );
 };

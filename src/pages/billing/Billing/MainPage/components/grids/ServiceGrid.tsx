@@ -103,7 +103,12 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({ services, control, upd
           type="select"
           size="small"
           fullWidth
-          options={physicians || []}
+          options={
+            physicians.map((p) => ({
+              value: Number(p.value),
+              label: p.label,
+            })) || []
+          }
           defaultText="Select"
           onChange={(data: any) => {
             if (data && typeof data === "object" && "value" in data) {
