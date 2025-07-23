@@ -9,19 +9,12 @@ export interface ProductIssualDto extends BaseDto {
   pisid: number;
   pisDate: Date;
   issualType: IssualType;
-
-  // Source Department (Always Required)
   fromDeptID: number;
   fromDeptName: string;
-
-  // Department Issual Fields (Required for Department Issual)
   toDeptID: number;
   toDeptName: string;
-
-  // Physician Issual Fields (Not used in Department Issual)
   recConID?: number;
   recConName?: string;
-
   auGrpID?: number;
   catDesc?: string;
   catValue?: string;
@@ -30,10 +23,7 @@ export interface ProductIssualDto extends BaseDto {
   approvedYN: string;
   approvedID?: number;
   approvedBy?: string;
-
   details?: ProductIssualDetailDto[];
-
-  // Computed Properties
   readonly totalItems: number;
   readonly totalRequestedQty: number;
   readonly totalIssuedQty: number;
@@ -42,7 +32,6 @@ export interface ProductIssualDto extends BaseDto {
   readonly destinationID: number | null;
   readonly issualCodePrefix: string;
 }
-
 export interface ProductIssualDetailDto extends BaseDto {
   pisDetID: number;
   pisid: number;
@@ -157,56 +146,6 @@ export interface ProductStockBalance {
   rActiveYN?: string;
 }
 
-// Default values for Department Issual
-export const defaultProductIssualDto = (): ProductIssualDto => ({
-  pisid: 0,
-  pisDate: new Date(),
-  issualType: IssualType.Department,
-  fromDeptID: 0,
-  fromDeptName: "",
-  toDeptID: 0,
-  toDeptName: "",
-  approvedYN: "N",
-  catValue: "MEDI",
-  catDesc: "REVENUE",
-  auGrpID: 18,
-  totalItems: 0,
-  totalRequestedQty: 0,
-  totalIssuedQty: 0,
-  issualTypeName: "Department Issual",
-  destinationInfo: "",
-  destinationID: null,
-  issualCodePrefix: "DIS",
-});
-
-export const defaultProductIssualDetailDto = (): ProductIssualDetailDto => ({
-  pisDetID: 0,
-  pisid: 0,
-  productID: 0,
-  productCode: "",
-  productName: "",
-  requestedQty: 0,
-  issuedQty: 0,
-  catValue: "MEDI",
-  catDesc: "REVENUE",
-  expiryYN: "N",
-  pUnitsPerPack: 1,
-});
-
-export const defaultProductIssualCompositeDto = (): ProductIssualCompositeDto => ({
-  productIssual: defaultProductIssualDto(),
-  details: [],
-});
-
-export const defaultProductIssualSearchRequest = (): ProductIssualSearchRequest => ({
-  pageIndex: 1,
-  pageSize: 20,
-  issualType: IssualType.Department,
-  sortBy: "PISDate",
-  sortAscending: false,
-});
-
-// Utility functions for Department Issual
 export const isIssualEditable = (issual: ProductIssualDto): boolean => {
   return issual.approvedYN !== "Y";
 };

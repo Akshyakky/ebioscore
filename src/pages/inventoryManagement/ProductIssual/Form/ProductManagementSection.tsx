@@ -80,7 +80,6 @@ type ProductDetailWithId = ProductIssualDetailDto & {
   id: string;
   cgst?: number;
   sgst?: number;
-  // Additional ProductListDto fields for comprehensive display
   barcode?: string;
   vedCode?: string;
   abcCode?: string;
@@ -123,8 +122,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
   const watchedDetails = useWatch({ control, name: "details" });
   const fromDeptID = useWatch({ control, name: "fromDeptID" });
   const toDeptName = useWatch({ control, name: "toDeptName" });
-
-  // Use the BatchSelectionDialog hook
   const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, openDialog: openBatchDialog, closeDialog: closeBatchDialog } = useBatchSelection();
 
   const clearTemporaryFields = useCallback(() => {
@@ -139,13 +136,9 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     setClearProductSearchTrigger((prev) => prev + 1);
   }, []);
 
-  // Enhanced helper function to map complete ProductListDto to ProductIssualDetailDto for Department Transfer
   const mapCompleteProductListToIssualDetail = useCallback((completeProduct: ProductListDto, batch: ProductBatchDto, issuedQty: number = 0): ProductIssualDetailDto => {
     const safeIssuedQty = Math.max(0, issuedQty);
-
-    // For Department transfers, requested quantity equals issued quantity initially
     const requestedQtyFromProduct = safeIssuedQty || completeProduct.requestedQuantity || completeProduct.orderQuantity || completeProduct.defaultQuantity || 1;
-
     return {
       pisDetID: 0,
       pisid: 0,
@@ -188,7 +181,6 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     };
   }, []);
 
-  // Convert GrnDetailDto to ProductBatchDto format for BatchSelectionDialog
   const convertGrnToBatchDto = useCallback(
     (grn: GrnDetailDto, product: ProductListDto): ProductBatchDto => {
       return {
@@ -206,38 +198,30 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
     [fromDeptID]
   );
 
-  // Enhanced handleBatchSelect to fetch complete ProductListDto by productID for Department Transfer
   const handleBatchSelect = useCallback(
     async (batch: ProductBatchDto) => {
       try {
         setIsLoadingBatches(true);
         closeBatchDialog();
-
         const productResponse = await productListService.getById(batch.productID);
-
         if (!productResponse.success || !productResponse.data) {
           throw new Error(`Failed to fetch complete ProductListDto for productID: ${batch.productID}`);
         }
-
         const completeProductData = productResponse.data;
         const newProductDetail = mapCompleteProductListToIssualDetail(completeProductData, batch, selectedProductIssuedQty || 0);
-
         if (isEditingExistingProduct && editingProductIndex !== null) {
-          // Update existing product
           setValue(`details.${editingProductIndex}`, newProductDetail, {
             shouldValidate: true,
             shouldDirty: true,
           });
           showAlert("Success", `Department transfer product "${completeProductData.productName}" updated successfully`, "success");
         } else {
-          // Add new product only if not editing
           append(newProductDetail);
           showAlert("Success", `Product "${completeProductData.productName}" added for department transfer, batch: ${batch.batchNo}`, "success");
         }
 
         clearTemporaryFields();
       } catch (error) {
-        console.error("Error in handleBatchSelect:", error);
         showAlert("Error", `Failed to fetch product data for department transfer. Please try again.`, "error");
         clearTemporaryFields();
       } finally {
@@ -263,28 +247,21 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
         clearTemporaryFields();
         return;
       }
-
       if (!fromDeptID) {
         showAlert("Warning", "Please select a from department first for the department transfer", "warning");
         return;
       }
-
-      // Only check for duplicate products when adding new (not when editing existing)
       if (!isEditingExistingProduct && fields.find((d) => d.productID === product.productID)) {
         showAlert("Warning", `"${product.productName}" is already added to the department transfer list.`, "warning");
         productSearchRef.current?.clearSelection();
         return;
       }
-
       try {
         setSelectedProduct(product);
         setIsLoadingBatches(true);
-
         const response = await billingService.getBatchNoProduct(product.productID, fromDeptID);
-
         if (response.success && response.data) {
           const batches = response.data;
-
           if (batches.length === 0) {
             showAlert("Warning", "No batches available for this product in the source department", "warning");
             clearTemporaryFields();
@@ -308,26 +285,20 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
   const handleEditExistingProduct = useCallback(
     async (index: number) => {
       if (isViewMode) return;
-
       const productDetail = fields[index];
       if (!productDetail) return;
-
       try {
-        // Set editing state first
         setIsEditingExistingProduct(true);
         setEditingProductIndex(index);
         setIsAddingProduct(true);
         setIsLoadingBatches(true);
-
         const productResponse = await productListService.getById(productDetail.productID);
         if (!productResponse.success || !productResponse.data) {
           throw new Error("Failed to fetch complete ProductListDto for editing department transfer");
         }
-
         const fullProductData = productResponse.data;
         setSelectedProduct(fullProductData);
         setSelectedProductIssuedQty(productDetail.issuedQty || 0);
-
         const grnResponse = await grnDetailService.getById(productDetail.productID);
         if (grnResponse.success && grnResponse.data) {
           const grnData = Array.isArray(grnResponse.data) ? grnResponse.data : [grnResponse.data];
@@ -621,18 +592,14 @@ const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({ control, 
             value={currentValue}
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
-
               if (value > availableQty) {
                 showAlert("Warning", `Requested quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
                 return;
               }
-
               setValue(`details.${index}.requestedQty`, value, {
                 shouldValidate: true,
                 shouldDirty: true,
               });
-
-              // For department transfers, sync issued quantity with requested quantity initially
               setValue(`details.${index}.issuedQty`, value, {
                 shouldValidate: true,
                 shouldDirty: true,

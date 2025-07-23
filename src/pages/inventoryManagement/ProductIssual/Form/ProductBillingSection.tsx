@@ -96,10 +96,7 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
         igstAmount: 0,
       };
     }
-
-    // Calculate totals based on issued quantities only for Department Issual
     const validDetails = watchedDetails.filter((detail) => detail.issuedQty > 0);
-
     const billAmount = validDetails.reduce((sum, detail) => {
       const itemTotal = (detail.sellUnitPrice || detail.unitPrice || 0) * detail.issuedQty;
       return sum + itemTotal;
@@ -113,17 +110,13 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
 
     const cgstAmount = taxAmount / 2;
     const sgstAmount = taxAmount / 2;
-    const igstAmount = 0; // For inter-state transactions
-
-    const discountPercentage = 0; // No discount for Department Issual typically
+    const igstAmount = 0;
+    const discountPercentage = 0;
     const discountAmount = (billAmount * discountPercentage) / 100;
-
     const netBeforeTax = billAmount - discountAmount;
     const netAmount = netBeforeTax + taxAmount;
-
     const coinAdjustment = Math.round(netAmount) - netAmount;
     const balance = netAmount + coinAdjustment;
-
     const totalItems = validDetails.length;
     const totalRequestedQty = validDetails.reduce((sum, detail) => sum + detail.requestedQty, 0);
     const totalIssuedQty = validDetails.reduce((sum, detail) => sum + detail.issuedQty, 0);
@@ -166,8 +159,6 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
         <Chip label={`From: ${fromDeptName || "Not Selected"}`} size="small" color="secondary" variant="outlined" />
         <Chip label={`To: ${toDeptName || "Not Selected"}`} size="small" color="success" variant="outlined" />
       </Typography>
-
-      {/* Transfer Statistics Section */}
       <Box
         sx={{
           display: "flex",
@@ -216,7 +207,6 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
         </Box>
       </Box>
 
-      {/* Financial Summary Section */}
       <Box
         sx={{
           display: "flex",
@@ -265,7 +255,6 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
         </Box>
       </Box>
 
-      {/* Final Amount Section */}
       <Box
         sx={{
           display: "flex",
@@ -305,7 +294,6 @@ const ProductBillingSection: React.FC<BillingSectionProps> = ({ control }) => {
         </Box>
       </Box>
 
-      {/* Department Transfer Information */}
       <Alert severity="info" sx={{ mt: 2 }}>
         <Typography variant="body2">
           <strong>Department to Department Transfer:</strong> This is an internal transfer between departments. Stock will be deducted from{" "}

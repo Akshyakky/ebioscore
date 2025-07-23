@@ -4,17 +4,10 @@ import { PaginatedList } from "@/interfaces/Common/PaginatedList";
 import { IssualType, ProductIssualCompositeDto, ProductIssualDto, ProductIssualSearchRequest, ProductStockBalance } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
-
-/**
- * Service to handle all operations related to Product Issuals.
- * It interacts with both the `ProductIssualCompositeController` for complex operations
- * and the base `ProductIssualController` for standard CRUD actions like delete.
- */
 class ProductIssualService extends GenericEntityService<ProductIssualDto> {
   private readonly compositeEndpoint = "ProductIssualComposite";
 
   constructor() {
-    // The base class targets the `ProductIssualController` for generic operations.
     super(
       new CommonApiService({
         baseURL: APIConfig.inventoryManagementURL,
@@ -23,12 +16,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     );
   }
 
-  // region --- Code Generation ---
-
-  /**
-   * Generates a unique issual code based on the department and issual type.
-   * Corresponds to: GET /api/ProductIssualComposite/GenerateIssualCode
-   */
   async generateIssualCode(fromDepartmentId: number, issualType: IssualType = IssualType.Department): Promise<OperationResult<string>> {
     try {
       const params = new URLSearchParams({
@@ -44,10 +31,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Generates a unique code specifically for a Department Issual.
-   * Corresponds to: GET /api/ProductIssualComposite/GenerateDepartmentIssualCode
-   */
   async generateDepartmentIssualCode(fromDepartmentId: number): Promise<OperationResult<string>> {
     try {
       return await this.apiService.get<OperationResult<string>>(`${this.compositeEndpoint}/GenerateDepartmentIssualCode?fromDepartmentId=${fromDepartmentId}`, this.getToken());
@@ -59,10 +42,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Generates a unique code specifically for a Physician Issual.
-   * Corresponds to: GET /api/ProductIssualComposite/GeneratePhysicianIssualCode
-   */
   async generatePhysicianIssualCode(fromDepartmentId: number): Promise<OperationResult<string>> {
     try {
       return await this.apiService.get<OperationResult<string>>(`${this.compositeEndpoint}/GeneratePhysicianIssualCode?fromDepartmentId=${fromDepartmentId}`, this.getToken());
@@ -74,14 +53,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  // endregion
-
-  // region --- Create Operations ---
-
-  /**
-   * Creates or updates a Product Issual with its details.
-   * Corresponds to: POST /api/ProductIssualComposite/CreateWithDetails
-   */
   async createIssualWithDetails(issualDto: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> {
     try {
       return await this.apiService.post<OperationResult<ProductIssualCompositeDto>>(`${this.compositeEndpoint}/CreateWithDetails`, issualDto, this.getToken());
@@ -93,10 +64,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Creates a Department Issual with its details.
-   * Corresponds to: POST /api/ProductIssualComposite/CreateDepartmentIssual
-   */
   async createDepartmentIssual(issualDto: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> {
     try {
       issualDto.productIssual.issualType = IssualType.Department;
@@ -109,10 +76,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Creates a Physician Issual with its details.
-   * Corresponds to: POST /api/ProductIssualComposite/CreatePhysicianIssual
-   */
   async createPhysicianIssual(issualDto: ProductIssualCompositeDto): Promise<OperationResult<ProductIssualCompositeDto>> {
     try {
       issualDto.productIssual.issualType = IssualType.Physician;
@@ -125,14 +88,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  // endregion
-
-  // region --- Read and Search Operations ---
-
-  /**
-   * Retrieves a complete Product Issual, including its master and detail records.
-   * Corresponds to: GET /api/ProductIssualComposite/GetIssualWithDetailsById
-   */
   async getIssualWithDetailsById(issualId: number): Promise<OperationResult<ProductIssualCompositeDto>> {
     try {
       return await this.apiService.get<OperationResult<ProductIssualCompositeDto>>(`${this.compositeEndpoint}/GetIssualWithDetailsById?issualId=${issualId}`, this.getToken());
@@ -144,10 +99,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Performs a paginated search for Product Issuals based on various criteria.
-   * Corresponds to: POST /api/ProductIssualComposite/IssualSearch
-   */
   async issualSearch(searchRequest: ProductIssualSearchRequest): Promise<OperationResult<PaginatedList<ProductIssualDto>>> {
     try {
       return await this.apiService.post<OperationResult<PaginatedList<ProductIssualDto>>>(`${this.compositeEndpoint}/IssualSearch`, searchRequest, this.getToken());
@@ -159,10 +110,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Performs a search specifically for Department Issuals.
-   * Corresponds to: POST /api/ProductIssualComposite/SearchDepartmentIssuals
-   */
   async searchDepartmentIssuals(searchRequest: ProductIssualSearchRequest): Promise<OperationResult<PaginatedList<ProductIssualDto>>> {
     try {
       searchRequest.issualType = IssualType.Department;
@@ -175,10 +122,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Performs a search specifically for Physician Issuals.
-   * Corresponds to: POST /api/ProductIssualComposite/SearchPhysicianIssuals
-   */
   async searchPhysicianIssuals(searchRequest: ProductIssualSearchRequest): Promise<OperationResult<PaginatedList<ProductIssualDto>>> {
     try {
       searchRequest.issualType = IssualType.Physician;
@@ -191,10 +134,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Retrieves the available product stock for a given department.
-   * Corresponds to: GET /api/ProductIssualComposite/GetAvailableStock
-   */
   async getAvailableStock(departmentId: number, productId?: number): Promise<OperationResult<ProductStockBalance[]>> {
     try {
       const params = new URLSearchParams({
@@ -213,14 +152,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  // endregion
-
-  // region --- Update and Action Operations ---
-
-  /**
-   * Approves a Product Issual, triggering stock updates.
-   * Corresponds to: PUT /api/ProductIssualComposite/Approve/{issualId}
-   */
   async approveIssual(issualId: number): Promise<OperationResult<boolean>> {
     try {
       return await this.apiService.put<OperationResult<boolean>>(`${this.compositeEndpoint}/Approve/${issualId}`, {}, this.getToken());
@@ -232,18 +163,8 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  // endregion
-
-  // region --- Delete Operations ---
-
-  /**
-   * Deletes a Product Issual. This calls the generic controller endpoint.
-   * Corresponds to: DELETE /api/ProductIssual/{id}
-   */
   async deleteIssual(issualId: number): Promise<OperationResult<boolean>> {
     try {
-      // Uses the delete method inherited from GenericEntityService,
-      // which correctly targets the /api/ProductIssual/{id} endpoint.
       return await this.delete(issualId);
     } catch (error) {
       return {
@@ -253,14 +174,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  // endregion
-
-  // region --- Metadata and Summary ---
-
-  /**
-   * Retrieves the available issual types (Department, Physician).
-   * Corresponds to: GET /api/ProductIssualComposite/GetIssualTypes
-   */
   async getIssualTypes(): Promise<OperationResult<any[]>> {
     try {
       return await this.apiService.get<OperationResult<any[]>>(`${this.compositeEndpoint}/GetIssualTypes`, this.getToken());
@@ -272,10 +185,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
     }
   }
 
-  /**
-   * Retrieves a summary of issuals grouped by type within a date range.
-   * Corresponds to: GET /api/ProductIssualComposite/GetIssualSummaryByType
-   */
   async getIssualSummaryByType(startDate?: Date, endDate?: Date): Promise<OperationResult<any>> {
     try {
       const params = new URLSearchParams();
@@ -296,7 +205,6 @@ class ProductIssualService extends GenericEntityService<ProductIssualDto> {
       };
     }
   }
-  // endregion
 }
 
 export const productIssualService = new ProductIssualService();
