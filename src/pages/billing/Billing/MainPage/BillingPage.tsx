@@ -20,6 +20,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 // Import new components and utilities
+import useContactMastByCategory from "@/hooks/hospitalAdministration/useContactMastByCategory";
 import { useBilling } from "../hooks/useBilling";
 import { BillDetailsSection, BillSummarySection, ItemsSection, PatientSection, PaymentSection, VisitReferenceCard } from "./components";
 import { DEFAULT_FORM_VALUES } from "./constants";
@@ -58,14 +59,8 @@ const BillingPage: React.FC = () => {
   } = useDepartmentSelection();
 
   // Mock data - should be replaced with actual API data
-  const physicians = [
-    { value: 1, label: "Dr. Ajeesh" },
-    { value: 2, label: "Dr. Akash" },
-  ];
-  const referals = [
-    { value: 1, label: "Dr. Ajeesh" },
-    { value: 2, label: "Dr. Akash" },
-  ];
+  const { contacts: physicians } = useContactMastByCategory({ consValue: "PHY" });
+  const { contacts: referals } = useContactMastByCategory({ consValue: "PHY" });
 
   // React Hook Form
   const {
@@ -231,7 +226,7 @@ const BillingPage: React.FC = () => {
               <PatientSection selectedPChartID={selectedPChartID} clearSearchTrigger={clearSearchTrigger} onPatientSelect={handlePatientSelect} />
             </Grid>
             {/* Visit Reference Section */}
-            <Grid size={{ xs: 12, sm: 12, md: 4 }}>{watchedVisitReference && <VisitReferenceCard visitReference={watchedVisitReference} onChangeVisit={handleChangeVisit} />}</Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 4 }}>{selectedPChartID > 0 && <VisitReferenceCard visitReference={watchedVisitReference} onChangeVisit={handleChangeVisit} />}</Grid>
             {/* Bill Details Section */}
             <Grid size={{ sm: 12 }}>
               <BillDetailsSection control={control} dropdownValues={dropdownValues} physicians={physicians} referals={referals} setValue={setValue} />

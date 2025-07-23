@@ -14,6 +14,7 @@ interface BillDetailsSectionProps {
 }
 
 export const BillDetailsSection: React.FC<BillDetailsSectionProps> = ({ control, dropdownValues, physicians, referals, setValue }) => {
+  console.log("physicians", physicians);
   return (
     <Card variant="outlined">
       <CardContent>
@@ -51,7 +52,12 @@ export const BillDetailsSection: React.FC<BillDetailsSectionProps> = ({ control,
               type="select"
               size="small"
               fullWidth
-              options={referals || []}
+              options={
+                referals.map((p) => ({
+                  value: Number(p.value),
+                  label: p.label,
+                })) || []
+              }
               defaultText="Select Primary Introducing Source"
               onChange={(data: any) => {
                 if (data && typeof data === "object" && "value" in data) {
@@ -69,7 +75,12 @@ export const BillDetailsSection: React.FC<BillDetailsSectionProps> = ({ control,
               type="select"
               size="small"
               fullWidth
-              options={referals || []}
+              options={
+                referals.map((p) => ({
+                  value: Number(p.value),
+                  label: p.label,
+                })) || []
+              }
               defaultText="Select Secondary Introducing Source"
               onChange={(data: any) => {
                 if (data && typeof data === "object" && "value" in data) {
@@ -87,7 +98,12 @@ export const BillDetailsSection: React.FC<BillDetailsSectionProps> = ({ control,
               type="select"
               size="small"
               fullWidth
-              options={physicians || []}
+              options={
+                physicians.map((p) => ({
+                  value: Number(p.value),
+                  label: p.label,
+                })) || []
+              }
               defaultText="Select Attending Physician"
               onChange={(data: any) => {
                 if (data && typeof data === "object" && "value" in data) {
