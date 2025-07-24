@@ -1,6 +1,6 @@
 // src/pages/frontOffice/Appointment/AppointmentScheduler.tsx
 import { Box, Paper } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 // Component imports
 import ConfirmationDialog from "../../../components/Dialog/ConfirmationDialog";
@@ -13,25 +13,13 @@ import { TimeLegend } from "./components/TimeLegend";
 import { WeekView } from "./components/WeekView";
 
 // Hooks and utilities
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useSchedulerData } from "./hooks/useSchedulerData";
 import { useTimeSlots } from "./hooks/useTimeSlots";
 
 // Types
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { SchedulerHeader } from "./components/SchedulerHeader";
-
-// Mock data for providers and resources (move to separate constants file)
-const mockProviders = [
-  { value: 1, label: "Dr. Smith", type: "physician" },
-  { value: 2, label: "Dr. Johnson", type: "physician" },
-  { value: 3, label: "Dr. Brown", type: "physician" },
-];
-
-const mockResources = [
-  { value: 1, label: "Room 1", type: "room" },
-  { value: 2, label: "Room 2", type: "room" },
-  { value: 3, label: "X-Ray", type: "equipment" },
-];
 
 const AppointmentScheduler: React.FC = () => {
   // State management
@@ -56,6 +44,26 @@ const AppointmentScheduler: React.FC = () => {
   // Custom hooks
   const { appointments, setAppointments, breaks, workHours } = useSchedulerData();
   const timeSlots = useTimeSlots();
+
+  // Load dropdown values for providers and resources
+  const { appointmentConsultants = [], roomList = [], isLoading } = useDropdownValues(["appointmentConsultants", "roomList"]);
+
+  // Transform dropdown data to match expected format
+  const providers = useMemo(() => {
+    return appointmentConsultants.map((consultant) => ({
+      value: Number(consultant.value),
+      label: consultant.label,
+      type: "physician",
+    }));
+  }, [appointmentConsultants]);
+
+  const resources = useMemo(() => {
+    return roomList.map((room) => ({
+      value: Number(room.value),
+      label: room.label,
+      type: "room",
+    }));
+  }, [roomList]);
 
   // Booking form state
   const initialBookingForm: AppointBookingDto = {
@@ -294,8 +302,8 @@ const AppointmentScheduler: React.FC = () => {
         onProviderChange={setSelectedProvider}
         onResourceChange={setSelectedResource}
         onBookingClick={() => setShowBookingDialog(true)}
-        providers={mockProviders}
-        resources={mockResources}
+        providers={providers}
+        resources={resources}
         getWeekDates={getWeekDates}
       />
 
@@ -315,8 +323,8 @@ const AppointmentScheduler: React.FC = () => {
         open={showBookingDialog}
         bookingForm={bookingForm}
         isRegisteredPatient={isRegisteredPatient}
-        providers={mockProviders}
-        resources={mockResources}
+        providers={providers}
+        resources={resources}
         onClose={() => setShowBookingDialog(false)}
         onSubmit={handleBookingSubmit}
         onFormChange={setBookingForm}
