@@ -2,6 +2,7 @@ import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { ReasonListDto } from "@/interfaces/FrontOffice/ReasonListDto";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
@@ -20,6 +21,7 @@ import {
 import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
+import { reasonListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import {
@@ -128,9 +130,8 @@ export type DropdownType =
   | "dietType"
   | "smokingStatus"
   | "exerciseFrequency"
-  | "paymentTypes"
-  | "insuranceList"
-  | "alcoholStatus";
+  | "alcoholStatus"
+  | "reasonList";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -596,6 +597,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: DeptUnitListDto) => ({
           value: item.dulID || 0,
           label: item.unitDesc || "",
+          ...item,
+        }));
+      },
+      reasonList: async () => {
+        const response = await reasonListService.getAll();
+        return (response.data || []).map((item: ReasonListDto) => ({
+          value: item.arlID || 0,
+          label: item.arlName || "",
           ...item,
         }));
       },
