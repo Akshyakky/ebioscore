@@ -18,42 +18,27 @@ export interface ProductIssualHookReturn {
   isLoading: boolean;
   error: string | null;
 
-  // Generic and Type-Specific Search
   genericIssualSearch: (searchRequest: ProductIssualSearchRequest) => Promise<PaginatedList<ProductIssualDto>>;
   departmentIssualSearch: (searchRequest: ProductIssualSearchRequest) => Promise<PaginatedList<ProductIssualDto>>;
   physicianIssualSearch: (searchRequest: ProductIssualSearchRequest) => Promise<PaginatedList<ProductIssualDto>>;
-
-  // Get and Save Operations
   getIssualWithDetailsById: (issualId: number) => Promise<ProductIssualCompositeDto | null>;
   saveIssualWithDetails: (issualData: ProductIssualCompositeDto) => Promise<OperationResult<ProductIssualCompositeDto>>;
   saveDepartmentIssual: (issualData: ProductIssualCompositeDto) => Promise<OperationResult<ProductIssualCompositeDto>>;
   savePhysicianIssual: (issualData: ProductIssualCompositeDto) => Promise<OperationResult<ProductIssualCompositeDto>>;
-
-  // Action Operations
   deleteIssual: (issualId: number) => Promise<boolean>;
   approveIssual: (issualId: number) => Promise<boolean>;
-
-  // Code Generation
   genericGenerateIssualCode: (fromDepartmentId: number, issualType: IssualType) => Promise<string | null>;
   generateDepartmentIssualCode: (fromDepartmentId: number) => Promise<string | null>;
   generatePhysicianIssualCode: (fromDepartmentId: number) => Promise<string | null>;
-
-  // Stock and Validation
   getAvailableStock: (departmentId: number, productId?: number) => Promise<ProductStockBalance[]>;
   validateStockAvailability: (departmentId: number, productId: number, requiredQty: number, batchNo?: string) => Promise<boolean>;
-
-  // Utility and Summary
   getIssualSummary: (startDate?: Date, endDate?: Date) => Promise<any>;
   getIssualTypes: () => Promise<any[]>;
   getPendingIssuals: (issualType?: IssualType, pageIndex?: number, pageSize?: number) => Promise<PaginatedList<ProductIssualDto>>;
   getApprovedIssuals: (issualType?: IssualType, pageIndex?: number, pageSize?: number) => Promise<PaginatedList<ProductIssualDto>>;
-
-  // Permission Checks
   canEditIssual: (issual: ProductIssualDto) => boolean;
   canApproveIssual: (issual: ProductIssualDto) => boolean;
   canDeleteIssual: (issual: ProductIssualDto) => boolean;
-
-  // State Management
   clearError: () => void;
   refreshCurrentPage: () => Promise<void>;
 }
@@ -75,9 +60,7 @@ export const useProductIssual = (): ProductIssualHookReturn => {
       setLoading(true);
       setIsLoading(true);
       clearError();
-
       const response = await apiCall();
-
       if (response.success) {
         if (successMessage) {
           showAlert("Success", successMessage, "success");
@@ -100,19 +83,16 @@ export const useProductIssual = (): ProductIssualHookReturn => {
     }
   };
 
-  const genericIssualSearch = useCallback(
-    async (searchRequest: ProductIssualSearchRequest): Promise<PaginatedList<ProductIssualDto>> => {
-      setLastSearchRequest(searchRequest);
-      const response = await handleApiCall(() => productIssualService.issualSearch(searchRequest));
-      if (response.success && response.data) {
-        setPaginatedIssuals(response.data);
-        return response.data;
-      }
-      setPaginatedIssuals(defaultPaginatedList);
-      return defaultPaginatedList;
-    },
-    [] // handleApiCall is not a dependency
-  );
+  const genericIssualSearch = useCallback(async (searchRequest: ProductIssualSearchRequest): Promise<PaginatedList<ProductIssualDto>> => {
+    setLastSearchRequest(searchRequest);
+    const response = await handleApiCall(() => productIssualService.issualSearch(searchRequest));
+    if (response.success && response.data) {
+      setPaginatedIssuals(response.data);
+      return response.data;
+    }
+    setPaginatedIssuals(defaultPaginatedList);
+    return defaultPaginatedList;
+  }, []);
 
   const departmentIssualSearch = useCallback(
     async (searchRequest: ProductIssualSearchRequest): Promise<PaginatedList<ProductIssualDto>> => {
@@ -182,7 +162,6 @@ export const useProductIssual = (): ProductIssualHookReturn => {
   }, []);
 
   const generateDepartmentIssualCode = useCallback((fromDepartmentId: number) => genericGenerateIssualCode(fromDepartmentId, IssualType.Department), [genericGenerateIssualCode]);
-
   const generatePhysicianIssualCode = useCallback((fromDepartmentId: number) => genericGenerateIssualCode(fromDepartmentId, IssualType.Physician), [genericGenerateIssualCode]);
 
   const getAvailableStock = useCallback(async (departmentId: number, productId?: number): Promise<ProductStockBalance[]> => {

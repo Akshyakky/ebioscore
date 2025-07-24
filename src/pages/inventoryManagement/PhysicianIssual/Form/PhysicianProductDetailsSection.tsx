@@ -51,9 +51,9 @@ const issualDetailSchema = z.object({
   manufacturerCode: z.string().optional(),
   manufacturerName: z.string().optional(),
   psbid: z.number().optional(),
-  margin: z.number().min(0, "Margin must be non-negative").default(10), // Default 10% margin
-  physicianSellingPrice: z.number().optional(), // New field for calculated physician selling price
+  margin: z.number().min(0, "Margin must be non-negative").default(10),
   rActiveYN: z.string().default("Y"),
+  transferYN: z.string().default("N"),
   remarks: z.string().optional(),
 });
 
@@ -85,8 +85,7 @@ type PhysicianProductDetailWithId = ProductIssualDetailDto & {
   cgst?: number;
   sgst?: number;
   margin?: number;
-  physicianSellingPrice?: number;
-  // Additional ProductListDto fields for comprehensive display
+  transferYN?: string;
   barcode?: string;
   vedCode?: string;
   abcCode?: string;
@@ -95,7 +94,6 @@ type PhysicianProductDetailWithId = ProductIssualDetailDto & {
   taxable?: string;
   chargableYN?: string;
   isAssetYN?: string;
-  transferYN?: string;
   leadTime?: number;
   leadTimeDesc?: string;
   rOL?: number;
@@ -130,7 +128,6 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
   const fromDeptID = useWatch({ control, name: "fromDeptID" });
   const recConName = useWatch({ control, name: "recConName" });
 
-  // Use the BatchSelectionDialog hook
   const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, openDialog: openBatchDialog, closeDialog: closeBatchDialog } = useBatchSelection();
 
   const clearTemporaryFields = useCallback(() => {
@@ -145,26 +142,42 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
     setClearProductSearchTrigger((prev) => prev + 1);
   }, []);
 
-  // Calculate physician selling price based on unit price and margin
-  const calculatePhysicianSellingPrice = useCallback((unitPrice: number, margin: number): number => {
+  const calculateSellingPrice = useCallback((unitPrice: number, margin: number): number => {
     if (!unitPrice || margin < 0) return unitPrice || 0;
     return unitPrice + (unitPrice * margin) / 100;
   }, []);
 
-  // Enhanced helper function to map complete ProductListDto to ProductIssualDetailDto for Physician Issual
+  const calculateMarginFromSellingPrice = useCallback((sellingPrice: number, unitPrice: number): number => {
+    if (!unitPrice || unitPrice === 0) return 10;
+    const margin = ((sellingPrice - unitPrice) / unitPrice) * 100;
+    return Math.max(0, margin);
+  }, []);
+
   const mapCompleteProductListToIssualDetail = useCallback(
-    (completeProduct: ProductListDto, batch: ProductBatchDto, issuedQty: number = 0): ProductIssualDetailDto => {
+    (completeProduct: ProductListDto, batch: ProductBatchDto, issuedQty: number = 0, existingDetail?: any): ProductIssualDetailDto => {
       const safeIssuedQty = Math.max(0, issuedQty);
       const unitPrice = batch.sellingPrice || completeProduct.defaultPrice || 0;
-      const defaultMargin = 10; // Default 10% margin
-      const physicianSellingPrice = calculatePhysicianSellingPrice(unitPrice, defaultMargin);
+      let margin = 10;
+      let sellingPrice = 0;
 
-      // For Physician issuals, requested quantity equals issued quantity initially
+      if (existingDetail) {
+        if (existingDetail.sellUnitPrice && existingDetail.sellUnitPrice > 0) {
+          sellingPrice = existingDetail.sellUnitPrice;
+          margin = calculateMarginFromSellingPrice(sellingPrice, unitPrice);
+        } else if (existingDetail.margin !== undefined && existingDetail.margin !== null) {
+          margin = existingDetail.margin;
+          sellingPrice = calculateSellingPrice(unitPrice, margin);
+        } else {
+          sellingPrice = calculateSellingPrice(unitPrice, margin);
+        }
+      } else {
+        sellingPrice = calculateSellingPrice(unitPrice, margin);
+      }
+
       const requestedQtyFromProduct = safeIssuedQty || completeProduct.requestedQuantity || completeProduct.orderQuantity || completeProduct.defaultQuantity || 1;
-
       return {
-        pisDetID: 0,
-        pisid: 0,
+        pisDetID: existingDetail?.pisDetID || 0,
+        pisid: existingDetail?.pisid || 0,
         productID: completeProduct.productID,
         productCode: completeProduct.productCode || "",
         productName: completeProduct.productName || "",
@@ -181,9 +194,9 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
         expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : undefined,
         unitPrice: unitPrice,
         tax: completeProduct.gstPerValue || 0,
-        sellUnitPrice: batch.sellingPrice || completeProduct.defaultPrice || 0,
-        requestedQty: requestedQtyFromProduct,
-        issuedQty: safeIssuedQty,
+        sellUnitPrice: sellingPrice,
+        requestedQty: existingDetail?.requestedQty || requestedQtyFromProduct,
+        issuedQty: existingDetail?.issuedQty || safeIssuedQty,
         availableQty: batch.productQOH || 0,
         expiryYN: completeProduct.expiry || "N",
         psGrpID: completeProduct.psGrpID || 0,
@@ -199,16 +212,15 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
         manufacturerCode: completeProduct.manufacturerCode || "",
         manufacturerName: completeProduct.manufacturerName || "",
         psbid: batch.grnDetID || 0,
-        margin: defaultMargin, // Set default 10% margin
-        physicianSellingPrice: physicianSellingPrice, // Calculate physician selling price
-        rActiveYN: completeProduct.rActiveYN || "Y",
-        remarks: completeProduct.productNotes || "",
+        margin: margin,
+        rActiveYN: "Y",
+        transferYN: "N",
+        remarks: existingDetail?.remarks || completeProduct.productNotes || "",
       };
     },
-    [calculatePhysicianSellingPrice]
+    [calculateSellingPrice, calculateMarginFromSellingPrice]
   );
 
-  // Convert GrnDetailDto to ProductBatchDto format for BatchSelectionDialog
   const convertGrnToBatchDto = useCallback(
     (grn: GrnDetailDto, product: ProductListDto): ProductBatchDto => {
       return {
@@ -226,38 +238,32 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
     [fromDeptID]
   );
 
-  // Enhanced handleBatchSelect to fetch complete ProductListDto by productID for Physician Issual
   const handleBatchSelect = useCallback(
     async (batch: ProductBatchDto) => {
       try {
         setIsLoadingBatches(true);
         closeBatchDialog();
-
         const productResponse = await productListService.getById(batch.productID);
-
         if (!productResponse.success || !productResponse.data) {
           throw new Error(`Failed to fetch complete ProductListDto for productID: ${batch.productID}`);
         }
-
         const completeProductData = productResponse.data;
-        const newProductDetail = mapCompleteProductListToIssualDetail(completeProductData, batch, selectedProductIssuedQty || 0);
-
         if (isEditingExistingProduct && editingProductIndex !== null) {
-          // Update existing product
+          const existingProduct = fields[editingProductIndex];
+          const newProductDetail = mapCompleteProductListToIssualDetail(completeProductData, batch, selectedProductIssuedQty || existingProduct?.issuedQty || 0, existingProduct);
           setValue(`details.${editingProductIndex}`, newProductDetail, {
             shouldValidate: true,
             shouldDirty: true,
           });
           showAlert("Success", `Physician issual product "${completeProductData.productName}" updated successfully`, "success");
         } else {
-          // Add new product only if not editing
+          const newProductDetail = mapCompleteProductListToIssualDetail(completeProductData, batch, selectedProductIssuedQty || 0, null);
           append(newProductDetail);
           showAlert("Success", `Product "${completeProductData.productName}" added for physician issual, batch: ${batch.batchNo}`, "success");
         }
 
         clearTemporaryFields();
       } catch (error) {
-        console.error("Error in handleBatchSelect:", error);
         showAlert("Error", `Failed to fetch product data for physician issual. Please try again.`, "error");
         clearTemporaryFields();
       } finally {
@@ -268,6 +274,7 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
       selectedProductIssuedQty,
       isEditingExistingProduct,
       editingProductIndex,
+      fields,
       append,
       setValue,
       showAlert,
@@ -283,28 +290,21 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
         clearTemporaryFields();
         return;
       }
-
       if (!fromDeptID) {
         showAlert("Warning", "Please select a from department first for the physician issual", "warning");
         return;
       }
-
-      // Only check for duplicate products when adding new (not when editing existing)
       if (!isEditingExistingProduct && fields.find((d) => d.productID === product.productID)) {
         showAlert("Warning", `"${product.productName}" is already added to the physician issual list.`, "warning");
         productSearchRef.current?.clearSelection();
         return;
       }
-
       try {
         setSelectedProduct(product);
         setIsLoadingBatches(true);
-
         const response = await billingService.getBatchNoProduct(product.productID, fromDeptID);
-
         if (response.success && response.data) {
           const batches = response.data;
-
           if (batches.length === 0) {
             showAlert("Warning", "No batches available for this product in the source department", "warning");
             clearTemporaryFields();
@@ -328,26 +328,20 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
   const handleEditExistingProduct = useCallback(
     async (index: number) => {
       if (isViewMode) return;
-
       const productDetail = fields[index];
       if (!productDetail) return;
-
       try {
-        // Set editing state first
         setIsEditingExistingProduct(true);
         setEditingProductIndex(index);
         setIsAddingProduct(true);
         setIsLoadingBatches(true);
-
         const productResponse = await productListService.getById(productDetail.productID);
         if (!productResponse.success || !productResponse.data) {
           throw new Error("Failed to fetch complete ProductListDto for editing physician issual");
         }
-
         const fullProductData = productResponse.data;
         setSelectedProduct(fullProductData);
         setSelectedProductIssuedQty(productDetail.issuedQty || 0);
-
         const grnResponse = await grnDetailService.getById(productDetail.productID);
         if (grnResponse.success && grnResponse.data) {
           const grnData = Array.isArray(grnResponse.data) ? grnResponse.data : [grnResponse.data];
@@ -358,7 +352,6 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
               const dateB = b.expiryDate ? new Date(b.expiryDate).getTime() : 0;
               return dateA - dateB;
             });
-
           if (validBatches.length > 1) {
             const batchDtos = validBatches.map((grn) => convertGrnToBatchDto(grn, fullProductData));
             openBatchDialog(batchDtos);
@@ -383,7 +376,7 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
     const totalRequestedQty = watchedDetails?.reduce((sum, item) => sum + (item.requestedQty || 0), 0) || 0;
     const totalIssuedQty = watchedDetails?.reduce((sum, item) => sum + (item.issuedQty || 0), 0) || 0;
     const totalValue = watchedDetails?.reduce((sum, item) => sum + (item.unitPrice || 0) * (item.issuedQty || 0), 0) || 0;
-    const totalPhysicianValue = watchedDetails?.reduce((sum, item) => sum + (item.physicianSellingPrice || 0) * (item.issuedQty || 0), 0) || 0;
+    const totalSellingValue = watchedDetails?.reduce((sum, item) => sum + (item.sellUnitPrice || 0) * (item.issuedQty || 0), 0) || 0;
     const avgMargin = watchedDetails?.length > 0 ? watchedDetails.reduce((sum, item) => sum + (item.margin || 0), 0) / watchedDetails.length : 0;
     const zeroQohItems = watchedDetails?.filter((item) => (item.availableQty || 0) === 0).length || 0;
     const expiring30Days =
@@ -411,7 +404,7 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
       totalRequestedQty,
       totalIssuedQty,
       totalValue,
-      totalPhysicianValue,
+      totalSellingValue,
       avgMargin,
       zeroQohItems,
       expiring30Days,
@@ -425,8 +418,16 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
       const totalTax = field.tax || 0;
       const cgst = totalTax / 2;
       const sgst = totalTax / 2;
-      const margin = field.margin || 10; // Default 10% if not set
-      const physicianSellingPrice = calculatePhysicianSellingPrice(field.unitPrice || 0, margin);
+      let margin = field.margin || 10;
+      let sellingPrice = field.sellUnitPrice || 0;
+      if (sellingPrice > 0 && (!field.margin || field.margin === 0)) {
+        const unitPrice = field.unitPrice || 0;
+        if (unitPrice > 0) {
+          margin = calculateMarginFromSellingPrice(sellingPrice, unitPrice);
+        }
+      } else if (margin > 0) {
+        sellingPrice = calculateSellingPrice(field.unitPrice || 0, margin);
+      }
 
       const row: PhysicianProductDetailWithId = {
         pisDetID: field.pisDetID ?? 0,
@@ -449,7 +450,7 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
         tax: field.tax ?? 0,
         cgst: cgst,
         sgst: sgst,
-        sellUnitPrice: field.sellUnitPrice ?? 0,
+        sellUnitPrice: sellingPrice,
         requestedQty: field.requestedQty ?? 0,
         issuedQty: field.issuedQty ?? 0,
         availableQty: field.availableQty ?? 0,
@@ -468,15 +469,15 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
         manufacturerName: field.manufacturerName ?? "",
         psbid: field.psbid ?? 0,
         margin: margin,
-        physicianSellingPrice: physicianSellingPrice,
         rActiveYN: field.rActiveYN ?? "Y",
+        transferYN: field.transferYN ?? "N",
         remarks: field.remarks ?? "",
         id: `${field.productID}-${field.pisDetID || index}`,
       };
 
       return row;
     });
-  }, [fields, calculatePhysicianSellingPrice]);
+  }, [fields, calculateSellingPrice, calculateMarginFromSellingPrice]);
 
   const getExpiryWarning = (expiryDate?: Date) => {
     if (!expiryDate) return null;
@@ -568,7 +569,6 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
           }
           return field.productID === params.row.productID;
         });
-
         if (index === -1) {
           return (
             <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
@@ -576,10 +576,8 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
             </Typography>
           );
         }
-
         const currentValue = watchedDetails?.[index]?.requestedQty || params.row.requestedQty || 0;
         const availableQty = watchedDetails?.[index]?.availableQty || params.row.availableQty || 0;
-
         return (
           <TextField
             size="small"
@@ -597,8 +595,6 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
                 shouldValidate: true,
                 shouldDirty: true,
               });
-
-              // For physician issuals, sync issued quantity with requested quantity initially
               setValue(`details.${index}.issuedQty`, value, {
                 shouldValidate: true,
                 shouldDirty: true,
@@ -662,10 +658,8 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
             </Typography>
           );
         }
-
         const currentValue = watchedDetails?.[index]?.issuedQty || params.row.issuedQty || 0;
         const availableQty = watchedDetails?.[index]?.availableQty || params.row.availableQty || 0;
-        const requestedQty = watchedDetails?.[index]?.requestedQty || params.row.requestedQty || 0;
 
         return (
           <TextField
@@ -674,14 +668,8 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
             value={currentValue}
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
-
               if (value > availableQty) {
                 showAlert("Warning", `Issued quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
-                return;
-              }
-
-              if (value > requestedQty) {
-                showAlert("Warning", `Issued quantity (${value}) cannot exceed requested quantity (${requestedQty})`, "warning");
                 return;
               }
 
@@ -693,9 +681,9 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
             onClick={(e) => e.stopPropagation()}
             onFocus={(e) => e.stopPropagation()}
             disabled={isViewMode}
-            inputProps={{ min: 0, max: Math.min(availableQty, requestedQty), step: 0.01 }}
-            error={!!errors.details?.[index]?.issuedQty || currentValue > availableQty || currentValue > requestedQty}
-            helperText={currentValue > availableQty ? "Cannot exceed available qty" : currentValue > requestedQty ? "Cannot exceed requested qty" : ""}
+            inputProps={{ min: 0, max: availableQty, step: 0.01 }}
+            error={!!errors.details?.[index]?.issuedQty || currentValue > availableQty}
+            helperText={currentValue > availableQty ? "Cannot exceed available qty" : ""}
             sx={{
               width: "100px",
               "& .MuiInputBase-input": {
@@ -733,7 +721,7 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
     },
     {
       field: "unitPrice",
-      headerName: "Unit Price",
+      headerName: "Cost Price",
       width: 100,
       sortable: false,
       filterable: false,
@@ -743,7 +731,6 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
         </Typography>
       ),
     },
-    // **EDITABLE MARGIN COLUMN**
     {
       field: "margin",
       headerName: "Margin %",
@@ -757,11 +744,12 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
           }
           return field.productID === params.row.productID;
         });
-
         if (index === -1 || isViewMode) {
-          const marginValue = params.value || 10;
+          let marginValue = params.value || 10;
+          if (params.row.sellUnitPrice && params.row.unitPrice && params.row.unitPrice > 0) {
+            marginValue = calculateMarginFromSellingPrice(params.row.sellUnitPrice, params.row.unitPrice);
+          }
           const color = marginValue > 20 ? "success.main" : marginValue > 10 ? "warning.main" : "error.main";
-
           return (
             <Typography
               variant="body2"
@@ -776,10 +764,19 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
             </Typography>
           );
         }
+        let currentValue = watchedDetails?.[index]?.margin;
+        if (currentValue === undefined || currentValue === null) {
+          const fieldData = fields[index];
+          const unitPrice = watchedDetails?.[index]?.unitPrice || fieldData?.unitPrice || params.row.unitPrice || 0;
+          const sellUnitPrice = watchedDetails?.[index]?.sellUnitPrice || fieldData?.sellUnitPrice || params.row.sellUnitPrice || 0;
+          if (sellUnitPrice > 0 && unitPrice > 0) {
+            currentValue = calculateMarginFromSellingPrice(sellUnitPrice, unitPrice);
+          } else {
+            currentValue = params.row.margin || 10;
+          }
+        }
 
-        const currentValue = watchedDetails?.[index]?.margin || params.row.margin || 10;
         const unitPrice = watchedDetails?.[index]?.unitPrice || params.row.unitPrice || 0;
-
         return (
           <TextField
             size="small"
@@ -787,16 +784,12 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
             value={currentValue}
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
-
-              // Update margin
               setValue(`details.${index}.margin`, value, {
                 shouldValidate: true,
                 shouldDirty: true,
               });
-
-              // Calculate and update physician selling price
-              const newPhysicianSellingPrice = calculatePhysicianSellingPrice(unitPrice, value);
-              setValue(`details.${index}.physicianSellingPrice`, newPhysicianSellingPrice, {
+              const newSellingPrice = calculateSellingPrice(unitPrice, value);
+              setValue(`details.${index}.sellUnitPrice`, newSellingPrice, {
                 shouldValidate: true,
                 shouldDirty: true,
               });
@@ -817,10 +810,9 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
         );
       },
     },
-    // **PHYSICIAN SELLING PRICE COLUMN (CALCULATED)**
     {
-      field: "physicianSellingPrice",
-      headerName: "Physician Selling Price",
+      field: "sellUnitPrice",
+      headerName: "Selling Price",
       width: 150,
       sortable: false,
       filterable: false,
@@ -832,12 +824,23 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
           return field.productID === params.row.productID;
         });
 
-        let physicianSellingPrice = params.row.physicianSellingPrice || 0;
+        let sellingPrice = params.row.sellUnitPrice || 0;
 
         if (index !== -1) {
           const unitPrice = watchedDetails?.[index]?.unitPrice || params.row.unitPrice || 0;
-          const margin = watchedDetails?.[index]?.margin || params.row.margin || 10;
-          physicianSellingPrice = calculatePhysicianSellingPrice(unitPrice, margin);
+          let margin = watchedDetails?.[index]?.margin;
+          if (margin === undefined || margin === null) {
+            const fieldData = fields[index];
+            if (fieldData?.sellUnitPrice && fieldData.sellUnitPrice > 0 && unitPrice > 0) {
+              margin = calculateMarginFromSellingPrice(fieldData.sellUnitPrice, unitPrice);
+              sellingPrice = fieldData.sellUnitPrice;
+            } else {
+              margin = fieldData?.margin || params.row.margin || 10;
+              sellingPrice = calculateSellingPrice(unitPrice, margin);
+            }
+          } else {
+            sellingPrice = calculateSellingPrice(unitPrice, margin);
+          }
         }
 
         return (
@@ -850,7 +853,7 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
               color: "success.main",
             }}
           >
-            ₹{physicianSellingPrice.toFixed(2)}
+            ₹{sellingPrice.toFixed(2)}
           </Typography>
         );
       },
@@ -875,18 +878,15 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
       filterable: false,
       renderCell: (params) => {
         if (isViewMode) return null;
-
         const index = fields.findIndex((field) => {
           if (field.pisDetID && params.row.pisDetID) {
             return field.pisDetID === params.row.pisDetID;
           }
           return field.productID === params.row.productID;
         });
-
         if (index === -1) {
           return null;
         }
-
         return (
           <Box sx={{ display: "flex", gap: 0.5 }}>
             <Tooltip title="Edit Product">
@@ -1110,10 +1110,10 @@ const PhysicianProductDetailsSection: React.FC<PhysicianProductDetailsSectionPro
               <Grid size={{ sm: 2, xs: 6 }}>
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h6" color="success.main">
-                    ₹{statistics.totalPhysicianValue.toFixed(2)}
+                    ₹{statistics.totalSellingValue.toFixed(2)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Physician Value
+                    Selling Value
                   </Typography>
                 </Box>
               </Grid>

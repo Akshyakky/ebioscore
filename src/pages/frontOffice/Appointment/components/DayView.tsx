@@ -1,8 +1,10 @@
 // src/pages/frontOffice/Appointment/components/DayView.tsx
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { Block } from "@mui/icons-material";
-import { Box, Grid, Typography } from "@mui/material";
+import { Box, Grid, Typography, useTheme } from "@mui/material";
 import React from "react";
-import { AppointmentData, TimeSlot, WorkHoursData } from "../types";
+import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
 import { AppointmentCard } from "./AppointmentCard";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
@@ -10,11 +12,11 @@ import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 interface DayViewProps {
   currentDate: Date;
   timeSlots: TimeSlot[];
-  appointments: AppointmentData[];
-  workHours: WorkHoursData[];
+  appointments: AppointBookingDto[];
+  workHours: HospWorkHoursDto[];
   currentTime: Date;
   onSlotDoubleClick: (date: Date, hour: number, minute: number) => void;
-  onAppointmentClick: (appointment: AppointmentData) => void;
+  onAppointmentClick: (appointment: AppointBookingDto) => void;
   onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
 }
 
@@ -28,6 +30,9 @@ export const DayView: React.FC<DayViewProps> = ({
   onAppointmentClick,
   onElapsedSlotConfirmation,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
   const isWithinWorkingHours = (date: Date, hour: number, minute: number) => {
     const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
     const workHour = workHours.find((wh) => wh.daysDesc === dayName && wh.rActiveYN === "Y");
@@ -57,14 +62,26 @@ export const DayView: React.FC<DayViewProps> = ({
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
 
     if (!withinWorkingHours) {
-      return isElapsed ? "#eeeeee" : "#f5f5f5";
+      return isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
     }
 
     if (isElapsed) {
-      return "#f0f0f0"; // Lighter background for better appointment visibility
+      return isDarkMode
+        ? theme.palette.grey[700] // Darker but still distinguishable in dark mode
+        : "#f0f0f0";
     }
 
     return "transparent";
+  };
+
+  const getHoverBackgroundColor = (date: Date, hour: number, minute: number) => {
+    const isElapsed = isTimeSlotElapsed(date, hour, minute);
+
+    if (isDarkMode) {
+      return isElapsed ? theme.palette.grey[600] : theme.palette.grey[700];
+    } else {
+      return isElapsed ? "#f5f5f5" : "#f0f0f0";
+    }
   };
 
   const getAppointmentsForSlot = (date: Date, hour: number, minute: number) => {
@@ -98,7 +115,6 @@ export const DayView: React.FC<DayViewProps> = ({
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
     const slotAppointments = getAppointmentsForSlot(date, hour, minute);
 
-    // Only handle single clicks for elapsed slots (to show confirmation)
     if (withinWorkingHours && isElapsed && slotAppointments.length === 0) {
       onElapsedSlotConfirmation(date, hour, minute);
     }
@@ -108,7 +124,6 @@ export const DayView: React.FC<DayViewProps> = ({
     const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
     const slotAppointments = getAppointmentsForSlot(date, hour, minute);
 
-    // Allow double-click booking for any working hours slot without appointments
     if (withinWorkingHours && slotAppointments.length === 0) {
       onSlotDoubleClick(date, hour, minute);
     }
@@ -117,21 +132,30 @@ export const DayView: React.FC<DayViewProps> = ({
   return (
     <Grid container spacing={1}>
       <Grid size={{ xs: 1 }}>
-        {/* Fixed sticky header positioning */}
         <Box
           sx={{
             position: "sticky",
             top: 0,
-            background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-            zIndex: 30, // Much higher z-index to ensure it stays above all content
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${theme.palette.grey[800]} 0%, ${theme.palette.grey[700]} 100%)`
+              : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+            zIndex: 30,
             py: 0.5,
             borderBottom: 2,
             borderColor: "primary.main",
             mb: 0.5,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
         >
-          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem", fontWeight: "bold", color: "primary.main" }}>
+          <Typography
+            variant="subtitle2"
+            align="center"
+            sx={{
+              fontSize: "0.8rem",
+              fontWeight: "bold",
+              color: isDarkMode ? theme.palette.primary.light : "primary.main",
+            }}
+          >
             Time
           </Typography>
         </Box>
@@ -145,6 +169,7 @@ export const DayView: React.FC<DayViewProps> = ({
               borderBottom: 1,
               borderColor: "divider",
               px: 1,
+              backgroundColor: isDarkMode ? theme.palette.background.paper : "transparent",
             }}
           >
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
@@ -157,21 +182,29 @@ export const DayView: React.FC<DayViewProps> = ({
       <Grid size={{ xs: 11 }} sx={{ position: "relative" }}>
         <CurrentTimeIndicator date={currentDate} height={40} timeSlots={timeSlots} currentTime={currentTime} />
 
-        {/* Fixed sticky header positioning */}
         <Box
           sx={{
             position: "sticky",
             top: 0,
-            background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-            zIndex: 30, // Much higher z-index to ensure it stays above all content
+            background: isDarkMode
+              ? `linear-gradient(135deg, ${theme.palette.grey[800]} 0%, ${theme.palette.grey[700]} 100%)`
+              : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+            zIndex: 30,
             py: 0.5,
             borderBottom: 2,
             borderColor: "primary.main",
             mb: 0.5,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
         >
-          <Typography variant="subtitle2" align="center" sx={{ fontSize: "0.8rem" }}>
+          <Typography
+            variant="subtitle2"
+            align="center"
+            sx={{
+              fontSize: "0.8rem",
+              color: isDarkMode ? theme.palette.primary.light : theme.palette.text.primary,
+            }}
+          >
             {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </Typography>
         </Box>
@@ -195,11 +228,11 @@ export const DayView: React.FC<DayViewProps> = ({
                 "&:hover":
                   withinWorkingHours && slotAppointments.length === 0
                     ? {
-                        backgroundColor: isElapsed ? "#f5f5f5" : "#f0f0f0",
+                        backgroundColor: getHoverBackgroundColor(currentDate, slot.hour, slot.minute),
                         "& .slot-hint": { opacity: 1 },
                       }
                     : {},
-                opacity: !withinWorkingHours ? 0.5 : 1, // Removed opacity reduction for elapsed slots
+                opacity: !withinWorkingHours ? 0.5 : 1,
                 position: "relative",
                 userSelect: "none",
               }}
@@ -221,7 +254,7 @@ export const DayView: React.FC<DayViewProps> = ({
                   className="slot-hint"
                   sx={{
                     fontSize: "0.6rem",
-                    color: "text.secondary",
+                    color: isDarkMode ? theme.palette.text.secondary : "text.secondary",
                     opacity: 0,
                     transition: "opacity 0.2s",
                     position: "absolute",
@@ -230,6 +263,7 @@ export const DayView: React.FC<DayViewProps> = ({
                     transform: "translate(-50%, -50%)",
                     pointerEvents: "none",
                     fontStyle: "italic",
+                    fontWeight: isDarkMode ? "500" : "normal",
                   }}
                 >
                   {isElapsed ? "Click for elapsed booking" : "Double-click to book"}
@@ -245,7 +279,6 @@ export const DayView: React.FC<DayViewProps> = ({
                 if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
                   const slotHeight = 40;
                   const durationInSlots = appointment.abDuration / 15;
-                  // Enhanced minimum height for better visibility of short appointments
                   const appointmentHeight = Math.max(durationInSlots * slotHeight - 2, appointment.abDuration <= 15 ? 18 : 24);
 
                   const minuteOffset = appointmentStartMinutes - slotStartMinutes;
@@ -264,7 +297,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         left: "4px",
                         right: "4px",
                         height: `${appointmentHeight}px`,
-                        zIndex: 15, // Higher z-index to ensure appointments are above slot backgrounds
+                        zIndex: 15,
                       }}
                     >
                       <AppointmentCard
@@ -273,7 +306,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         column={column}
                         totalColumns={totalColumns}
                         onClick={onAppointmentClick}
-                        isElapsed={isElapsed} // Pass elapsed state for better styling
+                        isElapsed={isElapsed}
                       />
                     </Box>
                   );

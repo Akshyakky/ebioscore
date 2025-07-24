@@ -19,68 +19,12 @@ import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check as CheckIcon, ContentCopy as ContentCopyIcon, LocalHospital as PhysicianIcon, Refresh, Save, Search as SearchIcon, Sync as SyncIcon } from "@mui/icons-material";
 import { Alert, Box, Chip, CircularProgress, Grid, IconButton, InputAdornment, Paper, Tooltip, Typography } from "@mui/material";
-import React, { ErrorInfo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import ProductBillingSection from "../../ProductIssual/Form/ProductBillingSection";
 import { useProductIssual } from "../../ProductIssual/hooks/useProductIssual";
 import PhysicianProductDetailsSection from "./PhysicianProductDetailsSection";
-
-// Error Boundary Component for form-level error handling
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ComponentType<{ error: Error; resetError: () => void }>;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class FormErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("PhysicianIssualForm Error:", error, errorInfo);
-  }
-
-  resetError = () => {
-    this.setState({ hasError: false, error: null });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      const FallbackComponent = this.props.fallback || DefaultErrorFallback;
-      return <FallbackComponent error={this.state.error!} resetError={this.resetError} />;
-    }
-
-    return this.props.children;
-  }
-}
-
-// Default Error Fallback Component
-const DefaultErrorFallback: React.FC<{ error: Error; resetError: () => void }> = ({ error, resetError }) => (
-  <Box sx={{ p: 3, textAlign: "center" }}>
-    <Alert severity="error" sx={{ mb: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Something went wrong with the form
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 2 }}>
-        {error.message}
-      </Typography>
-      <SmartButton text="Try Again" onClick={resetError} variant="contained" color="primary" size="small" />
-    </Alert>
-  </Box>
-);
-
-// Form component props interface
 interface PhysicianIssualFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
@@ -92,7 +36,6 @@ interface PhysicianIssualFormProps {
   issualType?: IssualType;
 }
 
-// Zod schema for issual detail validation
 const issualDetailSchema = z.object({
   pisDetID: z.number(),
   pisid: z.number(),
@@ -133,15 +76,14 @@ const issualDetailSchema = z.object({
   remarks: z.string().optional(),
 });
 
-// Zod schema for physician issual validation
 const physicianIssualSchema = z.object({
   pisid: z.number(),
   pisDate: z.date(),
   issualType: z.nativeEnum(IssualType).default(IssualType.Physician),
   fromDeptID: z.number().min(1, "From department is required"),
   fromDeptName: z.string().min(1, "From department name is required"),
-  toDeptID: z.number().min(1, "To department is required"),
-  toDeptName: z.string().min(1, "To department name is required"),
+  toDeptID: z.number().optional(),
+  toDeptName: z.string().optional(),
   recConID: z.number().min(1, "Physician is required"),
   recConName: z.string().min(1, "Physician name is required"),
   auGrpID: z.number().optional(),
@@ -152,6 +94,7 @@ const physicianIssualSchema = z.object({
   approvedYN: z.string(),
   approvedID: z.number().optional(),
   approvedBy: z.string().optional(),
+  rActiveYN: z.string().default("Y"),
   details: z
     .array(issualDetailSchema)
     .min(1, "At least one product detail is required")
@@ -159,7 +102,6 @@ const physicianIssualSchema = z.object({
 });
 
 type PhysicianIssualFormData = z.infer<typeof physicianIssualSchema>;
-
 const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
   open,
   onClose,
@@ -180,7 +122,7 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { showAlert } = useAlert();
 
-  const { department, attendingPhy, isLoading: isLoadingDropdowns } = useDropdownValues(["department", "attendingPhy"]);
+  const { department, attendingPhy } = useDropdownValues(["department", "attendingPhy"]);
 
   const isAddMode = !initialData || copyMode;
   const isCopyMode = copyMode && !!initialData;
@@ -204,6 +146,7 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
       indentNo: "",
       pisCode: "",
       approvedYN: "N",
+      rActiveYN: "Y",
       approvedID: 0,
       approvedBy: "",
       details: [],
@@ -224,8 +167,9 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
     resolver: zodResolver(physicianIssualSchema),
     mode: "onChange",
   });
+  const activeStatusValue = useWatch({ control, name: "rActiveYN" });
+  const approvalStatusValue = useWatch({ control, name: "approvedYN" });
 
-  const activeStatusValue = useWatch({ control, name: "approvedYN" });
   const fromDeptID = watch("fromDeptID");
   const pisCode = watch("pisCode");
   const watchedDetails = useWatch({ control, name: "details" });
@@ -252,7 +196,7 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
     if (isSaving || !isDataLoaded || isViewMode) return false;
 
     const currentValues = getValues();
-    const hasRequiredFields = currentValues.fromDeptID > 0 && currentValues.toDeptID > 0 && currentValues.recConID > 0 && currentValues.pisCode?.trim();
+    const hasRequiredFields = currentValues.fromDeptID > 0 && currentValues.recConID > 0 && currentValues.pisCode?.trim();
 
     const hasValidProducts = fields.length > 0 && validDetailsCount > 0;
 
@@ -391,7 +335,6 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
       const actionText = isViewMode ? "viewing" : isCopyMode ? "copying" : "editing";
       showAlert("Success", `Physician issual data loaded successfully for ${actionText}`, "success");
     } catch (error) {
-      console.error("Error loading issual details:", error);
       showAlert("Error", "Failed to load physician issual details", "error");
     } finally {
       setLoading(false);
@@ -465,20 +408,16 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
     try {
       setIsSaving(true);
       setLoading(true);
-
       if (!data.fromDeptID || data.fromDeptID === 0) throw new Error("From department is required.");
-      if (!data.toDeptID || data.toDeptID === 0) throw new Error("To department is required.");
       if (!data.recConID || data.recConID === 0) throw new Error("Physician is required.");
       const validDetails = data.details.filter((detail) => detail.issuedQty > 0);
       if (validDetails.length === 0) throw new Error("At least one product must have an issued quantity greater than 0");
-
       const fromDept = memoizedDepartmentOptions?.find((d) => Number(d.value) === data.fromDeptID);
-      const toDept = memoizedDepartmentOptions?.find((d) => Number(d.value) === data.toDeptID);
       const selectedPhysician = memoizedPhysicianOptions?.find((p) => Number(p.value) === data.recConID);
-
+      const pisid = isAddMode || isCopyMode ? 0 : data.pisid;
       const transformedDetails: ProductIssualDetailDto[] = validDetails.map((detail) => ({
-        pisDetID: detail.pisDetID || 0,
-        pisid: detail.pisid || 0,
+        pisDetID: isCopyMode ? 0 : detail.pisDetID || 0,
+        pisid: isCopyMode ? 0 : detail.pisid || 0,
         productID: detail.productID || 0,
         productCode: detail.productCode || "",
         productName: detail.productName || "",
@@ -514,20 +453,43 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
         manufacturerName: detail.manufacturerName,
         psbid: detail.psbid,
         remarks: detail.remarks || "",
+        rActiveYN: "Y",
+        transferYN: "N",
       }));
 
+      const calculatedTotalItems = calculateTotalItems(transformedDetails);
+      const calculatedTotalRequestedQty = calculateTotalRequestedQty(transformedDetails);
+      const calculatedTotalIssuedQty = calculateTotalIssuedQty(transformedDetails);
+      const calculatedIssualTypeName = getIssualTypeName(issualType);
+      const calculatedIssualCodePrefix = getIssualCodePrefix(issualType);
       const issualCompositeDto: ProductIssualCompositeDto = {
         productIssual: {
-          ...data,
+          pisid: pisid,
+          pisDate: data.pisDate,
+          issualType: issualType,
+          fromDeptID: data.fromDeptID,
           fromDeptName: fromDept?.label || data.fromDeptName,
-          toDeptName: toDept?.label || data.toDeptName,
-          recConName: selectedPhysician?.label || data.recConName,
-          totalItems: calculateTotalItems(transformedDetails),
-          totalRequestedQty: calculateTotalRequestedQty(transformedDetails),
-          totalIssuedQty: calculateTotalIssuedQty(transformedDetails),
-          issualTypeName: getIssualTypeName(issualType),
-          issualCodePrefix: getIssualCodePrefix(issualType),
-        } as ProductIssualDto,
+          toDeptID: data.toDeptID || 0,
+          toDeptName: data.toDeptName || "",
+          recConID: data.recConID,
+          recConName: selectedPhysician?.label || data.recConName || "",
+          auGrpID: data.auGrpID,
+          catDesc: data.catDesc || "REVENUE",
+          catValue: data.catValue || "MEDI",
+          indentNo: data.indentNo || "",
+          pisCode: data.pisCode || "",
+          approvedYN: data.approvedYN || "N",
+          approvedID: data.approvedID || 0,
+          approvedBy: data.approvedBy || "",
+          totalItems: calculatedTotalItems,
+          totalRequestedQty: calculatedTotalRequestedQty,
+          totalIssuedQty: calculatedTotalIssuedQty,
+          issualTypeName: calculatedIssualTypeName,
+          issualCodePrefix: calculatedIssualCodePrefix,
+          destinationInfo: data.recConName || "",
+          destinationID: data.recConID || null,
+          rActiveYN: "Y",
+        },
         details: transformedDetails,
       };
 
@@ -600,7 +562,7 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
   );
 
   return (
-    <FormErrorBoundary>
+    <>
       <GenericDialog open={open} onClose={handleClose} title={dialogTitle} maxWidth="xl" fullWidth fullScreen showCloseButton actions={dialogActions}>
         <Box component="form" noValidate sx={{ p: 1 }}>
           {isCopyMode && (
@@ -705,23 +667,7 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
                   }}
                 />
               </Grid>
-              <Grid size={{ sm: 12, md: 2.25 }}>
-                <FormField
-                  name="toDeptID"
-                  control={control}
-                  label="To Department"
-                  type="select"
-                  required
-                  disabled={isViewMode}
-                  size="small"
-                  options={memoizedDepartmentOptions}
-                  fullWidth
-                  onChange={(value) => {
-                    const selectedDept = memoizedDepartmentOptions?.find((d) => Number(d.value) === Number(value.value));
-                    setValue("toDeptName", selectedDept?.label || "");
-                  }}
-                />
-              </Grid>
+
               <Grid size={{ xs: 12, md: 2.75 }}>
                 <FormField
                   name="recConName"
@@ -734,11 +680,19 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
                   onChange={handleAttendingPhysicianChange}
                 />
               </Grid>
-              <Grid size={{ sm: 12, md: 1.5 }}>
+              <Grid size={{ sm: 12, md: 2.75 }}>
                 <FormField name="indentNo" control={control} label="Indent No." type="text" disabled={isViewMode} size="small" fullWidth />
               </Grid>
-              <Grid size={{ sm: 12, md: 1.25 }}>
-                <FormField name="approvedYN" control={control} type="switch" color="primary" label={activeStatusValue === "Y" ? "Approved" : "Pending"} disabled={isViewMode} />
+              <Grid size={{ sm: 12, md: 1.5 }}>
+                <FormField name="rActiveYN" control={control} type="switch" color="warning" label={activeStatusValue === "Y" ? "Visible" : "Hidden"} disabled={isViewMode} />
+                <FormField
+                  name="approvedYN"
+                  control={control}
+                  type="switch"
+                  color="primary"
+                  label={approvalStatusValue === "Y" ? "Approved" : "Not Approved"}
+                  disabled={isViewMode}
+                />
               </Grid>
             </Grid>
           </Paper>
@@ -781,7 +735,7 @@ const PhysicianIssualForm: React.FC<PhysicianIssualFormProps> = ({
         cancelText="Continue Editing"
         type="warning"
       />
-    </FormErrorBoundary>
+    </>
   );
 };
 

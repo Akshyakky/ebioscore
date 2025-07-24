@@ -3,7 +3,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { ResourceListDto } from "@/interfaces/FrontOffice/ResourceListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel, Refresh, Save } from "@mui/icons-material";
@@ -16,7 +16,7 @@ import { useResourceList } from "../hooks/useResourceList";
 interface ResourceListFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: ResourceListData | null;
+  initialData: ResourceListDto | null;
   viewOnly?: boolean;
 }
 
@@ -106,7 +106,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
       setIsSaving(true);
       setLoading(true);
 
-      const resourceData: ResourceListData = {
+      const resourceData: ResourceListDto = {
         rLID: data.rLID,
         rLCode: data.rLCode,
         rLName: data.rLName,

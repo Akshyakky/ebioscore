@@ -1,15 +1,15 @@
 // src/frontOffice/components/AppointmentDetailsDialog.tsx
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { Cancel as CancelIcon, Edit as EditIcon } from "@mui/icons-material";
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@mui/material";
 import React from "react";
-import { AppointmentData } from "../types";
 import { getStatusColor } from "../utils/appointmentUtils";
 
 interface AppointmentDetailsDialogProps {
-  appointment: AppointmentData | null;
+  appointment: AppointBookingDto | null;
   onClose: () => void;
-  onEdit?: (appointment: AppointmentData) => void;
-  onCancel?: (appointment: AppointmentData) => void;
+  onEdit?: (appointment: AppointBookingDto) => void;
+  onCancel?: (appointment: AppointBookingDto) => void;
 }
 
 export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> = ({ appointment, onClose, onEdit, onCancel }) => {

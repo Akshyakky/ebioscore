@@ -1,7 +1,7 @@
 import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { FrequencyData } from "@/interfaces/FrontOffice/BreakListData";
+import { FrequencyDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { formatDate } from "@/utils/Common/dateUtils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,8 +24,8 @@ const BreakFrequency: React.FC<{
   open: boolean;
   onClose: () => void;
   endDateFromBreakDetails: string;
-  onSave: (frequencyData: FrequencyData) => void;
-  initialFrequencyData: FrequencyData;
+  onSave: (frequencyData: FrequencyDto) => void;
+  initialFrequencyData: FrequencyDto;
 }> = ({ open, onClose, endDateFromBreakDetails, onSave, initialFrequencyData }) => {
   const { control, handleSubmit, setValue, watch } = useForm<FrequencyFormData>({
     defaultValues: {
@@ -44,7 +44,7 @@ const BreakFrequency: React.FC<{
 
   useEffect(() => {
     Object.keys(initialFrequencyData).forEach((key) => {
-      setValue(key as keyof FrequencyFormData, initialFrequencyData[key as keyof FrequencyData]);
+      setValue(key as keyof FrequencyFormData, initialFrequencyData[key as keyof FrequencyDto]);
     });
   }, [initialFrequencyData, setValue]);
 
@@ -161,7 +161,7 @@ const BreakFrequency: React.FC<{
 
   const handleSave = () => {
     if (validateFrequency()) {
-      onSave(frequencyData as FrequencyData);
+      onSave(frequencyData as FrequencyDto);
       onClose();
     }
   };

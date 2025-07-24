@@ -1,7 +1,9 @@
 // src/pages/frontOffice/Appointment/components/WeekView.tsx
-import { Box, Grid, Typography } from "@mui/material";
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
+import { Box, Grid, Typography, useTheme } from "@mui/material";
 import React from "react";
-import { AppointmentData, TimeSlot, WorkHoursData } from "../types";
+import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
 import { AppointmentCard } from "./AppointmentCard";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
@@ -9,12 +11,12 @@ import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 interface WeekViewProps {
   currentDate: Date;
   timeSlots: TimeSlot[];
-  appointments: AppointmentData[];
-  workHours: WorkHoursData[];
+  appointments: AppointBookingDto[];
+  workHours: HospWorkHoursDto[];
   currentTime: Date;
   getWeekDates: (date: Date) => Date[];
   onSlotDoubleClick: (date: Date, hour: number, minute: number) => void;
-  onAppointmentClick: (appointment: AppointmentData) => void;
+  onAppointmentClick: (appointment: AppointBookingDto) => void;
   onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
 }
 
@@ -29,6 +31,8 @@ export const WeekView: React.FC<WeekViewProps> = ({
   onAppointmentClick,
   onElapsedSlotConfirmation,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   const weekDates = getWeekDates(currentDate);
 
   const isWithinWorkingHours = (date: Date, hour: number, minute: number) => {
@@ -60,14 +64,24 @@ export const WeekView: React.FC<WeekViewProps> = ({
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
 
     if (!withinWorkingHours) {
-      return isElapsed ? "#eeeeee" : "#f5f5f5";
+      return isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
     }
 
     if (isElapsed) {
-      return "#f0f0f0"; // Lighter background for better appointment visibility
+      return isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
     }
 
     return "transparent";
+  };
+
+  const getHoverBackgroundColor = (date: Date, hour: number, minute: number) => {
+    const isElapsed = isTimeSlotElapsed(date, hour, minute);
+
+    if (isDarkMode) {
+      return isElapsed ? theme.palette.grey[600] : theme.palette.grey[700];
+    } else {
+      return isElapsed ? "#f5f5f5" : "#f0f0f0";
+    }
   };
 
   const getAppointmentsForDate = (date: Date) => {
@@ -99,7 +113,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
     const slotAppointments = getAppointmentsForSlot(date, hour, minute);
 
-    // Only handle single clicks for elapsed slots (to show confirmation)
     if (withinWorkingHours && isElapsed && slotAppointments.length === 0) {
       onElapsedSlotConfirmation(date, hour, minute);
     }
@@ -109,7 +122,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
     const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
     const slotAppointments = getAppointmentsForSlot(date, hour, minute);
 
-    // Allow double-click booking for any working hours slot without appointments
     if (withinWorkingHours && slotAppointments.length === 0) {
       onSlotDoubleClick(date, hour, minute);
     }
@@ -118,20 +130,27 @@ export const WeekView: React.FC<WeekViewProps> = ({
   return (
     <Grid container spacing={0.5}>
       <Grid size={{ xs: 1.5 }}>
-        {/* Fixed sticky header positioning */}
         <Box
           sx={{
             position: "sticky",
             top: 0,
-            background: "white",
-            zIndex: 10, // Higher z-index to ensure it stays above content
+            background: isDarkMode ? theme.palette.background.paper : "white",
+            zIndex: 10,
             py: 0.5,
             borderBottom: 1,
             borderColor: "divider",
             mb: 0.5,
+            boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)",
           }}
         >
-          <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem" }}>
+          <Typography
+            variant="caption"
+            align="center"
+            sx={{
+              fontSize: "0.7rem",
+              color: theme.palette.text.primary,
+            }}
+          >
             Time
           </Typography>
         </Box>
@@ -145,6 +164,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
               borderBottom: 1,
               borderColor: "divider",
               px: 0.5,
+              backgroundColor: isDarkMode ? theme.palette.background.paper : "transparent",
             }}
           >
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.6rem" }}>
@@ -162,20 +182,28 @@ export const WeekView: React.FC<WeekViewProps> = ({
           <Grid size={{ xs: 1.5 }} key={index} sx={{ position: "relative" }}>
             <CurrentTimeIndicator date={date} height={30} timeSlots={timeSlots} currentTime={currentTime} />
 
-            {/* Fixed sticky header positioning */}
             <Box
               sx={{
                 position: "sticky",
                 top: 0,
-                background: "white",
-                zIndex: 10, // Higher z-index to ensure it stays above content
+                background: isDarkMode ? theme.palette.background.paper : "white",
+                zIndex: 10,
                 py: 0.5,
                 borderBottom: 1,
                 borderColor: "divider",
                 mb: 0.5,
+                boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)",
               }}
             >
-              <Typography variant="caption" align="center" sx={{ fontSize: "0.7rem", fontWeight: "bold" }}>
+              <Typography
+                variant="caption"
+                align="center"
+                sx={{
+                  fontSize: "0.7rem",
+                  fontWeight: "bold",
+                  color: theme.palette.text.primary,
+                }}
+              >
                 {date.toLocaleDateString("en-US", { weekday: "short" })}
               </Typography>
               <Typography
@@ -211,25 +239,24 @@ export const WeekView: React.FC<WeekViewProps> = ({
                     "&:hover":
                       withinWorkingHours && slotAppointments.length === 0
                         ? {
-                            backgroundColor: isElapsed ? "#f5f5f5" : "#f0f0f0",
+                            backgroundColor: getHoverBackgroundColor(date, slot.hour, slot.minute),
                             "& .slot-hint": { opacity: 1 },
                           }
                         : {},
-                    opacity: !withinWorkingHours ? 0.5 : 1, // Removed opacity reduction for elapsed slots
+                    opacity: !withinWorkingHours ? 0.5 : 1,
                     position: "relative",
                     userSelect: "none",
                   }}
                   onClick={() => handleSlotClick(date, slot.hour, slot.minute)}
                   onDoubleClick={() => handleSlotDoubleClick(date, slot.hour, slot.minute)}
                 >
-                  {/* Hover hint for booking */}
                   {withinWorkingHours && slotAppointments.length === 0 && (
                     <Typography
                       variant="caption"
                       className="slot-hint"
                       sx={{
                         fontSize: "0.5rem",
-                        color: "text.secondary",
+                        color: isDarkMode ? theme.palette.text.secondary : "text.secondary",
                         opacity: 0,
                         transition: "opacity 0.2s",
                         position: "absolute",
@@ -241,6 +268,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                         textAlign: "center",
                         lineHeight: 1,
                         whiteSpace: "nowrap",
+                        fontWeight: isDarkMode ? "500" : "normal",
                       }}
                     >
                       {isElapsed ? "Click" : "2x Click"}
@@ -256,7 +284,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
                     if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
                       const slotHeight = 30;
                       const durationInSlots = appointment.abDuration / 15;
-                      // Enhanced minimum height for better visibility in week view
                       const appointmentHeight = Math.max(durationInSlots * slotHeight - 1, appointment.abDuration <= 15 ? 16 : 20);
 
                       const minuteOffset = appointmentStartMinutes - slotStartMinutes;
@@ -275,16 +302,16 @@ export const WeekView: React.FC<WeekViewProps> = ({
                             left: "2px",
                             right: "2px",
                             height: `${appointmentHeight}px`,
-                            zIndex: 15, // Higher z-index to ensure appointments are above slot backgrounds
+                            zIndex: 15,
                           }}
                         >
                           <AppointmentCard
                             appointment={appointment}
-                            showDetails={appointment.abDuration > 15} // Show details only for longer appointments in week view
+                            showDetails={appointment.abDuration > 15}
                             column={column}
                             totalColumns={totalColumns}
                             onClick={onAppointmentClick}
-                            isElapsed={isElapsed} // Pass elapsed state for better styling
+                            isElapsed={isElapsed}
                           />
                         </Box>
                       );

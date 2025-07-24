@@ -1,6 +1,6 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
-export interface ReasonListData extends BaseDto {
+export interface ReasonListDto extends BaseDto {
   arlID: number;
   arlCode: string;
   arlName: string;

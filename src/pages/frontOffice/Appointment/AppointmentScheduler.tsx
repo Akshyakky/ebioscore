@@ -8,8 +8,6 @@ import { AppointmentDetailsDialog } from "./components/AppointmentDetailsDialog"
 import { BookingDialog } from "./components/BookingDialog";
 import { DayView } from "./components/DayView";
 import { MonthView } from "./components/MonthView";
-import { SchedulerFilters } from "./components/SchedulerFilters";
-import { SchedulerHeader } from "./components/SchedulerHeader";
 import { SchedulerStatistics } from "./components/SchedulerStatistics";
 import { TimeLegend } from "./components/TimeLegend";
 import { WeekView } from "./components/WeekView";
@@ -19,7 +17,8 @@ import { useSchedulerData } from "./hooks/useSchedulerData";
 import { useTimeSlots } from "./hooks/useTimeSlots";
 
 // Types
-import { AppointmentData, BookingFormData } from "./types";
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { SchedulerHeader } from "./components/SchedulerHeader";
 
 // Mock data for providers and resources (move to separate constants file)
 const mockProviders = [
@@ -40,7 +39,7 @@ const AppointmentScheduler: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("day");
   const [showBookingDialog, setShowBookingDialog] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointBookingDto | null>(null);
   const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
   const [bookingMode, setBookingMode] = useState("physician");
   const [selectedProvider, setSelectedProvider] = useState("");
@@ -59,19 +58,26 @@ const AppointmentScheduler: React.FC = () => {
   const timeSlots = useTimeSlots();
 
   // Booking form state
-  const [bookingForm, setBookingForm] = useState<BookingFormData>({
-    patientSearch: "",
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    provider: "",
-    resource: "",
-    appointmentDate: new Date(),
-    appointmentTime: "09:00",
-    duration: 30,
-    notes: "",
-  });
+  const initialBookingForm: AppointBookingDto = {
+    abID: 0,
+    abFName: "",
+    hplID: 0,
+    providerName: "",
+    rlID: 0,
+    rlName: "",
+    abDuration: 30,
+    abDurDesc: "",
+    abDate: new Date(),
+    abTime: new Date(),
+    abPType: "",
+    abStatus: "",
+    patRegisterYN: "Y",
+    otBookNo: 0,
+    patOPIP: "",
+    abEndTime: new Date(),
+  };
+
+  const [bookingForm, setBookingForm] = useState<AppointBookingDto>(initialBookingForm);
 
   // Update current time every minute
   useEffect(() => {
@@ -218,19 +224,7 @@ const AppointmentScheduler: React.FC = () => {
     setShowBookingDialog(false);
 
     // Reset form
-    setBookingForm({
-      patientSearch: "",
-      firstName: "",
-      lastName: "",
-      phone: "",
-      email: "",
-      provider: "",
-      resource: "",
-      appointmentDate: new Date(),
-      appointmentTime: "09:00",
-      duration: 30,
-      notes: "",
-    });
+    setBookingForm(initialBookingForm);
   };
 
   const handleSlotClick = () => {
@@ -238,17 +232,17 @@ const AppointmentScheduler: React.FC = () => {
     setShowBookingDialog(true);
   };
 
-  const handleAppointmentClick = (appointment: AppointmentData) => {
+  const handleAppointmentClick = (appointment: AppointBookingDto) => {
     setSelectedAppointment(appointment);
   };
 
-  const handleAppointmentEdit = (appointment: AppointmentData) => {
+  const handleAppointmentEdit = (appointment: AppointBookingDto) => {
     // Implement edit functionality
     console.log("Edit appointment:", appointment);
     setSelectedAppointment(null);
   };
 
-  const handleAppointmentCancel = (appointment: AppointmentData) => {
+  const handleAppointmentCancel = (appointment: AppointBookingDto) => {
     // Implement cancel functionality
     console.log("Cancel appointment:", appointment);
     setSelectedAppointment(null);
@@ -287,32 +281,27 @@ const AppointmentScheduler: React.FC = () => {
 
   return (
     <Box sx={{ p: 1 }}>
-      {/* Header */}
       <SchedulerHeader
         currentDate={currentDate}
         viewMode={viewMode}
-        onDateChange={setCurrentDate}
-        onViewModeChange={setViewMode}
-        onNavigate={handleNavigateDate}
-        getWeekDates={getWeekDates}
-      />
-
-      {/* Filters */}
-      <SchedulerFilters
         bookingMode={bookingMode}
         selectedProvider={selectedProvider}
         selectedResource={selectedResource}
+        onDateChange={setCurrentDate}
+        onViewModeChange={setViewMode}
+        onNavigate={handleNavigateDate}
         onBookingModeChange={setBookingMode}
         onProviderChange={setSelectedProvider}
         onResourceChange={setSelectedResource}
         onBookingClick={() => setShowBookingDialog(true)}
         providers={mockProviders}
         resources={mockResources}
+        getWeekDates={getWeekDates}
       />
 
       {/* Main Scheduler View */}
       <Paper sx={{ p: 1, mb: 1 }}>
-        <Box sx={{ height: "calc(100vh - 275px)", overflow: "auto" }}>{renderCurrentView()}</Box>
+        <Box sx={{ height: "calc(100vh - 225px)", overflow: "auto" }}>{renderCurrentView()}</Box>
       </Paper>
 
       {/* Time Legend */}
