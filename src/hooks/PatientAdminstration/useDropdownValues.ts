@@ -131,7 +131,9 @@ export type DropdownType =
   | "smokingStatus"
   | "exerciseFrequency"
   | "alcoholStatus"
-  | "reasonList";
+  | "reasonList"
+  | "paymentTypes"
+  | "insuranceList";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
