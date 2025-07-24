@@ -1,3 +1,4 @@
+import { AdvanceReceiptDto } from "@/interfaces/Billing/AdvanceReceiptDto";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { BPatTypeDto } from "@/interfaces/Billing/BPatTypeDto";
 import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
@@ -8,3 +9,4 @@ export const patientInvioceService = createEntityService<BPatTypeDto>("PatientIn
 export const serviceGroupService = createEntityService<BServiceGrpDto>("ServiceGroup", "billingURL");
 export const paymentTypeService = createEntityService<BPayTypeDto>("PaymentTypes", "billingURL");
 export const serviceTypeService = createEntityService<ServiceTypeDto>("ServiceType", "billingURL");
+export const advanceReceiptService = createEntityService<AdvanceReceiptDto>("AdvanceReceipt", "billingURL");
