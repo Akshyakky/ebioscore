@@ -1,4 +1,5 @@
 // src/components/Button/SmartButton.tsx
+import { useLoading } from "@/hooks/Common/useLoading";
 import { SvgIconComponent } from "@mui/icons-material";
 import { Box, CircularProgress, Tooltip } from "@mui/material";
 import React, { useState } from "react";
@@ -43,7 +44,7 @@ const SmartButton: React.FC<SmartButtonProps> = ({
   disabled = false,
   ...rest
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, setLoading: setIsLoading } = useLoading();
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
