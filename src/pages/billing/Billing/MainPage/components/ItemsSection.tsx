@@ -218,10 +218,10 @@ export const ItemsSection: React.FC<ItemsSectionProps> = ({
             </ToggleButton>
           </ToggleButtonGroup>
 
-          {itemMode === "product" && isDepartmentSelected && (
+          {itemMode === "product" && (
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="body2" color="text.secondary">
-                Department:
+                {isDepartmentSelected ? " Department: " : "Department Not Selected"}
               </Typography>
               <Chip label={selectedDeptName} size="small" color="primary" variant="outlined" onDelete={openDepartmentDialog} deleteIcon={<EditIcon fontSize="small" />} />
             </Box>

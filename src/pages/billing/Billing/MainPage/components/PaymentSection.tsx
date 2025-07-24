@@ -1,12 +1,11 @@
 // src/pages/billing/Billing/MainPage/components/PaymentSection.tsx
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
-import { paymentTypeService } from "@/services/BillingServices/BillingGenericService";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { Add as AddIcon, AttachMoney as AttachMoneyIcon, CreditCard as CreditCardIcon, Delete as DeleteIcon, Info as InfoIcon } from "@mui/icons-material";
 import { Alert, AlertTitle, Box, Button, Card, CardContent, Chip, Divider, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { Control, UseFormSetValue, UseFormWatch, useFieldArray } from "react-hook-form";
-import { BillingFormData, DropdownOption } from "../types";
+import { BillingFormData } from "../types";
 import { formatCurrency } from "../utils/billingUtils";
 
 interface PaymentSectionProps {
@@ -17,9 +16,8 @@ interface PaymentSectionProps {
 }
 
 export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValue, watch, finalBillAmount }) => {
-  const [paymentTypes, setPaymentTypes] = useState<BPayTypeDto[]>([]);
-  const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
-
+  const { paymentTypes, insuranceList } = useDropdownValues(["paymentTypes", "insuranceList"]);
+  console.log("insuranceList", insuranceList);
   const {
     fields: paymentFields,
     append: appendPayment,
@@ -30,14 +28,6 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
   });
 
   const watchedPaymentDetails = watch("billPaymentDetails");
-
-  // Convert payment types to dropdown options
-  const paymentTypeOptions: DropdownOption[] = useMemo(() => {
-    return paymentTypes.map((type) => ({
-      value: type.payID,
-      label: type.payName,
-    }));
-  }, [paymentTypes]);
 
   // Calculate total paid amount from all payment methods
   const totalPaidAmount = useMemo(() => {
@@ -50,24 +40,6 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
   const balance = useMemo(() => {
     return finalBillAmount - totalPaidAmount;
   }, [finalBillAmount, totalPaidAmount]);
-
-  // Fetch payment types on mount
-  useEffect(() => {
-    const fetchPaymentTypes = async () => {
-      setLoadingPaymentTypes(true);
-      try {
-        const response = await paymentTypeService.getAll();
-        if (response.success && response.data) {
-          setPaymentTypes(response.data);
-        }
-      } catch (error) {
-        console.error("Failed to load payment types:", error);
-      } finally {
-        setLoadingPaymentTypes(false);
-      }
-    };
-    fetchPaymentTypes();
-  }, []);
 
   // Add default payment method on mount if none exists
   useEffect(() => {
@@ -82,7 +54,9 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
         referenceNumber: "",
         bank: "",
         branch: "",
-        transactionNumber: undefined,
+        clientID: 0,
+        clientCode: "",
+        clientName: "",
       });
     }
   }, [paymentFields.length, appendPayment]);
@@ -99,7 +73,9 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
       referenceNumber: "",
       bank: "",
       branch: "",
-      transactionNumber: undefined,
+      clientID: 0,
+      clientCode: "",
+      clientName: "",
     });
   }, [appendPayment]);
 
@@ -117,6 +93,20 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
       }
     },
     [paymentTypes, setValue]
+  );
+  const handleInsuranceChange = useCallback(
+    (index: number, data: any) => {
+      console.log("Selected insurer data:", data);
+      if (data && typeof data === "object" && "value" in data) {
+        const selected = insuranceList.find((type) => type.insurID === data.value);
+        if (selected) {
+          setValue(`billPaymentDetails.${index}.clientID`, selected.insurID, { shouldDirty: true });
+          setValue(`billPaymentDetails.${index}.clientCode`, selected.insurCode, { shouldDirty: true });
+          setValue(`billPaymentDetails.${index}.clientName`, selected.insurName, { shouldDirty: true });
+        }
+      }
+    },
+    [insuranceList, setValue]
   );
 
   // Get payment mode icon
@@ -198,10 +188,9 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
                     required
                     size="small"
                     fullWidth
-                    options={paymentTypeOptions}
+                    options={paymentTypes}
                     defaultText="Select Payment Type"
                     onChange={(data) => handlePaymentTypeChange(index, data)}
-                    disabled={loadingPaymentTypes}
                   />
                 </Grid>
 
@@ -234,7 +223,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
                 </Grid>
 
                 {/* Additional fields for non-cash payments */}
-                {selectedPaymentType && selectedPaymentType.payCode !== "CASH" && (
+                {selectedPaymentType && selectedPaymentType.payCode === "BT" && (
                   <>
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField
@@ -254,6 +243,23 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
 
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name={`billPaymentDetails.${index}.branch`} control={control} label="Branch" type="text" size="small" fullWidth placeholder="Enter branch" />
+                    </Grid>
+                  </>
+                )}
+                {/* Additional fields for non-cash payments */}
+                {selectedPaymentType && selectedPaymentType.payCode === "INSU" && (
+                  <>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField
+                        name={`billPaymentDetails.${index}.clientID`}
+                        control={control}
+                        label="Insurer Name"
+                        type="select"
+                        size="small"
+                        fullWidth
+                        options={insuranceList}
+                        onChange={(data) => handleInsuranceChange(index, data)}
+                      />
                     </Grid>
                   </>
                 )}

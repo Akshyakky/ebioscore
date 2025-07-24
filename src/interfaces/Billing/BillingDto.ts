@@ -116,6 +116,9 @@ export interface BillPaymentDetailsDto {
   bank?: string;
   branch?: string;
   transactionNumber?: number;
+  clientID?: number;
+  ClientCode?: string;
+  clientName?: string;
 }
 export interface BillSaveRequest {
   bill: BillsDto;

@@ -37,7 +37,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
 
   const isWithinWorkingHours = (date: Date, hour: number, minute: number) => {
     const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
-    const workHour = workHours.find((wh) => wh.daysDesc === dayName && wh.rActiveYN === "Y");
+    const workHour = workHours.find((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y");
 
     if (!workHour || !workHour.startTime || !workHour.endTime) return false;
 

@@ -1,6 +1,6 @@
 // src/pages/frontOffice/Appointment/AppointmentScheduler.tsx
-import { Box, Paper } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import { Alert, Box, CircularProgress, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 // Component imports
 import ConfirmationDialog from "../../../components/Dialog/ConfirmationDialog";
@@ -13,25 +13,13 @@ import { TimeLegend } from "./components/TimeLegend";
 import { WeekView } from "./components/WeekView";
 
 // Hooks and utilities
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useSchedulerData } from "./hooks/useSchedulerData";
 import { useTimeSlots } from "./hooks/useTimeSlots";
 
 // Types
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { SchedulerHeader } from "./components/SchedulerHeader";
-
-// Mock data for providers and resources (move to separate constants file)
-const mockProviders = [
-  { value: 1, label: "Dr. Smith", type: "physician" },
-  { value: 2, label: "Dr. Johnson", type: "physician" },
-  { value: 3, label: "Dr. Brown", type: "physician" },
-];
-
-const mockResources = [
-  { value: 1, label: "Room 1", type: "room" },
-  { value: 2, label: "Room 2", type: "room" },
-  { value: 3, label: "X-Ray", type: "equipment" },
-];
 
 const AppointmentScheduler: React.FC = () => {
   // State management
@@ -53,9 +41,42 @@ const AppointmentScheduler: React.FC = () => {
     minute: number;
   } | null>(null);
 
-  // Custom hooks
-  const { appointments, setAppointments, breaks, workHours } = useSchedulerData();
+  // Custom hooks with work hours integration
+  const {
+    appointments,
+    setAppointments,
+    breaks,
+    workHours,
+    isLoading: workHoursLoading,
+    error: workHoursError,
+    isTimeWithinWorkingHours,
+    getAvailableTimeRanges,
+    isWorkingDay,
+    getWorkHoursStats,
+    refreshData,
+  } = useSchedulerData();
+
   const timeSlots = useTimeSlots();
+
+  // Load dropdown values for providers and resources
+  const { appointmentConsultants = [], roomList = [], isLoading } = useDropdownValues(["appointmentConsultants", "roomList"]);
+
+  // Transform dropdown data to match expected format
+  const providers = useMemo(() => {
+    return appointmentConsultants.map((consultant) => ({
+      value: Number(consultant.value),
+      label: consultant.label,
+      type: "physician",
+    }));
+  }, [appointmentConsultants]);
+
+  const resources = useMemo(() => {
+    return roomList.map((room) => ({
+      value: Number(room.value),
+      label: room.label,
+      type: "room",
+    }));
+  }, [roomList]);
 
   // Booking form state
   const initialBookingForm: AppointBookingDto = {
@@ -190,20 +211,31 @@ const AppointmentScheduler: React.FC = () => {
 
   // Enhanced event handlers for the new functionality
   const handleSlotDoubleClick = (date: Date, hour: number, minute: number) => {
+    // Check if the time slot is within working hours
+    if (!isTimeWithinWorkingHours(date, hour, minute)) {
+      return; // Don't allow booking outside working hours
+    }
+
     // Pre-populate the booking form with the selected date and time
     const selectedDateTime = new Date(date);
     selectedDateTime.setHours(hour, minute, 0, 0);
 
     setBookingForm((prev) => ({
       ...prev,
-      appointmentDate: date,
-      appointmentTime: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+      abDate: date,
+      abTime: selectedDateTime,
+      abEndTime: new Date(selectedDateTime.getTime() + 30 * 60000), // Default 30 minutes
     }));
 
     setShowBookingDialog(true);
   };
 
   const handleElapsedSlotConfirmation = (date: Date, hour: number, minute: number) => {
+    // Only allow confirmation for elapsed slots within working hours
+    if (!isTimeWithinWorkingHours(date, hour, minute)) {
+      return;
+    }
+
     setPendingElapsedSlot({ date, hour, minute });
     setShowElapsedConfirmation(true);
   };
@@ -248,8 +280,19 @@ const AppointmentScheduler: React.FC = () => {
     setSelectedAppointment(null);
   };
 
-  // Enhanced view rendering with new event handlers
+  // Enhanced view rendering with work hours integration
   const renderCurrentView = () => {
+    if (workHoursLoading) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" height={200}>
+          <CircularProgress />
+          <Typography variant="body2" sx={{ ml: 2 }}>
+            Loading work hours...
+          </Typography>
+        </Box>
+      );
+    }
+
     const commonProps = {
       currentDate,
       timeSlots,
@@ -279,6 +322,28 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
+  // Work hours statistics for display
+  const workHoursStats = getWorkHoursStats();
+
+  // Show error if work hours failed to load
+  if (workHoursError) {
+    return (
+      <Box sx={{ p: 1 }}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <button onClick={refreshData} style={{ marginLeft: 8 }}>
+              Retry
+            </button>
+          }
+        >
+          Failed to load work hours: {workHoursError}
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 1 }}>
       <SchedulerHeader
@@ -294,14 +359,32 @@ const AppointmentScheduler: React.FC = () => {
         onProviderChange={setSelectedProvider}
         onResourceChange={setSelectedResource}
         onBookingClick={() => setShowBookingDialog(true)}
-        providers={mockProviders}
-        resources={mockResources}
+        providers={providers}
+        resources={resources}
         getWeekDates={getWeekDates}
       />
 
+      {/* Work Hours Status */}
+      {workHours.length > 0 && (
+        <Paper sx={{ p: 1, mb: 1 }}>
+          <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+            <Typography variant="caption" color="text.secondary">
+              Work Hours Status:
+            </Typography>
+            <Typography variant="caption">{workHoursStats.activeDays} working days configured</Typography>
+            <Typography variant="caption">{workHoursStats.languages} languages supported</Typography>
+            {!isWorkingDay(currentDate) && (
+              <Alert severity="warning" sx={{ p: 0.5, fontSize: "0.75rem" }}>
+                No working hours configured for {currentDate.toLocaleDateString("en-US", { weekday: "long" })}
+              </Alert>
+            )}
+          </Box>
+        </Paper>
+      )}
+
       {/* Main Scheduler View */}
       <Paper sx={{ p: 1, mb: 1 }}>
-        <Box sx={{ height: "calc(100vh - 225px)", overflow: "auto" }}>{renderCurrentView()}</Box>
+        <Box sx={{ height: "calc(100vh - 300px)", overflow: "auto" }}>{renderCurrentView()}</Box>
       </Paper>
 
       {/* Time Legend */}
@@ -315,8 +398,8 @@ const AppointmentScheduler: React.FC = () => {
         open={showBookingDialog}
         bookingForm={bookingForm}
         isRegisteredPatient={isRegisteredPatient}
-        providers={mockProviders}
-        resources={mockResources}
+        providers={providers}
+        resources={resources}
         onClose={() => setShowBookingDialog(false)}
         onSubmit={handleBookingSubmit}
         onFormChange={setBookingForm}
