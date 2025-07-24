@@ -1,6 +1,7 @@
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { ReasonListDto } from "@/interfaces/FrontOffice/ReasonListDto";
 import { ResourceListDto } from "@/interfaces/FrontOffice/ResourceListDto";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
@@ -19,7 +20,7 @@ import {
 import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
-import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { reasonListService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import { deptUnitListService, roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
@@ -121,7 +122,8 @@ export type DropdownType =
   | "dietType"
   | "smokingStatus"
   | "exerciseFrequency"
-  | "alcoholStatus";
+  | "alcoholStatus"
+  | "reasonList";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -579,6 +581,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: DeptUnitListDto) => ({
           value: item.dulID || 0,
           label: item.unitDesc || "",
+          ...item,
+        }));
+      },
+      reasonList: async () => {
+        const response = await reasonListService.getAll();
+        return (response.data || []).map((item: ReasonListDto) => ({
+          value: item.arlID || 0,
+          label: item.arlName || "",
           ...item,
         }));
       },
