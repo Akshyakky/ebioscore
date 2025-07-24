@@ -55,7 +55,6 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
     if (requireSelection && selectedDeptId === 0) {
       const isSelectDept = await showAlert("Warning", "Please select a department before closing.", "warning", true);
       if (isSelectDept) return;
-      navigate(-1);
     }
     onClose();
   }, [onClose, selectedDeptId, requireSelection, showAlert, navigate]);

@@ -72,7 +72,9 @@ export const BillPaymentDetailsDtoSchema = z.object({
   referenceNumber: z.string().optional(),
   bank: z.string().optional(),
   branch: z.string().optional(),
-  transactionNumber: z.number().optional(),
+  clientID: z.number().optional(),
+  clientCode: z.string().optional(),
+  clientName: z.string().optional(),
 });
 
 // Main Billing Schema

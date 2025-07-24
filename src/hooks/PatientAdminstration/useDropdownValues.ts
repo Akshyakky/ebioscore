@@ -1,13 +1,14 @@
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
+import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
+import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { useAlert } from "@/providers/AlertProvider";
-import { serviceGroupService, serviceTypeService } from "@/services/BillingServices/BillingGenericService";
+import { paymentTypeService, serviceGroupService, serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import {
   consultantRoleService,
   medicationDosageService,
@@ -19,10 +20,16 @@ import {
 import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
-import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
-import { deptUnitListService, roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import {
+  deptUnitListService,
+  insuranceListService,
+  roomGroupService,
+  roomListService,
+  wardCategoryService,
+  wrBedService,
+} from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { AppModifyListService } from "@/services/NotGenericPaternServices/AppModifyListService";
@@ -121,6 +128,8 @@ export type DropdownType =
   | "dietType"
   | "smokingStatus"
   | "exerciseFrequency"
+  | "paymentTypes"
+  | "insuranceList"
   | "alcoholStatus";
 
 // Structure for tracking each dropdown's state
@@ -566,11 +575,19 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         }
         return [];
       },
-      resourceList: async () => {
-        const response = await resourceListService.getAll();
-        return (response.data || []).map((item: ResourceListData) => ({
-          value: item.rLID || 0,
-          label: item.rLName || "",
+      paymentTypes: async () => {
+        const response = await paymentTypeService.getAll();
+        return (response.data || []).map((item: BPayTypeDto) => ({
+          value: item.payID || 0,
+          label: item.payName || "",
+          ...item,
+        }));
+      },
+      insuranceList: async () => {
+        const response = await insuranceListService.getAll();
+        return (response.data || []).map((item: InsuranceListDto) => ({
+          value: item.insurID || 0,
+          label: item.insurCode || "",
           ...item,
         }));
       },
