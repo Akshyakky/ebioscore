@@ -3,6 +3,7 @@ import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { ReasonListDto } from "@/interfaces/FrontOffice/ReasonListDto";
+import { ResourceListDto } from "@/interfaces/FrontOffice/ResourceListDto";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
@@ -21,7 +22,7 @@ import {
 import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
-import { reasonListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { reasonListService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import {
@@ -577,6 +578,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           }));
         }
         return [];
+      },
+      resourceList: async () => {
+        const response = await resourceListService.getAll();
+        return (response.data || []).map((item: ResourceListDto) => ({
+          value: item.rLID || 0,
+          label: item.rLName || "",
+          ...item,
+        }));
       },
       paymentTypes: async () => {
         const response = await paymentTypeService.getAll();

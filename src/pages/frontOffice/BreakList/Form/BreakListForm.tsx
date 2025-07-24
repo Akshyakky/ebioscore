@@ -142,6 +142,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   const endTime = watch("bLEndTime");
   const isPhyResYN = watch("isPhyResYN");
   const isSuspended = initialData?.status === "Suspended";
+
   const generateFrequencyDescription = (data: FrequencyDto): string => {
     const formattedEndDate = formatDate(data.endDate);
     switch (data.frequency) {
@@ -256,16 +257,22 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     [setValue]
   );
 
-  const handleCheckboxChange = useCallback((id: number, isChecked: boolean) => {
-    setSelectedItems((prevItems) => (isChecked ? [...prevItems, id] : prevItems.filter((item) => item !== id)));
+  // Fixed checkbox change handler with proper error handling
+  const handleCheckboxChange = useCallback((id: number, checked: boolean) => {
+    if (typeof checked === "boolean") {
+      setSelectedItems((prevItems) => (checked ? [...prevItems, id] : prevItems.filter((item) => item !== id)));
+    }
   }, []);
 
+  // Fixed select all handler with proper error handling
   const handleSelectAll = useCallback(
     (checked: boolean) => {
-      if (selectedOption === "resource") {
-        setSelectedItems(checked ? resourceData.map((item) => item.rLID) : []);
-      } else {
-        setSelectedItems(checked ? consultantData.map((item) => item.conID) : []);
+      if (typeof checked === "boolean") {
+        if (selectedOption === "resource") {
+          setSelectedItems(checked ? resourceData.map((item) => item.rLID) : []);
+        } else {
+          setSelectedItems(checked ? consultantData.map((item) => item.conID) : []);
+        }
       }
     },
     [selectedOption, resourceData, consultantData]
@@ -311,6 +318,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     },
     [setValue]
   );
+
   const onSubmit = async (data: BreakListFormData) => {
     if (viewOnly) return;
     if (selectedItems.length === 0) {
@@ -435,6 +443,10 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     setShowCancelConfirmation(false);
   };
 
+  // Get current data arrays with safety checks
+  const currentData = selectedOption === "resource" ? resourceData : consultantData;
+  const allSelected = selectedItems.length > 0 && selectedItems.length === currentData.length;
+
   const dialogTitle = viewOnly ? "View Break Details" : "Create New Break";
 
   const dialogActions = viewOnly ? (
@@ -515,20 +527,12 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 5 }}>
                       <FormField name="bLStartDate" control={control} label="Start Date" type="datepicker" required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 5 }}>
                       <FormField name="bLEndDate" control={control} label="End Date" type="datepicker" required disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-                    <Grid size={{ sm: 12, md: 2 }}>
-                      {!viewOnly && (
-                        <FormControlLabel
-                          control={<Switch checked={isOneDay} onChange={(e) => handleOneDayToggle(e.target.checked)} disabled={viewOnly} size="small" />}
-                          label="One Day"
-                        />
-                      )}
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 5 }}>
@@ -565,6 +569,15 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                       />
                     </Grid>
 
+                    <Grid size={{ sm: 12, md: 2 }}>
+                      {!viewOnly && (
+                        <FormControlLabel
+                          control={<Switch checked={isOneDay} onChange={(e) => handleOneDayToggle(e.target.checked)} disabled={viewOnly} size="small" />}
+                          label="One Day"
+                        />
+                      )}
+                    </Grid>
+
                     <Grid size={{ sm: 12, md: 8 }}>
                       {viewOnly ? (
                         <Typography sx={{ color: "primary.main", display: "flex", alignItems: "center", mt: 2 }}>
@@ -584,7 +597,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
             </Grid>
 
             {/* Resource/Physician Selection Section */}
-
             {viewOnly ? (
               <Grid size={{ sm: 12 }}>
                 <Card variant="outlined">
@@ -638,10 +650,13 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                                       name="selectAll"
                                       control={control}
                                       type="checkbox"
-                                      defaultValue={
-                                        selectedItems.length > 0 && selectedItems.length === (selectedOption === "resource" ? resourceData.length : consultantData.length)
-                                      }
-                                      onChange={(e) => handleSelectAll(e.target.checked)}
+                                      onChange={(value) => {
+                                        // Handle both event objects and direct boolean values
+                                        const checked = typeof value === "boolean" ? value : value?.target?.checked;
+                                        if (typeof checked === "boolean") {
+                                          handleSelectAll(checked);
+                                        }
+                                      }}
                                       disabled={viewOnly}
                                     />
                                   </TableCell>
@@ -649,8 +664,9 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {(selectedOption === "resource" ? resourceData : consultantData).map((item) => {
+                                {currentData.map((item) => {
                                   const id = selectedOption === "resource" ? item.rLID : item.conID;
+                                  const isSelected = selectedItems.includes(id);
                                   return (
                                     <TableRow key={id}>
                                       <TableCell>
@@ -658,8 +674,13 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                                           name={`select-${id}`}
                                           control={control}
                                           type="checkbox"
-                                          defaultValue={selectedItems.includes(id)}
-                                          onChange={(e) => handleCheckboxChange(id, e.target.checked)}
+                                          onChange={(value) => {
+                                            // Handle both event objects and direct boolean values
+                                            const checked = typeof value === "boolean" ? value : value?.target?.checked;
+                                            if (typeof checked === "boolean") {
+                                              handleCheckboxChange(id, checked);
+                                            }
+                                          }}
                                           disabled={viewOnly}
                                         />
                                       </TableCell>
