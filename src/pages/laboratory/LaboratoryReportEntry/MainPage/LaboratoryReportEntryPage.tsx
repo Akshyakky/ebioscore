@@ -11,10 +11,11 @@ import {
   Print as PrintIcon,
   Refresh as RefreshIcon,
   Assignment as ReportIcon,
+  Science as SampleIcon,
   Search as SearchIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Alert, Avatar, Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLaboratoryReportEntry } from "../hooks/useLaboratoryReportEntry";
 
@@ -192,35 +193,31 @@ const LaboratoryReportEntryPage: React.FC = () => {
         reg.patientUHID?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         reg.referralDoctor?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      const matchesSampleStatus = filters.sampleStatus === "all" || labRegisters.some((lab) => lab.labRegister.sampleStatus?.toLowerCase() === filters.sampleStatus.toLowerCase());
+      const matchesSampleStatus = filters.sampleStatus === "all" || reg.sampleStatus?.toLowerCase() === filters.sampleStatus.toLowerCase();
 
       const matchesPatientStatus =
         filters.patientStatus === "all" || (filters.patientStatus === "op" && reg.patientStatus === "OP") || (filters.patientStatus === "ip" && reg.patientStatus.startsWith("IP"));
 
-      // TODO: Add report status filtering when available
       const matchesReportStatus = filters.reportStatus === "all" || true;
 
       return matchesSearch && matchesSampleStatus && matchesPatientStatus && matchesReportStatus;
     });
   }, [labRegisters, debouncedSearchTerm, filters]);
 
-  const getSampleStatusColor = (status: string): "default" | "warning" | "info" | "success" | "error" => {
+  const getSampleStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
+        return "error";
+      case "partially collected":
         return "warning";
       case "collected":
-        return "info";
-      case "received":
-        return "info";
-      case "processing":
-        return "warning";
-      case "completed":
-        return "success";
+        return "primary";
+      case "rejected":
+        return "secondary";
       default:
         return "default";
     }
   };
-
   const columns: Column<GetLabRegistersListDto>[] = [
     {
       key: "labRegNo",
@@ -321,16 +318,28 @@ const LaboratoryReportEntryPage: React.FC = () => {
       },
     },
     {
+      key: "sampleStatus",
+      header: "Sample Status",
+      visible: true,
+      sortable: true,
+      width: 150,
+      render: (item) => (
+        <Chip size="small" icon={<SampleIcon />} label={item.labRegister.sampleStatus} color={getSampleStatusColor(item.labRegister.sampleStatus)} sx={{ fontWeight: 500 }} />
+      ),
+    },
+    {
       key: "investigations",
       header: "Investigations",
       visible: true,
-      width: 300,
+      width: 200,
       render: (item) => (
-        <>
-          <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.light" }}>
-            <Typography variant="caption">{item.labRegister.investigationCount}</Typography>
-          </Avatar>
-        </>
+        <Box>
+          <Stack direction="row" spacing={1}>
+            <Chip size="small" label={`Total: ${item.labRegister.investigationCount}`} color="info" variant="filled" sx={{ fontSize: "0.75rem" }} />
+            <Chip size="small" label={`Pending: ${item.labRegister.invSamplePendingCount}`} color="error" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+            <Chip size="small" label={`Collected: ${item.labRegister.invSampleCollectedCount}`} color="primary" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+          </Stack>
+        </Box>
       ),
     },
     {
@@ -391,7 +400,6 @@ const LaboratoryReportEntryPage: React.FC = () => {
       ),
     },
   ];
-
   const customFilter = useCallback((item: GetLabRegistersListDto, searchValue: string) => {
     const reg = item.labRegister;
     const searchLower = searchValue.toLowerCase();
