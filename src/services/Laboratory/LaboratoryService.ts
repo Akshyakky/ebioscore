@@ -14,10 +14,10 @@ export const lCompAgeRangeService = createEntityService<LCompAgeRangeDto>("LComp
 
 class ExtendedLaboratoryService extends GenericEntityService<any> {
   constructor() {
-    super(new CommonApiService({ baseURL: APIConfig.laboratoryURL }), "Laboratory");
+    super(new CommonApiService({ baseURL: APIConfig.laboratoryURL }), "LaboratoryResultEntry");
   }
   async getLabRegisters(bchID: number): Promise<OperationResult<GetLabRegistersListDto[]>> {
-    return this.apiService.get<OperationResult<GetLabRegistersListDto[]>>(`${this.baseEndpoint}/GetRegisters/${bchID}`, this.getToken());
+    return this.apiService.get<OperationResult<GetLabRegistersListDto[]>>(`${this.baseEndpoint}/GetRegisters?serviceType=${bchID}`, this.getToken());
   }
 }
 export const laboratoryService = new ExtendedLaboratoryService();

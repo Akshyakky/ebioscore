@@ -6,25 +6,17 @@ export interface LabRegisterData {
   patientRefCode: string;
   labRegisterDate: string;
   referralDoctor: string;
-  sampleStatus: string;
+  sampleStatus: "Pending" | "Partially Collected" | "Collected" | "Rejected";
   wardName: string;
   roomName: string;
   bedName: string;
   comments: string;
-  billedBy: string;
-}
-
-export interface LabRegisterInvestigationData {
-  investigationId: number;
-  investigationCode: string;
-  investigationName: string;
   investigationCount: number;
-  serviceGroupId: number;
-  serviceGroupName: string;
-  sampleStatus: string;
+  invSamplePendingCount: number;
+  invSampleCollectedCount: number;
+  billedBy: string;
 }
 
 export interface GetLabRegistersListDto {
   labRegister: LabRegisterData;
-  labRegisterInvestigationData: LabRegisterInvestigationData[];
 }
