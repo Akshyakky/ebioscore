@@ -6,7 +6,7 @@ export interface LabRegisterData {
   patientRefCode: string;
   labRegisterDate: string;
   referralDoctor: string;
-  sampleStatus: "Pending" | "Collected" | "Rejected";
+  sampleStatus: "Pending" | "Partially Collected" | "Collected" | "Rejected";
   wardName: string;
   roomName: string;
   bedName: string;
