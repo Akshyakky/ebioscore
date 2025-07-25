@@ -1,6 +1,7 @@
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { GetLabRegistersListDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
 import { useAlert } from "@/providers/AlertProvider";
@@ -15,8 +16,9 @@ import {
   Search as SearchIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import { Alert, Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Chip, CircularProgress, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import SampleStatusUpdateDialog from "../components/SampleStatusUpdateDialog";
 import { useLaboratoryReportEntry } from "../hooks/useLaboratoryReportEntry";
 
 const sampleStatusOptions = [
@@ -50,7 +52,24 @@ const LaboratoryReportEntryPage: React.FC = () => {
   const { serviceType } = useDropdownValues(["serviceType"]);
   const [labServiceTypes, setLabServiceTypes] = useState<any[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<number | null>(null);
-  const { labRegisters, isLoading, error, handleServiceTypeChange, refreshData } = useLaboratoryReportEntry();
+  const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+  const {
+    labRegisters,
+    isLoading,
+    error,
+    investigationStatuses,
+    selectedLabRegNo,
+    statusLoading,
+    handleServiceTypeChange,
+    refreshData,
+    fetchInvestigationStatus,
+    clearInvestigationStatus,
+    updateLoading,
+    updateSampleStatus,
+  } = useLaboratoryReportEntry();
+
+  const [openStatusDialog, setOpenStatusDialog] = useState(false);
+  const [selectedRegister, setSelectedRegister] = useState<GetLabRegistersListDto | null>(null);
 
   const [filters, setFilters] = useState<{
     sampleStatus: string;
@@ -67,7 +86,6 @@ const LaboratoryReportEntryPage: React.FC = () => {
       const filteredServiceTypes = serviceType.filter((type) => type.labYN === "Y");
       setLabServiceTypes(filteredServiceTypes);
 
-      // Set the first service type as default if not already selected
       if (!selectedServiceType && filteredServiceTypes.length > 0) {
         const defaultServiceType = filteredServiceTypes[0];
         setSelectedServiceType(defaultServiceType.bchID);
@@ -123,10 +141,18 @@ const LaboratoryReportEntryPage: React.FC = () => {
   const handleRefresh = useCallback(() => {
     refreshData();
   }, [refreshData]);
-
+  const handleOpenUpdateDialog = useCallback(() => {
+    if (investigationStatuses.length > 0) {
+      setOpenUpdateDialog(true);
+    } else {
+      showAlert("Info", "Please select a lab register first", "info");
+    }
+  }, [investigationStatuses, showAlert]);
+  const handleCloseUpdateDialog = useCallback(() => {
+    setOpenUpdateDialog(false);
+  }, []);
   const handleEnterReport = useCallback(
     (register: GetLabRegistersListDto) => {
-      // TODO: Navigate to report entry form
       showAlert("Info", `Opening report entry for Lab Reg No: ${register.labRegister.labRegNo}`, "info");
     },
     [showAlert]
@@ -134,7 +160,6 @@ const LaboratoryReportEntryPage: React.FC = () => {
 
   const handleViewReport = useCallback(
     (register: GetLabRegistersListDto) => {
-      // TODO: Open report viewer
       showAlert("Info", `Viewing report for Lab Reg No: ${register.labRegister.labRegNo}`, "info");
     },
     [showAlert]
@@ -142,7 +167,6 @@ const LaboratoryReportEntryPage: React.FC = () => {
 
   const handlePrintReport = useCallback(
     (register: GetLabRegistersListDto) => {
-      // TODO: Print report
       showAlert("Info", `Printing report for Lab Reg No: ${register.labRegister.labRegNo}`, "info");
     },
     [showAlert]
@@ -203,7 +227,34 @@ const LaboratoryReportEntryPage: React.FC = () => {
       return matchesSearch && matchesSampleStatus && matchesPatientStatus && matchesReportStatus;
     });
   }, [labRegisters, debouncedSearchTerm, filters]);
+  const handleRowClick = useCallback(
+    async (register: GetLabRegistersListDto) => {
+      setSelectedRegister(register);
+      setOpenStatusDialog(true);
+      await fetchInvestigationStatus(register.labRegister.labRegNo);
+    },
+    [fetchInvestigationStatus]
+  );
 
+  const handleCloseStatusDialog = useCallback(() => {
+    setOpenStatusDialog(false);
+    setSelectedRegister(null);
+    clearInvestigationStatus();
+  }, [clearInvestigationStatus]);
+  const getInvestigationStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "error";
+      case "partially collected":
+        return "warning";
+      case "collected":
+        return "success";
+      case "rejected":
+        return "default";
+      default:
+        return "info";
+    }
+  };
   const getSampleStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
@@ -215,7 +266,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
       case "rejected":
         return "secondary";
       default:
-        return "default";
+        return "info";
     }
   };
   const columns: Column<GetLabRegistersListDto>[] = [
@@ -479,7 +530,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
                 value={selectedServiceType?.toString() || ""}
                 options={labServiceTypes.map((type) => ({
                   value: type.bchID.toString(),
-                  label: type.bchName, // adjust based on your data structure
+                  label: type.bchName,
                 }))}
                 onChange={(e) => handleServiceTypeDropdownChange(e.target.value)}
                 size="small"
@@ -580,8 +631,98 @@ const LaboratoryReportEntryPage: React.FC = () => {
           customFilter={customFilter}
           searchTerm={debouncedSearchTerm}
           density="medium"
+          onRowClick={handleRowClick}
         />
       </Paper>
+      <GenericDialog
+        open={openStatusDialog}
+        onClose={handleCloseStatusDialog}
+        title="Investigation Status"
+        maxWidth="md"
+        fullWidth
+        showCloseButton={true}
+        actions={
+          <>
+            <SmartButton text="Close" onClick={handleCloseStatusDialog} variant="outlined" size="small" />
+            {selectedRegister && investigationStatuses.length > 0 && (
+              <SmartButton text="Update Sample Status" icon={SampleIcon} onClick={handleOpenUpdateDialog} color="warning" variant="contained" size="small" />
+            )}
+            {selectedRegister && (
+              <SmartButton
+                text="Enter Report"
+                icon={ReportIcon}
+                onClick={() => {
+                  handleCloseStatusDialog();
+                  handleEnterReport(selectedRegister);
+                }}
+                color="primary"
+                variant="contained"
+                size="small"
+              />
+            )}
+          </>
+        }
+      >
+        {selectedRegister && (
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+            Lab Reg No: {selectedRegister.labRegister.labRegNo} | Patient: {selectedRegister.labRegister.patientFullName}
+          </Typography>
+        )}
+
+        {statusLoading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+            <CircularProgress />
+          </Box>
+        ) : investigationStatuses.length > 0 ? (
+          <Stack spacing={2}>
+            {investigationStatuses.map((investigation, index) => (
+              <Paper key={index} elevation={1} sx={{ p: 2 }}>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid size={{ xs: 12, sm: 8 }}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {investigation.investigationName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Code: {investigation.investigationCode} | ID: {investigation.investigationId}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Chip label={investigation.sampleStatus} color={getInvestigationStatusColor(investigation.sampleStatus)} icon={<SampleIcon />} sx={{ fontWeight: 500 }} />
+                  </Grid>
+                </Grid>
+              </Paper>
+            ))}
+
+            {selectedRegister && (
+              <Box mt={2} p={2} bgcolor="grey.50" borderRadius={1}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Summary
+                </Typography>
+                <Stack direction="row" spacing={2}>
+                  <Chip size="small" label={`Total Investigations: ${selectedRegister.labRegister.investigationCount}`} color="info" />
+                  <Chip size="small" label={`Pending: ${selectedRegister.labRegister.invSamplePendingCount}`} color="error" variant="outlined" />
+                  <Chip size="small" label={`Collected: ${selectedRegister.labRegister.invSampleCollectedCount}`} color="success" variant="outlined" />
+                </Stack>
+              </Box>
+            )}
+          </Stack>
+        ) : (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+            <Typography color="text.secondary">No investigation data available</Typography>
+          </Box>
+        )}
+      </GenericDialog>
+      {selectedRegister && (
+        <SampleStatusUpdateDialog
+          open={openUpdateDialog}
+          onClose={handleCloseUpdateDialog}
+          investigations={investigationStatuses}
+          labRegNo={selectedRegister.labRegister.labRegNo}
+          serviceTypeId={selectedServiceType || 0}
+          onUpdate={updateSampleStatus}
+          loading={updateLoading}
+        />
+      )}
     </Box>
   );
 };
