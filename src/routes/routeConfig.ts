@@ -1,5 +1,6 @@
 import BillingPage from "@/pages/billing/Billing/MainPage/BillingPage";
 import TemplateListPage from "@/pages/clinicalManagement/TemplateList/MainPage/TemplateListPage";
+import LaboratoryReportEntryPage from "@/pages/laboratory/LaboratoryReportEntry/MainPage/LaboratoryReportEntryPage";
 import { AlertProvider } from "@/providers/AlertProvider";
 import React, { lazy, Suspense } from "react";
 
@@ -610,6 +611,16 @@ const routeConfig: RouteConfig[] = [
     metadata: {
       title: "Billing",
       category: "billing",
+    },
+  },
+  {
+    path: "/LaboratoryReportEntry",
+    component: wrapWithSuspense(LaboratoryReportEntryPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Laboratory Report Entry",
+      category: "inventory",
     },
   },
   {
