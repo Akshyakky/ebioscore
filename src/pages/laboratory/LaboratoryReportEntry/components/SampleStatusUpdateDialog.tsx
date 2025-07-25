@@ -5,7 +5,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { InvStatusResponseDto, SampleStatusUpdateRequestDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
 import { useAlert } from "@/providers/AlertProvider";
 import { CheckCircle, Error as ErrorIcon, HourglassEmpty } from "@mui/icons-material";
-import { Box, Chip, FormControl, Grid, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Box, Chip, Divider, FormControl, Grid, Paper, Stack, TextField, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 
 interface SampleStatusUpdateDialogProps {
@@ -28,6 +28,8 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
   const { showAlert } = useAlert();
   const [statusUpdates, setStatusUpdates] = useState<Record<number, { status: string; reason: string }>>({});
   const [errors, setErrors] = useState<Record<number, string>>({});
+  const [bulkStatus, setBulkStatus] = useState<string>("");
+  const [bulkReason, setBulkReason] = useState<string>("");
 
   useEffect(() => {
     if (open && investigations.length > 0) {
@@ -40,6 +42,8 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
       });
       setStatusUpdates(initialStatuses);
       setErrors({});
+      setBulkStatus("");
+      setBulkReason("");
     }
   }, [open, investigations]);
 
@@ -69,6 +73,37 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
       },
     }));
   }, []);
+
+  const handleBulkStatusChange = useCallback((status: string) => {
+    setBulkStatus(status);
+    if (status !== "R") {
+      setBulkReason("");
+    }
+  }, []);
+
+  const applyBulkUpdate = useCallback(() => {
+    if (!bulkStatus) {
+      showAlert("Warning", "Please select a status to apply to all investigations", "warning");
+      return;
+    }
+
+    if (bulkStatus === "R" && !bulkReason.trim()) {
+      showAlert("Error", "Please provide a rejection reason for bulk rejection", "error");
+      return;
+    }
+
+    const newStatusUpdates: Record<number, { status: string; reason: string }> = {};
+    investigations.forEach((inv) => {
+      newStatusUpdates[inv.investigationId] = {
+        status: bulkStatus,
+        reason: bulkStatus === "R" ? bulkReason : "",
+      };
+    });
+
+    setStatusUpdates(newStatusUpdates);
+    setErrors({});
+    showAlert("Success", `Applied ${sampleStatusUpdateOptions.find((opt) => opt.value === bulkStatus)?.label} status to all investigations`, "success");
+  }, [bulkStatus, bulkReason, investigations, showAlert]);
 
   const validateUpdates = useCallback(() => {
     const newErrors: Record<number, string> = {};
@@ -153,6 +188,51 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
         </Typography>
       </Box>
 
+      {/* Bulk Update Section */}
+      <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
+        <Grid container spacing={2} alignItems="flex-end">
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <FormControl fullWidth size="small">
+              <DropdownSelect
+                label="Apply Status to All"
+                name="bulk-status"
+                value={bulkStatus}
+                options={sampleStatusUpdateOptions}
+                onChange={(e) => handleBulkStatusChange(e.target.value)}
+                size="small"
+                defaultText="Select Status"
+              />
+            </FormControl>
+          </Grid>
+
+          {bulkStatus === "R" && (
+            <Grid size={{ xs: 12, sm: 5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Rejection Reason (Applied to All)"
+                value={bulkReason}
+                onChange={(e) => setBulkReason(e.target.value)}
+                required
+                multiline
+                rows={2}
+              />
+            </Grid>
+          )}
+
+          <Grid size={{ xs: 12, sm: bulkStatus === "R" ? 3 : 8 }}>
+            <SmartButton text="Apply to All" onClick={applyBulkUpdate} variant="contained" color="secondary" size="small" disabled={!bulkStatus || loading} />
+          </Grid>
+        </Grid>
+      </Paper>
+
+      <Divider sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          Individual Investigation Updates
+        </Typography>
+      </Divider>
+
+      {/* Individual Investigation Updates */}
       <Stack spacing={2}>
         {investigations.map((investigation) => (
           <Paper key={investigation.investigationId} elevation={1} sx={{ p: 2 }}>
