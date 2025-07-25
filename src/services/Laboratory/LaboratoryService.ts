@@ -1,6 +1,6 @@
 import { APIConfig } from "@/apiConfig";
 import { InvestigationListDto, LCompAgeRangeDto, LComponentDto, LComponentEntryTypeDto, LInvMastDto, LTemplateGroupDto } from "@/interfaces/Laboratory/InvestigationListDto";
-import { GetLabRegistersListDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
+import { GetLabRegistersListDto, InvStatusResponseDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { CommonApiService } from "../CommonApiService";
 import { GenericEntityService, OperationResult } from "../GenericEntityService/GenericEntityService";
@@ -18,6 +18,12 @@ class ExtendedLaboratoryService extends GenericEntityService<any> {
   }
   async getLabRegisters(bchID: number): Promise<OperationResult<GetLabRegistersListDto[]>> {
     return this.apiService.get<OperationResult<GetLabRegistersListDto[]>>(`${this.baseEndpoint}/GetRegisters?serviceType=${bchID}`, this.getToken());
+  }
+  async getInvestigationsStatus(labRegId: number, serviceTypeId): Promise<OperationResult<InvStatusResponseDto[]>> {
+    return this.apiService.get<OperationResult<InvStatusResponseDto[]>>(
+      `${this.baseEndpoint}/GetInvestigationsStatus?serviceTypeId=${serviceTypeId}&labRegId=${labRegId}`,
+      this.getToken()
+    );
   }
 }
 export const laboratoryService = new ExtendedLaboratoryService();

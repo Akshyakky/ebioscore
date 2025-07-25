@@ -20,3 +20,12 @@ export interface LabRegisterData {
 export interface GetLabRegistersListDto {
   labRegister: LabRegisterData;
 }
+
+export interface InvStatusResponseDto {
+  LabRegNo: number;
+  ServiceTypeID: number;
+  investigationNamee: string;
+  sampleStatus: "Pending" | "Partially Collected" | "Collected" | "Rejected";
+  investigationId: number;
+  investigationCode: string;
+}
