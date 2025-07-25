@@ -270,9 +270,20 @@ const BillingPage: React.FC = () => {
               />
             </Grid>
 
-            {/* Payment Section - ADD THIS NEW SECTION */}
             <Grid size={{ sm: 12 }}>
-              <PaymentSection control={control} setValue={setValue} watch={watch} finalBillAmount={finalBillAmount} />
+              <PaymentSection
+                control={control}
+                setValue={setValue}
+                watch={watch}
+                finalBillAmount={finalBillAmount}
+                paymentSectionTitle="Payment Details"
+                addPaymentButtonText="Add Payment Method"
+                showPaymentSummary={true}
+                allowMultiplePayments={true}
+                requiredPaymentFields={["paymentType", "paidAmount"]}
+                showBankChargeInfo={true}
+                enableGroupedPaymentSummary={true}
+              />
             </Grid>
 
             {/* Action Buttons */}

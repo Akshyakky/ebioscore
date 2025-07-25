@@ -5,7 +5,6 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { AdvanceReceiptDto } from "@/interfaces/Billing/AdvanceReceiptDto";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { PaymentSection } from "@/pages/billing/Billing/MainPage/components/PaymentSection";
-import { BillingFormData } from "@/pages/billing/Billing/MainPage/types";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { useAlert } from "@/providers/AlertProvider";
@@ -33,7 +32,7 @@ import {
 } from "@mui/icons-material";
 import { Alert, Avatar, Box, Card, CardContent, Chip, CircularProgress, Collapse, Divider, Grid, InputAdornment, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Control, useForm, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useAdvanceReceipt } from "../hook/useAdvanceReceipt";
 
@@ -151,7 +150,7 @@ const AdvanceReceiptMainPage: React.FC<AdvanceReceiptMainPageProps> = ({ initial
     reset,
     setValue,
     watch,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
   } = useForm<FormData>({
     defaultValues,
     resolver: zodResolver(formSchema),
@@ -216,7 +215,6 @@ const AdvanceReceiptMainPage: React.FC<AdvanceReceiptMainPageProps> = ({ initial
       }
       throw new Error(result.errorMessage || "Failed to fetch patient details");
     } catch (error) {
-      console.error("Error fetching complete patient data:", error);
       showAlert("Error", "Failed to fetch complete patient details", "error");
       return null;
     } finally {
@@ -235,7 +233,6 @@ const AdvanceReceiptMainPage: React.FC<AdvanceReceiptMainPageProps> = ({ initial
         showAlert("Warning", "Failed to generate receipt code", "warning");
       }
     } catch (error) {
-      console.error("Error generating receipt code:", error);
       showAlert("Error", "Error generating receipt code", "error");
     } finally {
       updateState({ isGeneratingCode: false });
@@ -247,7 +244,6 @@ const AdvanceReceiptMainPage: React.FC<AdvanceReceiptMainPageProps> = ({ initial
       const history = await getAdvanceReceiptsByPatientId(patientId);
       setPatientPaymentHistory(history);
     } catch (error) {
-      console.error("Error fetching patient payment history:", error);
       setPatientPaymentHistory([]);
     }
   };
@@ -462,7 +458,6 @@ const AdvanceReceiptMainPage: React.FC<AdvanceReceiptMainPageProps> = ({ initial
         throw new Error(response.errorMessage || "Failed to save advance receipt");
       }
     } catch (error) {
-      console.error("Error saving advance receipt:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save advance receipt";
       updateState({ formError: errorMessage });
       showAlert("Error", errorMessage, "error");
@@ -485,7 +480,6 @@ const AdvanceReceiptMainPage: React.FC<AdvanceReceiptMainPageProps> = ({ initial
         setValue("patientId", patientData.pChartID, { shouldValidate: true, shouldDirty: true });
         await fetchPatientPaymentHistory(patientData.pChartID);
       } catch (error) {
-        console.error("Error fetching complete patient data:", error);
         setValue("uhidNo", patient.pChartCode, { shouldValidate: true, shouldDirty: true });
         setValue("patientId", patient.pChartID, { shouldValidate: true, shouldDirty: true });
         await fetchPatientPaymentHistory(patient.pChartID);
@@ -759,10 +753,19 @@ const AdvanceReceiptMainPage: React.FC<AdvanceReceiptMainPageProps> = ({ initial
 
         <Grid size={{ xs: 12 }}>
           <PaymentSection
-            control={control as unknown as Control<BillingFormData>}
-            setValue={setValue as unknown as UseFormSetValue<BillingFormData>}
-            watch={watch as unknown as UseFormWatch<BillingFormData>}
+            control={control}
+            setValue={setValue}
+            watch={watch}
             finalBillAmount={getTotalAmount()}
+            excludePaymentModes={["INSUP"]}
+            paymentSectionTitle="Advance Payment Details"
+            addPaymentButtonText="Add Payment Method"
+            showPaymentSummary={true}
+            allowMultiplePayments={true}
+            hidePaymentFields={["insurance"]}
+            requiredPaymentFields={["paymentType", "paidAmount"]}
+            showBankChargeInfo={true}
+            enableGroupedPaymentSummary={false}
           />
         </Grid>
       </Grid>
