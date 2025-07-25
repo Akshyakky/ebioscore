@@ -134,7 +134,8 @@ export type DropdownType =
   | "alcoholStatus"
   | "reasonList"
   | "paymentTypes"
-  | "insuranceList";
+  | "insuranceList"
+  | "bank";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -214,6 +215,7 @@ const APP_MODIFY_LIST_CONFIGS: Record<string, string | { fieldName: string; mapp
   grnType: "GRNTYPE",
   dischargeType: "DISCHARGETYPE",
   alertCategory: "ALERTCATEGORY",
+  bank: "BANK",
 
   // Mappings with custom transformations
   floor: {

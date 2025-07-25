@@ -1,47 +1,128 @@
-// src/pages/billing/Billing/MainPage/components/PaymentSection.tsx
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { Add as AddIcon, AttachMoney as AttachMoneyIcon, CreditCard as CreditCardIcon, Delete as DeleteIcon, Info as InfoIcon } from "@mui/icons-material";
 import { Alert, AlertTitle, Box, Button, Card, CardContent, Chip, Divider, Grid, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import React, { useCallback, useEffect, useMemo } from "react";
-import { Control, UseFormSetValue, UseFormWatch, useFieldArray } from "react-hook-form";
-import { BillingFormData } from "../types";
+import { useCallback, useEffect, useMemo } from "react";
+import { Control, FieldArrayPath, FieldPath, Path, UseFormSetValue, UseFormWatch, useFieldArray } from "react-hook-form";
 import { formatCurrency } from "../utils/billingUtils";
-
-interface PaymentSectionProps {
-  control: Control<BillingFormData>;
-  setValue: UseFormSetValue<BillingFormData>;
-  watch: UseFormWatch<BillingFormData>;
-  finalBillAmount: number;
+interface PaymentDetail {
+  paymentID?: number;
+  paymentMode?: string;
+  paymentCode?: string;
+  paymentName?: string;
+  paidAmount?: number;
+  paymentNote?: string;
+  referenceNumber?: string;
+  bank?: string;
+  branch?: string;
+  clientID?: number;
+  clientCode?: string;
+  clientName?: string;
+  transactionNumber?: number;
 }
 
-export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValue, watch, finalBillAmount }) => {
-  const { paymentTypes, insuranceList } = useDropdownValues(["paymentTypes", "insuranceList"]);
-  console.log("insuranceList", insuranceList);
+interface PaymentSectionProps<T extends Record<string, any>> {
+  control: Control<T>;
+  setValue: UseFormSetValue<T>;
+  watch: UseFormWatch<T>;
+  finalBillAmount: number;
+  showTitle?: boolean;
+  showPaymentSummary?: boolean;
+  paymentFieldName?: FieldArrayPath<T>;
+  filterPaymentTypes?: (types: any[]) => any[];
+  filterInsuranceList?: (insurers: any[]) => any[];
+  excludePaymentModes?: string[];
+  includeOnlyPaymentModes?: string[];
+  excludePaymentCodes?: string[];
+  includeOnlyPaymentCodes?: string[];
+  customPaymentFilter?: (paymentType: any) => boolean;
+  maxPaymentAmount?: number;
+  allowMultiplePayments?: boolean;
+  requiredPaymentFields?: string[];
+  hidePaymentFields?: string[];
+  paymentSectionTitle?: string;
+  addPaymentButtonText?: string;
+  showBankChargeInfo?: boolean;
+  enableGroupedPaymentSummary?: boolean;
+}
+
+export const PaymentSection = <T extends Record<string, any>>({
+  control,
+  setValue,
+  watch,
+  finalBillAmount,
+  showTitle = true,
+  showPaymentSummary = true,
+  paymentFieldName = "billPaymentDetails" as FieldArrayPath<T>,
+  filterPaymentTypes,
+  filterInsuranceList,
+  excludePaymentModes = [],
+  includeOnlyPaymentModes = [],
+  excludePaymentCodes = [],
+  includeOnlyPaymentCodes = [],
+  customPaymentFilter,
+  maxPaymentAmount,
+  allowMultiplePayments = true,
+  requiredPaymentFields = [],
+  hidePaymentFields = [],
+  paymentSectionTitle = "Payment Details",
+  addPaymentButtonText = "Add Payment Method",
+  showBankChargeInfo = true,
+  enableGroupedPaymentSummary = false,
+}: PaymentSectionProps<T>): JSX.Element => {
+  const { paymentTypes: allPaymentTypes, insuranceList: allInsuranceList, bank: allBankList } = useDropdownValues(["paymentTypes", "insuranceList", "bank"]);
+
+  const paymentTypes = useMemo(() => {
+    let filteredTypes = allPaymentTypes;
+
+    if (customPaymentFilter) {
+      filteredTypes = filteredTypes.filter(customPaymentFilter);
+    }
+    if (excludePaymentModes.length > 0) {
+      filteredTypes = filteredTypes.filter((type) => !excludePaymentModes.includes(type.payMode));
+    }
+    if (includeOnlyPaymentModes.length > 0) {
+      filteredTypes = filteredTypes.filter((type) => includeOnlyPaymentModes.includes(type.payMode));
+    }
+    if (excludePaymentCodes.length > 0) {
+      filteredTypes = filteredTypes.filter((type) => !excludePaymentCodes.includes(type.payCode));
+    }
+    if (includeOnlyPaymentCodes.length > 0) {
+      filteredTypes = filteredTypes.filter((type) => includeOnlyPaymentCodes.includes(type.payCode));
+    }
+    if (filterPaymentTypes) {
+      filteredTypes = filterPaymentTypes(filteredTypes);
+    }
+
+    return filteredTypes;
+  }, [allPaymentTypes, excludePaymentModes, includeOnlyPaymentModes, excludePaymentCodes, includeOnlyPaymentCodes, customPaymentFilter, filterPaymentTypes]);
+
+  const insuranceList = filterInsuranceList ? filterInsuranceList(allInsuranceList) : allInsuranceList;
+
+  const bankList = allBankList || [];
   const {
     fields: paymentFields,
     append: appendPayment,
     remove: removePayment,
   } = useFieldArray({
     control,
-    name: "billPaymentDetails",
+    name: paymentFieldName,
   });
 
-  const watchedPaymentDetails = watch("billPaymentDetails");
-
-  // Calculate total paid amount from all payment methods
+  const watchedPaymentDetails = watch(paymentFieldName as Path<T>);
   const totalPaidAmount = useMemo(() => {
-    return watchedPaymentDetails.reduce((sum, payment) => {
-      return sum + (payment.paidAmount || 0);
+    if (!watchedPaymentDetails || !Array.isArray(watchedPaymentDetails)) return 0;
+    return watchedPaymentDetails.reduce((sum: number, payment: PaymentDetail) => {
+      return sum + (payment?.paidAmount || 0);
     }, 0);
   }, [watchedPaymentDetails]);
 
-  // Calculate balance
   const balance = useMemo(() => {
     return finalBillAmount - totalPaidAmount;
   }, [finalBillAmount, totalPaidAmount]);
 
-  // Add default payment method on mount if none exists
+  const effectiveMaxAmount = maxPaymentAmount ?? finalBillAmount;
+
   useEffect(() => {
     if (paymentFields.length === 0) {
       appendPayment({
@@ -57,12 +138,13 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
         clientID: 0,
         clientCode: "",
         clientName: "",
-      });
+      } as any);
     }
   }, [paymentFields.length, appendPayment]);
 
-  // Add new payment method
   const handleAddPayment = useCallback(() => {
+    if (!allowMultiplePayments && paymentFields.length >= 1) return;
+
     appendPayment({
       paymentID: 0,
       paymentMode: "",
@@ -76,40 +158,50 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
       clientID: 0,
       clientCode: "",
       clientName: "",
-    });
-  }, [appendPayment]);
+    } as any);
+  }, [appendPayment, allowMultiplePayments, paymentFields.length]);
 
-  // Handle payment type selection for a specific index
   const handlePaymentTypeChange = useCallback(
     (index: number, data: any) => {
       if (data && typeof data === "object" && "value" in data) {
         const selected = paymentTypes.find((type) => type.payID === data.value);
         if (selected) {
-          setValue(`billPaymentDetails.${index}.paymentID`, selected.payID, { shouldDirty: true });
-          setValue(`billPaymentDetails.${index}.paymentMode`, selected.payMode, { shouldDirty: true });
-          setValue(`billPaymentDetails.${index}.paymentCode`, selected.payCode, { shouldDirty: true });
-          setValue(`billPaymentDetails.${index}.paymentName`, selected.payName, { shouldDirty: true });
+          setValue(`${paymentFieldName}.${index}.paymentID` as FieldPath<T>, selected.payID as any, { shouldDirty: true });
+          setValue(`${paymentFieldName}.${index}.paymentMode` as FieldPath<T>, selected.payMode as any, { shouldDirty: true });
+          setValue(`${paymentFieldName}.${index}.paymentCode` as FieldPath<T>, selected.payCode as any, { shouldDirty: true });
+          setValue(`${paymentFieldName}.${index}.paymentName` as FieldPath<T>, selected.payName as any, { shouldDirty: true });
         }
       }
     },
-    [paymentTypes, setValue]
+    [paymentTypes, setValue, paymentFieldName]
   );
+
   const handleInsuranceChange = useCallback(
     (index: number, data: any) => {
-      console.log("Selected insurer data:", data);
       if (data && typeof data === "object" && "value" in data) {
         const selected = insuranceList.find((type) => type.insurID === data.value);
         if (selected) {
-          setValue(`billPaymentDetails.${index}.clientID`, selected.insurID, { shouldDirty: true });
-          setValue(`billPaymentDetails.${index}.clientCode`, selected.insurCode, { shouldDirty: true });
-          setValue(`billPaymentDetails.${index}.clientName`, selected.insurName, { shouldDirty: true });
+          setValue(`${paymentFieldName}.${index}.clientID` as FieldPath<T>, selected.insurID as any, { shouldDirty: true });
+          setValue(`${paymentFieldName}.${index}.clientCode` as FieldPath<T>, selected.insurCode as any, { shouldDirty: true });
+          setValue(`${paymentFieldName}.${index}.clientName` as FieldPath<T>, selected.insurName as any, { shouldDirty: true });
         }
       }
     },
-    [insuranceList, setValue]
+    [insuranceList, setValue, paymentFieldName]
   );
 
-  // Get payment mode icon
+  const handleBankChange = useCallback(
+    (index: number, data: any) => {
+      if (data && typeof data === "object" && "value" in data) {
+        const selected = bankList.find((bank) => bank.bankID === data.value);
+        if (selected) {
+          setValue(`${paymentFieldName}.${index}.bank` as FieldPath<T>, selected.bankName as any, { shouldDirty: true });
+        }
+      }
+    },
+    [bankList, setValue, paymentFieldName]
+  );
+
   const getPaymentIcon = (payMode: string) => {
     switch (payMode) {
       case "CASHP":
@@ -123,37 +215,102 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
     }
   };
 
-  // Get selected payment type for a specific payment
   const getSelectedPaymentType = (paymentMode: string) => {
     return paymentTypes.find((type) => type.payMode === paymentMode);
   };
 
+  const isFieldRequired = (fieldName: string) => {
+    return requiredPaymentFields.includes(fieldName);
+  };
+
+  const isFieldHidden = (fieldName: string) => {
+    return hidePaymentFields.includes(fieldName);
+  };
+
+  const shouldShowReferenceNumber = (paymentCode: string) => {
+    return ["CHK", "CRP", "UPI", "BT"].includes(paymentCode);
+  };
+
+  const shouldShowBankField = (paymentCode: string) => {
+    return ["CHK", "CRP", "UPI", "BT"].includes(paymentCode);
+  };
+
+  const getReferenceNumberLabel = (paymentCode: string) => {
+    switch (paymentCode) {
+      case "CHK":
+        return "Cheque Number";
+      case "CRP":
+        return "Card Reference Number";
+      case "UPI":
+        return "UPI Transaction ID";
+      case "BT":
+        return "Bank Transfer Reference";
+      default:
+        return "Reference Number";
+    }
+  };
+
+  const getReferenceNumberPlaceholder = (paymentCode: string) => {
+    switch (paymentCode) {
+      case "CHK":
+        return "Enter cheque number";
+      case "CRP":
+        return "Enter card reference number";
+      case "UPI":
+        return "Enter UPI transaction ID";
+      case "BT":
+        return "Enter bank transfer reference";
+      default:
+        return "Enter reference number";
+    }
+  };
+
+  const groupedPaymentSummary = useMemo(() => {
+    if (!enableGroupedPaymentSummary || !watchedPaymentDetails || !Array.isArray(watchedPaymentDetails)) return null;
+
+    const grouped = watchedPaymentDetails.reduce((acc: any, payment: PaymentDetail) => {
+      const key = payment?.paymentName || payment?.paymentMode || "Unknown";
+      if (!acc[key]) {
+        acc[key] = { count: 0, total: 0 };
+      }
+      acc[key].count += 1;
+      acc[key].total += payment?.paidAmount || 0;
+      return acc;
+    }, {});
+
+    return grouped;
+  }, [watchedPaymentDetails, enableGroupedPaymentSummary]);
+
   return (
     <Card variant="outlined">
       <CardContent>
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <CreditCardIcon color="primary" />
-            <Typography variant="h6">Payment Details</Typography>
-          </Box>
-          <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={handleAddPayment}>
-            Add Payment Method
-          </Button>
-        </Box>
-        <Divider sx={{ mb: 2 }} />
+        {showTitle && (
+          <>
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <CreditCardIcon color="primary" />
+                <Typography variant="h6">{paymentSectionTitle}</Typography>
+              </Box>
+              {allowMultiplePayments && (
+                <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={handleAddPayment}>
+                  {addPaymentButtonText}
+                </Button>
+              )}
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+          </>
+        )}
 
-        {/* Payment Methods */}
         {paymentFields.map((field, index) => {
-          const payment = watchedPaymentDetails[index];
-          const selectedPaymentType = payment ? getSelectedPaymentType(payment.paymentMode) : null;
-          const bankChargeAmount = selectedPaymentType && payment ? (payment.paidAmount * selectedPaymentType.bankCharge) / 100 : 0;
-          const showPaymentMethodLabel = paymentFields.length > 1;
+          const payment = watchedPaymentDetails?.[index];
+          const selectedPaymentType = payment ? getSelectedPaymentType(payment.paymentMode || "") : null;
+          const bankChargeAmount = selectedPaymentType && payment ? ((payment.paidAmount || 0) * (selectedPaymentType.bankCharge || 0)) / 100 : 0;
+          const showPaymentMethodLabel = allowMultiplePayments && paymentFields.length > 1;
 
           return (
             <Box key={field.id} mb={3}>
               {index > 0 && <Divider sx={{ mb: 2 }} />}
 
-              {/* Only show payment method label when there are multiple payment methods */}
               {showPaymentMethodLabel && (
                 <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                   <Typography variant="subtitle2" color="text.secondary">
@@ -167,8 +324,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
                 </Box>
               )}
 
-              {/* Show remove button for single payment method without label */}
-              {!showPaymentMethodLabel && paymentFields.length === 1 && (
+              {!showPaymentMethodLabel && paymentFields.length === 1 && allowMultiplePayments && (
                 <Box display="flex" justifyContent="flex-end" mb={2}>
                   <Tooltip title="Remove Payment Method">
                     <IconButton size="small" color="error" onClick={() => removePayment(index)}>
@@ -179,92 +335,119 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
               )}
 
               <Grid container spacing={2}>
-                <Grid size={{ sm: 12, md: 4 }}>
-                  <FormField
-                    name={`billPaymentDetails.${index}.paymentType`}
-                    control={control}
-                    label="Payment Type"
-                    type="select"
-                    required
-                    size="small"
-                    fullWidth
-                    options={paymentTypes}
-                    defaultText="Select Payment Type"
-                    onChange={(data) => handlePaymentTypeChange(index, data)}
-                  />
-                </Grid>
-
-                <Grid size={{ sm: 12, md: 4 }}>
-                  <FormField
-                    name={`billPaymentDetails.${index}.paidAmount`}
-                    control={control}
-                    label="Payment Amount"
-                    type="number"
-                    required
-                    size="small"
-                    fullWidth
-                    min={0}
-                    max={finalBillAmount}
-                    step={0.01}
-                    placeholder="Enter payment amount"
-                  />
-                </Grid>
-
-                <Grid size={{ sm: 12, md: 4 }}>
-                  <FormField
-                    name={`billPaymentDetails.${index}.paymentNote`}
-                    control={control}
-                    label="Payment Note"
-                    type="text"
-                    size="small"
-                    fullWidth
-                    placeholder="Enter payment note"
-                  />
-                </Grid>
-
-                {/* Additional fields for non-cash payments */}
-                {selectedPaymentType && selectedPaymentType.payCode === "BT" && (
-                  <>
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField
-                        name={`billPaymentDetails.${index}.referenceNumber`}
-                        control={control}
-                        label="Reference Number"
-                        type="text"
-                        size="small"
-                        fullWidth
-                        placeholder="Enter reference number"
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name={`billPaymentDetails.${index}.bank`} control={control} label="Bank Name" type="text" size="small" fullWidth placeholder="Enter bank name" />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name={`billPaymentDetails.${index}.branch`} control={control} label="Branch" type="text" size="small" fullWidth placeholder="Enter branch" />
-                    </Grid>
-                  </>
-                )}
-                {/* Additional fields for non-cash payments */}
-                {selectedPaymentType && selectedPaymentType.payCode === "INSU" && (
-                  <>
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField
-                        name={`billPaymentDetails.${index}.clientID`}
-                        control={control}
-                        label="Insurer Name"
-                        type="select"
-                        size="small"
-                        fullWidth
-                        options={insuranceList}
-                        onChange={(data) => handleInsuranceChange(index, data)}
-                      />
-                    </Grid>
-                  </>
+                {!isFieldHidden("paymentType") && (
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField
+                      name={`${paymentFieldName}.${index}.paymentType` as FieldPath<T>}
+                      control={control}
+                      label="Payment Type"
+                      type="select"
+                      required={isFieldRequired("paymentType")}
+                      size="small"
+                      fullWidth
+                      options={paymentTypes}
+                      defaultText="Select Payment Type"
+                      onChange={(data) => handlePaymentTypeChange(index, data)}
+                    />
+                  </Grid>
                 )}
 
-                {/* Payment method info */}
+                {!isFieldHidden("paidAmount") && (
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField
+                      name={`${paymentFieldName}.${index}.paidAmount` as FieldPath<T>}
+                      control={control}
+                      label="Payment Amount"
+                      type="number"
+                      required={isFieldRequired("paidAmount")}
+                      size="small"
+                      fullWidth
+                      min={0}
+                      max={effectiveMaxAmount}
+                      step={0.01}
+                      placeholder="Enter payment amount"
+                    />
+                  </Grid>
+                )}
+
+                {!isFieldHidden("paymentNote") && (
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField
+                      name={`${paymentFieldName}.${index}.paymentNote` as FieldPath<T>}
+                      control={control}
+                      label="Payment Note"
+                      type="text"
+                      required={isFieldRequired("paymentNote")}
+                      size="small"
+                      fullWidth
+                      placeholder="Enter payment note"
+                    />
+                  </Grid>
+                )}
+
+                {selectedPaymentType && shouldShowReferenceNumber(selectedPaymentType.payCode) && !isFieldHidden("referenceNumber") && (
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField
+                      name={`${paymentFieldName}.${index}.referenceNumber` as FieldPath<T>}
+                      control={control}
+                      label={getReferenceNumberLabel(selectedPaymentType.payCode)}
+                      type="text"
+                      required={isFieldRequired("referenceNumber")}
+                      size="small"
+                      fullWidth
+                      placeholder={getReferenceNumberPlaceholder(selectedPaymentType.payCode)}
+                    />
+                  </Grid>
+                )}
+
+                {selectedPaymentType && shouldShowBankField(selectedPaymentType.payCode) && !isFieldHidden("bank") && (
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField
+                      name={`${paymentFieldName}.${index}.bank` as FieldPath<T>}
+                      control={control}
+                      label="Bank Name"
+                      type="select"
+                      required={isFieldRequired("bank")}
+                      size="small"
+                      fullWidth
+                      options={bankList}
+                      defaultText="Select Bank"
+                      onChange={(data) => handleBankChange(index, data)}
+                    />
+                  </Grid>
+                )}
+
+                {selectedPaymentType?.payCode === "BT" && !isFieldHidden("branch") && (
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField
+                      name={`${paymentFieldName}.${index}.branch` as FieldPath<T>}
+                      control={control}
+                      label="Branch"
+                      type="text"
+                      required={isFieldRequired("branch")}
+                      size="small"
+                      fullWidth
+                      placeholder="Enter branch"
+                    />
+                  </Grid>
+                )}
+
+                {selectedPaymentType?.payCode === "INSU" && !isFieldHidden("insurance") && (
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField
+                      name={`${paymentFieldName}.${index}.clientID` as FieldPath<T>}
+                      control={control}
+                      label="Insurer Name"
+                      type="select"
+                      required={isFieldRequired("clientID")}
+                      size="small"
+                      fullWidth
+                      options={insuranceList}
+                      onChange={(data) => handleInsuranceChange(index, data)}
+                    />
+                  </Grid>
+                )}
+
                 {selectedPaymentType && (
                   <Grid size={{ sm: 12 }}>
                     <Box sx={{ p: 1.5, borderRadius: 1 }}>
@@ -282,7 +465,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
                           </Box>
                         </Box>
 
-                        {selectedPaymentType.bankCharge > 0 && (
+                        {(selectedPaymentType.bankCharge || 0) > 0 && showBankChargeInfo && (
                           <Box textAlign="right">
                             <Typography variant="caption" color="text.secondary">
                               Bank Charges ({selectedPaymentType.bankCharge}%)
@@ -301,71 +484,84 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({ control, setValu
           );
         })}
 
-        {/* Payment Summary */}
-        <Box sx={{ p: 2, borderRadius: 1, mt: 3 }}>
-          <Typography variant="subtitle2" color="text.secondary" mb={2}>
-            Payment Summary
-          </Typography>
+        {showPaymentSummary && (
+          <Box sx={{ p: 2, borderRadius: 1, mt: 3 }}>
+            <Typography variant="subtitle2" color="text.secondary" mb={2}>
+              Payment Summary
+            </Typography>
 
-          <Grid container spacing={2}>
-            <Grid size={{ sm: 12, md: 6 }}>
-              <Stack spacing={1.5}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography>Bill Amount:</Typography>
-                  <Typography fontWeight="medium">{formatCurrency(finalBillAmount)}</Typography>
-                </Box>
+            <Grid container spacing={2}>
+              <Grid size={{ sm: 12, md: 6 }}>
+                <Stack spacing={1.5}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography>Bill Amount:</Typography>
+                    <Typography fontWeight="medium">{formatCurrency(finalBillAmount)}</Typography>
+                  </Box>
 
-                {/* Individual payment breakdown - only show when multiple payments */}
-                {watchedPaymentDetails.length > 1 &&
-                  watchedPaymentDetails.map((payment, index) => (
-                    <Box key={index} display="flex" justifyContent="space-between" alignItems="center">
-                      <Typography variant="body2">
-                        Payment {index + 1} ({payment.paymentName || "Not selected"}):
-                      </Typography>
-                      <Typography variant="body2">{formatCurrency(payment.paidAmount || 0)}</Typography>
-                    </Box>
-                  ))}
+                  {enableGroupedPaymentSummary && groupedPaymentSummary
+                    ? Object.entries(groupedPaymentSummary).map(([paymentType, data]: [string, any]) => (
+                        <Box key={paymentType} display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography variant="body2">
+                            {paymentType} ({data.count} payment{data.count > 1 ? "s" : ""}):
+                          </Typography>
+                          <Typography variant="body2">{formatCurrency(data.total)}</Typography>
+                        </Box>
+                      ))
+                    : watchedPaymentDetails &&
+                      Array.isArray(watchedPaymentDetails) &&
+                      watchedPaymentDetails.length > 1 &&
+                      watchedPaymentDetails.map((payment: PaymentDetail, index: number) => (
+                        <Box key={index} display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography variant="body2">
+                            Payment {index + 1} ({payment?.paymentName || "Not selected"}):
+                          </Typography>
+                          <Typography variant="body2">{formatCurrency(payment?.paidAmount || 0)}</Typography>
+                        </Box>
+                      ))}
 
-                <Divider />
+                  <Divider />
 
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography fontWeight="medium">Total Paid:</Typography>
-                  <Typography fontWeight="medium" color="primary">
-                    {formatCurrency(totalPaidAmount)}
-                  </Typography>
-                </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography fontWeight="medium">Total Paid:</Typography>
+                    <Typography fontWeight="medium" color="primary">
+                      {formatCurrency(totalPaidAmount)}
+                    </Typography>
+                  </Box>
 
-                <Divider />
+                  <Divider />
 
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h6">Balance:</Typography>
-                  <Typography variant="h6" color={balance > 0 ? "error" : balance < 0 ? "warning.main" : "success.main"}>
-                    {formatCurrency(balance)}
-                  </Typography>
-                </Box>
-              </Stack>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h6">Balance:</Typography>
+                    <Typography variant="h6" color={balance > 0 ? "error" : balance < 0 ? "warning.main" : "success.main"}>
+                      {formatCurrency(balance)}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Grid>
+
+              <Grid size={{ sm: 12, md: 6 }}>
+                {watchedPaymentDetails &&
+                  Array.isArray(watchedPaymentDetails) &&
+                  watchedPaymentDetails.some((payment: PaymentDetail) => {
+                    const paymentType = getSelectedPaymentType(payment?.paymentMode || "");
+                    return paymentType && (paymentType.bankCharge || 0) > 0;
+                  }) &&
+                  showBankChargeInfo && (
+                    <Alert severity="info" icon={<InfoIcon />}>
+                      <AlertTitle>Bank Charges Apply</AlertTitle>
+                      Some payment methods include bank charges. These are shown above for each payment method.
+                    </Alert>
+                  )}
+
+                {balance !== 0 && (
+                  <Alert severity={balance > 0 ? "warning" : "info"} sx={{ mt: 2 }}>
+                    {balance > 0 ? `Remaining balance of ${formatCurrency(balance)} needs to be paid` : `Excess payment of ${formatCurrency(Math.abs(balance))} will be refunded`}
+                  </Alert>
+                )}
+              </Grid>
             </Grid>
-
-            <Grid size={{ sm: 12, md: 6 }}>
-              {/* Bank charges summary */}
-              {watchedPaymentDetails.some((payment) => {
-                const paymentType = getSelectedPaymentType(payment.paymentMode);
-                return paymentType && paymentType.bankCharge > 0;
-              }) && (
-                <Alert severity="info" icon={<InfoIcon />}>
-                  <AlertTitle>Bank Charges Apply</AlertTitle>
-                  Some payment methods include bank charges. These are shown above for each payment method.
-                </Alert>
-              )}
-
-              {balance !== 0 && (
-                <Alert severity={balance > 0 ? "warning" : "info"} sx={{ mt: 2 }}>
-                  {balance > 0 ? `Remaining balance of ${formatCurrency(balance)} needs to be paid` : `Excess payment of ${formatCurrency(Math.abs(balance))} will be refunded`}
-                </Alert>
-              )}
-            </Grid>
-          </Grid>
-        </Box>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
