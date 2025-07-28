@@ -1,5 +1,3 @@
-// src/pages/inventoryManagement/DepartmentConsumption/hooks/useDepartmentConsumption.ts
-
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { PaginatedList } from "@/interfaces/Common/PaginatedList";
 import {
@@ -191,12 +189,12 @@ export const useDepartmentConsumption = () => {
 
   // Helper functions for permissions
   const canEditConsumption = useCallback((consumption: ProductConsumptionMastDto): boolean => {
-    // Can edit if it's active and user has permissions
+    // Can edit if it's active
     return consumption.rActiveYN === "Y";
   }, []);
 
   const canDeleteConsumption = useCallback((consumption: ProductConsumptionMastDto): boolean => {
-    // Can delete if it's active and user has permissions
+    // Can delete if it's active
     return consumption.rActiveYN === "Y";
   }, []);
 

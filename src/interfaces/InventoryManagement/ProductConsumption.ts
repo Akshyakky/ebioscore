@@ -1,6 +1,8 @@
 // src/interfaces/InventoryManagement/ProductConsumptionDto.ts
 
-export interface ProductConsumptionMastDto {
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
+
+export interface ProductConsumptionMastDto extends BaseDto {
   deptConsID: number;
   deptConsCode?: string;
   deptConsDate?: Date;
@@ -22,7 +24,7 @@ export interface ProductConsumptionMastDto {
   details?: ProductConsumptionDetailDto[];
 }
 
-export interface ProductConsumptionDetailDto {
+export interface ProductConsumptionDetailDto extends BaseDto {
   deptConsDetID: number;
   deptConsID: number;
   psdid: number;
@@ -45,6 +47,7 @@ export interface ProductConsumptionDetailDto {
   batchNo?: string;
   expiryDate?: Date;
   unitPrice?: number;
+
   tax?: number;
   sellUnitPrice?: number;
   affectedQty?: number;
@@ -79,7 +82,7 @@ export interface ProductConsumptionCompositeDto {
   totalValue: number;
 }
 
-export interface ProductConsumptionSearchRequest {
+export interface ProductConsumptionSearchRequest extends BaseDto {
   pageIndex: number;
   pageSize: number;
   dateFilterType?: DateFilterType;
