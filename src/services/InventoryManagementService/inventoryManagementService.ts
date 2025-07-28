@@ -1,4 +1,5 @@
 import { GrnDetailDto, GrnMastDto } from "@/interfaces/InventoryManagement/GRNDto";
+import { ProductConsumptionDetailDto, ProductConsumptionMastDto } from "@/interfaces/InventoryManagement/ProductConsumption";
 import { ProductGroupDto, ProductSubGroupDto, ProductUnitDto } from "@/interfaces/InventoryManagement/ProductGroup-Unit-SubGroup";
 import { ProductIssualDetailDto, ProductIssualDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
@@ -22,6 +23,9 @@ export const grnDetailService = createEntityService<GrnDetailDto>("GrnDetail", "
 // Product Issual Services - Updated to use the individual controllers
 export const productIssualMastService = createEntityService<ProductIssualDto>("ProductIssual", "inventoryManagementURL");
 export const productIssualDetailService = createEntityService<ProductIssualDetailDto>("ProductIssualDetail", "inventoryManagementURL");
+
+export const productConsumptionMastService = createEntityService<ProductConsumptionMastDto>("ProductConsumptionMast", "inventoryManagementURL");
+export const productConsumptionDetailService = createEntityService<ProductConsumptionDetailDto>("ProductConsumptionDetail", "inventoryManagementURL");
 
 // Note: The main ProductIssualCompositeService is imported separately from the ProductIssualService
 // This provides backward compatibility while the new service handles composite operations

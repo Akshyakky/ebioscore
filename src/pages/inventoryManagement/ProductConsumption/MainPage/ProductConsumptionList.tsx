@@ -4,10 +4,9 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ProductConsumptionCompositeDto, ProductConsumptionMastDto, ProductConsumptionSearchRequest } from "@/interfaces/InventoryManagement/ProductConsumption";
-import { DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
+import { DateFilterType, formatCurrency, ProductConsumptionCompositeDto, ProductConsumptionMastDto } from "@/interfaces/InventoryManagement/ProductConsumption";
 import { useAlert } from "@/providers/AlertProvider";
-import { formatCurrency } from "@/utils/Common/formatUtils";
+import { productConsumptionMastService } from "@/services/InventoryManagementService/inventoryManagementService";
 import {
   Add as AddIcon,
   ViewModule as CardIcon,
@@ -136,58 +135,110 @@ const DepartmentConsumptionPage: React.FC = () => {
     hookClearError();
   }, [hookClearError]);
 
+  //   const fetchConsumptionsForDepartment = useCallback(async () => {
+  //     if (!deptId) return;
+  //     try {
+  //       setIsLoading(true);
+  //       clearError();
+
+  //       // Create a basic search request with required fields
+  //       const searchRequest: ProductConsumptionSearchRequest = {
+  //         pageIndex: 1,
+  //         pageSize: 1000,
+  //         departmentID: deptId,
+  //         sortBy: sortBy || "DeptConsDate",
+  //         sortAscending: sortOrder,
+  //       };
+
+  //       // Add optional fields only if they have values
+  //       if (deptConsCode?.trim()) {
+  //         searchRequest.deptConsCode = deptConsCode;
+  //       }
+  //       if (productName?.trim()) {
+  //         searchRequest.productName = productName;
+  //       }
+  //       if (categoryValue) {
+  //         searchRequest.categoryValue = categoryValue;
+  //       }
+  //       if (minConsumedQty !== undefined && minConsumedQty !== null) {
+  //         searchRequest.minConsumedQty = minConsumedQty;
+  //       }
+  //       if (maxConsumedQty !== undefined && maxConsumedQty !== null) {
+  //         searchRequest.maxConsumedQty = maxConsumedQty;
+  //       }
+
+  //       // Handle date filtering
+  //       const filterType = getDateFilterType();
+  //       if (filterType !== undefined) {
+  //         searchRequest.dateFilterType = filterType;
+  //       }
+
+  //       if (startDate) {
+  //         searchRequest.startDate = startDate;
+  //       }
+  //       if (endDate) {
+  //         searchRequest.endDate = endDate;
+  //       }
+
+  //       console.log("Sending search request:", searchRequest);
+
+  //       const result = await searchConsumptions(searchRequest);
+  //       if (result && result.items) {
+  //         setPaginatedConsumptions(result.items);
+  //       } else {
+  //         setPaginatedConsumptions([]);
+  //       }
+  //     } catch (error) {
+  //       const errorMessage = error instanceof Error ? error.message : "Failed to fetch Department Consumption data";
+  //       setError(errorMessage);
+  //       showAlert("Error", "Failed to fetch Department Consumption data for the selected department", "error");
+  //       setPaginatedConsumptions([]);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   }, [
+  //     deptId,
+  //     deptConsCode,
+  //     productName,
+  //     categoryValue,
+  //     sortBy,
+  //     sortOrder,
+  //     minConsumedQty,
+  //     maxConsumedQty,
+  //     startDate,
+  //     endDate,
+  //     dateRange,
+  //     searchConsumptions,
+  //     showAlert,
+  //     clearError,
+  //   ]);
+
   const fetchConsumptionsForDepartment = useCallback(async () => {
     if (!deptId) return;
     try {
+      debugger;
       setIsLoading(true);
       clearError();
-
-      const searchRequest: ProductConsumptionSearchRequest = {
-        pageIndex: 1,
-        pageSize: 1000,
-        departmentID: deptId,
-        deptConsCode: deptConsCode || undefined,
-        productName: productName || undefined,
-        categoryValue: categoryValue,
-        sortBy: sortBy,
-        sortAscending: sortOrder,
-        minConsumedQty: minConsumedQty,
-        maxConsumedQty: maxConsumedQty,
-        dateFilterType: getDateFilterType(),
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-      };
-
-      const result = await searchConsumptions(searchRequest);
-      if (result && result.items) {
-        setPaginatedConsumptions(result.items);
+      const response = await productConsumptionMastService.getAll();
+      if (response.success && response.data && Array.isArray(response.data)) {
+        let departmentIssuals = response.data.filter((issual: ProductConsumptionMastDto) => {
+          return issual.fromDeptID === deptId;
+        });
+        // departmentIssuals = applyClientSideFilters(departmentIssuals);
+        // departmentIssuals = applySorting(departmentIssuals);
+        // setPaginatedIssuals(departmentIssuals);
       } else {
-        setPaginatedConsumptions([]);
+        throw new Error(response.errorMessage || "Failed to fetch Department Issuals - invalid response");
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to fetch Department Consumption data";
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch Department Issual data";
       setError(errorMessage);
-      showAlert("Error", "Failed to fetch Department Consumption data for the selected department", "error");
-      setPaginatedConsumptions([]);
+      showAlert("Error", "Failed to fetch Department Issual data for the selected department", "error");
+      //   setPaginatedIssuals([]);
     } finally {
       setIsLoading(false);
     }
-  }, [
-    deptId,
-    deptConsCode,
-    productName,
-    categoryValue,
-    sortBy,
-    sortOrder,
-    minConsumedQty,
-    maxConsumedQty,
-    startDate,
-    endDate,
-    dateRange,
-    searchConsumptions,
-    showAlert,
-    clearError,
-  ]);
+  }, [deptId, startDate, endDate, sortBy, sortOrder, showAlert, clearError]);
 
   const getDateFilterType = (): DateFilterType | undefined => {
     switch (dateRange) {

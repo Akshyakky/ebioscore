@@ -12,10 +12,8 @@ import {
 import { ProductStockBalance } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
-
 class ProductConsumptionService extends GenericEntityService<ProductConsumptionMastDto> {
   private readonly compositeEndpoint = "ProductConsumption";
-
   constructor() {
     super(
       new CommonApiService({
@@ -47,6 +45,7 @@ class ProductConsumptionService extends GenericEntityService<ProductConsumptionM
    */
   async createConsumptionWithDetails(consumptionDto: ProductConsumptionCompositeDto): Promise<OperationResult<ProductConsumptionCompositeDto>> {
     try {
+      debugger;
       return await this.apiService.post<OperationResult<ProductConsumptionCompositeDto>>(`${this.compositeEndpoint}/CreateWithDetails`, consumptionDto, this.getToken());
     } catch (error) {
       return {
@@ -78,8 +77,12 @@ class ProductConsumptionService extends GenericEntityService<ProductConsumptionM
    */
   async consumptionSearch(searchRequest: ProductConsumptionSearchRequest): Promise<OperationResult<PaginatedList<ProductConsumptionMastDto>>> {
     try {
+      // Log the request for debugging
+      console.log("Consumption Search Request:", JSON.stringify(searchRequest, null, 2));
+
       return await this.apiService.post<OperationResult<PaginatedList<ProductConsumptionMastDto>>>(`${this.compositeEndpoint}/ConsumptionSearch`, searchRequest, this.getToken());
     } catch (error) {
+      console.error("Consumption Search Error:", error);
       return {
         success: false,
         errorMessage: error instanceof Error ? error.message : "Failed to search consumptions",
@@ -113,7 +116,13 @@ class ProductConsumptionService extends GenericEntityService<ProductConsumptionM
    */
   async validateStockAvailability(request: ValidateConsumptionStockRequest): Promise<OperationResult<boolean>> {
     try {
-      return await this.apiService.post<OperationResult<boolean>>(`${this.compositeEndpoint}/ValidateStockAvailability`, request, this.getToken());
+      // Ensure proper casing for backend API
+      const validationRequest = {
+        DepartmentId: request.departmentId,
+        ConsumptionDetails: request.consumptionDetails,
+      };
+
+      return await this.apiService.post<OperationResult<boolean>>(`${this.compositeEndpoint}/ValidateStockAvailability`, validationRequest, this.getToken());
     } catch (error) {
       return {
         success: false,

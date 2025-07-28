@@ -56,8 +56,9 @@ const consumptionDetailSchema = z.object({
   unitPrice: z.number().optional(),
   tax: z.number().optional(),
   sellUnitPrice: z.number().optional(),
-  affectedQty: z.number().min(0, "Consumed quantity must be non-negative"),
+  affectedQty: z.number().min(0, "Consumed quantity must be non-negative").optional(),
   affectedUnitQty: z.number().optional(),
+  issuedQty: z.number().min(0, "Issued quantity must be non-negative").optional(),
   availableQty: z.number().optional(),
   prescriptionYN: z.string().optional(),
   expiryYN: z.string().optional(),
@@ -78,6 +79,34 @@ const consumptionDetailSchema = z.object({
   grnDate: z.date(),
   auGrpID: z.number(),
   consumptionRemarks: z.string().optional(),
+  // Additional fields
+  barcode: z.string().optional(),
+  vedCode: z.string().optional(),
+  abcCode: z.string().optional(),
+  chargableYN: z.string().optional(),
+  chargePercentage: z.number().optional(),
+  isAssetYN: z.string().optional(),
+  productDiscount: z.number().optional(),
+  supplierStatus: z.string().optional(),
+  medicationGenericName: z.string().optional(),
+  productLocation: z.string().optional(),
+  productNotes: z.string().optional(),
+  serialNumber: z.string().optional(),
+  hsnCODE: z.string().optional(),
+  gstPerValue: z.number().optional(),
+  cgstPerValue: z.number().optional(),
+  sgstPerValue: z.number().optional(),
+  universalCode: z.number().optional(),
+  transferYN: z.string().optional(),
+  rNotes: z.string().optional(),
+  baseUnit: z.number().optional(),
+  issueUnit: z.number().optional(),
+  leadTime: z.number().optional(),
+  leadTimeDesc: z.string().optional(),
+  rOL: z.number().optional(),
+  pLocationID: z.number().optional(),
+  pLocationCode: z.string().optional(),
+  pLocationName: z.string().optional(),
 });
 
 const departmentConsumptionSchema = z.object({
@@ -93,7 +122,16 @@ const departmentConsumptionSchema = z.object({
   details: z
     .array(consumptionDetailSchema)
     .min(1, "At least one product detail is required")
-    .refine((details) => details.some((detail) => detail.affectedQty > 0), "At least one product must have quantity greater than 0"),
+    .refine(
+      (details) => {
+        // Check if at least one product has either affectedQty or issuedQty > 0
+        const validProducts = details.filter((detail) => detail.productID > 0 && ((detail.affectedQty && detail.affectedQty > 0) || (detail.issuedQty && detail.issuedQty > 0)));
+        return validProducts.length > 0;
+      },
+      {
+        message: "At least one product must have consuming quantity or issued quantity greater than 0",
+      }
+    ),
 });
 
 type DepartmentConsumptionFormData = z.infer<typeof departmentConsumptionSchema>;
@@ -116,14 +154,11 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { showAlert } = useAlert();
-
   const { department } = useDropdownValues(["department"]);
-
   const isAddMode = !initialData || copyMode;
   const isCopyMode = copyMode && !!initialData;
   const isEditMode = !!initialData && !copyMode && !viewOnly;
   const isViewMode = viewOnly;
-
   const defaultValues: DepartmentConsumptionFormData = useMemo(
     () => ({
       deptConsID: 0,
@@ -170,7 +205,9 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
 
   const validDetailsCount = useMemo(() => {
     if (!watchedDetails) return 0;
-    return watchedDetails.filter((detail) => detail && detail.productID && detail.affectedQty > 0).length;
+    return watchedDetails.filter(
+      (detail) => detail && detail.productID && detail.productID > 0 && ((detail.affectedQty && detail.affectedQty > 0) || (detail.issuedQty && detail.issuedQty > 0))
+    ).length;
   }, [watchedDetails]);
 
   const canSave = useMemo(() => {
@@ -203,6 +240,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       }
     }
 
+    // Set default numeric values
     const numericDefaults = {
       deptConsDetID: 0,
       deptConsID: 0,
@@ -219,6 +257,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       sellUnitPrice: 0,
       affectedQty: 0,
       affectedUnitQty: 0,
+      issuedQty: 0,
       availableQty: 0,
       psGrpID: 0,
       pGrpID: 0,
@@ -227,6 +266,17 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       manufacturerID: 0,
       grnDetID: 0,
       auGrpID: 18,
+      chargePercentage: 0,
+      productDiscount: 0,
+      universalCode: 0,
+      baseUnit: 1,
+      issueUnit: 1,
+      leadTime: 0,
+      rOL: 0,
+      pLocationID: 0,
+      gstPerValue: 0,
+      cgstPerValue: 0,
+      sgstPerValue: 0,
     };
 
     Object.keys(numericDefaults).forEach((key) => {
@@ -235,6 +285,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       }
     });
 
+    // Set default string values
     const stringDefaults = {
       productCode: "",
       productName: "",
@@ -255,6 +306,22 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       manufacturerCode: "",
       manufacturerName: "",
       consumptionRemarks: "",
+      barcode: "",
+      vedCode: "",
+      abcCode: "",
+      chargableYN: "N",
+      isAssetYN: "N",
+      supplierStatus: "Active",
+      medicationGenericName: "",
+      productLocation: "",
+      productNotes: "",
+      serialNumber: "",
+      hsnCODE: "",
+      transferYN: "N",
+      rNotes: "",
+      leadTimeDesc: "",
+      pLocationCode: "",
+      pLocationName: "",
     };
 
     Object.keys(stringDefaults).forEach((key) => {
@@ -263,11 +330,15 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       }
     });
 
+    // Ensure grnDate is set
+    if (!mappedDetail.grnDate) {
+      mappedDetail.grnDate = new Date();
+    }
+
     return mappedDetail;
   }, []);
 
   const generateConsumptionCodeAsync = useCallback(async () => {
-    debugger;
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
     if (!isAddMode || !deptId) return;
 
@@ -390,6 +461,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
   }, [open, isViewMode, canSave, isDirty, handleSubmit, onClose]);
 
   const onSubmit = async (data: DepartmentConsumptionFormData) => {
+    debugger;
     if (isViewMode) return;
     setFormError(null);
 
@@ -399,60 +471,101 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
 
       if (!data.fromDeptID || data.fromDeptID === 0) throw new Error("Department is required.");
 
-      const validDetails = data.details.filter((detail) => detail.affectedQty > 0);
-      if (validDetails.length === 0) throw new Error("At least one product must have a consumed quantity greater than 0");
+      // Filter details that have either affectedQty or issuedQty > 0
+      const validDetails = data.details.filter((detail) => (detail.affectedQty && detail.affectedQty > 0) || (detail.issuedQty && detail.issuedQty > 0));
+
+      if (validDetails.length === 0) {
+        throw new Error("At least one product must have consuming quantity or issued quantity greater than 0");
+      }
 
       const fromDept = memoizedDepartmentOptions?.find((d) => Number(d.value) === data.fromDeptID);
 
       const deptConsID = isAddMode || isCopyMode ? 0 : data.deptConsID;
 
-      const transformedDetails: ProductConsumptionDetailDto[] = validDetails.map((detail) => ({
-        deptConsDetID: isCopyMode ? 0 : detail.deptConsDetID || 0,
-        deptConsID: isCopyMode ? 0 : detail.deptConsID || 0,
-        psdid: detail.psdid || 0,
-        pisid: detail.pisid || 0,
-        psbid: detail.psbid || 0,
-        pGrpID: detail.pGrpID,
-        pGrpName: detail.pGrpName || "",
-        productID: detail.productID || 0,
-        productCode: detail.productCode || "",
-        productName: detail.productName || "",
-        catValue: detail.catValue || "MEDI",
-        catDesc: detail.catDesc || "REVENUE",
-        mfID: detail.mfID || 0,
-        mfName: detail.mfName || "",
-        pUnitID: detail.pUnitID || 0,
-        pUnitName: detail.pUnitName || "",
-        pUnitsPerPack: detail.pUnitsPerPack || 1,
-        pkgID: detail.pkgID || 0,
-        pkgName: detail.pkgName || "",
-        batchNo: detail.batchNo || "",
-        expiryDate: detail.expiryDate,
-        unitPrice: detail.unitPrice || 0,
-        tax: detail.tax || 0,
-        sellUnitPrice: detail.sellUnitPrice || 0,
-        affectedQty: detail.affectedQty || 0,
-        affectedUnitQty: detail.affectedUnitQty || 0,
-        availableQty: detail.availableQty,
-        prescriptionYN: detail.prescriptionYN || "N",
-        expiryYN: detail.expiryYN || "N",
-        sellableYN: detail.sellableYN || "Y",
-        taxableYN: detail.taxableYN || "Y",
-        psGrpID: detail.psGrpID,
-        psGrpName: detail.psGrpName,
-        manufacturerID: detail.manufacturerID,
-        manufacturerCode: detail.manufacturerCode,
-        manufacturerName: detail.manufacturerName,
-        taxID: detail.taxID,
-        taxCode: detail.taxCode,
-        taxName: detail.taxName,
-        mrp: detail.mrp,
-        grnDetID: detail.grnDetID || 0,
-        grnDate: detail.grnDate || new Date(),
-        auGrpID: detail.auGrpID || 18,
-        consumptionRemarks: detail.consumptionRemarks || "",
-        rActiveYN: "Y",
-      }));
+      const transformedDetails: ProductConsumptionDetailDto[] = validDetails.map((detail) => {
+        // Calculate affectedUnitQty based on affectedQty and pUnitsPerPack
+        const consumingQty = detail.affectedQty || 0;
+        const unitsPerPack = detail.pUnitsPerPack || 1;
+        const affectedUnitQty = consumingQty * unitsPerPack;
+
+        return {
+          deptConsDetID: isCopyMode ? 0 : detail.deptConsDetID || 0,
+          deptConsID: isCopyMode ? 0 : detail.deptConsID || 0,
+          psdid: detail.psdid || 0,
+          pisid: detail.pisid || 0,
+          psbid: detail.psbid || 0,
+          pGrpID: detail.pGrpID,
+          pGrpName: detail.pGrpName || "",
+          productID: detail.productID || 0,
+          productCode: detail.productCode || "",
+          productName: detail.productName || "",
+          catValue: detail.catValue || "MEDI",
+          catDesc: detail.catDesc || "REVENUE",
+          mfID: detail.mfID || 0,
+          mfName: detail.mfName || "",
+          pUnitID: detail.pUnitID || 0,
+          pUnitName: detail.pUnitName || "",
+          pUnitsPerPack: unitsPerPack,
+          pkgID: detail.pkgID || 0,
+          pkgName: detail.pkgName || "",
+          batchNo: detail.batchNo || "",
+          expiryDate: detail.expiryDate,
+          unitPrice: detail.unitPrice || 0,
+          tax: detail.tax || 0,
+          sellUnitPrice: detail.sellUnitPrice || 0,
+          affectedQty: consumingQty, // This is the consuming quantity
+          affectedUnitQty: affectedUnitQty, // Calculated consuming unit quantity
+          issuedQty: detail.issuedQty || 0,
+          availableQty: detail.availableQty,
+          prescriptionYN: detail.prescriptionYN || "N",
+          expiryYN: detail.expiryYN || "N",
+          sellableYN: detail.sellableYN || "Y",
+          taxableYN: detail.taxableYN || "Y",
+          psGrpID: detail.psGrpID,
+          psGrpName: detail.psGrpName,
+          manufacturerID: detail.manufacturerID,
+          manufacturerCode: detail.manufacturerCode,
+          manufacturerName: detail.manufacturerName,
+          taxID: detail.taxID,
+          taxCode: detail.taxCode,
+          taxName: detail.taxName,
+          mrp: detail.mrp,
+          grnDetID: detail.grnDetID || 0,
+          grnDate: detail.grnDate || new Date(),
+          auGrpID: detail.auGrpID || 18,
+          consumptionRemarks: detail.consumptionRemarks || "",
+          rActiveYN: "Y",
+
+          // Additional fields from ProductListDto
+          barcode: detail.barcode || "",
+          vedCode: detail.vedCode || "",
+          abcCode: detail.abcCode || "",
+          chargableYN: detail.chargableYN || "N",
+          chargePercentage: detail.chargePercentage || 0,
+          isAssetYN: detail.isAssetYN || "N",
+          productDiscount: detail.productDiscount || 0,
+          supplierStatus: detail.supplierStatus || "Active",
+          medicationGenericName: detail.medicationGenericName || "",
+          productLocation: detail.productLocation || "",
+          productNotes: detail.productNotes || "",
+          serialNumber: detail.serialNumber || "",
+          hsnCODE: detail.hsnCODE || "",
+          gstPerValue: detail.gstPerValue || 0,
+          cgstPerValue: detail.cgstPerValue || 0,
+          sgstPerValue: detail.sgstPerValue || 0,
+          universalCode: detail.universalCode || 0,
+          transferYN: detail.transferYN || "N",
+          rNotes: detail.rNotes || "",
+          baseUnit: detail.baseUnit || 1,
+          issueUnit: detail.issueUnit || 1,
+          leadTime: detail.leadTime || 0,
+          leadTimeDesc: detail.leadTimeDesc || "",
+          rOL: detail.rOL || 0,
+          pLocationID: detail.pLocationID || 0,
+          pLocationCode: detail.pLocationCode || "",
+          pLocationName: detail.pLocationName || "",
+        };
+      });
 
       const calculatedTotalItems = calculateTotalItems(transformedDetails);
       const calculatedTotalConsumedQty = calculateTotalConsumedQty(transformedDetails);
