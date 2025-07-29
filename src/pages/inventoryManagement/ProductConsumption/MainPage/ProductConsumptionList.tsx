@@ -4,10 +4,9 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ProductConsumptionCompositeDto, ProductConsumptionMastDto, ProductConsumptionSearchRequest } from "@/interfaces/InventoryManagement/ProductConsumption";
-import { DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
+import { DateFilterType, formatCurrency, ProductConsumptionCompositeDto, ProductConsumptionMastDto } from "@/interfaces/InventoryManagement/ProductConsumption";
 import { useAlert } from "@/providers/AlertProvider";
-import { formatCurrency } from "@/utils/Common/formatUtils";
+import { productConsumptionMastService } from "@/services/InventoryManagementService/inventoryManagementService";
 import {
   Add as AddIcon,
   ViewModule as CardIcon,
@@ -141,28 +140,20 @@ const DepartmentConsumptionPage: React.FC = () => {
     try {
       setIsLoading(true);
       clearError();
+      const response = await productConsumptionMastService.getAll();
+      if (response.success && response.data && Array.isArray(response.data)) {
+        // Filter consumptions for the selected department
+        let departmentConsumptions = response.data.filter((consumption: ProductConsumptionMastDto) => {
+          return consumption.fromDeptID === deptId;
+        });
 
-      const searchRequest: ProductConsumptionSearchRequest = {
-        pageIndex: 1,
-        pageSize: 1000,
-        departmentID: deptId,
-        deptConsCode: deptConsCode || undefined,
-        productName: productName || undefined,
-        categoryValue: categoryValue,
-        sortBy: sortBy,
-        sortAscending: sortOrder,
-        minConsumedQty: minConsumedQty,
-        maxConsumedQty: maxConsumedQty,
-        dateFilterType: getDateFilterType(),
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-      };
+        // Set the filtered data first
+        setPaginatedConsumptions(departmentConsumptions);
 
-      const result = await searchConsumptions(searchRequest);
-      if (result && result.items) {
-        setPaginatedConsumptions(result.items);
+        // Show success message only once
+        console.log(`Loaded ${departmentConsumptions.length} consumption records for department ${deptId}`);
       } else {
-        setPaginatedConsumptions([]);
+        throw new Error(response.errorMessage || "Failed to fetch Department Consumptions - invalid response");
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch Department Consumption data";
@@ -172,22 +163,182 @@ const DepartmentConsumptionPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    deptId,
-    deptConsCode,
-    productName,
-    categoryValue,
-    sortBy,
-    sortOrder,
-    minConsumedQty,
-    maxConsumedQty,
-    startDate,
-    endDate,
-    dateRange,
-    searchConsumptions,
-    showAlert,
-    clearError,
-  ]);
+  }, [deptId, showAlert, clearError]);
+
+  const applyFiltersAndSorting = useCallback(
+    (consumptions: ProductConsumptionMastDto[]) => {
+      let filteredConsumptions = [...consumptions];
+
+      // Apply filters
+      if (deptConsCode) {
+        filteredConsumptions = filteredConsumptions.filter((c) => c.deptConsCode?.toLowerCase().includes(deptConsCode.toLowerCase()));
+      }
+
+      if (categoryValue && categoryValue !== "all") {
+        filteredConsumptions = filteredConsumptions.filter((c) => c.catValue === categoryValue);
+      }
+
+      if (startDate || endDate) {
+        filteredConsumptions = filteredConsumptions.filter((c) => {
+          if (!c.deptConsDate) return false;
+          const consDate = new Date(c.deptConsDate);
+          let matchesDateRange = true;
+
+          if (startDate) {
+            matchesDateRange = matchesDateRange && consDate >= startDate;
+          }
+          if (endDate) {
+            matchesDateRange = matchesDateRange && consDate <= endDate;
+          }
+
+          return matchesDateRange;
+        });
+      }
+
+      if (minConsumedQty !== undefined) {
+        filteredConsumptions = filteredConsumptions.filter((c) => (c.totalConsumedQty || 0) >= minConsumedQty);
+      }
+
+      if (maxConsumedQty !== undefined) {
+        filteredConsumptions = filteredConsumptions.filter((c) => (c.totalConsumedQty || 0) <= maxConsumedQty);
+      }
+
+      // Apply sorting
+      if (sortBy) {
+        filteredConsumptions = filteredConsumptions.sort((a, b) => {
+          let aValue: any;
+          let bValue: any;
+
+          switch (sortBy) {
+            case "deptConsDate":
+              aValue = a.deptConsDate ? new Date(a.deptConsDate).getTime() : 0;
+              bValue = b.deptConsDate ? new Date(b.deptConsDate).getTime() : 0;
+              break;
+            case "deptConsCode":
+              aValue = a.deptConsCode || "";
+              bValue = b.deptConsCode || "";
+              break;
+            case "fromDeptName":
+              aValue = a.fromDeptName || "";
+              bValue = b.fromDeptName || "";
+              break;
+            case "catValue":
+              aValue = a.catValue || "";
+              bValue = b.catValue || "";
+              break;
+            case "totalConsumedQty":
+              aValue = a.totalConsumedQty || 0;
+              bValue = b.totalConsumedQty || 0;
+              break;
+            case "totalValue":
+              aValue = a.totalValue || 0;
+              bValue = b.totalValue || 0;
+              break;
+            default:
+              aValue = a.deptConsDate ? new Date(a.deptConsDate).getTime() : 0;
+              bValue = b.deptConsDate ? new Date(b.deptConsDate).getTime() : 0;
+          }
+
+          if (typeof aValue === "string") {
+            return sortOrder ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+          } else {
+            return sortOrder ? aValue - bValue : bValue - aValue;
+          }
+        });
+      }
+
+      return filteredConsumptions;
+    },
+    [deptConsCode, categoryValue, startDate, endDate, minConsumedQty, maxConsumedQty, sortBy, sortOrder]
+  );
+
+  const [rawConsumptions, setRawConsumptions] = useState<ProductConsumptionMastDto[]>([]);
+
+  // Update the fetch function to use raw data storage
+  const fetchConsumptionsForDepartmentFixed = useCallback(async () => {
+    if (!deptId) return;
+    try {
+      setIsLoading(true);
+      clearError();
+      const response = await productConsumptionMastService.getAll();
+      if (response.success && response.data && Array.isArray(response.data)) {
+        // Filter consumptions for the selected department
+        const departmentConsumptions = response.data.filter((consumption: ProductConsumptionMastDto) => {
+          return consumption.fromDeptID === deptId;
+        });
+
+        // Store raw data
+        setRawConsumptions(departmentConsumptions);
+
+        console.log(`Loaded ${departmentConsumptions.length} consumption records for department ${deptId}`);
+      } else {
+        throw new Error(response.errorMessage || "Failed to fetch Department Consumptions - invalid response");
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch Department Consumption data";
+      setError(errorMessage);
+      showAlert("Error", "Failed to fetch Department Consumption data for the selected department", "error");
+      setRawConsumptions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [deptId, showAlert, clearError]);
+
+  // Apply filters whenever raw data or filter criteria change
+  useEffect(() => {
+    if (rawConsumptions.length > 0 || rawConsumptions.length === 0) {
+      const filteredData = applyFiltersAndSorting(rawConsumptions);
+      setPaginatedConsumptions(filteredData);
+    }
+  }, [rawConsumptions, applyFiltersAndSorting]);
+
+  // Update the useEffect that triggers the fetch
+  useEffect(() => {
+    if (isDepartmentSelected && deptId) {
+      fetchConsumptionsForDepartmentFixed();
+    }
+  }, [isDepartmentSelected, deptId, fetchConsumptionsForDepartmentFixed]);
+
+  // Update the refresh function
+  const handleRefresh = useCallback(async () => {
+    if (!deptId) {
+      showAlert("Warning", "Please select a department first", "warning");
+      return;
+    }
+    setSearchTerm("");
+    setSelectedRows([]);
+    await fetchConsumptionsForDepartmentFixed();
+    showAlert("Success", "Data refreshed successfully", "success");
+  }, [deptId, fetchConsumptionsForDepartmentFixed, showAlert]);
+
+  // Update the form close handler
+  const handleFormClose = useCallback(
+    (refreshData?: boolean) => {
+      setIsFormOpen(false);
+      setSelectedConsumption(null);
+      setIsCopyMode(false);
+      setIsViewMode(false);
+      if (refreshData && deptId) {
+        fetchConsumptionsForDepartmentFixed();
+      }
+    },
+    [deptId, fetchConsumptionsForDepartmentFixed]
+  );
+
+  // Update the delete confirm handler
+  const handleConfirmDelete = useCallback(async () => {
+    if (!selectedConsumption) return;
+    try {
+      const success = await deleteConsumption(selectedConsumption.deptConsID);
+      if (success) {
+        await fetchConsumptionsForDepartmentFixed();
+      }
+    } catch (error) {
+      showAlert("Error", "Failed to delete Department Consumption", "error");
+    }
+    setIsDeleteConfirmOpen(false);
+    setSelectedConsumption(null);
+  }, [selectedConsumption, deleteConsumption, fetchConsumptionsForDepartmentFixed, showAlert]);
 
   const getDateFilterType = (): DateFilterType | undefined => {
     switch (dateRange) {
@@ -267,9 +418,18 @@ const DepartmentConsumptionPage: React.FC = () => {
   useEffect(() => {
     const consumptions = paginatedConsumptions || [];
     const total = consumptions.length;
-    const totalValue = consumptions.reduce((sum, consumption) => sum + (consumption.totalValue || 0), 0);
-    const totalConsumedQty = consumptions.reduce((sum, consumption) => sum + (consumption.totalConsumedQty || 0), 0);
-    const totalProducts = consumptions.reduce((sum, consumption) => sum + (consumption.totalItems || 0), 0);
+    const totalValue = consumptions.reduce((sum, consumption) => {
+      const value = consumption.totalValue || 0;
+      return sum + (typeof value === "number" ? value : 0);
+    }, 0);
+    const totalConsumedQty = consumptions.reduce((sum, consumption) => {
+      const qty = consumption.totalConsumedQty || 0;
+      return sum + (typeof qty === "number" ? qty : 0);
+    }, 0);
+    const totalProducts = consumptions.reduce((sum, consumption) => {
+      const items = consumption.totalItems || 0;
+      return sum + (typeof items === "number" ? items : 0);
+    }, 0);
 
     // Mock calculations for zero stock and expiring items - would need actual product details
     const zeroStockItems = Math.floor(totalProducts * 0.1); // 10% assumption
@@ -284,17 +444,6 @@ const DepartmentConsumptionPage: React.FC = () => {
       totalProducts,
     });
   }, [paginatedConsumptions]);
-
-  const handleRefresh = useCallback(async () => {
-    if (!deptId) {
-      showAlert("Warning", "Please select a department first", "warning");
-      return;
-    }
-    setSearchTerm("");
-    setSelectedRows([]);
-    await fetchConsumptionsForDepartment();
-    showAlert("Success", "Data refreshed successfully", "success");
-  }, [deptId, fetchConsumptionsForDepartment, showAlert]);
 
   const handleAddNew = useCallback(() => {
     setSelectedConsumption(null);
@@ -395,33 +544,6 @@ const DepartmentConsumptionPage: React.FC = () => {
       setIsDeleteConfirmOpen(true);
     },
     [canDeleteConsumption, showAlert]
-  );
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (!selectedConsumption) return;
-    try {
-      const success = await deleteConsumption(selectedConsumption.deptConsID);
-      if (success) {
-        await fetchConsumptionsForDepartment();
-      }
-    } catch (error) {
-      showAlert("Error", "Failed to delete Department Consumption", "error");
-    }
-    setIsDeleteConfirmOpen(false);
-    setSelectedConsumption(null);
-  }, [selectedConsumption, deleteConsumption, fetchConsumptionsForDepartment, showAlert]);
-
-  const handleFormClose = useCallback(
-    (refreshData?: boolean) => {
-      setIsFormOpen(false);
-      setSelectedConsumption(null);
-      setIsCopyMode(false);
-      setIsViewMode(false);
-      if (refreshData && deptId) {
-        fetchConsumptionsForDepartment();
-      }
-    },
-    [deptId, fetchConsumptionsForDepartment]
   );
 
   const handleSortChange = useCallback(
@@ -645,10 +767,10 @@ const DepartmentConsumptionPage: React.FC = () => {
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.875rem" }}>
-            <strong>Date:</strong> {formatConsumptionDate(consumption.deptConsDate || new Date())} • <strong>Items:</strong> {consumption.totalItems}
+            <strong>Date:</strong> {formatConsumptionDate(consumption.deptConsDate || new Date())} • <strong>Items:</strong> {consumption.totalItems || 0}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Days: {calculateDaysOld(consumption.deptConsDate || new Date())} • Qty: {consumption.totalConsumedQty}
+            Days: {calculateDaysOld(consumption.deptConsDate || new Date())} • Qty: {consumption.totalConsumedQty || 0}
           </Typography>
         </Box>
       ),
@@ -664,10 +786,10 @@ const DepartmentConsumptionPage: React.FC = () => {
           <DeptIcon sx={{ fontSize: 20, color: "primary.main" }} />
           <Box>
             <Typography variant="body2" fontWeight="500">
-              {consumption.fromDeptName}
+              {consumption.fromDeptName || "N/A"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              ID: {consumption.fromDeptID}
+              ID: {consumption.fromDeptID || 0}
             </Typography>
           </Box>
         </Box>
@@ -699,7 +821,7 @@ const DepartmentConsumptionPage: React.FC = () => {
       render: (consumption: ProductConsumptionMastDto) => (
         <Box>
           <Typography variant="body2">
-            <strong>Consumed:</strong> {consumption.totalConsumedQty}
+            <strong>Consumed:</strong> {consumption.totalConsumedQty || 0}
           </Typography>
           <Typography variant="body2" color="primary" fontWeight="bold">
             <strong>Value:</strong> {formatCurrency(consumption.totalValue || 0)}

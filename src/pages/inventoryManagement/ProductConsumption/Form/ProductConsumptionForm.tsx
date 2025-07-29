@@ -16,14 +16,14 @@ import {
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check as CheckIcon, Inventory as ConsumptionIcon, ContentCopy as ContentCopyIcon, Refresh, Save, Search as SearchIcon, Sync as SyncIcon } from "@mui/icons-material";
-import { Alert, Box, Chip, CircularProgress, Grid, IconButton, InputAdornment, Paper, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, Chip, CircularProgress, Grid, IconButton, InputAdornment, Paper, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import useDepartmentConsumption from "../hook/useProductConsumption";
-import DepartmentConsumptionProductDetailsSection from "./ProductConsumptionDetailsSection";
+import ProductConsumptionDetailsSection from "./ProductConsumptionDetailsSection";
 
-interface DepartmentConsumptionFormProps {
+interface ProductConsumptionFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
   initialData: ProductConsumptionMastDto | null;
@@ -56,7 +56,7 @@ const consumptionDetailSchema = z.object({
   unitPrice: z.number().optional(),
   tax: z.number().optional(),
   sellUnitPrice: z.number().optional(),
-  affectedQty: z.number().min(0, "Consumed quantity must be non-negative"),
+  affectedQty: z.number().min(0.01, "Consumed quantity must be greater than 0").optional(),
   affectedUnitQty: z.number().optional(),
   availableQty: z.number().optional(),
   prescriptionYN: z.string().optional(),
@@ -77,10 +77,12 @@ const consumptionDetailSchema = z.object({
   grnDetID: z.number(),
   grnDate: z.date(),
   auGrpID: z.number(),
+  totalValue: z.number().optional(),
   consumptionRemarks: z.string().optional(),
+  rActiveYN: z.string().optional(),
 });
 
-const departmentConsumptionSchema = z.object({
+const productConsumptionSchema = z.object({
   deptConsID: z.number(),
   deptConsDate: z.date(),
   fromDeptID: z.number().min(1, "Department is required"),
@@ -90,15 +92,24 @@ const departmentConsumptionSchema = z.object({
   catValue: z.string().optional(),
   deptConsCode: z.string().min(1, "Consumption code is required"),
   rActiveYN: z.string().default("Y"),
+  consumptionRemarks: z.string().optional(),
   details: z
     .array(consumptionDetailSchema)
     .min(1, "At least one product detail is required")
-    .refine((details) => details.some((detail) => detail.affectedQty > 0), "At least one product must have quantity greater than 0"),
+    .refine(
+      (details) => {
+        const validProducts = details.filter((detail) => detail.productID > 0 && detail.affectedQty && detail.affectedQty > 0);
+        return validProducts.length > 0;
+      },
+      {
+        message: "At least one product must have consuming quantity greater than 0",
+      }
+    ),
 });
 
-type DepartmentConsumptionFormData = z.infer<typeof departmentConsumptionSchema>;
+type ProductConsumptionFormData = z.infer<typeof productConsumptionSchema>;
 
-const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
+const ProductConsumptionForm: React.FC<ProductConsumptionFormProps> = ({
   open,
   onClose,
   initialData,
@@ -116,7 +127,6 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const { showAlert } = useAlert();
-
   const { department } = useDropdownValues(["department"]);
 
   const isAddMode = !initialData || copyMode;
@@ -124,7 +134,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
   const isEditMode = !!initialData && !copyMode && !viewOnly;
   const isViewMode = viewOnly;
 
-  const defaultValues: DepartmentConsumptionFormData = useMemo(
+  const defaultValues: ProductConsumptionFormData = useMemo(
     () => ({
       deptConsID: 0,
       deptConsDate: new Date(),
@@ -135,6 +145,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       catValue: "MEDI",
       deptConsCode: "",
       rActiveYN: "Y",
+      consumptionRemarks: "",
       details: [],
     }),
     [selectedDepartmentId, selectedDepartmentName]
@@ -148,9 +159,9 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
     getValues,
     watch,
     formState: { errors, isDirty, isValid },
-  } = useForm<DepartmentConsumptionFormData>({
+  } = useForm<ProductConsumptionFormData>({
     defaultValues,
-    resolver: zodResolver(departmentConsumptionSchema),
+    resolver: zodResolver(productConsumptionSchema),
     mode: "onChange",
   });
 
@@ -158,6 +169,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
   const fromDeptID = watch("fromDeptID");
   const deptConsCode = watch("deptConsCode");
   const watchedDetails = useWatch({ control, name: "details" });
+  const consumptionRemarks = useWatch({ control, name: "consumptionRemarks" });
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -170,7 +182,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
 
   const validDetailsCount = useMemo(() => {
     if (!watchedDetails) return 0;
-    return watchedDetails.filter((detail) => detail && detail.productID && detail.affectedQty > 0).length;
+    return watchedDetails.filter((detail) => detail && detail.productID && detail.productID > 0 && detail.affectedQty && detail.affectedQty > 0).length;
   }, [watchedDetails]);
 
   const canSave = useMemo(() => {
@@ -217,8 +229,8 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       unitPrice: 0,
       tax: 0,
       sellUnitPrice: 0,
-      affectedQty: 0,
-      affectedUnitQty: 0,
+      affectedQty: 1,
+      affectedUnitQty: 1,
       availableQty: 0,
       psGrpID: 0,
       pGrpID: 0,
@@ -227,6 +239,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       manufacturerID: 0,
       grnDetID: 0,
       auGrpID: 18,
+      totalValue: 0,
     };
 
     Object.keys(numericDefaults).forEach((key) => {
@@ -255,6 +268,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       manufacturerCode: "",
       manufacturerName: "",
       consumptionRemarks: "",
+      rActiveYN: "Y",
     };
 
     Object.keys(stringDefaults).forEach((key) => {
@@ -263,11 +277,18 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
       }
     });
 
+    if (!mappedDetail.grnDate) {
+      mappedDetail.grnDate = new Date();
+    }
+
+    if (!mappedDetail.totalValue && mappedDetail.affectedQty && mappedDetail.unitPrice) {
+      mappedDetail.totalValue = mappedDetail.affectedQty * mappedDetail.unitPrice;
+    }
+
     return mappedDetail;
   }, []);
 
   const generateConsumptionCodeAsync = useCallback(async () => {
-    debugger;
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
     if (!isAddMode || !deptId) return;
 
@@ -310,7 +331,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
         compositeDto = fetchedComposite;
       }
 
-      const formData: DepartmentConsumptionFormData = {
+      const formData: ProductConsumptionFormData = {
         deptConsID: isCopyMode ? 0 : compositeDto.productConsumption.deptConsID,
         deptConsDate: isCopyMode ? new Date() : new Date(compositeDto.productConsumption.deptConsDate || new Date()),
         fromDeptID: compositeDto.productConsumption.fromDeptID,
@@ -320,6 +341,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
         catValue: compositeDto.productConsumption.catValue || "MEDI",
         deptConsCode: isCopyMode ? "" : compositeDto.productConsumption.deptConsCode || "",
         rActiveYN: compositeDto.productConsumption.rActiveYN || "Y",
+        consumptionRemarks: compositeDto.productConsumption.consumptionRemarks || "",
         details: (compositeDto.consumptionDetails || []).map((detail) => createDetailMappingWithAllFields(detail, isCopyMode)),
       };
 
@@ -389,7 +411,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, isViewMode, canSave, isDirty, handleSubmit, onClose]);
 
-  const onSubmit = async (data: DepartmentConsumptionFormData) => {
+  const onSubmit = async (data: ProductConsumptionFormData) => {
     if (isViewMode) return;
     setFormError(null);
 
@@ -399,60 +421,72 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
 
       if (!data.fromDeptID || data.fromDeptID === 0) throw new Error("Department is required.");
 
-      const validDetails = data.details.filter((detail) => detail.affectedQty > 0);
-      if (validDetails.length === 0) throw new Error("At least one product must have a consumed quantity greater than 0");
+      const validDetails = data.details.filter((detail) => detail.affectedQty && detail.affectedQty > 0);
+
+      if (validDetails.length === 0) {
+        throw new Error("At least one product must have consuming quantity greater than 0");
+      }
 
       const fromDept = memoizedDepartmentOptions?.find((d) => Number(d.value) === data.fromDeptID);
 
-      const deptConsID = isAddMode || isCopyMode ? 0 : data.deptConsID;
+      // CRITICAL: Preserve the original deptConsID for updates
+      const deptConsID = isAddMode || isCopyMode ? 0 : initialData?.deptConsID || data.deptConsID;
 
-      const transformedDetails: ProductConsumptionDetailDto[] = validDetails.map((detail) => ({
-        deptConsDetID: isCopyMode ? 0 : detail.deptConsDetID || 0,
-        deptConsID: isCopyMode ? 0 : detail.deptConsID || 0,
-        psdid: detail.psdid || 0,
-        pisid: detail.pisid || 0,
-        psbid: detail.psbid || 0,
-        pGrpID: detail.pGrpID,
-        pGrpName: detail.pGrpName || "",
-        productID: detail.productID || 0,
-        productCode: detail.productCode || "",
-        productName: detail.productName || "",
-        catValue: detail.catValue || "MEDI",
-        catDesc: detail.catDesc || "REVENUE",
-        mfID: detail.mfID || 0,
-        mfName: detail.mfName || "",
-        pUnitID: detail.pUnitID || 0,
-        pUnitName: detail.pUnitName || "",
-        pUnitsPerPack: detail.pUnitsPerPack || 1,
-        pkgID: detail.pkgID || 0,
-        pkgName: detail.pkgName || "",
-        batchNo: detail.batchNo || "",
-        expiryDate: detail.expiryDate,
-        unitPrice: detail.unitPrice || 0,
-        tax: detail.tax || 0,
-        sellUnitPrice: detail.sellUnitPrice || 0,
-        affectedQty: detail.affectedQty || 0,
-        affectedUnitQty: detail.affectedUnitQty || 0,
-        availableQty: detail.availableQty,
-        prescriptionYN: detail.prescriptionYN || "N",
-        expiryYN: detail.expiryYN || "N",
-        sellableYN: detail.sellableYN || "Y",
-        taxableYN: detail.taxableYN || "Y",
-        psGrpID: detail.psGrpID,
-        psGrpName: detail.psGrpName,
-        manufacturerID: detail.manufacturerID,
-        manufacturerCode: detail.manufacturerCode,
-        manufacturerName: detail.manufacturerName,
-        taxID: detail.taxID,
-        taxCode: detail.taxCode,
-        taxName: detail.taxName,
-        mrp: detail.mrp,
-        grnDetID: detail.grnDetID || 0,
-        grnDate: detail.grnDate || new Date(),
-        auGrpID: detail.auGrpID || 18,
-        consumptionRemarks: detail.consumptionRemarks || "",
-        rActiveYN: "Y",
-      }));
+      const transformedDetails: ProductConsumptionDetailDto[] = validDetails.map((detail) => {
+        const consumingQty = detail.affectedQty || 0;
+        const unitsPerPack = detail.pUnitsPerPack || 1;
+        const affectedUnitQty = consumingQty * unitsPerPack;
+
+        return {
+          // CRITICAL: Preserve original IDs for updates
+          deptConsDetID: isCopyMode ? 0 : detail.deptConsDetID || 0,
+          deptConsID: isCopyMode ? 0 : deptConsID || detail.deptConsID || 0,
+          psdid: detail.psdid || 0,
+          pisid: detail.pisid || 0,
+          psbid: detail.psbid || 0,
+          pGrpID: detail.pGrpID,
+          pGrpName: detail.pGrpName || "",
+          productID: detail.productID || 0,
+          productCode: detail.productCode || "",
+          productName: detail.productName || "",
+          catValue: detail.catValue || "MEDI",
+          catDesc: detail.catDesc || "REVENUE",
+          mfID: detail.mfID || 0,
+          mfName: detail.mfName || "",
+          pUnitID: detail.pUnitID || 0,
+          pUnitName: detail.pUnitName || "",
+          pUnitsPerPack: unitsPerPack,
+          pkgID: detail.pkgID || 0,
+          pkgName: detail.pkgName || "",
+          batchNo: detail.batchNo || "",
+          expiryDate: detail.expiryDate,
+          unitPrice: detail.unitPrice || 0,
+          tax: detail.tax || 0,
+          sellUnitPrice: detail.sellUnitPrice || 0,
+          affectedQty: consumingQty,
+          affectedUnitQty: affectedUnitQty,
+          availableQty: detail.availableQty,
+          prescriptionYN: detail.prescriptionYN || "N",
+          expiryYN: detail.expiryYN || "N",
+          sellableYN: detail.sellableYN || "Y",
+          taxableYN: detail.taxableYN || "Y",
+          psGrpID: detail.psGrpID,
+          psGrpName: detail.psGrpName,
+          manufacturerID: detail.manufacturerID,
+          manufacturerCode: detail.manufacturerCode,
+          manufacturerName: detail.manufacturerName,
+          taxID: detail.taxID,
+          taxCode: detail.taxCode,
+          taxName: detail.taxName,
+          mrp: detail.mrp,
+          grnDetID: detail.grnDetID || 0,
+          grnDate: detail.grnDate || new Date(),
+          auGrpID: detail.auGrpID || 18,
+          consumptionRemarks: detail.consumptionRemarks || "",
+          rActiveYN: "Y",
+          transferYN: "N",
+        };
+      });
 
       const calculatedTotalItems = calculateTotalItems(transformedDetails);
       const calculatedTotalConsumedQty = calculateTotalConsumedQty(transformedDetails);
@@ -460,6 +494,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
 
       const consumptionCompositeDto: ProductConsumptionCompositeDto = {
         productConsumption: {
+          // CRITICAL: Use the preserved deptConsID for updates
           deptConsID: deptConsID,
           deptConsDate: data.deptConsDate,
           fromDeptID: data.fromDeptID,
@@ -471,6 +506,7 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
           totalItems: calculatedTotalItems,
           totalConsumedQty: calculatedTotalConsumedQty,
           totalValue: calculatedTotalValue,
+          rNotes: data.consumptionRemarks || "",
           rActiveYN: "Y",
         },
         consumptionDetails: transformedDetails,
@@ -658,9 +694,34 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
                 <FormField name="rActiveYN" control={control} type="switch" color="warning" label={activeStatusValue === "Y" ? "Active" : "Inactive"} disabled={isViewMode} />
               </Grid>
             </Grid>
+
+            {/* Consumption Remarks Section */}
+            <Grid container spacing={2} sx={{ mt: 2 }}>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  label="Consumption Remarks"
+                  multiline
+                  rows={3}
+                  fullWidth
+                  size="small"
+                  value={consumptionRemarks || ""}
+                  onChange={(e) => setValue("consumptionRemarks", e.target.value, { shouldValidate: true, shouldDirty: true })}
+                  disabled={isViewMode}
+                  placeholder="Enter remarks or notes about this consumption..."
+                  variant="outlined"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "primary.main",
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
           </Paper>
 
-          <DepartmentConsumptionProductDetailsSection
+          <ProductConsumptionDetailsSection
             control={control}
             fields={fields}
             append={append}
@@ -703,4 +764,4 @@ const DepartmentConsumptionForm: React.FC<DepartmentConsumptionFormProps> = ({
   );
 };
 
-export default DepartmentConsumptionForm;
+export default ProductConsumptionForm;

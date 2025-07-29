@@ -1,7 +1,6 @@
 import CustomButton from "@/components/Button/CustomButton";
 import { GrnDetailDto } from "@/interfaces/InventoryManagement/GRNDto";
 import { ProductBatchDto } from "@/interfaces/InventoryManagement/ProductBatchDto";
-
 import { ProductConsumptionDetailDto } from "@/interfaces/InventoryManagement/ProductConsumption";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { BatchSelectionDialog, useBatchSelection } from "@/pages/inventoryManagement/CommonPage/BatchSelectionDialog";
@@ -38,7 +37,7 @@ const consumptionDetailSchema = z.object({
   unitPrice: z.number().optional(),
   tax: z.number().optional(),
   sellUnitPrice: z.number().optional(),
-  affectedQty: z.number().min(0, "Consumed quantity must be non-negative"),
+  affectedQty: z.number().min(0.01, "Consumed quantity must be greater than 0").optional(),
   affectedUnitQty: z.number().optional(),
   availableQty: z.number().optional(),
   prescriptionYN: z.string().optional(),
@@ -59,41 +58,49 @@ const consumptionDetailSchema = z.object({
   grnDetID: z.number(),
   grnDate: z.date(),
   auGrpID: z.number(),
+  totalValue: z.number().optional(),
   consumptionRemarks: z.string().optional(),
+  rActiveYN: z.string().optional(),
 });
 
-const schema = z.object({
+const productConsumptionSchema = z.object({
   deptConsID: z.number(),
   deptConsDate: z.date(),
   fromDeptID: z.number().min(1, "Department is required"),
-  fromDeptName: z.string(),
+  fromDeptName: z.string().min(1, "Department name is required"),
   auGrpID: z.number().optional(),
   catDesc: z.string().optional(),
   catValue: z.string().optional(),
-  deptConsCode: z.string().optional(),
+  deptConsCode: z.string().min(1, "Consumption code is required"),
   rActiveYN: z.string().default("Y"),
-  details: z.array(consumptionDetailSchema).min(1, "At least one product detail is required"),
+  consumptionRemarks: z.string().optional(),
+  details: z
+    .array(consumptionDetailSchema)
+    .min(1, "At least one product detail is required")
+    .refine(
+      (details) => {
+        const validProducts = details.filter((detail) => detail.productID > 0 && detail.affectedQty && detail.affectedQty > 0);
+        return validProducts.length > 0;
+      },
+      {
+        message: "At least one product must have consuming quantity greater than 0",
+      }
+    ),
 });
 
-type DepartmentConsumptionFormData = z.infer<typeof schema>;
+type DepartmentConsumptionFormData = z.infer<typeof productConsumptionSchema>;
 type DepartmentConsumptionDetailWithId = ProductConsumptionDetailDto & {
   id: string;
   cgst?: number;
   sgst?: number;
-  barcode?: string;
-  vedCode?: string;
-  abcCode?: string;
-  prescription?: string;
-  sellable?: string;
-  taxable?: string;
-  chargableYN?: string;
-  isAssetYN?: string;
-  leadTime?: number;
-  leadTimeDesc?: string;
-  rOL?: number;
-  universalCode?: number;
-  cgstPerValue?: number;
-  sgstPerValue?: number;
+  transNo?: string;
+  issuedDate?: Date;
+  hsnCode?: string;
+  issuedQty?: number;
+  pastConsumedQty?: number;
+  pastReturnQty?: number;
+  qohUnits?: number;
+  totalUnitPrice?: number;
 };
 
 interface DepartmentConsumptionProductDetailsSectionProps {
@@ -118,7 +125,7 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
   showAlert,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductListDto | null>(null);
-  const [selectedProductConsumedQty, setSelectedProductConsumedQty] = useState<number | undefined>(undefined);
+  const [selectedProductConsumedQty, setSelectedProductConsumedQty] = useState<number>(1);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isLoadingBatches, setIsLoadingBatches] = useState(false);
   const [editingProductIndex, setEditingProductIndex] = useState<number | null>(null);
@@ -135,7 +142,7 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
 
   const clearTemporaryFields = useCallback(() => {
     setSelectedProduct(null);
-    setSelectedProductConsumedQty(undefined);
+    setSelectedProductConsumedQty(1);
     setIsAddingProduct(false);
     setIsLoadingBatches(false);
     setEditingProductIndex(null);
@@ -144,62 +151,6 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
     setProductSearchInputValue("");
     setClearProductSearchTrigger((prev) => prev + 1);
   }, []);
-
-  const mapCompleteProductListToConsumptionDetail = useCallback(
-    (completeProduct: ProductListDto, batch: ProductBatchDto, consumedQty: number = 0, existingDetail?: any): ProductConsumptionDetailDto => {
-      const safeConsumedQty = Math.max(0, consumedQty);
-      const unitPrice = batch.sellingPrice || completeProduct.defaultPrice || 0;
-
-      return {
-        deptConsDetID: existingDetail?.deptConsDetID || 0,
-        deptConsID: existingDetail?.deptConsID || 0,
-        psdid: existingDetail?.psdid || 0,
-        pisid: existingDetail?.pisid || 0,
-        psbid: batch.grnDetID || 0,
-        pGrpID: completeProduct.pGrpID || 0,
-        pGrpName: completeProduct.productGroupName || "",
-        productID: completeProduct.productID,
-        productCode: completeProduct.productCode || "",
-        productName: completeProduct.productName || "",
-        catValue: completeProduct.catValue || "MEDI",
-        catDesc: completeProduct.catDescription || "REVENUE",
-        mfID: completeProduct.mFID || completeProduct.manufacturerID || 0,
-        mfName: completeProduct.MFName || completeProduct.manufacturerName || "",
-        pUnitID: completeProduct.pUnitID || 0,
-        pUnitName: completeProduct.pUnitName || "",
-        pUnitsPerPack: completeProduct.unitPack || 1,
-        pkgID: completeProduct.pPackageID || 0,
-        pkgName: completeProduct.productPackageName || "",
-        batchNo: batch.batchNo || "",
-        expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : undefined,
-        unitPrice: unitPrice,
-        tax: completeProduct.gstPerValue || 0,
-        sellUnitPrice: unitPrice,
-        affectedQty: existingDetail?.affectedQty || safeConsumedQty,
-        affectedUnitQty: existingDetail?.affectedUnitQty || safeConsumedQty * (completeProduct.unitPack || 1),
-        availableQty: batch.productQOH || 0,
-        prescriptionYN: completeProduct.prescription || "N",
-        expiryYN: completeProduct.expiry || "N",
-        sellableYN: completeProduct.sellable || "Y",
-        taxableYN: completeProduct.taxable || "Y",
-        psGrpID: completeProduct.psGrpID || 0,
-        psGrpName: completeProduct.psGroupName || "",
-        manufacturerID: completeProduct.manufacturerID || 0,
-        manufacturerCode: completeProduct.manufacturerCode || "",
-        manufacturerName: completeProduct.manufacturerName || "",
-        taxID: completeProduct.taxID || 0,
-        taxCode: completeProduct.taxCode || "",
-        taxName: completeProduct.taxName || "",
-        mrp: completeProduct.defaultPrice || 0,
-        grnDetID: batch.grnDetID || 0,
-        grnDate: new Date(),
-        auGrpID: 18,
-        consumptionRemarks: existingDetail?.consumptionRemarks || completeProduct.productNotes || "",
-        rActiveYN: "Y",
-      };
-    },
-    []
-  );
 
   const convertGrnToBatchDto = useCallback(
     (grn: GrnDetailDto, product: ProductListDto): ProductBatchDto => {
@@ -223,27 +174,69 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
       try {
         setIsLoadingBatches(true);
         closeBatchDialog();
+
         const productResponse = await productListService.getById(batch.productID);
         if (!productResponse.success || !productResponse.data) {
           throw new Error(`Failed to fetch complete ProductListDto for productID: ${batch.productID}`);
         }
-        const completeProductData = productResponse.data;
+        const completeProductData: ProductListDto = productResponse.data;
+
+        const newProductDetail: ProductConsumptionDetailDto = {
+          deptConsDetID: 0,
+          deptConsID: 0,
+          psdid: Math.max(1, batch.grnDetID || 1),
+          pisid: Math.max(1, batch.grnDetID || 1),
+          psbid: Math.max(1, batch.grnDetID || 1),
+          pGrpID: completeProductData.pGrpID || 0,
+          pGrpName: completeProductData.productGroupName || "",
+          productID: completeProductData.productID,
+          productCode: (completeProductData.productCode || "").substring(0, 100),
+          productName: (completeProductData.productName || "").substring(0, 200),
+          catValue: (completeProductData.catValue || "MEDI").substring(0, 5),
+          catDesc: (completeProductData.catDescription || "REVENUE").substring(0, 200),
+          mfID: completeProductData.mFID || 0,
+          mfName: completeProductData.MFName || completeProductData.manufacturerName || "",
+          pUnitID: completeProductData.pUnitID || 0,
+          pUnitName: completeProductData.pUnitName || "",
+          pUnitsPerPack: Math.max(1, completeProductData.unitPack || 1),
+          pkgID: completeProductData.pPackageID || 0,
+          pkgName: completeProductData.productPackageName || "",
+          batchNo: (batch.batchNo || "").substring(0, 30),
+          expiryDate: batch.expiryDate ? new Date(batch.expiryDate) : undefined,
+          unitPrice: Math.max(0, batch.sellingPrice || completeProductData.defaultPrice || 0),
+          tax: Math.max(0, completeProductData.gstPerValue || 0),
+          sellUnitPrice: Math.max(0, batch.sellingPrice || completeProductData.defaultPrice || 0),
+          affectedQty: Math.max(0.01, selectedProductConsumedQty || 0),
+          affectedUnitQty: Math.max(0.01, (selectedProductConsumedQty || 1) * Math.max(1, completeProductData.unitPack || 1)),
+          prescriptionYN: completeProductData.prescription === "Y" || completeProductData.prescription === "N" ? completeProductData.prescription : "N",
+          expiryYN: completeProductData.expiry === "Y" || completeProductData.expiry === "N" ? completeProductData.expiry : "N",
+          sellableYN: completeProductData.sellable === "Y" || completeProductData.sellable === "N" ? completeProductData.sellable : "Y",
+          taxableYN: completeProductData.taxable === "Y" || completeProductData.taxable === "N" ? completeProductData.taxable : "Y",
+          psGrpID: completeProductData.psGrpID || 0,
+          psGrpName: completeProductData.psGroupName || "",
+          manufacturerID: completeProductData.manufacturerID || 0,
+          manufacturerCode: completeProductData.manufacturerCode || "",
+          manufacturerName: completeProductData.manufacturerName || "",
+          taxID: completeProductData.taxID || 0,
+          taxCode: completeProductData.taxCode || "",
+          taxName: completeProductData.taxName || "",
+          mrp: Math.max(0, completeProductData.defaultPrice || 0),
+          grnDetID: Math.max(1, batch.grnDetID || 1),
+          grnDate: new Date(Math.min(Date.now(), batch.expiryDate ? new Date(batch.expiryDate).getTime() : Date.now())),
+          auGrpID: 18,
+          totalValue: Math.max(0, (selectedProductConsumedQty || 1) * (batch.sellingPrice || completeProductData.defaultPrice || 0)),
+          availableQty: batch.productQOH || 0,
+          consumptionRemarks: (completeProductData.productNotes || "").substring(0, 500),
+          rActiveYN: "Y",
+        };
 
         if (isEditingExistingProduct && editingProductIndex !== null) {
-          const existingProduct = fields[editingProductIndex];
-          const newProductDetail = mapCompleteProductListToConsumptionDetail(
-            completeProductData,
-            batch,
-            selectedProductConsumedQty || existingProduct?.affectedQty || 0,
-            existingProduct
-          );
           setValue(`details.${editingProductIndex}`, newProductDetail, {
             shouldValidate: true,
             shouldDirty: true,
           });
           showAlert("Success", `Department consumption product "${completeProductData.productName}" updated successfully`, "success");
         } else {
-          const newProductDetail = mapCompleteProductListToConsumptionDetail(completeProductData, batch, selectedProductConsumedQty || 0, null);
           append(newProductDetail);
           showAlert("Success", `Product "${completeProductData.productName}" added for department consumption, batch: ${batch.batchNo}`, "success");
         }
@@ -256,18 +249,7 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
         setIsLoadingBatches(false);
       }
     },
-    [
-      selectedProductConsumedQty,
-      isEditingExistingProduct,
-      editingProductIndex,
-      fields,
-      append,
-      setValue,
-      showAlert,
-      closeBatchDialog,
-      clearTemporaryFields,
-      mapCompleteProductListToConsumptionDetail,
-    ]
+    [selectedProductConsumedQty, isEditingExistingProduct, editingProductIndex, append, setValue, showAlert, closeBatchDialog, clearTemporaryFields]
   );
 
   const handleProductSelect = useCallback(
@@ -361,7 +343,7 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
   const statistics = useMemo(() => {
     const totalProducts = watchedDetails?.length || 0;
     const totalConsumedQty = watchedDetails?.reduce((sum, item) => sum + (item.affectedQty || 0), 0) || 0;
-    const totalValue = watchedDetails?.reduce((sum, item) => sum + (item.unitPrice || 0) * (item.affectedQty || 0), 0) || 0;
+    const totalValue = watchedDetails?.reduce((sum, item) => sum + (item.totalValue || 0), 0) || 0;
     const zeroQohItems = watchedDetails?.filter((item) => (item.availableQty || 0) === 0).length || 0;
     const expiring30Days =
       watchedDetails?.filter((item) => {
@@ -429,7 +411,6 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
         sellUnitPrice: field.sellUnitPrice ?? 0,
         affectedQty: field.affectedQty ?? 0,
         affectedUnitQty: field.affectedUnitQty ?? 0,
-        availableQty: field.availableQty ?? 0,
         prescriptionYN: field.prescriptionYN ?? "N",
         expiryYN: field.expiryYN ?? "N",
         sellableYN: field.sellableYN ?? "Y",
@@ -446,9 +427,21 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
         grnDetID: field.grnDetID ?? 0,
         grnDate: field.grnDate ?? new Date(),
         auGrpID: field.auGrpID ?? 18,
+        totalValue: field.totalValue ?? 0,
+        availableQty: field.availableQty ?? 0,
         consumptionRemarks: field.consumptionRemarks ?? "",
-        rActiveYN: "Y",
+        rActiveYN: field.rActiveYN ?? "Y",
         id: `${field.productID}-${field.deptConsDetID || index}`,
+
+        // Additional fields for the enhanced grid
+        transNo: field.grnDetID ? `TXN-${field.grnDetID}` : `TXN-${index + 1}`,
+        issuedDate: field.grnDate ? new Date(field.grnDate) : new Date(),
+        hsnCode: field.taxCode || field.productCode || "",
+        issuedQty: field.affectedQty || 0,
+        pastConsumedQty: 0, // This would come from historical data
+        pastReturnQty: 0, // This would come from historical data
+        qohUnits: field.availableQty || 0,
+        totalUnitPrice: (field.affectedQty || 0) * (field.unitPrice || 0),
       };
 
       return row;
@@ -479,14 +472,26 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
       },
     },
     {
-      field: "productCode",
-      headerName: "Product Code",
+      field: "transNo",
+      headerName: "Trans No",
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", fontWeight: 500, color: "primary.main" }}>
+          {params.value || ""}
+        </Typography>
+      ),
+    },
+    {
+      field: "issuedDate",
+      headerName: "Issued Date",
       width: 120,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
-          {params.value || ""}
+        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+          {params.value ? new Date(params.value).toLocaleDateString() : ""}
         </Typography>
       ),
     },
@@ -503,6 +508,18 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
             {params.value || ""}
           </Typography>
         </Tooltip>
+      ),
+    },
+    {
+      field: "hsnCode",
+      headerName: "HSN Code",
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+          {params.value || ""}
+        </Typography>
       ),
     },
     {
@@ -533,29 +550,21 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
       ),
     },
     {
-      field: "availableQty",
-      headerName: "Available Qty",
-      width: 120,
+      field: "issuedQty",
+      headerName: "Issued Qty",
+      width: 100,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Typography
-          variant="body2"
-          sx={{
-            fontSize: "0.875rem",
-            textAlign: "right",
-            color: (params.value || 0) === 0 ? "warning.main" : "inherit",
-            fontWeight: (params.value || 0) === 0 ? 600 : 400,
-          }}
-        >
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
           {params.value || 0}
         </Typography>
       ),
     },
     {
       field: "affectedQty",
-      headerName: "Consumed Qty",
-      width: 140,
+      headerName: "Consuming Qty",
+      width: 130,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -573,8 +582,10 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
             </Typography>
           );
         }
+
         const currentValue = watchedDetails?.[index]?.affectedQty || params.row.affectedQty || 0;
         const availableQty = watchedDetails?.[index]?.availableQty || params.row.availableQty || 0;
+        const unitsPerPack = watchedDetails?.[index]?.pUnitsPerPack || params.row.pUnitsPerPack || 1;
 
         return (
           <TextField
@@ -584,7 +595,11 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
             onChange={(e) => {
               const value = parseFloat(e.target.value) || 0;
               if (value > availableQty) {
-                showAlert("Warning", `Consumed quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
+                showAlert("Warning", `Consuming quantity (${value}) cannot exceed available quantity (${availableQty})`, "warning");
+                return;
+              }
+              if (value <= 0) {
+                showAlert("Warning", "Consuming quantity must be greater than 0", "warning");
                 return;
               }
 
@@ -592,7 +607,12 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
                 shouldValidate: true,
                 shouldDirty: true,
               });
-              setValue(`details.${index}.affectedUnitQty`, value * (watchedDetails?.[index]?.pUnitsPerPack || 1), {
+              setValue(`details.${index}.affectedUnitQty`, value * unitsPerPack, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+              const unitPrice = watchedDetails?.[index]?.unitPrice || params.row.unitPrice || 0;
+              setValue(`details.${index}.totalValue`, value * unitPrice, {
                 shouldValidate: true,
                 shouldDirty: true,
               });
@@ -600,19 +620,63 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
             onClick={(e) => e.stopPropagation()}
             onFocus={(e) => e.stopPropagation()}
             disabled={isViewMode}
-            inputProps={{ min: 0, max: availableQty, step: 0.01 }}
-            error={!!errors.details?.[index]?.affectedQty || currentValue > availableQty}
-            helperText={currentValue > availableQty ? "Cannot exceed available qty" : ""}
+            inputProps={{ min: 0.01, max: availableQty, step: 0.01 }}
+            error={!!errors.details?.[index]?.affectedQty || currentValue > availableQty || currentValue <= 0}
             sx={{
-              width: "120px",
+              width: "110px",
               "& .MuiInputBase-input": {
                 cursor: "text",
                 textAlign: "right",
+                fontSize: "0.875rem",
               },
             }}
           />
         );
       },
+    },
+    {
+      field: "pastConsumedQty",
+      headerName: "Past Consumed Qty",
+      width: 130,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
+          {params.value || 0}
+        </Typography>
+      ),
+    },
+    {
+      field: "pastReturnQty",
+      headerName: "Past Return Qty",
+      width: 120,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
+          {params.value || 0}
+        </Typography>
+      ),
+    },
+    {
+      field: "qohUnits",
+      headerName: "QOH(Units)",
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: "0.875rem",
+            textAlign: "right",
+            color: (params.value || 0) === 0 ? "warning.main" : "inherit",
+            fontWeight: (params.value || 0) === 0 ? 600 : 400,
+          }}
+        >
+          {params.value || 0}
+        </Typography>
+      ),
     },
     {
       field: "expiryDate",
@@ -651,6 +715,18 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
       ),
     },
     {
+      field: "totalUnitPrice",
+      headerName: "Total Unit Price",
+      width: 120,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right", fontWeight: 600, color: "primary.main" }}>
+          ₹{(params.value || 0).toFixed(2)}
+        </Typography>
+      ),
+    },
+    {
       field: "tax",
       headerName: "GST %",
       width: 80,
@@ -663,57 +739,33 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
       ),
     },
     {
-      field: "consumptionRemarks",
-      headerName: "Remarks",
-      width: 150,
+      field: "cgst",
+      headerName: "CGST %",
+      width: 80,
       sortable: false,
       filterable: false,
-      renderCell: (params) => {
-        const index = fields.findIndex((field) => {
-          if (field.deptConsDetID && params.row.deptConsDetID) {
-            return field.deptConsDetID === params.row.deptConsDetID;
-          }
-          return field.productID === params.row.productID;
-        });
-
-        if (index === -1 || isViewMode) {
-          return (
-            <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
-              {params.row.consumptionRemarks || ""}
-            </Typography>
-          );
-        }
-
-        const currentValue = watchedDetails?.[index]?.consumptionRemarks || params.row.consumptionRemarks || "";
-
-        return (
-          <TextField
-            size="small"
-            value={currentValue}
-            onChange={(e) => {
-              setValue(`details.${index}.consumptionRemarks`, e.target.value, {
-                shouldValidate: true,
-                shouldDirty: true,
-              });
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onFocus={(e) => e.stopPropagation()}
-            disabled={isViewMode}
-            placeholder="Add remarks..."
-            sx={{
-              width: "130px",
-              "& .MuiInputBase-input": {
-                cursor: "text",
-              },
-            }}
-          />
-        );
-      },
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
+          {(params.value || 0).toFixed(2)}%
+        </Typography>
+      ),
+    },
+    {
+      field: "sgst",
+      headerName: "SGST %",
+      width: 80,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ fontSize: "0.875rem", textAlign: "right" }}>
+          {(params.value || 0).toFixed(2)}%
+        </Typography>
+      ),
     },
     {
       field: "actions",
-      headerName: "Actions",
-      width: 100,
+      headerName: "Delete",
+      width: 80,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -815,12 +867,21 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
                 label="Consumption Quantity"
                 type="number"
                 value={selectedProductConsumedQty || ""}
-                onChange={(e) => setSelectedProductConsumedQty(parseFloat(e.target.value) || undefined)}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value) || 1;
+                  if (value <= 0) {
+                    showAlert("Warning", "Consumption quantity must be greater than 0", "warning");
+                    return;
+                  }
+                  setSelectedProductConsumedQty(value);
+                }}
                 disabled={isViewMode || !selectedProduct || isAddingProduct || isLoadingBatches}
                 size="small"
                 fullWidth
-                inputProps={{ min: 0, step: 0.01 }}
+                inputProps={{ min: 0.01, step: 0.01 }}
                 placeholder="Enter quantity consumed"
+                error={selectedProductConsumedQty <= 0}
+                helperText={selectedProductConsumedQty <= 0 ? "Must be greater than 0" : ""}
               />
             </Grid>
 
@@ -840,6 +901,8 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
                 <strong>Product Selected for Consumption:</strong> {selectedProduct.productName}
                 <br />
                 <strong>Product Code:</strong> {selectedProduct.productCode || "N/A"}
+                <br />
+                <strong>Manufacturer:</strong> {selectedProduct.manufacturerName || "N/A"}
                 <br />
                 <strong>Status:</strong> Waiting for batch selection for consumption...
               </Typography>
@@ -949,22 +1012,22 @@ const DepartmentConsumptionProductDetailsSection: React.FC<DepartmentConsumption
 
               <Grid size={{ sm: 2, xs: 6 }}>
                 <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h6" color={statistics.expiring30Days > 0 ? "error.main" : "success.main"}>
-                    {statistics.expiring30Days}
+                  <Typography variant="h6" color={statistics.expiredItems > 0 ? "error.main" : "success.main"}>
+                    {statistics.expiredItems}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Expiring ≤30d
+                    Expired Items
                   </Typography>
                 </Box>
               </Grid>
 
               <Grid size={{ sm: 2, xs: 6 }}>
                 <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="h6" color={statistics.expiredItems > 0 ? "error.main" : "success.main"}>
-                    {statistics.expiredItems}
+                  <Typography variant="h6" color={statistics.expiring30Days > 0 ? "warning.main" : "success.main"}>
+                    {statistics.expiring30Days}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Expired Items
+                    Expiring ≤30 Days
                   </Typography>
                 </Box>
               </Grid>
