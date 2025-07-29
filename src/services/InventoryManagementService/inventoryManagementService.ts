@@ -4,6 +4,7 @@ import { ProductGroupDto, ProductSubGroupDto, ProductUnitDto } from "@/interface
 import { ProductIssualDetailDto, ProductIssualDto } from "@/interfaces/InventoryManagement/ProductIssualDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
+import { ProductStockReturnDetailDto, ProductStockReturnDto } from "@/interfaces/InventoryManagement/ProductStockReturnDto";
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
 import { PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
@@ -29,3 +30,5 @@ export const productConsumptionDetailService = createEntityService<ProductConsum
 
 // Note: The main ProductIssualCompositeService is imported separately from the ProductIssualService
 // This provides backward compatibility while the new service handles composite operations
+export const productStockReturnMastService = createEntityService<ProductStockReturnDto>("ProductStockReturn", "inventoryManagementURL");
+export const productStockReturnDetailService = createEntityService<ProductStockReturnDetailDto>("ProductStockReturnDetail", "inventoryManagementURL");

@@ -62,6 +62,7 @@ const HospWorkHoursPage = lazy(() => import("@/pages/frontOffice/HospWorkHours/M
 const AppointmentScheduler = lazy(() => import("@/pages/frontOffice/Appointment/AppointmentScheduler"));
 const AdvanceReceiptListPage = lazy(() => import("@/pages/billing/AdvanceReceipt/MainPage/AdvanceReceiptList"));
 const DepartmentConsumptionPage = lazy(() => import("@/pages/inventoryManagement/ProductConsumption/MainPage/ProductConsumptionList"));
+const ProductStockReturnPage = lazy(() => import("@/pages/inventoryManagement/ProductStockReturn/MainPage/ProductStockReturnMainPage "));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -664,6 +665,28 @@ const routeConfig: RouteConfig[] = [
       category: "default",
     },
   },
+
+  {
+    path: "/ProductStockReturnPage",
+    component: wrapWithSuspense(ProductStockReturnPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Product Stock Return  ",
+      category: "default",
+    },
+  },
+
+  //   {
+  //   path: "/PhysicianStockReturnPage",
+  //   component: wrapWithSuspense(PhysicianStockReturnPage),
+  //   protected: true,
+  //   providers: [AlertProvider],
+  //   metadata: {
+  //     title: "Department Consumption",
+  //     category: "default",
+  //   },
+  // },
 
   // 404 Not Found route - must be placed last to catch all unmatched routes
   {
