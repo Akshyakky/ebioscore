@@ -27,6 +27,7 @@ export interface InvStatusResponseDto {
   investigationName: string;
   sampleStatus: "Pending" | "Partially Collected" | "Collected" | "Rejected";
   investigationId: number;
+  sampleType: string;
   investigationCode: string;
 }
 
