@@ -51,6 +51,8 @@ export interface LabResultSaveRequestDto {
   labConsultantId?: number;
   labConsultantName?: string;
   isLabConsultantApproved?: boolean;
+  departmentId: number;
+  departmentName: string;
   results: LabResultItemDto[];
 }
 
@@ -59,6 +61,7 @@ export interface LabResultItemDto {
   investigationCode: string;
   investigationName: string;
   remarks?: string;
+  printOrder: number;
   componentResults?: ComponentResultDto[];
 }
 export interface ComponentResultDto {
@@ -74,9 +77,17 @@ export interface ComponentResultDto {
   referenceRange?: ReferenceRangeDto;
   resultStatus: "Normal" | "Abnormal";
   comments?: string;
+  interpretation?: string;
+  order?: number;
+  mainGroupId?: number;
+  mainGroupName?: string;
+  subTitleId?: number;
+  subTitleName?: string;
+  remarks?: string;
 }
 export interface ReferenceRangeDto {
   lowerValue?: number;
   UpperValue?: number;
   referenceRange?: string;
+  normal?: string;
 }
