@@ -39,3 +39,44 @@ export interface SampleStatusUpdateRequestDto {
   SampleCollectionDate: Date;
   SampleRejectionReason: string;
 }
+
+//
+
+export interface LabResultSaveRequestDto {
+  labRegNo: number;
+  serviceTypeId: number;
+  technicianId?: number;
+  technicianName?: string;
+  isTechnicianApproved?: boolean;
+  labConsultantId?: number;
+  labConsultantName?: string;
+  isLabConsultantApproved?: boolean;
+  results: LabResultItemDto[];
+}
+
+export interface LabResultItemDto {
+  investigationId: number;
+  investigationCode: string;
+  investigationName: string;
+  remarks?: string;
+  componentResults?: ComponentResultDto[];
+}
+export interface ComponentResultDto {
+  componentId: number;
+  componentCode: string;
+  componentName: string;
+  patuentValue: string;
+  unit?: string;
+  status: "Normal" | "Abnormal";
+  resultTypeId: 1 | 2 | 3 | 4 | 5 | 6 | 7; // 1: Single Line Alphanumeric, 2: Single Line Numeric, 3: Multi Line, 4: Multiple Selection, 5: Reference Values, 6: Template Values
+  resultTypeName: string;
+  resultUnit?: string;
+  referenceRange?: ReferenceRangeDto;
+  resultStatus: "Normal" | "Abnormal";
+  comments?: string;
+}
+export interface ReferenceRangeDto {
+  lowerValue?: number;
+  UpperValue?: number;
+  referenceRange?: string;
+}
