@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 // Component imports
 import ConfirmationDialog from "../../../components/Dialog/ConfirmationDialog";
 import { AppointmentDetailsDialog } from "./components/AppointmentDetailsDialog";
-import { BookingDialog } from "./components/BookingDialog";
 import { DayView } from "./components/DayView";
 import { MonthView } from "./components/MonthView";
 import { SchedulerStatistics } from "./components/SchedulerStatistics";
@@ -19,6 +18,7 @@ import { useTimeSlots } from "./hooks/useTimeSlots";
 
 // Types
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import BookingDialog from "./components/BookingDialog";
 import { SchedulerHeader } from "./components/SchedulerHeader";
 
 const AppointmentScheduler: React.FC = () => {
@@ -28,7 +28,6 @@ const AppointmentScheduler: React.FC = () => {
   const [viewMode, setViewMode] = useState("day");
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointBookingDto | null>(null);
-  const [isRegisteredPatient, setIsRegisteredPatient] = useState(true);
   const [bookingMode, setBookingMode] = useState("physician");
   const [selectedProvider, setSelectedProvider] = useState("");
   const [selectedResource, setSelectedResource] = useState("");
@@ -251,8 +250,7 @@ const AppointmentScheduler: React.FC = () => {
     setPendingElapsedSlot(null);
   };
 
-  const handleBookingSubmit = () => {
-    console.log("Booking data:", bookingForm);
+  const handleBookingSubmit = async (bookingData: AppointBookingDto) => {
     setShowBookingDialog(false);
 
     // Reset form
@@ -397,13 +395,11 @@ const AppointmentScheduler: React.FC = () => {
       <BookingDialog
         open={showBookingDialog}
         bookingForm={bookingForm}
-        isRegisteredPatient={isRegisteredPatient}
         providers={providers}
         resources={resources}
         onClose={() => setShowBookingDialog(false)}
         onSubmit={handleBookingSubmit}
         onFormChange={setBookingForm}
-        onRegisteredPatientChange={setIsRegisteredPatient}
       />
 
       <AppointmentDetailsDialog appointment={selectedAppointment} onClose={() => setSelectedAppointment(null)} onEdit={handleAppointmentEdit} onCancel={handleAppointmentCancel} />

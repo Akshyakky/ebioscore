@@ -5,253 +5,258 @@ import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField"
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { AppointBookingDto, APPOINTMENT_STATUS_OPTIONS, DURATION_OPTIONS, PATIENT_TYPE_OPTIONS } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { AppointBookingDto, DURATION_OPTIONS, PATIENT_TYPE_OPTIONS } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  CalendarToday as CalendarIcon,
   Clear as ClearIcon,
   ExpandMore as ExpandMoreIcon,
-  Person as PersonIcon,
+  LocalHospital as HospitalIcon,
+  Person as PatientIcon,
   Save as SaveIcon,
   Schedule as ScheduleIcon,
 } from "@mui/icons-material";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, FormControlLabel, Grid, Paper, Stack, Switch, Typography } from "@mui/material";
-import dayjs from "dayjs";
-import React, { useCallback, useEffect, useState } from "react";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Avatar,
+  Box,
+  Chip,
+  Divider,
+  FormControlLabel,
+  Grid,
+  Radio,
+  RadioGroup,
+  Stack,
+  Switch,
+  Typography,
+} from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 // Enhanced schema for appointment booking
-const bookingSchema = z
-  .object({
-    abID: z.number().default(0),
-    abFName: z.string().min(1, "First name is required"),
-    abLName: z.string().optional().default(""),
-    abMName: z.string().optional().default(""),
-    hplID: z.number().min(1, "Provider is required"),
-    providerName: z.string().default(""),
-    rlID: z.number().min(1, "Resource is required"),
-    rlName: z.string().default(""),
-    arlID: z.number().optional().default(0),
-    arlName: z.string().optional().default(""),
-    abDuration: z.number().min(15, "Duration must be at least 15 minutes"),
-    abDurDesc: z.string().default(""),
-    abDate: z.date(),
-    abTime: z.date(),
-    abEndTime: z.date(),
-    pChartID: z.number().optional().default(0),
-    pChartCode: z.string().optional().default(""),
-    abPType: z.string().min(1, "Patient type is required"),
-    abStatus: z.string().min(1, "Status is required"),
-    appPhone1: z.string().min(1, "Primary phone is required"),
-    appPhone2: z.string().optional().default(""),
-    patRegisterYN: z.enum(["Y", "N"]).default("N"),
-    otBookNo: z.number().default(0),
-    atID: z.number().optional().default(0),
-    atName: z.string().optional().default(""),
-    pNatID: z.number().optional().default(0),
-    pNatName: z.string().optional().default(""),
-    patOPIP: z.string().default("O"),
-    admitID: z.number().optional().default(0),
-    wNameID: z.number().optional().default(0),
-    wName: z.string().optional().default(""),
-    wCatID: z.number().optional().default(0),
-    wCatName: z.string().optional().default(""),
-    roomID: z.number().optional().default(0),
-    roomName: z.string().optional().default(""),
-    bedID: z.number().optional().default(0),
-    bedName: z.string().optional().default(""),
-    crID: z.number().optional().default(0),
-    crName: z.string().optional().default(""),
-    procNotes: z.string().optional().default(""),
-    arlInstructions: z.string().optional().default(""),
-    abTitle: z.string().optional().default(""),
-    cancelReason: z.string().optional().default(""),
-    city: z.string().optional().default(""),
-    dob: z.date().optional(),
-    email: z.string().email().optional().or(z.literal("")),
-    pChartCompID: z.number().optional().default(0),
-    rSchdleID: z.number().optional().default(0),
-    rschdleBy: z.string().optional().default(""),
-    pssnId: z.string().optional().default(""),
-    intIdPsprt: z.string().optional().default(""),
-    oldPChartID: z.number().optional().default(0),
-  })
-  .refine(
-    (data) => {
-      if (data.patRegisterYN === "Y" && data.pChartID === 0) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Patient selection is required for registered patients",
-      path: ["pChartID"],
-    }
-  )
-  .refine(
-    (data) => {
-      return data.abEndTime > data.abTime;
-    },
-    {
-      message: "End time must be after start time",
-      path: ["abEndTime"],
-    }
-  );
+const appointmentBookingSchema = z.object({
+  // Basic appointment information
+  abID: z.number().default(0),
+  abFName: z.string().min(1, "First name is required"),
+  abLName: z.string().min(1, "Last name is required"),
+  abMName: z.string().optional().default(""),
+  abTitle: z.string().optional().default(""),
 
-type BookingFormData = z.infer<typeof bookingSchema>;
+  // Provider and resource information
+  hplID: z.number().min(1, "Provider is required"),
+  providerName: z.string().default(""),
+  rlID: z.number().min(1, "Resource is required"),
+  rlName: z.string().default(""),
+
+  // Reason and duration
+  arlID: z.number().optional().default(0),
+  arlName: z.string().optional().default(""),
+  abDuration: z.number().min(15, "Duration must be at least 15 minutes").default(30),
+  abDurDesc: z.string().default("30 minutes"),
+
+  // Date and time
+  abDate: z.date(),
+  abTime: z.date(),
+  abEndTime: z.date(),
+
+  // Patient information
+  pChartID: z.number().optional().default(0),
+  pChartCode: z.string().optional().default(""),
+  abPType: z.string().min(1, "Patient type is required"),
+  abStatus: z.string().default("Booked"),
+  patRegisterYN: z.enum(["Y", "N"]).default("Y"),
+
+  // Contact information (for non-registered patients)
+  appPhone1: z.string().optional().default(""),
+  appPhone2: z.string().optional().default(""),
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+  city: z.string().optional().default(""),
+  dob: z.date().optional(),
+
+  // Additional information
+  procNotes: z.string().optional().default(""),
+  arlInstructions: z.string().optional().default(""),
+
+  // Insurance and billing
+  atID: z.number().optional().default(0),
+  atName: z.string().optional().default(""),
+  pNatID: z.number().optional().default(0),
+  pNatName: z.string().optional().default(""),
+  patOPIP: z.string().default("O"),
+
+  // Admission related (for inpatient appointments)
+  admitID: z.number().optional().default(0),
+  wNameID: z.number().optional().default(0),
+  wName: z.string().optional().default(""),
+  wCatID: z.number().optional().default(0),
+  wCatName: z.string().optional().default(""),
+  roomID: z.number().optional().default(0),
+  roomName: z.string().optional().default(""),
+  bedID: z.number().optional().default(0),
+  bedName: z.string().optional().default(""),
+
+  // Consultant role
+  crID: z.number().optional().default(0),
+  crName: z.string().optional().default(""),
+
+  // Additional fields
+  cancelReason: z.string().optional().default(""),
+  pChartCompID: z.number().optional().default(0),
+  rSchdleID: z.number().optional().default(0),
+  rschdleBy: z.string().optional().default(""),
+  pssnId: z.string().optional().default(""),
+  intIdPsprt: z.string().optional().default(""),
+  oldPChartID: z.number().optional().default(0),
+  otBookNo: z.number().default(0),
+});
+
+type BookingFormData = z.infer<typeof appointmentBookingSchema>;
 
 interface BookingDialogProps {
   open: boolean;
+  onClose: () => void;
+  onSubmit: (bookingData: AppointBookingDto) => Promise<void>;
   bookingForm: AppointBookingDto;
-  isRegisteredPatient: boolean;
+  onFormChange: (bookingData: AppointBookingDto) => void;
   providers: Array<{ value: number; label: string; type: string }>;
   resources: Array<{ value: number; label: string; type: string }>;
-  onClose: () => void;
-  onSubmit: () => void;
-  onFormChange: (form: AppointBookingDto) => void;
-  onRegisteredPatientChange: (isRegistered: boolean) => void;
+  existingAppointment?: AppointBookingDto;
 }
 
-export const BookingDialog: React.FC<BookingDialogProps> = ({
-  open,
-  bookingForm,
-  isRegisteredPatient,
-  providers,
-  resources,
-  onClose,
-  onSubmit,
-  onFormChange,
-  onRegisteredPatientChange,
-}) => {
+const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, bookingForm, onFormChange, providers, resources, existingAppointment }) => {
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
-  const [patientDetailsExpanded, setPatientDetailsExpanded] = useState(false);
-  const [appointmentDetailsExpanded, setAppointmentDetailsExpanded] = useState(true);
-  const [contactDetailsExpanded, setContactDetailsExpanded] = useState(false);
+  const [patientSearchClear, setPatientSearchClear] = useState(0);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Accordion states
+  const [patientAccordionExpanded, setPatientAccordionExpanded] = useState(true);
+  const [appointmentAccordionExpanded, setAppointmentAccordionExpanded] = useState(true);
+  const [additionalAccordionExpanded, setAdditionalAccordionExpanded] = useState(false);
 
   const { showAlert } = useAlert();
   const serverDate = useServerDate();
+  const isEditMode = !!existingAppointment;
 
   // Load dropdown values
-  const { nationality = [], title = [], reasonList = [] } = useDropdownValues(["nationality", "title", "reasonList"]);
+  const {
+    reasonList = [],
+    attendingPhy = [],
+    resourceList = [],
+    title = [],
+    nationality = [],
+    area = [],
+    city = [],
+    country = [],
+    consultantRole = [],
+    isLoading: dropdownLoading,
+  } = useDropdownValues(["reasonList", "attendingPhy", "resourceList", "title", "nationality", "area", "city", "country", "consultantRole"]);
 
   // Form setup with default values
+  const defaultValues: BookingFormData = useMemo(
+    () => ({
+      abID: existingAppointment?.abID || 0,
+      abFName: existingAppointment?.abFName || "",
+      abLName: existingAppointment?.abLName || "",
+      abMName: existingAppointment?.abMName || "",
+      abTitle: existingAppointment?.abTitle || "",
+      hplID: existingAppointment?.hplID || bookingForm.hplID || 0,
+      providerName: existingAppointment?.providerName || bookingForm.providerName || "",
+      rlID: existingAppointment?.rlID || bookingForm.rlID || 0,
+      rlName: existingAppointment?.rlName || bookingForm.rlName || "",
+      arlID: existingAppointment?.arlID || 0,
+      arlName: existingAppointment?.arlName || "",
+      abDuration: existingAppointment?.abDuration || bookingForm.abDuration || 30,
+      abDurDesc: existingAppointment?.abDurDesc || bookingForm.abDurDesc || "30 minutes",
+      abDate: existingAppointment?.abDate ? new Date(existingAppointment.abDate) : bookingForm.abDate ? new Date(bookingForm.abDate) : serverDate,
+      abTime: existingAppointment?.abTime ? new Date(existingAppointment.abTime) : bookingForm.abTime ? new Date(bookingForm.abTime) : serverDate,
+      abEndTime: existingAppointment?.abEndTime ? new Date(existingAppointment.abEndTime) : bookingForm.abEndTime ? new Date(bookingForm.abEndTime) : serverDate,
+      pChartID: existingAppointment?.pChartID || 0,
+      pChartCode: existingAppointment?.pChartCode || "",
+      abPType: existingAppointment?.abPType || "OP",
+      abStatus: existingAppointment?.abStatus || "Booked",
+      patRegisterYN: existingAppointment?.patRegisterYN === "Y" || existingAppointment?.patRegisterYN === "N" ? existingAppointment.patRegisterYN : "Y",
+      appPhone1: existingAppointment?.appPhone1 || "",
+      appPhone2: existingAppointment?.appPhone2 || "",
+      email: "",
+      city: existingAppointment?.city || "",
+      dob: existingAppointment?.dob ? new Date(existingAppointment.dob) : undefined,
+      procNotes: existingAppointment?.procNotes || "",
+      arlInstructions: existingAppointment?.arlInstructions || "",
+      atID: existingAppointment?.atID || 0,
+      atName: existingAppointment?.atName || "",
+      pNatID: existingAppointment?.pNatID || 0,
+      pNatName: existingAppointment?.pNatName || "",
+      patOPIP: existingAppointment?.patOPIP || "O",
+      admitID: existingAppointment?.admitID || 0,
+      wNameID: existingAppointment?.wNameID || 0,
+      wName: existingAppointment?.wName || "",
+      wCatID: existingAppointment?.wCatID || 0,
+      wCatName: existingAppointment?.wCatName || "",
+      roomID: existingAppointment?.roomID || 0,
+      roomName: existingAppointment?.roomName || "",
+      bedID: existingAppointment?.bedID || 0,
+      bedName: existingAppointment?.bedName || "",
+      crID: existingAppointment?.crID || 0,
+      crName: existingAppointment?.crName || "",
+      cancelReason: existingAppointment?.cancelReason || "",
+      pChartCompID: existingAppointment?.pChartCompID || 0,
+      rSchdleID: existingAppointment?.rSchdleID || 0,
+      rschdleBy: existingAppointment?.rschdleBy || "",
+      pssnId: existingAppointment?.pssnId || "",
+      intIdPsprt: existingAppointment?.intIdPsprt || "",
+      oldPChartID: existingAppointment?.oldPChartID || 0,
+      otBookNo: existingAppointment?.otBookNo || 0,
+    }),
+    [existingAppointment, bookingForm, serverDate]
+  );
+
   const {
     control,
     handleSubmit,
     reset,
     setValue,
     watch,
-    formState: { errors, isDirty, isValid, isSubmitting },
+    formState: { errors, isDirty, isValid },
   } = useForm<BookingFormData>({
-    resolver: zodResolver(bookingSchema),
+    resolver: zodResolver(appointmentBookingSchema),
     mode: "onChange",
-    defaultValues: {
-      abID: 0,
-      abFName: "",
-      abLName: "",
-      abMName: "",
-      hplID: 0,
-      providerName: "",
-      rlID: 0,
-      rlName: "",
-      arlID: 0,
-      arlName: "",
-      abDuration: 30,
-      abDurDesc: "30 minutes",
-      abDate: serverDate,
-      abTime: serverDate,
-      abEndTime: dayjs(serverDate).add(30, "minute").toDate(),
-      pChartID: 0,
-      pChartCode: "",
-      abPType: "",
-      abStatus: "Scheduled",
-      appPhone1: "",
-      appPhone2: "",
-      patRegisterYN: "N",
-      otBookNo: 0,
-      atID: 0,
-      atName: "",
-      pNatID: 0,
-      pNatName: "",
-      patOPIP: "O",
-      admitID: 0,
-      wNameID: 0,
-      wName: "",
-      wCatID: 0,
-      wCatName: "",
-      roomID: 0,
-      roomName: "",
-      bedID: 0,
-      bedName: "",
-      crID: 0,
-      crName: "",
-      procNotes: "",
-      arlInstructions: "",
-      abTitle: "",
-      cancelReason: "",
-      city: "",
-      dob: undefined,
-      email: "",
-      pChartCompID: 0,
-      rSchdleID: 0,
-      rschdleBy: "",
-      pssnId: "",
-      intIdPsprt: "",
-      oldPChartID: 0,
-    },
+    defaultValues,
   });
 
-  // Watch form values for dynamic behavior
+  // Watch form values for calculations and updates
   const watchedDuration = watch("abDuration");
   const watchedAbTime = watch("abTime");
   const watchedPatRegisterYN = watch("patRegisterYN");
+  const watchedAbPType = watch("abPType");
 
-  // Auto-calculate end time when duration or start time changes
+  // Calculate end time when duration or start time changes
   useEffect(() => {
     if (watchedAbTime && watchedDuration) {
-      const endTime = dayjs(watchedAbTime).add(watchedDuration, "minute").toDate();
-      setValue("abEndTime", endTime, { shouldValidate: true });
-
-      // Update duration description
-      const durationOption = DURATION_OPTIONS.find((opt) => opt.value === watchedDuration.toString());
-      setValue("abDurDesc", durationOption?.label || `${watchedDuration} minutes`, { shouldValidate: true });
+      const endTime = new Date(watchedAbTime);
+      endTime.setMinutes(endTime.getMinutes() + watchedDuration);
+      setValue("abEndTime", endTime, { shouldDirty: false });
     }
   }, [watchedAbTime, watchedDuration, setValue]);
 
   // Initialize form when dialog opens
   useEffect(() => {
     if (open) {
-      reset({
-        ...bookingForm,
-        patRegisterYN: isRegisteredPatient ? "Y" : "N",
-      });
-      setPatientDetailsExpanded(isRegisteredPatient);
-      setAppointmentDetailsExpanded(true);
-      setContactDetailsExpanded(!isRegisteredPatient);
+      reset(defaultValues);
+      setFormError(null);
+
+      // Auto-expand relevant accordions
+      setPatientAccordionExpanded(true);
+      setAppointmentAccordionExpanded(true);
+      setAdditionalAccordionExpanded(false);
     }
-  }, [open, bookingForm, isRegisteredPatient, reset]);
-
-  // Handle patient type toggle
-  const handlePatientTypeToggle = useCallback(
-    (checked: boolean) => {
-      setValue("patRegisterYN", checked ? "Y" : "N", { shouldValidate: true });
-      onRegisteredPatientChange(checked);
-      setPatientDetailsExpanded(checked);
-      setContactDetailsExpanded(!checked);
-
-      if (!checked) {
-        // Clear patient data for walk-in patients
-        setSelectedPatient(null);
-        setValue("pChartID", 0, { shouldValidate: true });
-        setValue("pChartCode", "", { shouldValidate: true });
-      }
-    },
-    [setValue, onRegisteredPatientChange]
-  );
+  }, [open, defaultValues, reset, setValue]);
 
   // Handle patient selection
   const handlePatientSelect = useCallback(
@@ -259,19 +264,21 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
       setSelectedPatient(patient);
 
       if (patient) {
-        setValue("pChartID", patient.pChartID, { shouldValidate: true });
-        setValue("pChartCode", patient.pChartCode, { shouldValidate: true });
+        setValue("pChartID", patient.pChartID, { shouldValidate: true, shouldDirty: true });
+        setValue("pChartCode", patient.pChartCode, { shouldValidate: true, shouldDirty: true });
 
-        // Extract name parts from fullName
+        // Parse full name to extract first and last name
         const nameParts = patient.fullName.split(" ");
-        setValue("abFName", nameParts[0] || "", { shouldValidate: true });
-        setValue("abLName", nameParts[nameParts.length - 1] || "", { shouldValidate: true });
+        setValue("abFName", nameParts[0] || "", { shouldValidate: true, shouldDirty: true });
+        setValue("abLName", nameParts[nameParts.length - 1] || "", { shouldValidate: true, shouldDirty: true });
         if (nameParts.length > 2) {
-          setValue("abMName", nameParts.slice(1, -1).join(" "), { shouldValidate: true });
+          setValue("abMName", nameParts.slice(1, -1).join(" "), { shouldValidate: true, shouldDirty: true });
         }
+
+        setValue("patRegisterYN", "Y", { shouldValidate: true, shouldDirty: true });
       } else {
-        setValue("pChartID", 0, { shouldValidate: true });
-        setValue("pChartCode", "", { shouldValidate: true });
+        setValue("pChartID", 0, { shouldValidate: true, shouldDirty: true });
+        setValue("pChartCode", "", { shouldValidate: true, shouldDirty: true });
       }
     },
     [setValue]
@@ -280,10 +287,10 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
   // Handle provider selection
   const handleProviderChange = useCallback(
     (value: any) => {
-      const selectedProvider = providers.find((provider) => provider.value === value.value);
+      const selectedProvider = providers.find((provider) => Number(provider.value) === Number(value.value));
       if (selectedProvider) {
-        setValue("hplID", selectedProvider.value, { shouldValidate: true });
-        setValue("providerName", selectedProvider.label, { shouldValidate: true });
+        setValue("hplID", Number(selectedProvider.value), { shouldValidate: true, shouldDirty: true });
+        setValue("providerName", selectedProvider.label, { shouldValidate: true, shouldDirty: true });
       }
     },
     [providers, setValue]
@@ -292,10 +299,10 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
   // Handle resource selection
   const handleResourceChange = useCallback(
     (value: any) => {
-      const selectedResource = resources.find((resource) => resource.value === value.value);
+      const selectedResource = resources.find((resource) => Number(resource.value) === Number(value.value));
       if (selectedResource) {
-        setValue("rlID", selectedResource.value, { shouldValidate: true });
-        setValue("rlName", selectedResource.label, { shouldValidate: true });
+        setValue("rlID", Number(selectedResource.value), { shouldValidate: true, shouldDirty: true });
+        setValue("rlName", selectedResource.label, { shouldValidate: true, shouldDirty: true });
       }
     },
     [resources, setValue]
@@ -304,69 +311,171 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
   // Handle reason selection
   const handleReasonChange = useCallback(
     (value: any) => {
-      const selectedReason = reasonList.find((reason) => reason.value === value.value);
+      const selectedReason = reasonList.find((reason) => Number(reason.value) === Number(value.value));
       if (selectedReason) {
-        setValue("arlID", Number(selectedReason.value), { shouldValidate: true });
-        setValue("arlName", selectedReason.label, { shouldValidate: true });
+        setValue("arlID", Number(selectedReason.value), { shouldValidate: true, shouldDirty: true });
+        setValue("arlName", selectedReason.label, { shouldValidate: true, shouldDirty: true });
       }
     },
     [reasonList, setValue]
   );
 
-  // Handle nationality selection
-  const handleNationalityChange = useCallback(
+  // Handle duration selection
+  const handleDurationChange = useCallback(
     (value: any) => {
-      const selectedNationality = nationality.find((nat) => nat.value === value.value);
-      if (selectedNationality) {
-        setValue("pNatID", Number(selectedNationality.value), { shouldValidate: true });
-        setValue("pNatName", selectedNationality.label, { shouldValidate: true });
+      const selectedDuration = DURATION_OPTIONS.find((duration) => duration.value === value.value);
+      if (selectedDuration) {
+        setValue("abDuration", Number(selectedDuration.value), { shouldValidate: true, shouldDirty: true });
+        setValue("abDurDesc", selectedDuration.label, { shouldValidate: true, shouldDirty: true });
       }
     },
-    [nationality, setValue]
+    [setValue]
   );
 
-  // Handle title selection
-  const handleTitleChange = useCallback(
+  // Handle consultant role selection
+  const handleConsultantRoleChange = useCallback(
     (value: any) => {
-      const selectedTitle = title.find((t) => t.value === value.value);
-      if (selectedTitle) {
-        setValue("abTitle", selectedTitle.label, { shouldValidate: true });
+      const selectedRole = consultantRole.find((role) => Number(role.value) === Number(value.value));
+      if (selectedRole) {
+        setValue("crID", Number(selectedRole.value), { shouldValidate: true, shouldDirty: true });
+        setValue("crName", selectedRole.label, { shouldValidate: true, shouldDirty: true });
       }
     },
-    [title, setValue]
+    [consultantRole, setValue]
+  );
+
+  // Handle patient type change
+  const handlePatientTypeChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setValue("abPType", event.target.value, { shouldValidate: true, shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  // Handle registered patient toggle
+  const handleRegisteredPatientToggle = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const isRegistered = event.target.checked;
+      setValue("patRegisterYN", isRegistered ? "Y" : "N", { shouldValidate: true, shouldDirty: true });
+
+      if (!isRegistered) {
+        // Clear patient selection when switching to non-registered
+        setSelectedPatient(null);
+        setPatientSearchClear((prev) => prev + 1);
+        setValue("pChartID", 0, { shouldValidate: true, shouldDirty: true });
+        setValue("pChartCode", "", { shouldValidate: true, shouldDirty: true });
+      }
+    },
+    [setValue]
   );
 
   // Form submission
   const onFormSubmit = async (data: BookingFormData) => {
+    setFormError(null);
+
     try {
-      // Update the parent form data
-      onFormChange(data as AppointBookingDto);
-      onSubmit();
+      setIsSubmitting(true);
+
+      // Validate required fields based on patient type
+      if (data.patRegisterYN === "Y" && !data.pChartID) {
+        throw new Error("Please select a registered patient");
+      }
+
+      if (data.patRegisterYN === "N" && (!data.abFName || !data.abLName || !data.appPhone1)) {
+        throw new Error("Please provide patient name and contact information");
+      }
+
+      // Transform form data to AppointBookingDto
+      const appointmentData: AppointBookingDto = {
+        abID: data.abID,
+        abFName: data.abFName,
+        abLName: data.abLName,
+        abMName: data.abMName,
+        abTitle: data.abTitle,
+        hplID: data.hplID,
+        providerName: data.providerName,
+        rlID: data.rlID,
+        rlName: data.rlName,
+        arlID: data.arlID,
+        arlName: data.arlName,
+        abDuration: data.abDuration,
+        abDurDesc: data.abDurDesc,
+        abDate: data.abDate,
+        abTime: data.abTime,
+        pChartID: data.pChartID,
+        pChartCode: data.pChartCode,
+        abPType: data.abPType,
+        abStatus: data.abStatus,
+        appPhone1: data.appPhone1,
+        appPhone2: data.appPhone2,
+        patRegisterYN: data.patRegisterYN,
+        otBookNo: data.otBookNo,
+        atID: data.atID,
+        atName: data.atName,
+        pNatID: data.pNatID,
+        pNatName: data.pNatName,
+        patOPIP: data.patOPIP,
+        admitID: data.admitID,
+        wNameID: data.wNameID,
+        wName: data.wName,
+        wCatID: data.wCatID,
+        wCatName: data.wCatName,
+        roomID: data.roomID,
+        roomName: data.roomName,
+        bedID: data.bedID,
+        bedName: data.bedName,
+        crID: data.crID,
+        crName: data.crName,
+        abEndTime: data.abEndTime,
+        procNotes: data.procNotes,
+        arlInstructions: data.arlInstructions,
+        cancelReason: data.cancelReason,
+        city: data.city,
+        dob: data.dob,
+        email: "",
+        pChartCompID: data.pChartCompID,
+        rSchdleID: data.rSchdleID,
+        rschdleBy: data.rschdleBy,
+        pssnId: data.pssnId,
+        intIdPsprt: data.intIdPsprt,
+        oldPChartID: data.oldPChartID,
+      };
+
+      await onSubmit(appointmentData);
     } catch (error) {
-      console.error("Error submitting booking:", error);
-      showAlert("Error", "Failed to save appointment booking", "error");
+      console.error("Error submitting appointment:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to book appointment";
+      setFormError(errorMessage);
+      showAlert("Error", errorMessage, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleClear = () => {
-    reset();
+  // Clear form
+  const handleClear = useCallback(() => {
+    reset(defaultValues);
     setSelectedPatient(null);
-  };
+    setPatientSearchClear((prev) => prev + 1);
+    setFormError(null);
+    onFormChange(bookingForm);
+  }, [reset, defaultValues, onFormChange, bookingForm]);
 
+  // Dialog actions
   const dialogActions = (
     <Stack direction="row" spacing={1}>
       <CustomButton variant="outlined" text="Clear" icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || !isDirty} color="inherit" size="small" />
       <CustomButton variant="outlined" text="Cancel" onClick={onClose} disabled={isSubmitting} size="small" />
       <SmartButton
         variant="contained"
-        text="Book Appointment"
+        text={isEditMode ? "Update Appointment" : "Book Appointment"}
         icon={SaveIcon}
         onAsyncClick={handleSubmit(onFormSubmit)}
         asynchronous
-        disabled={!isValid || !isDirty}
+        disabled={!isValid || isSubmitting}
         color="primary"
-        loadingText="Booking..."
-        successText="Booked!"
+        loadingText={isEditMode ? "Updating..." : "Booking..."}
+        successText={isEditMode ? "Updated!" : "Booked!"}
         size="small"
       />
     </Stack>
@@ -376,90 +485,151 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
     <GenericDialog
       open={open}
       onClose={onClose}
-      title="Book New Appointment"
-      maxWidth="md"
+      title={isEditMode ? "Edit Appointment" : "Book New Appointment"}
+      maxWidth="lg"
       fullWidth
       disableBackdropClick={isSubmitting}
       disableEscapeKeyDown={isSubmitting}
       actions={dialogActions}
     >
-      <Box sx={{ p: 1.5 }}>
-        <form onSubmit={handleSubmit(onFormSubmit)}>
-          <Grid container spacing={1.5}>
-            {/* Patient Type Toggle */}
-            <Grid size={{ xs: 12 }}>
-              <Paper sx={{ p: 1.5, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
-                <FormControlLabel
-                  control={<Switch checked={watchedPatRegisterYN === "Y"} onChange={(e) => handlePatientTypeToggle(e.target.checked)} color="primary" />}
-                  label={
-                    <Typography variant="subtitle1" fontWeight="600">
-                      Registered Patient
-                    </Typography>
-                  }
-                />
-                <Typography variant="caption" color="text.secondary" display="block">
-                  {watchedPatRegisterYN === "Y" ? "Search and select an existing patient" : "Enter walk-in patient details"}
-                </Typography>
-              </Paper>
-            </Grid>
+      <Box sx={{ p: 2 }}>
+        {formError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
+            {formError}
+          </Alert>
+        )}
 
-            {/* Patient Details Section */}
+        <form onSubmit={handleSubmit(onFormSubmit)}>
+          <Grid container spacing={2}>
+            {/* Patient Information Section */}
             <Grid size={{ xs: 12 }}>
               <Accordion
-                expanded={patientDetailsExpanded}
-                onChange={() => setPatientDetailsExpanded(!patientDetailsExpanded)}
-                sx={{ border: "1px solid", borderColor: "grey.300" }}
+                expanded={patientAccordionExpanded}
+                onChange={() => setPatientAccordionExpanded(!patientAccordionExpanded)}
+                sx={{ border: "1px solid", borderColor: "primary.200" }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ py: 0.5 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: "primary.50" }}>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <PersonIcon fontSize="small" />
-                    <Typography variant="subtitle2">Patient Information</Typography>
-                    {selectedPatient && <Chip size="small" label={selectedPatient.fullName} color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6rem" }} />}
+                    <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32 }}>
+                      <PatientIcon fontSize="small" />
+                    </Avatar>
+                    <Typography variant="h6">Patient Information</Typography>
+                    {selectedPatient && <Chip size="small" label={selectedPatient.fullName} color="primary" variant="outlined" />}
                   </Box>
                 </AccordionSummary>
-                <AccordionDetails sx={{ p: 1.5 }}>
-                  {watchedPatRegisterYN === "Y" ? (
-                    <Box>
-                      <PatientSearch onPatientSelect={handlePatientSelect} placeholder="Search by name, UHID, or phone number" />
-                      {errors.pChartID && (
-                        <Typography variant="caption" color="error.main" sx={{ mt: 0.5, display: "block" }}>
-                          {errors.pChartID.message}
+                <AccordionDetails sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    {/* Patient Type Selection */}
+                    <Grid size={{ xs: 12 }}>
+                      <Box sx={{ p: 1, backgroundColor: "grey.50", borderRadius: 1 }}>
+                        <FormControlLabel
+                          control={<Switch checked={watchedPatRegisterYN === "Y"} onChange={handleRegisteredPatientToggle} color="primary" />}
+                          label="Registered Patient"
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {watchedPatRegisterYN === "Y" ? "Search and select from existing patients" : "Enter new patient details for walk-in appointment"}
                         </Typography>
-                      )}
-                    </Box>
-                  ) : (
-                    <Grid container spacing={1.5}>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name="abTitle" control={control} type="select" label="Title" size="small" options={title} onChange={handleTitleChange} />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name="abFName" control={control} type="text" label="First Name" required size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name="abMName" control={control} type="text" label="Middle Name" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name="abLName" control={control} type="text" label="Last Name" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <EnhancedFormField name="dob" control={control} type="datepicker" label="Date of Birth" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <EnhancedFormField
-                          name="pNatID"
-                          control={control}
-                          type="select"
-                          label="Nationality"
-                          size="small"
-                          options={nationality}
-                          onChange={handleNationalityChange}
+                      </Box>
+                    </Grid>
+
+                    {/* Patient Search for Registered Patients */}
+                    {watchedPatRegisterYN === "Y" && (
+                      <Grid size={{ xs: 12 }}>
+                        <PatientSearch
+                          onPatientSelect={handlePatientSelect}
+                          clearTrigger={patientSearchClear}
+                          label="Search Patient"
+                          placeholder="Search by name, UHID, or phone number"
                         />
                       </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <EnhancedFormField name="city" control={control} type="text" label="City" size="small" />
-                      </Grid>
+                    )}
+
+                    {/* Patient Details Form */}
+                    <Grid size={{ xs: 12, sm: 3 }}>
+                      <EnhancedFormField
+                        name="abTitle"
+                        control={control}
+                        type="select"
+                        label="Title"
+                        size="small"
+                        options={title}
+                        disabled={watchedPatRegisterYN === "Y" && !!selectedPatient}
+                      />
                     </Grid>
-                  )}
+
+                    <Grid size={{ xs: 12, sm: 3 }}>
+                      <EnhancedFormField
+                        name="abFName"
+                        control={control}
+                        type="text"
+                        label="First Name"
+                        required
+                        size="small"
+                        disabled={watchedPatRegisterYN === "Y" && !!selectedPatient}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 3 }}>
+                      <EnhancedFormField
+                        name="abMName"
+                        control={control}
+                        type="text"
+                        label="Middle Name"
+                        size="small"
+                        disabled={watchedPatRegisterYN === "Y" && !!selectedPatient}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 3 }}>
+                      <EnhancedFormField
+                        name="abLName"
+                        control={control}
+                        type="text"
+                        label="Last Name"
+                        required
+                        size="small"
+                        disabled={watchedPatRegisterYN === "Y" && !!selectedPatient}
+                      />
+                    </Grid>
+
+                    {/* Contact Information for Non-Registered Patients */}
+                    {watchedPatRegisterYN === "N" && (
+                      <>
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="appPhone1" control={control} type="tel" label="Primary Phone" required size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="appPhone2" control={control} type="tel" label="Secondary Phone" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="dob" control={control} type="datepicker" label="Date of Birth" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <EnhancedFormField name="city" control={control} type="select" label="City" size="small" options={city} />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <EnhancedFormField name="pNatID" control={control} type="select" label="Nationality" size="small" options={nationality} />
+                        </Grid>
+                      </>
+                    )}
+
+                    {/* Patient Type */}
+                    <Grid size={{ xs: 12 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Patient Type
+                      </Typography>
+                      <RadioGroup value={watchedAbPType} onChange={handlePatientTypeChange} row>
+                        {PATIENT_TYPE_OPTIONS.map((option) => (
+                          <FormControlLabel key={option.value} value={option.value} control={<Radio size="small" />} label={option.label} />
+                        ))}
+                      </RadioGroup>
+                    </Grid>
+                  </Grid>
                 </AccordionDetails>
               </Accordion>
             </Grid>
@@ -467,42 +637,66 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
             {/* Appointment Details Section */}
             <Grid size={{ xs: 12 }}>
               <Accordion
-                expanded={appointmentDetailsExpanded}
-                onChange={() => setAppointmentDetailsExpanded(!appointmentDetailsExpanded)}
-                sx={{ border: "1px solid", borderColor: "grey.300" }}
+                expanded={appointmentAccordionExpanded}
+                onChange={() => setAppointmentAccordionExpanded(!appointmentAccordionExpanded)}
+                sx={{ border: "1px solid", borderColor: "success.200" }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ py: 0.5 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: "success.50" }}>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <CalendarIcon fontSize="small" />
-                    <Typography variant="subtitle2">Appointment Details</Typography>
+                    <Avatar sx={{ bgcolor: "success.main", width: 32, height: 32 }}>
+                      <ScheduleIcon fontSize="small" />
+                    </Avatar>
+                    <Typography variant="h6">Appointment Details</Typography>
                   </Box>
                 </AccordionSummary>
-                <AccordionDetails sx={{ p: 1.5 }}>
-                  <Grid container spacing={1.5}>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                <AccordionDetails sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    {/* Provider and Resource */}
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <EnhancedFormField name="hplID" control={control} type="select" label="Provider" required size="small" options={providers} onChange={handleProviderChange} />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <EnhancedFormField name="rlID" control={control} type="select" label="Resource" required size="small" options={resources} onChange={handleResourceChange} />
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <EnhancedFormField
+                        name="rlID"
+                        control={control}
+                        type="select"
+                        label="Resource/Room"
+                        required
+                        size="small"
+                        options={resources}
+                        onChange={handleResourceChange}
+                      />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
+
+                    {/* Date and Time */}
+                    <Grid size={{ xs: 12, sm: 4 }}>
                       <EnhancedFormField name="abDate" control={control} type="datepicker" label="Appointment Date" required size="small" />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="abTime" control={control} type="timepicker" label="Start Time" required size="small" format="HH:mm" />
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <EnhancedFormField name="abTime" control={control} type="timepicker" label="Start Time" required size="small" />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <EnhancedFormField name="abDuration" control={control} type="select" label="Duration" required size="small" options={DURATION_OPTIONS} />
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <EnhancedFormField
+                        name="abDuration"
+                        control={control}
+                        type="select"
+                        label="Duration"
+                        required
+                        size="small"
+                        options={DURATION_OPTIONS}
+                        onChange={handleDurationChange}
+                      />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <EnhancedFormField name="abPType" control={control} type="select" label="Patient Type" required size="small" options={PATIENT_TYPE_OPTIONS} />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <EnhancedFormField name="abStatus" control={control} type="select" label="Status" required size="small" options={APPOINTMENT_STATUS_OPTIONS} />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
+
+                    {/* Reason and Status */}
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <EnhancedFormField name="arlID" control={control} type="select" label="Reason for Visit" size="small" options={reasonList} onChange={handleReasonChange} />
                     </Grid>
+
+                    {/* Notes */}
                     <Grid size={{ xs: 12 }}>
                       <EnhancedFormField
                         name="procNotes"
@@ -511,7 +705,19 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
                         label="Appointment Notes"
                         size="small"
                         rows={3}
-                        placeholder="Additional notes or instructions for the appointment..."
+                        placeholder="Add any special instructions or notes for this appointment..."
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                      <EnhancedFormField
+                        name="arlInstructions"
+                        control={control}
+                        type="textarea"
+                        label="Patient Instructions"
+                        size="small"
+                        rows={2}
+                        placeholder="Instructions for the patient..."
                       />
                     </Grid>
                   </Grid>
@@ -519,29 +725,72 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
               </Accordion>
             </Grid>
 
-            {/* Contact Details Section */}
+            {/* Additional Information Section */}
             <Grid size={{ xs: 12 }}>
               <Accordion
-                expanded={contactDetailsExpanded}
-                onChange={() => setContactDetailsExpanded(!contactDetailsExpanded)}
-                sx={{ border: "1px solid", borderColor: "grey.300" }}
+                expanded={additionalAccordionExpanded}
+                onChange={() => setAdditionalAccordionExpanded(!additionalAccordionExpanded)}
+                sx={{ border: "1px solid", borderColor: "info.200" }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ py: 0.5 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: "info.50" }}>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <ScheduleIcon fontSize="small" />
-                    <Typography variant="subtitle2">Contact Information</Typography>
+                    <Avatar sx={{ bgcolor: "info.main", width: 32, height: 32 }}>
+                      <HospitalIcon fontSize="small" />
+                    </Avatar>
+                    <Typography variant="h6">Additional Information</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                      (Optional)
+                    </Typography>
                   </Box>
                 </AccordionSummary>
-                <AccordionDetails sx={{ p: 1.5 }}>
-                  <Grid container spacing={1.5}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <EnhancedFormField name="appPhone1" control={control} type="tel" label="Primary Phone" required size="small" />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <EnhancedFormField name="appPhone2" control={control} type="tel" label="Secondary Phone" size="small" />
-                    </Grid>
+                <AccordionDetails sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    {/* Inpatient Information */}
+                    {watchedAbPType === "IP" && (
+                      <>
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="subtitle2" gutterBottom color="primary">
+                            Inpatient Details
+                          </Typography>
+                          <Divider sx={{ mb: 2 }} />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="wName" control={control} type="text" label="Ward Name" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="roomName" control={control} type="text" label="Room Name" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="bedName" control={control} type="text" label="Bed Name" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <EnhancedFormField name="wCatName" control={control} type="text" label="Ward Category" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <EnhancedFormField name="admitID" control={control} type="number" label="Admission ID" size="small" inputProps={{ min: 0 }} />
+                        </Grid>
+                      </>
+                    )}
+
+                    {/* Additional Reference Fields */}
                     <Grid size={{ xs: 12 }}>
-                      <EnhancedFormField name="email" control={control} type="email" label="Email Address" size="small" />
+                      <Typography variant="subtitle2" gutterBottom color="info">
+                        Reference Information
+                      </Typography>
+                      <Divider sx={{ mb: 2 }} />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <EnhancedFormField name="pssnId" control={control} type="text" label="ABHA Number" size="small" />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <EnhancedFormField name="intIdPsprt" control={control} type="text" label="International ID/Passport" size="small" />
                     </Grid>
                   </Grid>
                 </AccordionDetails>
@@ -553,3 +802,5 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
     </GenericDialog>
   );
 };
+
+export default BookingDialog;
