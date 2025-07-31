@@ -9,6 +9,7 @@ import { AppointBookingDto, DURATION_OPTIONS, PATIENT_TYPE_OPTIONS } from "@/int
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { useAlert } from "@/providers/AlertProvider";
+import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Clear as ClearIcon,
@@ -260,28 +261,98 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
 
   // Handle patient selection
   const handlePatientSelect = useCallback(
-    (patient: PatientSearchResult | null) => {
+    async (patient: PatientSearchResult | null) => {
       setSelectedPatient(patient);
 
       if (patient) {
-        setValue("pChartID", patient.pChartID, { shouldValidate: true, shouldDirty: true });
-        setValue("pChartCode", patient.pChartCode, { shouldValidate: true, shouldDirty: true });
+        try {
+          // First set basic information immediately for responsive UI
+          setValue("pChartID", patient.pChartID, { shouldValidate: true, shouldDirty: true });
+          setValue("pChartCode", patient.pChartCode, { shouldValidate: true, shouldDirty: true });
+          setValue("patRegisterYN", "Y", { shouldValidate: true, shouldDirty: true });
 
-        // Parse full name to extract first and last name
-        const nameParts = patient.fullName.split(" ");
-        setValue("abFName", nameParts[0] || "", { shouldValidate: true, shouldDirty: true });
-        setValue("abLName", nameParts[nameParts.length - 1] || "", { shouldValidate: true, shouldDirty: true });
-        if (nameParts.length > 2) {
-          setValue("abMName", nameParts.slice(1, -1).join(" "), { shouldValidate: true, shouldDirty: true });
+          // Fetch detailed patient information
+          const result = await PatientService.getPatientDetails(patient.pChartID);
+
+          if (result.success && result.data) {
+            const patientDetails = result.data;
+            const patientRegisters = patientDetails.patRegisters;
+            const patientAddress = patientDetails.patAddress;
+            const patientOverview = patientDetails.patOverview;
+
+            // Update form with detailed patient information
+            if (patientRegisters) {
+              // Basic patient information
+              setValue("abTitle", patientRegisters.pTitle || "", { shouldValidate: true, shouldDirty: true });
+              setValue("abFName", patientRegisters.pFName || "", { shouldValidate: true, shouldDirty: true });
+              setValue("abMName", patientRegisters.pMName || "", { shouldValidate: true, shouldDirty: true });
+              setValue("abLName", patientRegisters.pLName || "", { shouldValidate: true, shouldDirty: true });
+              setValue("pChartCompID", patientRegisters.pChartCompID || 0, { shouldValidate: true, shouldDirty: true });
+
+              // Date of birth
+              if (patientRegisters.pDob) {
+                setValue("dob", new Date(patientRegisters.pDob), { shouldValidate: true, shouldDirty: true });
+              }
+
+              // Identity information
+              setValue("intIdPsprt", patientRegisters.intIdPsprt || "", { shouldValidate: true, shouldDirty: true });
+              setValue("pssnId", patientRegisters.intIdPsprt || "", { shouldValidate: true, shouldDirty: true });
+            }
+
+            // Address and contact information
+            if (patientAddress) {
+              setValue("appPhone1", patientAddress.pAddPhone1 || "", { shouldValidate: true, shouldDirty: true });
+              setValue("appPhone2", patientAddress.pAddPhone2 || "", { shouldValidate: true, shouldDirty: true });
+              setValue("city", patientAddress.pAddCity || "", { shouldValidate: true, shouldDirty: true });
+              setValue("email", patientAddress.pAddEmail || "", { shouldValidate: true, shouldDirty: true });
+            }
+
+            // Additional patient overview information
+            if (patientOverview) {
+              // Set nationality if available (you may need to map pCountryOfOrigin to pNatID)
+              // This depends on your dropdown mapping logic
+              if (patientOverview.pCountryOfOrigin) {
+                // You might need to find the corresponding nationality ID from your dropdown options
+                const nationalityOption = nationality.find((nat) => nat.label.toLowerCase() === patientOverview.pCountryOfOrigin?.toLowerCase());
+                if (nationalityOption) {
+                  setValue("pNatID", Number(nationalityOption.value), { shouldValidate: true, shouldDirty: true });
+                  setValue("pNatName", nationalityOption.label, { shouldValidate: true, shouldDirty: true });
+                }
+              }
+            }
+
+            showAlert("Success", "Patient details loaded successfully", "success");
+          } else {
+            const errorMessage = result.errorMessage || "Failed to fetch patient details";
+            showAlert("Warning", `Could not load complete patient details: ${errorMessage}`, "warning");
+          }
+        } catch (error) {
+          console.error("Error fetching patient details:", error);
+          const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+          showAlert("Error", `Failed to load patient details: ${errorMessage}`, "error");
+        } finally {
         }
-
-        setValue("patRegisterYN", "Y", { shouldValidate: true, shouldDirty: true });
       } else {
+        // Clear patient information when no patient is selected
         setValue("pChartID", 0, { shouldValidate: true, shouldDirty: true });
         setValue("pChartCode", "", { shouldValidate: true, shouldDirty: true });
+        setValue("abTitle", "", { shouldValidate: true, shouldDirty: true });
+        setValue("abFName", "", { shouldValidate: true, shouldDirty: true });
+        setValue("abMName", "", { shouldValidate: true, shouldDirty: true });
+        setValue("abLName", "", { shouldValidate: true, shouldDirty: true });
+        setValue("appPhone1", "", { shouldValidate: true, shouldDirty: true });
+        setValue("appPhone2", "", { shouldValidate: true, shouldDirty: true });
+        setValue("city", "", { shouldValidate: true, shouldDirty: true });
+        setValue("email", "", { shouldValidate: true, shouldDirty: true });
+        setValue("dob", undefined, { shouldValidate: true, shouldDirty: true });
+        setValue("intIdPsprt", "", { shouldValidate: true, shouldDirty: true });
+        setValue("pssnId", "", { shouldValidate: true, shouldDirty: true });
+        setValue("pNatID", 0, { shouldValidate: true, shouldDirty: true });
+        setValue("pNatName", "", { shouldValidate: true, shouldDirty: true });
+        setValue("pChartCompID", 0, { shouldValidate: true, shouldDirty: true });
       }
     },
-    [setValue]
+    [setValue, nationality, showAlert]
   );
 
   // Handle provider selection
