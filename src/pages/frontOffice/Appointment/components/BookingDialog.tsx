@@ -119,6 +119,8 @@ const appointmentBookingSchema = z
     intIdPsprt: z.string().optional().default(""),
     oldPChartID: z.number().optional().default(0),
     otBookNo: z.number().default(1),
+    rActiveYN: z.string().default("Y"),
+    transferYN: z.string().default("N"),
   })
   .refine(
     (data) => {
@@ -242,6 +244,8 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
       intIdPsprt: existingAppointment?.intIdPsprt || bookingForm.intIdPsprt || "",
       oldPChartID: existingAppointment?.oldPChartID || bookingForm.oldPChartID || 0,
       otBookNo: existingAppointment?.otBookNo || bookingForm.otBookNo || 1,
+      rActiveYN: existingAppointment?.rActiveYN || bookingForm.rActiveYN || "Y",
+      transferYN: existingAppointment?.transferYN || bookingForm.transferYN || "N",
     }),
     [existingAppointment, bookingForm, serverDate]
   );
@@ -504,6 +508,8 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
         pssnId: data.pssnId,
         intIdPsprt: data.intIdPsprt,
         oldPChartID: data.oldPChartID,
+        rActiveYN: data.rActiveYN,
+        transferYN: data.transferYN,
       };
 
       await onSubmit(appointmentData);
