@@ -42,7 +42,7 @@ export interface SampleStatusUpdateRequestDto {
 
 //
 
-export interface LabResultSaveRequestDto {
+export interface LabEnterResultDto {
   labRegNo: number;
   serviceTypeId: number;
   technicianId?: number;
