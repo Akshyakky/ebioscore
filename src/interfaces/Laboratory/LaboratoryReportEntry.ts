@@ -87,7 +87,7 @@ export interface ComponentResultDto {
 }
 export interface ReferenceRangeDto {
   lowerValue?: number;
-  UpperValue?: number;
+  upperValue?: number;
   referenceRange?: string;
   normal?: string;
 }
