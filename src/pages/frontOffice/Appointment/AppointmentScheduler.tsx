@@ -13,6 +13,7 @@ import { WeekView } from "./components/WeekView";
 
 // Hooks and utilities
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { useAlert } from "@/providers/AlertProvider";
 import { useSchedulerData } from "./hooks/useSchedulerData";
 import { useTimeSlots } from "./hooks/useTimeSlots";
 
@@ -22,6 +23,8 @@ import BookingDialog from "./components/BookingDialog";
 import { SchedulerHeader } from "./components/SchedulerHeader";
 
 const AppointmentScheduler: React.FC = () => {
+  const { showAlert } = useAlert();
+
   // State management
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -40,25 +43,30 @@ const AppointmentScheduler: React.FC = () => {
     minute: number;
   } | null>(null);
 
-  // Custom hooks with work hours integration
+  // Custom hooks with API integration
   const {
     appointments,
-    setAppointments,
     breaks,
     workHours,
-    isLoading: workHoursLoading,
-    error: workHoursError,
+    isLoading,
+    error,
     isTimeWithinWorkingHours,
     getAvailableTimeRanges,
     isWorkingDay,
     getWorkHoursStats,
     refreshData,
+    createAppointment,
+    updateAppointment,
+    cancelAppointment,
+    checkAppointmentConflicts,
+    fetchAppointments,
+    fetchAppointmentsByProvider,
   } = useSchedulerData();
 
   const timeSlots = useTimeSlots();
 
   // Load dropdown values for providers and resources
-  const { appointmentConsultants = [], roomList = [], isLoading } = useDropdownValues(["appointmentConsultants", "roomList"]);
+  const { appointmentConsultants = [], roomList = [], isLoading: dropdownLoading } = useDropdownValues(["appointmentConsultants", "roomList"]);
 
   // Transform dropdown data to match expected format
   const providers = useMemo(() => {
@@ -86,14 +94,14 @@ const AppointmentScheduler: React.FC = () => {
     rlID: 0,
     rlName: "",
     abDuration: 30,
-    abDurDesc: "",
+    abDurDesc: "30 minutes",
     abDate: new Date(),
     abTime: new Date(),
-    abPType: "",
-    abStatus: "",
+    abPType: "OP",
+    abStatus: "Scheduled",
     patRegisterYN: "Y",
     otBookNo: 0,
-    patOPIP: "",
+    patOPIP: "O",
     abEndTime: new Date(),
   };
 
@@ -106,6 +114,43 @@ const AppointmentScheduler: React.FC = () => {
     }, 60000);
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch appointments when date range or provider changes
+  useEffect(() => {
+    const fetchData = async () => {
+      if (selectedProvider) {
+        const startDate = new Date(currentDate);
+        const endDate = new Date(currentDate);
+
+        if (viewMode === "week") {
+          const weekDates = getWeekDates(currentDate);
+          startDate.setTime(weekDates[0].getTime());
+          endDate.setTime(weekDates[6].getTime());
+        } else if (viewMode === "month") {
+          startDate.setDate(1);
+          endDate.setMonth(endDate.getMonth() + 1, 0);
+        }
+
+        await fetchAppointmentsByProvider(Number(selectedProvider), startDate, endDate);
+      } else {
+        const startDate = new Date(currentDate);
+        const endDate = new Date(currentDate);
+
+        if (viewMode === "week") {
+          const weekDates = getWeekDates(currentDate);
+          startDate.setTime(weekDates[0].getTime());
+          endDate.setTime(weekDates[6].getTime());
+        } else if (viewMode === "month") {
+          startDate.setDate(1);
+          endDate.setMonth(endDate.getMonth() + 1, 0);
+        }
+
+        await fetchAppointments(startDate, endDate);
+      }
+    };
+
+    fetchData();
+  }, [currentDate, viewMode, selectedProvider, fetchAppointments, fetchAppointmentsByProvider]);
 
   // Date navigation utilities
   const getWeekDates = useCallback((date: Date) => {
@@ -208,11 +253,26 @@ const AppointmentScheduler: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // Enhanced event handlers for the new functionality
-  const handleSlotDoubleClick = (date: Date, hour: number, minute: number) => {
+  // Enhanced event handlers with API integration
+  const handleSlotDoubleClick = async (date: Date, hour: number, minute: number) => {
     // Check if the time slot is within working hours
     if (!isTimeWithinWorkingHours(date, hour, minute)) {
-      return; // Don't allow booking outside working hours
+      showAlert("Warning", "This time slot is outside of working hours", "warning");
+      return;
+    }
+
+    // Check for conflicts if provider is selected
+    if (selectedProvider) {
+      const selectedDateTime = new Date(date);
+      selectedDateTime.setHours(hour, minute, 0, 0);
+      const endDateTime = new Date(selectedDateTime.getTime() + 30 * 60000); // 30 minutes default
+
+      const conflictResult = await checkAppointmentConflicts(Number(selectedProvider), date, selectedDateTime, endDateTime);
+
+      if (conflictResult.success && conflictResult.data) {
+        showAlert("Conflict", "There is already an appointment scheduled at this time for the selected provider", "warning");
+        return;
+      }
     }
 
     // Pre-populate the booking form with the selected date and time
@@ -224,6 +284,8 @@ const AppointmentScheduler: React.FC = () => {
       abDate: date,
       abTime: selectedDateTime,
       abEndTime: new Date(selectedDateTime.getTime() + 30 * 60000), // Default 30 minutes
+      hplID: selectedProvider ? Number(selectedProvider) : 0,
+      rlID: selectedResource ? Number(selectedResource) : 0,
     }));
 
     setShowBookingDialog(true);
@@ -244,21 +306,43 @@ const AppointmentScheduler: React.FC = () => {
       handleSlotDoubleClick(pendingElapsedSlot.date, pendingElapsedSlot.hour, pendingElapsedSlot.minute);
     }
     setPendingElapsedSlot(null);
+    setShowElapsedConfirmation(false);
   };
 
   const handleElapsedSlotCancelled = () => {
     setPendingElapsedSlot(null);
+    setShowElapsedConfirmation(false);
   };
 
   const handleBookingSubmit = async (bookingData: AppointBookingDto) => {
-    setShowBookingDialog(false);
+    try {
+      let result;
 
-    // Reset form
-    setBookingForm(initialBookingForm);
+      if (bookingData.abID && bookingData.abID > 0) {
+        // Update existing appointment
+        result = await updateAppointment(bookingData);
+      } else {
+        // Create new appointment
+        result = await createAppointment(bookingData);
+      }
+
+      if (result.success) {
+        const actionText = bookingData.abID ? "updated" : "created";
+        showAlert("Success", `Appointment ${actionText} successfully`, "success");
+        setShowBookingDialog(false);
+        setBookingForm(initialBookingForm);
+      } else {
+        showAlert("Error", result.errorMessage || "Failed to save appointment", "error");
+      }
+    } catch (error) {
+      console.error("Error submitting appointment:", error);
+      showAlert("Error", "An unexpected error occurred while saving the appointment", "error");
+    }
   };
 
   const handleSlotClick = () => {
     // This is now only used for the Book button in filters
+    setBookingForm(initialBookingForm);
     setShowBookingDialog(true);
   };
 
@@ -267,25 +351,36 @@ const AppointmentScheduler: React.FC = () => {
   };
 
   const handleAppointmentEdit = (appointment: AppointBookingDto) => {
-    // Implement edit functionality
-    console.log("Edit appointment:", appointment);
+    setBookingForm(appointment);
     setSelectedAppointment(null);
+    setShowBookingDialog(true);
   };
 
-  const handleAppointmentCancel = (appointment: AppointBookingDto) => {
-    // Implement cancel functionality
-    console.log("Cancel appointment:", appointment);
-    setSelectedAppointment(null);
+  const handleAppointmentCancel = async (appointment: AppointBookingDto) => {
+    try {
+      const cancelReason = "Cancelled by user"; // You might want to show a dialog to get the reason
+      const result = await cancelAppointment(appointment.abID, cancelReason);
+
+      if (result.success) {
+        showAlert("Success", "Appointment cancelled successfully", "success");
+        setSelectedAppointment(null);
+      } else {
+        showAlert("Error", result.errorMessage || "Failed to cancel appointment", "error");
+      }
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      showAlert("Error", "An unexpected error occurred while cancelling the appointment", "error");
+    }
   };
 
   // Enhanced view rendering with work hours integration
   const renderCurrentView = () => {
-    if (workHoursLoading) {
+    if (isLoading) {
       return (
         <Box display="flex" justifyContent="center" alignItems="center" height={200}>
           <CircularProgress />
           <Typography variant="body2" sx={{ ml: 2 }}>
-            Loading work hours...
+            Loading scheduler data...
           </Typography>
         </Box>
       );
@@ -323,8 +418,8 @@ const AppointmentScheduler: React.FC = () => {
   // Work hours statistics for display
   const workHoursStats = getWorkHoursStats();
 
-  // Show error if work hours failed to load
-  if (workHoursError) {
+  // Show error if there's an error
+  if (error) {
     return (
       <Box sx={{ p: 1 }}>
         <Alert
@@ -336,7 +431,7 @@ const AppointmentScheduler: React.FC = () => {
             </button>
           }
         >
-          Failed to load work hours: {workHoursError}
+          Failed to load scheduler data: {error}
         </Alert>
       </Box>
     );
@@ -397,7 +492,10 @@ const AppointmentScheduler: React.FC = () => {
         bookingForm={bookingForm}
         providers={providers}
         resources={resources}
-        onClose={() => setShowBookingDialog(false)}
+        onClose={() => {
+          setShowBookingDialog(false);
+          setBookingForm(initialBookingForm);
+        }}
         onSubmit={handleBookingSubmit}
         onFormChange={setBookingForm}
       />

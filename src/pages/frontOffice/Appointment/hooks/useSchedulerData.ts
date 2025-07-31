@@ -2,18 +2,46 @@
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { BreakListData } from "@/interfaces/FrontOffice/BreakListDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
+import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
 import { hospWorkHoursService } from "@/services/FrontOfficeServices/HospWorkHoursService";
 import { useCallback, useEffect, useState } from "react";
 
-const Appointments: AppointBookingDto[] = [];
-const Breaks: BreakListData[] = [];
-
 export const useSchedulerData = () => {
-  const [appointments, setAppointments] = useState<AppointBookingDto[]>(Appointments);
-  const [breaks, setBreaks] = useState<BreakListData[]>(Breaks);
+  const [appointments, setAppointments] = useState<AppointBookingDto[]>([]);
+  const [breaks, setBreaks] = useState<BreakListData[]>([]);
   const [workHours, setWorkHours] = useState<HospWorkHoursDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch appointments from API
+  const fetchAppointments = useCallback(async (startDate?: Date, endDate?: Date) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      let result;
+      if (startDate && endDate) {
+        result = await appointmentService.getAppointmentsByDateRange(startDate, endDate);
+      } else {
+        // Default to today's appointments
+        result = await appointmentService.getTodaysAppointments();
+      }
+
+      if (result.success && result.data) {
+        setAppointments(result.data);
+      } else {
+        setError(result.errorMessage || "Failed to fetch appointments");
+        setAppointments([]);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
+      setAppointments([]);
+      console.error("Error fetching appointments:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Fetch work hours from API
   const fetchWorkHours = useCallback(async () => {
@@ -40,22 +68,107 @@ export const useSchedulerData = () => {
     }
   }, []);
 
+  // Create new appointment
+  const createAppointment = useCallback(
+    async (appointmentData: AppointBookingDto) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const result = await appointmentService.saveAppointment(appointmentData);
+
+        if (result.success && result.data) {
+          // Refresh appointments after successful creation
+          await fetchAppointments();
+          return { success: true, data: result.data };
+        } else {
+          setError(result.errorMessage || "Failed to create appointment");
+          return { success: false, errorMessage: result.errorMessage };
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+        setError(errorMessage);
+        return { success: false, errorMessage };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchAppointments]
+  );
+
+  // Update existing appointment
+  const updateAppointment = useCallback(
+    async (appointmentData: AppointBookingDto) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const result = await appointmentService.saveAppointment(appointmentData);
+
+        if (result.success && result.data) {
+          // Refresh appointments after successful update
+          await fetchAppointments();
+          return { success: true, data: result.data };
+        } else {
+          setError(result.errorMessage || "Failed to update appointment");
+          return { success: false, errorMessage: result.errorMessage };
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+        setError(errorMessage);
+        return { success: false, errorMessage };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchAppointments]
+  );
+
+  // Cancel appointment
+  const cancelAppointment = useCallback(
+    async (appointmentId: number, cancelReason: string) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const result = await appointmentService.cancelAppointment(appointmentId, cancelReason);
+
+        if (result.success) {
+          // Refresh appointments after successful cancellation
+          await fetchAppointments();
+          return { success: true };
+        } else {
+          setError(result.errorMessage || "Failed to cancel appointment");
+          return { success: false, errorMessage: result.errorMessage };
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+        setError(errorMessage);
+        return { success: false, errorMessage };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchAppointments]
+  );
+
+  // Check for appointment conflicts
+  const checkAppointmentConflicts = useCallback(async (hplId: number, appointmentDate: Date, startTime: Date, endTime: Date, excludeAppointmentId?: number) => {
+    try {
+      const result = await appointmentService.checkAppointmentConflicts(hplId, appointmentDate, startTime, endTime, excludeAppointmentId);
+
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      return { success: false, errorMessage, data: false };
+    }
+  }, []);
+
   // Get work hours for a specific day
   const getWorkHoursForDay = useCallback(
     (date: Date) => {
       const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
-      var dayWorkHour = workHours.filter((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y" && wh.wkHoliday === "N");
-      return dayWorkHour;
-    },
-    [workHours]
-  );
-
-  // Get holiday work hours for a specific day
-  const getHolidayWorkHoursForDay = useCallback(
-    (date: Date) => {
-      const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
-      var dayWorkHour = workHours.filter((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y" && wh.wkHoliday === "Y");
-      return dayWorkHour;
+      return workHours.filter((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y" && wh.wkHoliday === "N");
     },
     [workHours]
   );
@@ -131,16 +244,64 @@ export const useSchedulerData = () => {
     };
   }, [workHours]);
 
+  // Fetch appointments by provider
+  const fetchAppointmentsByProvider = useCallback(async (hplId: number, startDate: Date, endDate: Date) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const result = await appointmentService.getAppointmentsByProvider(hplId, startDate, endDate);
+
+      if (result.success && result.data) {
+        setAppointments(result.data);
+      } else {
+        setError(result.errorMessage || "Failed to fetch appointments by provider");
+        setAppointments([]);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
+      setAppointments([]);
+      console.error("Error fetching appointments by provider:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch appointments by patient
+  const fetchAppointmentsByPatient = useCallback(async (pChartId: number) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const result = await appointmentService.getAppointmentsByPatient(pChartId);
+
+      if (result.success && result.data) {
+        setAppointments(result.data);
+      } else {
+        setError(result.errorMessage || "Failed to fetch appointments by patient");
+        setAppointments([]);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
+      setAppointments([]);
+      console.error("Error fetching appointments by patient:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Initialize data on mount
   useEffect(() => {
     fetchWorkHours();
-  }, [fetchWorkHours]);
+    fetchAppointments();
+  }, [fetchWorkHours, fetchAppointments]);
 
   // Refresh all data
   const refreshData = useCallback(async () => {
-    await fetchWorkHours();
-    // Add appointment and break fetching here when available
-  }, [fetchWorkHours]);
+    await Promise.all([fetchWorkHours(), fetchAppointments()]);
+  }, [fetchWorkHours, fetchAppointments]);
 
   return {
     // Core data
@@ -155,10 +316,18 @@ export const useSchedulerData = () => {
     isLoading,
     error,
 
+    // Appointment operations
+    fetchAppointments,
+    fetchAppointmentsByProvider,
+    fetchAppointmentsByPatient,
+    createAppointment,
+    updateAppointment,
+    cancelAppointment,
+    checkAppointmentConflicts,
+
     // Work hours operations
     fetchWorkHours,
     getWorkHoursForDay,
-    getHolidayWorkHoursForDay,
     isTimeWithinWorkingHours,
     getAvailableTimeRanges,
     isWorkingDay,
