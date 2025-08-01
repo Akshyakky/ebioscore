@@ -376,9 +376,9 @@ const AppointmentScheduler: React.FC = () => {
   const renderCurrentView = () => {
     if (isLoading) {
       return (
-        <Box display="flex" justifyContent="center" alignItems="center" height={200}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
           <CircularProgress />
-          <Typography variant="body2" sx={{ ml: 2 }}>
+          <Typography variant="body2" component="span" marginLeft={2}>
             Loading scheduler data...
           </Typography>
         </Box>
@@ -422,16 +422,8 @@ const AppointmentScheduler: React.FC = () => {
   // Error handling with retry functionality
   if (error) {
     return (
-      <Box sx={{ p: 1 }}>
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={
-            <button onClick={refreshData} style={{ marginLeft: 8 }}>
-              Retry
-            </button>
-          }
-        >
+      <Box padding={1}>
+        <Alert severity="error" action={<button onClick={refreshData}>Retry</button>}>
           Failed to load scheduler data: {error}
         </Alert>
       </Box>
@@ -439,7 +431,7 @@ const AppointmentScheduler: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 1 }}>
+    <Box padding={1}>
       {/* Comprehensive scheduler header with navigation and filtering */}
       <SchedulerHeader
         currentDate={currentDate}
@@ -460,8 +452,12 @@ const AppointmentScheduler: React.FC = () => {
       />
 
       {/* Main scheduler view container */}
-      <Paper sx={{ p: 1, mb: 1 }}>
-        <Box sx={{ height: "calc(100vh - 300px)", overflow: "auto" }}>{renderCurrentView()}</Box>
+      <Paper variant="outlined">
+        <Box padding={1} marginBottom={1}>
+          <Box minHeight="calc(100vh - 300px)" overflow="auto">
+            {renderCurrentView()}
+          </Box>
+        </Box>
       </Paper>
 
       {/* Visual legend for time slot indicators */}

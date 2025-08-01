@@ -32,7 +32,7 @@ export const SchedulerFilters: React.FC<SchedulerFiltersProps> = ({
   resources,
 }) => {
   return (
-    <Paper sx={{ p: 1, mb: 1 }}>
+    <Paper variant="outlined" style={{ padding: 8, marginBottom: 8 }}>
       <Grid container spacing={1} alignItems="center">
         <Grid size={{ xs: 6, sm: 3 }}>
           <FormControl size="small" fullWidth>
@@ -76,7 +76,7 @@ export const SchedulerFilters: React.FC<SchedulerFiltersProps> = ({
         </Grid>
 
         <Grid size={{ xs: 6, sm: 3 }}>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={onBookingClick} fullWidth size="small" sx={{ fontSize: "0.8rem" }}>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={onBookingClick} fullWidth size="small">
             Book
           </Button>
         </Grid>

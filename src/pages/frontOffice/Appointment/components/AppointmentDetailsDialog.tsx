@@ -1,7 +1,7 @@
 // src/frontOffice/components/AppointmentDetailsDialog.tsx
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { Cancel as CancelIcon, Edit as EditIcon } from "@mui/icons-material";
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Typography } from "@mui/material";
+import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, Stack, Typography } from "@mui/material";
 import React from "react";
 import { getStatusColor } from "../utils/appointmentUtils";
 
@@ -17,92 +17,90 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
 
   return (
     <Dialog open={!!appointment} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant="h6" sx={{ fontSize: "1rem" }}>
-          Appointment Details
-        </Typography>
-        <Chip label={appointment.abStatus} color={getStatusColor(appointment.abStatus) as any} size="small" />
+      <DialogTitle>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="h6">Appointment Details</Typography>
+          <Chip label={appointment.abStatus} color={getStatusColor(appointment.abStatus) as any} size="small" />
+        </Stack>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 1 }}>
-        <Grid container spacing={1}>
-          <Grid size={{ xs: 12 }}>
-            <Typography variant="subtitle1" sx={{ fontSize: "0.9rem", fontWeight: "bold" }}>
+      <DialogContent>
+        <Stack spacing={2}>
+          <div>
+            <Typography variant="subtitle1" fontWeight="bold">
               {appointment.abFName} {appointment.abLName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {appointment.pChartCode}
             </Typography>
-          </Grid>
+          </div>
 
-          <Grid size={{ xs: 6 }}>
-            <Typography variant="caption" color="text.secondary">
-              Provider
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-              {appointment.providerName}
-            </Typography>
-          </Grid>
+          <Divider />
 
-          <Grid size={{ xs: 6 }}>
-            <Typography variant="caption" color="text.secondary">
-              Resource
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-              {appointment.rlName}
-            </Typography>
-          </Grid>
-
-          <Grid size={{ xs: 6 }}>
-            <Typography variant="caption" color="text.secondary">
-              Date & Time
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-              {new Date(appointment.abDate).toLocaleDateString()}
-              {" at "}
-              {new Date(appointment.abTime).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Typography>
-          </Grid>
-
-          <Grid size={{ xs: 6 }}>
-            <Typography variant="caption" color="text.secondary">
-              Duration
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-              {appointment.abDurDesc}
-            </Typography>
-          </Grid>
-
-          {appointment.procNotes && (
-            <Grid size={{ xs: 12 }}>
-              <Typography variant="caption" color="text.secondary">
-                Notes
+          <Grid container spacing={2}>
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Provider
               </Typography>
-              <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                {appointment.procNotes}
+              <Typography variant="body2">{appointment.providerName}</Typography>
+            </Grid>
+
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Resource
+              </Typography>
+              <Typography variant="body2">{appointment.rlName}</Typography>
+            </Grid>
+
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Date & Time
+              </Typography>
+              <Typography variant="body2">
+                {new Date(appointment.abDate).toLocaleDateString()}
+                {" at "}
+                {new Date(appointment.abTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Typography>
             </Grid>
-          )}
-        </Grid>
+
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Duration
+              </Typography>
+              <Typography variant="body2">{appointment.abDurDesc}</Typography>
+            </Grid>
+
+            {appointment.procNotes && (
+              <Grid size={12}>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Notes
+                </Typography>
+                <Typography variant="body2">{appointment.procNotes}</Typography>
+              </Grid>
+            )}
+          </Grid>
+        </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ pt: 1 }}>
-        {onEdit && (
-          <Button startIcon={<EditIcon />} size="small" onClick={() => onEdit(appointment)}>
-            Edit
+      <DialogActions>
+        <Stack direction="row" spacing={1}>
+          {onEdit && (
+            <Button startIcon={<EditIcon />} size="small" onClick={() => onEdit(appointment)} variant="outlined">
+              Edit
+            </Button>
+          )}
+          {onCancel && (
+            <Button startIcon={<CancelIcon />} color="warning" size="small" onClick={() => onCancel(appointment)} variant="outlined">
+              Cancel
+            </Button>
+          )}
+          <Button onClick={onClose} size="small" variant="contained">
+            Close
           </Button>
-        )}
-        {onCancel && (
-          <Button startIcon={<CancelIcon />} color="warning" size="small" onClick={() => onCancel(appointment)}>
-            Cancel
-          </Button>
-        )}
-        <Button onClick={onClose} size="small">
-          Close
-        </Button>
+        </Stack>
       </DialogActions>
     </Dialog>
   );

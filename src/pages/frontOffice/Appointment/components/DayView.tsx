@@ -3,7 +3,7 @@ import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { Block } from "@mui/icons-material";
-import { Box, Grid, Typography, useTheme } from "@mui/material";
+import { Box, Grid, Paper, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
@@ -93,39 +93,38 @@ export const DayView: React.FC<DayViewProps> = ({
     });
   };
 
-  const getSlotBackgroundColor = (date: Date, hour: number, minute: number) => {
+  const getSlotStyles = (date: Date, hour: number, minute: number) => {
     const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
     const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
 
+    let backgroundColor = "transparent";
+    let opacity = 1;
+    let cursor = "default";
+
     if (!withinWorkingHours) {
-      return isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
-    }
-
-    if (isDuringBreak) {
-      return isDarkMode ? "#d84315" : "#ffccbc"; // Orange tint for break periods
-    }
-
-    if (isElapsed) {
-      return isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
-    }
-
-    return "transparent";
-  };
-
-  const getHoverBackgroundColor = (date: Date, hour: number, minute: number) => {
-    const isElapsed = isTimeSlotElapsed(date, hour, minute);
-    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
-
-    if (isDuringBreak) {
-      return isDarkMode ? "#ff5722" : "#ffab91";
-    }
-
-    if (isDarkMode) {
-      return isElapsed ? theme.palette.grey[600] : theme.palette.grey[700];
+      backgroundColor = isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
+      opacity = 0.5;
+      cursor = "not-allowed";
+    } else if (isDuringBreak) {
+      backgroundColor = isDarkMode ? "#d84315" : "#ffccbc";
+    } else if (isElapsed) {
+      backgroundColor = isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
+      cursor = "pointer";
     } else {
-      return isElapsed ? "#f5f5f5" : "#f0f0f0";
+      cursor = "pointer";
     }
+
+    return {
+      backgroundColor,
+      opacity,
+      cursor,
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      height: 40,
+      padding: theme.spacing(0.5),
+      position: "relative" as const,
+      userSelect: "none" as const,
+    };
   };
 
   const getAppointmentsForSlot = (date: Date, hour: number, minute: number) => {
@@ -226,83 +225,65 @@ export const DayView: React.FC<DayViewProps> = ({
 
   return (
     <Grid container spacing={1}>
-      <Grid size={{ xs: 1 }}>
-        <Box
-          sx={{
+      <Grid size={1}>
+        <Paper
+          elevation={2}
+          style={{
             position: "sticky",
             top: 0,
             background: isDarkMode
               ? `linear-gradient(135deg, ${theme.palette.grey[800]} 0%, ${theme.palette.grey[700]} 100%)`
               : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
             zIndex: 30,
-            py: 0.5,
-            borderBottom: 2,
-            borderColor: "primary.main",
-            mb: 0.5,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+            padding: theme.spacing(0.5),
+            borderBottom: `2px solid ${theme.palette.primary.main}`,
+            marginBottom: theme.spacing(0.5),
           }}
         >
-          <Typography
-            variant="subtitle2"
-            align="center"
-            sx={{
-              fontSize: "0.8rem",
-              fontWeight: "bold",
-              color: isDarkMode ? theme.palette.primary.light : "primary.main",
-            }}
-          >
+          <Typography variant="subtitle2" align="center" fontWeight="bold" color={isDarkMode ? "primary.light" : "primary.main"}>
             Time
           </Typography>
-        </Box>
+        </Paper>
         {timeSlots.map((slot) => (
           <Box
             key={slot.time}
-            sx={{
+            style={{
               height: 40,
               display: "flex",
               alignItems: "center",
-              borderBottom: 1,
-              borderColor: "divider",
-              px: 1,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              padding: theme.spacing(0, 1),
               backgroundColor: isDarkMode ? theme.palette.background.paper : "transparent",
             }}
           >
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+            <Typography variant="caption" color="text.secondary">
               {slot.time}
             </Typography>
           </Box>
         ))}
       </Grid>
 
-      <Grid size={{ xs: 11 }} sx={{ position: "relative" }}>
+      <Grid size={11} style={{ position: "relative" }}>
         <CurrentTimeIndicator date={currentDate} height={40} timeSlots={timeSlots} currentTime={currentTime} />
 
-        <Box
-          sx={{
+        <Paper
+          elevation={2}
+          style={{
             position: "sticky",
             top: 0,
             background: isDarkMode
               ? `linear-gradient(135deg, ${theme.palette.grey[800]} 0%, ${theme.palette.grey[700]} 100%)`
               : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
             zIndex: 30,
-            py: 0.5,
-            borderBottom: 2,
-            borderColor: "primary.main",
-            mb: 0.5,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+            padding: theme.spacing(0.5),
+            borderBottom: `2px solid ${theme.palette.primary.main}`,
+            marginBottom: theme.spacing(0.5),
           }}
         >
-          <Typography
-            variant="subtitle2"
-            align="center"
-            sx={{
-              fontSize: "0.8rem",
-              color: isDarkMode ? theme.palette.primary.light : theme.palette.text.primary,
-            }}
-          >
+          <Typography variant="subtitle2" align="center" color={isDarkMode ? "primary.light" : "text.primary"}>
             {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </Typography>
-        </Box>
+        </Paper>
 
         {timeSlots.map((slot) => {
           const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
@@ -310,56 +291,35 @@ export const DayView: React.FC<DayViewProps> = ({
           const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
           const isElapsed = isTimeSlotElapsed(currentDate, slot.hour, slot.minute);
           const isDuringBreak = isTimeSlotDuringBreak(currentDate, slot.hour, slot.minute);
-          const backgroundColor = getSlotBackgroundColor(currentDate, slot.hour, slot.minute);
+          const slotStyles = getSlotStyles(currentDate, slot.hour, slot.minute);
 
           return (
             <Box
               key={slot.time}
-              sx={{
-                height: 40,
-                borderBottom: 1,
-                borderColor: "divider",
-                backgroundColor,
-                p: 0.5,
-                cursor: withinWorkingHours && !isDuringBreak ? (slotAppointments.length > 0 ? "default" : "pointer") : "not-allowed",
-                "&:hover":
-                  withinWorkingHours && slotAppointments.length === 0
-                    ? {
-                        backgroundColor: getHoverBackgroundColor(currentDate, slot.hour, slot.minute),
-                        "& .slot-hint": { opacity: isDuringBreak ? 0 : 1 },
-                      }
-                    : {},
-                opacity: !withinWorkingHours ? 0.5 : 1,
-                position: "relative",
-                userSelect: "none",
-              }}
+              style={slotStyles}
               onClick={() => handleSlotClick(currentDate, slot.hour, slot.minute)}
               onDoubleClick={() => handleSlotDoubleClick(currentDate, slot.hour, slot.minute)}
             >
               {!withinWorkingHours && !slotAppointments.length && !slotBreaks.length && (
-                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
-                  <Block fontSize="small" sx={{ mr: 0.5 }} />
-                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                <Box display="flex" alignItems="center" height="100%" color="text.disabled">
+                  <Block fontSize="small" />
+                  <Typography variant="caption" marginLeft={0.5}>
                     Outside hours
                   </Typography>
                 </Box>
               )}
 
               {isDuringBreak && slotAppointments.length === 0 && (
-                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "warning.main" }}>
-                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
-                    🚫 Break Time
-                  </Typography>
+                <Box display="flex" alignItems="center" height="100%" color="warning.main">
+                  <Typography variant="caption">🚫 Break Time</Typography>
                 </Box>
               )}
 
               {withinWorkingHours && !isDuringBreak && slotAppointments.length === 0 && slotBreaks.length === 0 && (
                 <Typography
                   variant="caption"
-                  className="slot-hint"
-                  sx={{
-                    fontSize: "0.6rem",
-                    color: isDarkMode ? theme.palette.text.secondary : "text.secondary",
+                  color={isDarkMode ? "text.secondary" : "text.secondary"}
+                  style={{
                     opacity: 0,
                     transition: "opacity 0.2s",
                     position: "absolute",
@@ -368,8 +328,9 @@ export const DayView: React.FC<DayViewProps> = ({
                     transform: "translate(-50%, -50%)",
                     pointerEvents: "none",
                     fontStyle: "italic",
-                    fontWeight: isDarkMode ? "500" : "normal",
+                    fontWeight: isDarkMode ? 500 : "normal",
                   }}
+                  className="slot-hint"
                 >
                   {isElapsed ? "Click for elapsed booking" : "Double-click to book"}
                 </Typography>
@@ -399,7 +360,7 @@ export const DayView: React.FC<DayViewProps> = ({
                   return (
                     <Box
                       key={`break-${breakItem.bLID}`}
-                      sx={{
+                      style={{
                         position: "absolute",
                         top: `${topOffset}px`,
                         left: "4px",
@@ -407,7 +368,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         height: `${breakHeight}px`,
                         zIndex: 10,
                       }}
-                    ></Box>
+                    />
                   );
                 }
                 return null;
@@ -435,7 +396,7 @@ export const DayView: React.FC<DayViewProps> = ({
                   return (
                     <Box
                       key={appointment.abID}
-                      sx={{
+                      style={{
                         position: "absolute",
                         top: `${topOffset}px`,
                         left: "4px",

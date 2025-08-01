@@ -55,11 +55,11 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   };
 
   return (
-    <Paper sx={{ p: 1, mb: 1 }}>
+    <Paper variant="outlined" style={{ padding: 8, marginBottom: 8 }}>
       <Grid container spacing={1} alignItems="center">
         {/* Date Display and Navigation */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+          <Typography variant="caption" color="text.secondary" display="block" marginBottom={0.5}>
             {getDateDisplay()}
           </Typography>
           <Stack direction="row" spacing={0.5} alignItems="center">
@@ -68,7 +68,10 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
               size="small"
               value={currentDate.toISOString().split("T")[0]}
               onChange={(e) => onDateChange(new Date(e.target.value))}
-              sx={{ minWidth: 120, "& .MuiInputBase-input": { fontSize: "0.8rem" } }}
+              style={{ minWidth: 120 }}
+              InputProps={{
+                style: { fontSize: "0.8rem" },
+              }}
             />
             <IconButton onClick={() => onNavigate("prev")} size="small">
               <NavigateBefore />
@@ -76,7 +79,7 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
             <IconButton onClick={() => onNavigate("next")} size="small">
               <NavigateNext />
             </IconButton>
-            <Button variant="outlined" startIcon={<Today />} onClick={() => onNavigate("today")} size="small" sx={{ minWidth: "auto", px: 1, fontSize: "0.7rem" }}>
+            <Button variant="outlined" startIcon={<Today />} onClick={() => onNavigate("today")} size="small" style={{ minWidth: "auto", fontSize: "0.7rem" }}>
               Today
             </Button>
           </Stack>
@@ -88,19 +91,48 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
             value={viewMode}
             onChange={(_, value) => onViewModeChange(value)}
             variant="fullWidth"
-            sx={{ "& .MuiTab-root": { fontSize: "0.75rem", minHeight: "36px", py: 0.5 } }}
+            style={{
+              minHeight: 36,
+            }}
           >
-            <Tab value="day" label="Day" sx={{ minWidth: "auto", px: 1 }} />
-            <Tab value="week" label="Week" sx={{ minWidth: "auto", px: 1 }} />
-            <Tab value="month" label="Month" sx={{ minWidth: "auto", px: 1 }} />
+            <Tab
+              value="day"
+              label="Day"
+              style={{
+                fontSize: "0.75rem",
+                minHeight: 36,
+                minWidth: "auto",
+                padding: "4px 8px",
+              }}
+            />
+            <Tab
+              value="week"
+              label="Week"
+              style={{
+                fontSize: "0.75rem",
+                minHeight: 36,
+                minWidth: "auto",
+                padding: "4px 8px",
+              }}
+            />
+            <Tab
+              value="month"
+              label="Month"
+              style={{
+                fontSize: "0.75rem",
+                minHeight: 36,
+                minWidth: "auto",
+                padding: "4px 8px",
+              }}
+            />
           </Tabs>
         </Grid>
 
         {/* Filters Section */}
         <Grid size={{ xs: 6, md: 1.5 }}>
           <FormControl size="small" fullWidth>
-            <InputLabel sx={{ fontSize: "0.8rem" }}>Mode</InputLabel>
-            <Select value={bookingMode} onChange={(e) => onBookingModeChange(e.target.value)} label="Mode" sx={{ "& .MuiSelect-select": { fontSize: "0.8rem" } }}>
+            <InputLabel style={{ fontSize: "0.8rem" }}>Mode</InputLabel>
+            <Select value={bookingMode} onChange={(e) => onBookingModeChange(e.target.value)} label="Mode" style={{ fontSize: "0.8rem" }}>
               {bookingModeOptions.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
@@ -112,8 +144,8 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
 
         <Grid size={{ xs: 6, md: 2 }}>
           <FormControl size="small" fullWidth>
-            <InputLabel sx={{ fontSize: "0.8rem" }}>Provider</InputLabel>
-            <Select value={selectedProvider} onChange={(e) => onProviderChange(e.target.value)} label="Provider" sx={{ "& .MuiSelect-select": { fontSize: "0.8rem" } }}>
+            <InputLabel style={{ fontSize: "0.8rem" }}>Provider</InputLabel>
+            <Select value={selectedProvider} onChange={(e) => onProviderChange(e.target.value)} label="Provider" style={{ fontSize: "0.8rem" }}>
               <MenuItem value="">All Providers</MenuItem>
               {providers.map((provider) => (
                 <MenuItem key={provider.value} value={provider.value.toString()}>
@@ -126,8 +158,8 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
 
         <Grid size={{ xs: 6, md: 2 }}>
           <FormControl size="small" fullWidth>
-            <InputLabel sx={{ fontSize: "0.8rem" }}>Resource</InputLabel>
-            <Select value={selectedResource} onChange={(e) => onResourceChange(e.target.value)} label="Resource" sx={{ "& .MuiSelect-select": { fontSize: "0.8rem" } }}>
+            <InputLabel style={{ fontSize: "0.8rem" }}>Resource</InputLabel>
+            <Select value={selectedResource} onChange={(e) => onResourceChange(e.target.value)} label="Resource" style={{ fontSize: "0.8rem" }}>
               <MenuItem value="">All Resources</MenuItem>
               {resources.map((resource) => (
                 <MenuItem key={resource.value} value={resource.value.toString()}>
@@ -139,7 +171,7 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
         </Grid>
 
         <Grid size={{ xs: 6, md: 1.5 }}>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={onBookingClick} fullWidth size="small" sx={{ fontSize: "0.8rem" }}>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={onBookingClick} fullWidth size="small" style={{ fontSize: "0.8rem" }}>
             Book
           </Button>
         </Grid>

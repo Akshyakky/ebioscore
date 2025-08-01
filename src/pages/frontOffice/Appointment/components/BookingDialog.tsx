@@ -30,6 +30,7 @@ import {
   Divider,
   FormControlLabel,
   Grid,
+  Paper,
   Radio,
   RadioGroup,
   Stack,
@@ -579,66 +580,55 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
       disableEscapeKeyDown={isSubmitting}
       actions={dialogActions}
     >
-      <Box sx={{ p: 2 }}>
+      <Box padding={2}>
         {formError && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
+          <Alert severity="error" onClose={() => setFormError(null)}>
             {formError}
           </Alert>
         )}
 
-        {isCheckingConflicts && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Checking for appointment conflicts...
-          </Alert>
-        )}
+        {isCheckingConflicts && <Alert severity="info">Checking for appointment conflicts...</Alert>}
 
         <form onSubmit={handleSubmit(onFormSubmit)}>
-          <Grid container spacing={2}>
+          <Stack spacing={2}>
             {/* Patient Information Section */}
-            <Grid size={{ xs: 12 }}>
-              <Accordion
-                expanded={patientAccordionExpanded}
-                onChange={() => setPatientAccordionExpanded(!patientAccordionExpanded)}
-                sx={{ border: "1px solid", borderColor: "primary.200" }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: "primary.50" }}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32 }}>
-                      <PatientIcon fontSize="small" />
-                    </Avatar>
-                    <Typography variant="h6">Patient Information</Typography>
-                    {selectedPatient && <Chip size="small" label={selectedPatient.fullName} color="primary" variant="outlined" />}
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails sx={{ p: 2 }}>
+            <Accordion expanded={patientAccordionExpanded} onChange={() => setPatientAccordionExpanded(!patientAccordionExpanded)} variant="outlined">
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} style={{ backgroundColor: "rgba(25, 118, 210, 0.04)" }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar color="primary">
+                    <PatientIcon />
+                  </Avatar>
+                  <Typography variant="h6">Patient Information</Typography>
+                  {selectedPatient && <Chip size="small" label={selectedPatient.fullName} color="primary" variant="outlined" />}
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2}>
+                  {/* Patient Type Selection */}
+                  <Paper variant="outlined">
+                    <Box padding={1}>
+                      <FormControlLabel
+                        control={<Switch checked={watchedPatRegisterYN === "Y"} onChange={handleRegisteredPatientToggle} color="primary" />}
+                        label="Registered Patient"
+                      />
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {watchedPatRegisterYN === "Y" ? "Search and select from existing patients" : "Enter new patient details for walk-in appointment"}
+                      </Typography>
+                    </Box>
+                  </Paper>
+
+                  {/* Patient Search for Registered Patients */}
+                  {watchedPatRegisterYN === "Y" && (
+                    <PatientSearch
+                      onPatientSelect={handlePatientSelect}
+                      clearTrigger={patientSearchClear}
+                      label="Search Patient"
+                      placeholder="Search by name, UHID, or phone number"
+                    />
+                  )}
+
+                  {/* Patient Details Form */}
                   <Grid container spacing={2}>
-                    {/* Patient Type Selection */}
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ p: 1, backgroundColor: "grey.50", borderRadius: 1 }}>
-                        <FormControlLabel
-                          control={<Switch checked={watchedPatRegisterYN === "Y"} onChange={handleRegisteredPatientToggle} color="primary" />}
-                          label="Registered Patient"
-                          sx={{ mb: 1 }}
-                        />
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {watchedPatRegisterYN === "Y" ? "Search and select from existing patients" : "Enter new patient details for walk-in appointment"}
-                        </Typography>
-                      </Box>
-                    </Grid>
-
-                    {/* Patient Search for Registered Patients */}
-                    {watchedPatRegisterYN === "Y" && (
-                      <Grid size={{ xs: 12 }}>
-                        <PatientSearch
-                          onPatientSelect={handlePatientSelect}
-                          clearTrigger={patientSearchClear}
-                          label="Search Patient"
-                          placeholder="Search by name, UHID, or phone number"
-                        />
-                      </Grid>
-                    )}
-
-                    {/* Patient Details Form */}
                     <Grid size={{ xs: 12, sm: 3 }}>
                       <EnhancedFormField
                         name="abTitle"
@@ -723,165 +713,153 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                       </RadioGroup>
                     </Grid>
                   </Grid>
-                </AccordionDetails>
-              </Accordion>
-            </Grid>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
 
             {/* Appointment Details Section */}
-            <Grid size={{ xs: 12 }}>
-              <Accordion
-                expanded={appointmentAccordionExpanded}
-                onChange={() => setAppointmentAccordionExpanded(!appointmentAccordionExpanded)}
-                sx={{ border: "1px solid", borderColor: "success.200" }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: "success.50" }}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Avatar sx={{ bgcolor: "success.main", width: 32, height: 32 }}>
-                      <ScheduleIcon fontSize="small" />
-                    </Avatar>
-                    <Typography variant="h6">Appointment Details</Typography>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    {/* Provider and Resource */}
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <EnhancedFormField name="hplID" control={control} type="select" label="Provider" required size="small" options={providers} onChange={handleProviderChange} />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <EnhancedFormField
-                        name="rlID"
-                        control={control}
-                        type="select"
-                        label="Resource/Room"
-                        required
-                        size="small"
-                        options={resources}
-                        onChange={handleResourceChange}
-                      />
-                    </Grid>
-
-                    {/* Date and Time */}
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <EnhancedFormField name="abDate" control={control} type="datepicker" label="Appointment Date" required size="small" />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <EnhancedFormField name="abTime" control={control} type="timepicker" label="Start Time" required size="small" />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <EnhancedFormField
-                        name="abDuration"
-                        control={control}
-                        type="select"
-                        label="Duration"
-                        required
-                        size="small"
-                        options={DURATION_OPTIONS}
-                        onChange={handleDurationChange}
-                      />
-                    </Grid>
-
-                    {/* Reason */}
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <EnhancedFormField name="arlID" control={control} type="select" label="Reason for Visit" size="small" options={reasonList} onChange={handleReasonChange} />
-                    </Grid>
-
-                    {/* Notes */}
-                    <Grid size={{ xs: 12 }}>
-                      <EnhancedFormField
-                        name="procNotes"
-                        control={control}
-                        type="textarea"
-                        label="Appointment Notes"
-                        size="small"
-                        rows={3}
-                        placeholder="Add any special instructions or notes for this appointment..."
-                      />
-                    </Grid>
-
-                    <Grid size={{ xs: 12 }}>
-                      <EnhancedFormField
-                        name="arlInstructions"
-                        control={control}
-                        type="textarea"
-                        label="Patient Instructions"
-                        size="small"
-                        rows={2}
-                        placeholder="Instructions for the patient..."
-                      />
-                    </Grid>
+            <Accordion expanded={appointmentAccordionExpanded} onChange={() => setAppointmentAccordionExpanded(!appointmentAccordionExpanded)} variant="outlined">
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} style={{ backgroundColor: "rgba(46, 125, 50, 0.04)" }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar style={{ backgroundColor: "#4caf50" }}>
+                    <ScheduleIcon />
+                  </Avatar>
+                  <Typography variant="h6">Appointment Details</Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  {/* Provider and Resource */}
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField name="hplID" control={control} type="select" label="Provider" required size="small" options={providers} onChange={handleProviderChange} />
                   </Grid>
-                </AccordionDetails>
-              </Accordion>
-            </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField
+                      name="rlID"
+                      control={control}
+                      type="select"
+                      label="Resource/Room"
+                      required
+                      size="small"
+                      options={resources}
+                      onChange={handleResourceChange}
+                    />
+                  </Grid>
+
+                  {/* Date and Time */}
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <EnhancedFormField name="abDate" control={control} type="datepicker" label="Appointment Date" required size="small" />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <EnhancedFormField name="abTime" control={control} type="timepicker" label="Start Time" required size="small" />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <EnhancedFormField
+                      name="abDuration"
+                      control={control}
+                      type="select"
+                      label="Duration"
+                      required
+                      size="small"
+                      options={DURATION_OPTIONS}
+                      onChange={handleDurationChange}
+                    />
+                  </Grid>
+
+                  {/* Reason */}
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField name="arlID" control={control} type="select" label="Reason for Visit" size="small" options={reasonList} onChange={handleReasonChange} />
+                  </Grid>
+
+                  {/* Notes */}
+                  <Grid size={{ xs: 12 }}>
+                    <EnhancedFormField
+                      name="procNotes"
+                      control={control}
+                      type="textarea"
+                      label="Appointment Notes"
+                      size="small"
+                      rows={3}
+                      placeholder="Add any special instructions or notes for this appointment..."
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
+                    <EnhancedFormField
+                      name="arlInstructions"
+                      control={control}
+                      type="textarea"
+                      label="Patient Instructions"
+                      size="small"
+                      rows={2}
+                      placeholder="Instructions for the patient..."
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
 
             {/* Additional Information Section */}
-            <Grid size={{ xs: 12 }}>
-              <Accordion
-                expanded={additionalAccordionExpanded}
-                onChange={() => setAdditionalAccordionExpanded(!additionalAccordionExpanded)}
-                sx={{ border: "1px solid", borderColor: "info.200" }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: "info.50" }}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Avatar sx={{ bgcolor: "info.main", width: 32, height: 32 }}>
-                      <HospitalIcon fontSize="small" />
-                    </Avatar>
-                    <Typography variant="h6">Additional Information</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                      (Optional)
+            <Accordion expanded={additionalAccordionExpanded} onChange={() => setAdditionalAccordionExpanded(!additionalAccordionExpanded)} variant="outlined">
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} style={{ backgroundColor: "rgba(2, 136, 209, 0.04)" }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar style={{ backgroundColor: "#2196f3" }}>
+                    <HospitalIcon />
+                  </Avatar>
+                  <Typography variant="h6">Additional Information</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    (Optional)
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  {/* Inpatient Information */}
+                  {watchedAbPType === "IP" && (
+                    <>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2" gutterBottom color="primary">
+                          Inpatient Details
+                        </Typography>
+                        <Divider />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <EnhancedFormField name="wName" control={control} type="text" label="Ward Name" size="small" />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <EnhancedFormField name="roomName" control={control} type="text" label="Room Name" size="small" />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <EnhancedFormField name="bedName" control={control} type="text" label="Bed Name" size="small" />
+                      </Grid>
+                    </>
+                  )}
+
+                  {/* Additional Reference Fields */}
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="subtitle2" gutterBottom color="info">
+                      Reference Information
                     </Typography>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    {/* Inpatient Information */}
-                    {watchedAbPType === "IP" && (
-                      <>
-                        <Grid size={{ xs: 12 }}>
-                          <Typography variant="subtitle2" gutterBottom color="primary">
-                            Inpatient Details
-                          </Typography>
-                          <Divider sx={{ mb: 2 }} />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                          <EnhancedFormField name="wName" control={control} type="text" label="Ward Name" size="small" />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                          <EnhancedFormField name="roomName" control={control} type="text" label="Room Name" size="small" />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                          <EnhancedFormField name="bedName" control={control} type="text" label="Bed Name" size="small" />
-                        </Grid>
-                      </>
-                    )}
-
-                    {/* Additional Reference Fields */}
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="subtitle2" gutterBottom color="info">
-                        Reference Information
-                      </Typography>
-                      <Divider sx={{ mb: 2 }} />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <EnhancedFormField name="pssnId" control={control} type="text" label="ABHA Number" size="small" />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <EnhancedFormField name="intIdPsprt" control={control} type="text" label="International ID/Passport" size="small" />
-                    </Grid>
+                    <Divider />
                   </Grid>
-                </AccordionDetails>
-              </Accordion>
-            </Grid>
-          </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <EnhancedFormField name="pssnId" control={control} type="text" label="ABHA Number" size="small" />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <EnhancedFormField name="intIdPsprt" control={control} type="text" label="International ID/Passport" size="small" />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+          </Stack>
         </form>
       </Box>
     </GenericDialog>

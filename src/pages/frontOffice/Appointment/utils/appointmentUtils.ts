@@ -1,5 +1,6 @@
 // src/frontOffice/utils/appointmentUtils.ts
-import { AppointmentData, AppointmentLayout } from "../types";
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { AppointmentLayout } from "../types";
 
 export const getStatusColor = (status: string) => {
   switch (status) {
@@ -20,11 +21,11 @@ export const getStatusColor = (status: string) => {
   }
 };
 
-export const calculateAppointmentLayout = (date: Date, appointments: AppointmentData[]): AppointmentLayout[] => {
+export const calculateAppointmentLayout = (date: Date, appointments: AppointBookingDto[]): AppointmentLayout[] => {
   const sortedAppointments = [...appointments].sort((a, b) => new Date(a.abTime).getTime() - new Date(b.abTime).getTime());
 
   const layout: AppointmentLayout[] = [];
-  const columns: Array<{ endTime: Date; appointments: AppointmentData[] }> = [];
+  const columns: Array<{ endTime: Date; appointments: AppointBookingDto[] }> = [];
 
   sortedAppointments.forEach((appointment) => {
     const startTime = new Date(appointment.abTime);
