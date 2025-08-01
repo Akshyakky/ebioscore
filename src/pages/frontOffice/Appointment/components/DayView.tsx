@@ -9,7 +9,6 @@ import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
 import { calculateBreakLayout } from "../utils/breakUtils";
 import { AppointmentCard } from "./AppointmentCard";
-import { BreakCard } from "./BreakCard";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 
 interface DayViewProps {
@@ -408,9 +407,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         height: `${breakHeight}px`,
                         zIndex: 10,
                       }}
-                    >
-                      <BreakCard breakItem={breakItem} showDetails={true} column={column} totalColumns={totalColumns} onClick={onBreakClick} />
-                    </Box>
+                    ></Box>
                   );
                 }
                 return null;

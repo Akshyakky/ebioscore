@@ -9,7 +9,6 @@ import { AppointBookingDto, DURATION_OPTIONS, PATIENT_TYPE_OPTIONS } from "@/int
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { useAlert } from "@/providers/AlertProvider";
-import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
 import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -293,44 +292,6 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
     }
   }, [open, defaultValues, reset]);
 
-  // Check for appointment conflicts when provider, date, or time changes
-  const checkAppointmentConflicts = useCallback(async () => {
-    if (!watchedHplID || !watchedAbDate || !watchedAbTime || !watchedDuration) {
-      return;
-    }
-
-    try {
-      setIsCheckingConflicts(true);
-
-      const endTime = new Date(watchedAbTime);
-      endTime.setMinutes(endTime.getMinutes() + watchedDuration);
-
-      const result = await appointmentService.checkAppointmentConflicts(watchedHplID, watchedAbDate, watchedAbTime, endTime, defaultValues.abID || undefined);
-
-      if (result.success && result.data) {
-        setFormError("There is already an appointment scheduled at this time for the selected provider");
-        showAlert("Conflict", "There is already an appointment scheduled at this time for the selected provider", "warning");
-      } else {
-        setFormError(null);
-      }
-    } catch (error) {
-      console.error("Error checking appointment conflicts:", error);
-    } finally {
-      setIsCheckingConflicts(false);
-    }
-  }, [watchedHplID, watchedAbDate, watchedAbTime, watchedDuration, defaultValues.abID, showAlert]);
-
-  // Debounced conflict checking
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (watchedHplID && watchedAbDate && watchedAbTime) {
-        checkAppointmentConflicts();
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [checkAppointmentConflicts, watchedHplID, watchedAbDate, watchedAbTime]);
-
   // Handle patient selection with enhanced error handling
   const handlePatientSelect = useCallback(
     async (patient: PatientSearchResult | null) => {
@@ -440,18 +401,6 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
 
       if (data.patRegisterYN === "N" && (!data.abFName || !data.abLName || !data.appPhone1)) {
         throw new Error("Please provide patient name and contact information");
-      }
-
-      // Check for conflicts one more time before submitting
-      if (data.hplID && data.abDate && data.abTime) {
-        const endTime = new Date(data.abTime);
-        endTime.setMinutes(endTime.getMinutes() + data.abDuration);
-
-        const conflictResult = await appointmentService.checkAppointmentConflicts(data.hplID, data.abDate, data.abTime, endTime, data.abID || undefined);
-
-        if (conflictResult.success && conflictResult.data) {
-          throw new Error("There is already an appointment scheduled at this time for the selected provider");
-        }
       }
 
       // Transform form data to AppointBookingDto

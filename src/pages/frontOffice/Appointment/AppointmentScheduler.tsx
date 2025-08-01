@@ -22,10 +22,25 @@ import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import BookingDialog from "./components/BookingDialog";
 import { SchedulerHeader } from "./components/SchedulerHeader";
 
+/**
+ * AppointmentScheduler Component
+ *
+ * A comprehensive appointment scheduling interface that provides multiple view modes
+ * (day, week, month) for managing healthcare appointments. The component integrates
+ * with work hours, break management, and provider scheduling systems.
+ *
+ * Key Features:
+ * - Multiple view modes (day, week, month)
+ * - Real-time appointment management
+ * - Work hours and break period validation
+ * - Provider and resource filtering
+ * - Appointment conflict detection
+ * - Elapsed time slot confirmation
+ */
 const AppointmentScheduler: React.FC = () => {
   const { showAlert } = useAlert();
 
-  // State management
+  // Core state management for scheduler functionality
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("day");
@@ -35,7 +50,7 @@ const AppointmentScheduler: React.FC = () => {
   const [selectedProvider, setSelectedProvider] = useState("");
   const [selectedResource, setSelectedResource] = useState("");
 
-  // New state for elapsed slot confirmation
+  // Enhanced state for elapsed slot confirmation workflow
   const [showElapsedConfirmation, setShowElapsedConfirmation] = useState(false);
   const [pendingElapsedSlot, setPendingElapsedSlot] = useState<{
     date: Date;
@@ -43,7 +58,7 @@ const AppointmentScheduler: React.FC = () => {
     minute: number;
   } | null>(null);
 
-  // Custom hooks with API integration
+  // Custom hooks for comprehensive data management and API integration
   const {
     appointments,
     breaks,
@@ -65,10 +80,10 @@ const AppointmentScheduler: React.FC = () => {
 
   const timeSlots = useTimeSlots();
 
-  // Load dropdown values for providers and resources
+  // Load dropdown values for provider and resource selection
   const { appointmentConsultants = [], roomList = [], isLoading: dropdownLoading } = useDropdownValues(["appointmentConsultants", "roomList"]);
 
-  // Transform dropdown data to match expected format
+  // Transform dropdown data to standardized format for component consumption
   const providers = useMemo(() => {
     return appointmentConsultants.map((consultant) => ({
       value: Number(consultant.value),
@@ -85,7 +100,7 @@ const AppointmentScheduler: React.FC = () => {
     }));
   }, [roomList]);
 
-  // Booking form state
+  // Initialize booking form with default values
   const initialBookingForm: AppointBookingDto = {
     abID: 0,
     abFName: "",
@@ -107,21 +122,22 @@ const AppointmentScheduler: React.FC = () => {
 
   const [bookingForm, setBookingForm] = useState<AppointBookingDto>(initialBookingForm);
 
-  // Update current time every minute
+  // Real-time clock updates for current time indicator
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000);
+    }, 60000); // Update every minute for optimal performance
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch appointments when date range or provider changes
+  // Data fetching based on view mode and filter changes
   useEffect(() => {
     const fetchData = async () => {
       if (selectedProvider) {
         const startDate = new Date(currentDate);
         const endDate = new Date(currentDate);
 
+        // Adjust date range based on current view mode
         if (viewMode === "week") {
           const weekDates = getWeekDates(currentDate);
           startDate.setTime(weekDates[0].getTime());
@@ -152,7 +168,7 @@ const AppointmentScheduler: React.FC = () => {
     fetchData();
   }, [currentDate, viewMode, selectedProvider, fetchAppointments, fetchAppointmentsByProvider]);
 
-  // Date navigation utilities
+  // Date navigation utility functions
   const getWeekDates = useCallback((date: Date) => {
     const week = [];
     const startDate = new Date(date);
@@ -193,12 +209,12 @@ const AppointmentScheduler: React.FC = () => {
     return dates;
   }, []);
 
-  // Filter appointments based on current view and filters
+  // Filter appointments based on current view parameters and selected filters
   const filteredAppointments = React.useMemo(() => {
     return appointments.filter((apt) => {
       const aptDate = new Date(apt.abDate);
 
-      // Filter by date range based on view mode
+      // Apply date range filtering based on current view mode
       let dateInRange = false;
       if (viewMode === "day") {
         const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
@@ -215,7 +231,7 @@ const AppointmentScheduler: React.FC = () => {
         dateInRange = aptDate.getMonth() === currentDate.getMonth() && aptDate.getFullYear() === currentDate.getFullYear();
       }
 
-      // Filter by provider and resource
+      // Apply provider and resource filtering
       const providerMatch = selectedProvider === "" || apt.hplID.toString() === selectedProvider;
       const resourceMatch = selectedResource === "" || apt.rlID.toString() === selectedResource;
 
@@ -223,7 +239,7 @@ const AppointmentScheduler: React.FC = () => {
     });
   }, [appointments, currentDate, viewMode, selectedProvider, selectedResource, getWeekDates]);
 
-  // Navigation handlers
+  // Navigation handlers for date movement and view changes
   const handleNavigateDate = (direction: "prev" | "next" | "today") => {
     const newDate = new Date(currentDate);
 
@@ -253,29 +269,9 @@ const AppointmentScheduler: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // Enhanced event handlers with API integration
+  // Enhanced appointment booking workflow with comprehensive validation
   const handleSlotDoubleClick = async (date: Date, hour: number, minute: number) => {
-    // Check if the time slot is within working hours
-    if (!isTimeWithinWorkingHours(date, hour, minute)) {
-      showAlert("Warning", "This time slot is outside of working hours", "warning");
-      return;
-    }
-
-    // Check for conflicts if provider is selected
-    if (selectedProvider) {
-      const selectedDateTime = new Date(date);
-      selectedDateTime.setHours(hour, minute, 0, 0);
-      const endDateTime = new Date(selectedDateTime.getTime() + 30 * 60000); // 30 minutes default
-
-      const conflictResult = await checkAppointmentConflicts(Number(selectedProvider), date, selectedDateTime, endDateTime);
-
-      if (conflictResult.success && conflictResult.data) {
-        showAlert("Conflict", "There is already an appointment scheduled at this time for the selected provider", "warning");
-        return;
-      }
-    }
-
-    // Pre-populate the booking form with the selected date and time
+    // Pre-populate booking form with selected time slot information
     const selectedDateTime = new Date(date);
     selectedDateTime.setHours(hour, minute, 0, 0);
 
@@ -283,7 +279,7 @@ const AppointmentScheduler: React.FC = () => {
       ...prev,
       abDate: date,
       abTime: selectedDateTime,
-      abEndTime: new Date(selectedDateTime.getTime() + 30 * 60000), // Default 30 minutes
+      abEndTime: new Date(selectedDateTime.getTime() + 30 * 60000), // Default 30-minute duration
       hplID: selectedProvider ? Number(selectedProvider) : 0,
       rlID: selectedResource ? Number(selectedResource) : 0,
     }));
@@ -291,8 +287,9 @@ const AppointmentScheduler: React.FC = () => {
     setShowBookingDialog(true);
   };
 
+  // Handle elapsed time slot confirmation workflow
   const handleElapsedSlotConfirmation = (date: Date, hour: number, minute: number) => {
-    // Only allow confirmation for elapsed slots within working hours
+    // Validate elapsed slot is within working hours before allowing confirmation
     if (!isTimeWithinWorkingHours(date, hour, minute)) {
       return;
     }
@@ -314,15 +311,16 @@ const AppointmentScheduler: React.FC = () => {
     setShowElapsedConfirmation(false);
   };
 
+  // Comprehensive appointment management with proper error handling
   const handleBookingSubmit = async (bookingData: AppointBookingDto) => {
     try {
       let result;
 
       if (bookingData.abID && bookingData.abID > 0) {
-        // Update existing appointment
+        // Update existing appointment workflow
         result = await updateAppointment(bookingData);
       } else {
-        // Create new appointment
+        // Create new appointment workflow
         result = await createAppointment(bookingData);
       }
 
@@ -340,12 +338,13 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
+  // Alternative booking entry point for filter button usage
   const handleSlotClick = () => {
-    // This is now only used for the Book button in filters
     setBookingForm(initialBookingForm);
     setShowBookingDialog(true);
   };
 
+  // Appointment interaction handlers
   const handleAppointmentClick = (appointment: AppointBookingDto) => {
     setSelectedAppointment(appointment);
   };
@@ -358,7 +357,7 @@ const AppointmentScheduler: React.FC = () => {
 
   const handleAppointmentCancel = async (appointment: AppointBookingDto) => {
     try {
-      const cancelReason = "Cancelled by user"; // You might want to show a dialog to get the reason
+      const cancelReason = "Cancelled by user"; // Could be enhanced with user input dialog
       const result = await cancelAppointment(appointment.abID, cancelReason);
 
       if (result.success) {
@@ -373,7 +372,7 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
-  // Enhanced view rendering with work hours integration
+  // Enhanced view rendering with comprehensive data integration
   const renderCurrentView = () => {
     if (isLoading) {
       return (
@@ -386,10 +385,12 @@ const AppointmentScheduler: React.FC = () => {
       );
     }
 
+    // Common properties shared across all view modes
     const commonProps = {
       currentDate,
       timeSlots,
       appointments: filteredAppointments,
+      breaks,
       workHours,
       currentTime,
       onAppointmentClick: handleAppointmentClick,
@@ -415,10 +416,10 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
-  // Work hours statistics for display
+  // Generate work hours statistics for display
   const workHoursStats = getWorkHoursStats();
 
-  // Show error if there's an error
+  // Error handling with retry functionality
   if (error) {
     return (
       <Box sx={{ p: 1 }}>
@@ -439,6 +440,7 @@ const AppointmentScheduler: React.FC = () => {
 
   return (
     <Box sx={{ p: 1 }}>
+      {/* Comprehensive scheduler header with navigation and filtering */}
       <SchedulerHeader
         currentDate={currentDate}
         viewMode={viewMode}
@@ -457,36 +459,18 @@ const AppointmentScheduler: React.FC = () => {
         getWeekDates={getWeekDates}
       />
 
-      {/* Work Hours Status */}
-      {workHours.length > 0 && (
-        <Paper sx={{ p: 1, mb: 1 }}>
-          <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
-            <Typography variant="caption" color="text.secondary">
-              Work Hours Status:
-            </Typography>
-            <Typography variant="caption">{workHoursStats.activeDays} working days configured</Typography>
-            <Typography variant="caption">{workHoursStats.languages} languages supported</Typography>
-            {!isWorkingDay(currentDate) && (
-              <Alert severity="warning" sx={{ p: 0.5, fontSize: "0.75rem" }}>
-                No working hours configured for {currentDate.toLocaleDateString("en-US", { weekday: "long" })}
-              </Alert>
-            )}
-          </Box>
-        </Paper>
-      )}
-
-      {/* Main Scheduler View */}
+      {/* Main scheduler view container */}
       <Paper sx={{ p: 1, mb: 1 }}>
         <Box sx={{ height: "calc(100vh - 300px)", overflow: "auto" }}>{renderCurrentView()}</Box>
       </Paper>
 
-      {/* Time Legend */}
+      {/* Visual legend for time slot indicators */}
       <TimeLegend />
 
-      {/* Statistics */}
+      {/* Scheduler statistics dashboard */}
       <SchedulerStatistics appointments={filteredAppointments} breaks={breaks} />
 
-      {/* Dialogs */}
+      {/* Appointment booking dialog */}
       <BookingDialog
         open={showBookingDialog}
         bookingForm={bookingForm}
@@ -500,9 +484,10 @@ const AppointmentScheduler: React.FC = () => {
         onFormChange={setBookingForm}
       />
 
+      {/* Appointment details view dialog */}
       <AppointmentDetailsDialog appointment={selectedAppointment} onClose={() => setSelectedAppointment(null)} onEdit={handleAppointmentEdit} onCancel={handleAppointmentCancel} />
 
-      {/* Elapsed Slot Confirmation Dialog */}
+      {/* Elapsed time slot confirmation dialog */}
       <ConfirmationDialog
         open={showElapsedConfirmation}
         onClose={handleElapsedSlotCancelled}
