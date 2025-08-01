@@ -103,8 +103,8 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
 
   const supplier = [
-    { value: "sup1", label: "Suplier1" },
-    { value: "sup2", label: "Suplier2" },
+    { value: 1, label: "Suplier1" },
+    { value: 2, label: "Suplier2" },
   ];
 
   const defaultValues: ProductStockReturnFormData = useMemo(
@@ -252,7 +252,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       manufacturerCode: "",
       manufacturerName: "",
       returnReason: "",
-      transferYN: "N",
       rActiveYN: "Y",
     };
 

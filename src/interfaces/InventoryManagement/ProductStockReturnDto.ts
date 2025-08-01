@@ -79,8 +79,6 @@ export interface ProductStockReturnDetailDto extends BaseDto {
   freeRetUnitQty?: number;
   psdID: number;
   hsnCode?: string;
-
-  // Additional properties for business logic
   productCode?: string;
   pUnitID?: number;
   pUnitName?: string;
@@ -96,8 +94,6 @@ export interface ProductStockReturnDetailDto extends BaseDto {
   mfName?: string;
   pGrpID?: number;
   pGrpName?: string;
-
-  // UI helper properties
   cgst?: number;
   sgst?: number;
 }
