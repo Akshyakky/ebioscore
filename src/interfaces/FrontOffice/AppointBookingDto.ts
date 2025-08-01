@@ -93,7 +93,6 @@ export const APPOINTMENT_STATUS_OPTIONS = [
 export const PATIENT_TYPE_OPTIONS = [
   { value: "OP", label: "Outpatient" },
   { value: "IP", label: "Inpatient" },
-  { value: "ER", label: "Emergency" },
 ];
 
 // Duration description options

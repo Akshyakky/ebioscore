@@ -18,6 +18,7 @@ import {
 } from "@mui/icons-material";
 import { Alert, Box, Chip, CircularProgress, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import LabEnterReportDialog from "../components/LabEnterReportDialog";
 import SampleStatusUpdateDialog from "../components/SampleStatusUpdateDialog";
 import { useLaboratoryReportEntry } from "../hooks/useLaboratoryReportEntry";
 
@@ -53,6 +54,8 @@ const LaboratoryReportEntryPage: React.FC = () => {
   const [labServiceTypes, setLabServiceTypes] = useState<any[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<number | null>(null);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+  const [openEnterReportDialog, setOpenEnterReportDialog] = useState(false);
+  const [selectedReportRegister, setSelectedReportRegister] = useState<GetLabRegistersListDto | null>(null);
   const {
     labRegisters,
     isLoading,
@@ -100,6 +103,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
+
   const handleServiceTypeDropdownChange = useCallback(
     (value: string) => {
       const serviceTypeId = parseInt(value);
@@ -151,13 +155,16 @@ const LaboratoryReportEntryPage: React.FC = () => {
   const handleCloseUpdateDialog = useCallback(() => {
     setOpenUpdateDialog(false);
   }, []);
-  const handleEnterReport = useCallback(
-    (register: GetLabRegistersListDto) => {
-      showAlert("Info", `Opening report entry for Lab Reg No: ${register.labRegister.labRegNo}`, "info");
-    },
-    [showAlert]
-  );
 
+  const handleEnterReport = useCallback((register: GetLabRegistersListDto) => {
+    setSelectedReportRegister(register);
+    setOpenEnterReportDialog(true);
+  }, []);
+  const handleCloseEnterReportDialog = useCallback(() => {
+    setOpenEnterReportDialog(false);
+    setSelectedReportRegister(null);
+    refreshData();
+  }, [refreshData]);
   const handleViewReport = useCallback(
     (register: GetLabRegistersListDto) => {
       showAlert("Info", `Viewing report for Lab Reg No: ${register.labRegister.labRegNo}`, "info");
@@ -721,6 +728,16 @@ const LaboratoryReportEntryPage: React.FC = () => {
           serviceTypeId={selectedServiceType || 0}
           onUpdate={updateSampleStatus}
           loading={updateLoading}
+        />
+      )}
+      {selectedReportRegister && (
+        <LabEnterReportDialog
+          open={openEnterReportDialog}
+          onClose={handleCloseEnterReportDialog}
+          labRegNo={selectedReportRegister.labRegister.labRegNo}
+          serviceTypeId={selectedServiceType || 0}
+          patientName={selectedReportRegister.labRegister.patientFullName}
+          onSave={handleCloseEnterReportDialog}
         />
       )}
     </Box>

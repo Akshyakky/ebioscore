@@ -1,22 +1,28 @@
 // src/pages/frontOffice/Appointment/components/DayView.tsx
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
+import { BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { Block } from "@mui/icons-material";
 import { Box, Grid, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
+import { calculateBreakLayout } from "../utils/breakUtils";
 import { AppointmentCard } from "./AppointmentCard";
+import { BreakCard } from "./BreakCard";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 
 interface DayViewProps {
   currentDate: Date;
   timeSlots: TimeSlot[];
   appointments: AppointBookingDto[];
+  breaks: BreakDto[];
   workHours: HospWorkHoursDto[];
   currentTime: Date;
+  selectedProvider?: string;
   onSlotDoubleClick: (date: Date, hour: number, minute: number) => void;
   onAppointmentClick: (appointment: AppointBookingDto) => void;
+  onBreakClick?: (breakItem: BreakDto) => void;
   onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
 }
 
@@ -24,10 +30,13 @@ export const DayView: React.FC<DayViewProps> = ({
   currentDate,
   timeSlots,
   appointments,
+  breaks,
   workHours,
   currentTime,
+  selectedProvider,
   onSlotDoubleClick,
   onAppointmentClick,
+  onBreakClick,
   onElapsedSlotConfirmation,
 }) => {
   const theme = useTheme();
@@ -57,18 +66,49 @@ export const DayView: React.FC<DayViewProps> = ({
     return slotDate < currentTime;
   };
 
+  const isTimeSlotDuringBreak = (date: Date, hour: number, minute: number) => {
+    const slotMinutes = hour * 60 + minute;
+
+    return breaks.some((breakItem) => {
+      // Check if break applies to selected provider
+      if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
+        return false;
+      }
+
+      // Check if slot date is within break date range
+      const breakStartDate = new Date(breakItem.bLStartDate);
+      const breakEndDate = new Date(breakItem.bLEndDate);
+
+      if (date < breakStartDate || date > breakEndDate) {
+        return false;
+      }
+
+      // Check if slot time is within break time range
+      const breakStartTime = new Date(breakItem.bLStartTime);
+      const breakEndTime = new Date(breakItem.bLEndTime);
+
+      const breakStartMinutes = breakStartTime.getHours() * 60 + breakStartTime.getMinutes();
+      const breakEndMinutes = breakEndTime.getHours() * 60 + breakEndTime.getMinutes();
+
+      return slotMinutes >= breakStartMinutes && slotMinutes < breakEndMinutes;
+    });
+  };
+
   const getSlotBackgroundColor = (date: Date, hour: number, minute: number) => {
     const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
+    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
 
     if (!withinWorkingHours) {
       return isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
     }
 
+    if (isDuringBreak) {
+      return isDarkMode ? "#d84315" : "#ffccbc"; // Orange tint for break periods
+    }
+
     if (isElapsed) {
-      return isDarkMode
-        ? theme.palette.grey[700] // Darker but still distinguishable in dark mode
-        : "#f0f0f0";
+      return isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
     }
 
     return "transparent";
@@ -76,6 +116,11 @@ export const DayView: React.FC<DayViewProps> = ({
 
   const getHoverBackgroundColor = (date: Date, hour: number, minute: number) => {
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
+    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
+
+    if (isDuringBreak) {
+      return isDarkMode ? "#ff5722" : "#ffab91";
+    }
 
     if (isDarkMode) {
       return isElapsed ? theme.palette.grey[600] : theme.palette.grey[700];
@@ -101,6 +146,32 @@ export const DayView: React.FC<DayViewProps> = ({
     });
   };
 
+  const getBreaksForSlot = (date: Date, hour: number, minute: number) => {
+    return breaks.filter((breakItem) => {
+      // Check if break applies to selected provider
+      if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
+        return false;
+      }
+
+      // Check if slot date is within break date range
+      const breakStartDate = new Date(breakItem.bLStartDate);
+      const breakEndDate = new Date(breakItem.bLEndDate);
+
+      if (date < breakStartDate || date > breakEndDate) {
+        return false;
+      }
+
+      // Check if slot time is within break time range
+      const breakStartTime = new Date(breakItem.bLStartTime);
+      const breakEndTime = new Date(breakItem.bLEndTime);
+
+      const slotTime = new Date(date);
+      slotTime.setHours(hour, minute, 0, 0);
+
+      return slotTime >= breakStartTime && slotTime < breakEndTime;
+    });
+  };
+
   const dayAppointments = appointments.filter((apt) => {
     const aptDate = new Date(apt.abDate);
     const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
@@ -108,12 +179,31 @@ export const DayView: React.FC<DayViewProps> = ({
     return aptDateOnly.getTime() === currentDateOnly.getTime();
   });
 
+  const dayBreaks = breaks.filter((breakItem) => {
+    // Filter by selected provider if specified
+    if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
+      return false;
+    }
+
+    const breakStartDate = new Date(breakItem.bLStartDate);
+    const breakEndDate = new Date(breakItem.bLEndDate);
+
+    return currentDate >= breakStartDate && currentDate <= breakEndDate;
+  });
+
   const appointmentLayout = calculateAppointmentLayout(currentDate, dayAppointments);
+  const breakLayout = calculateBreakLayout(currentDate, dayBreaks);
 
   const handleSlotClick = (date: Date, hour: number, minute: number) => {
     const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
+    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
     const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+    if (isDuringBreak) {
+      // Don't allow booking during breaks
+      return;
+    }
 
     if (withinWorkingHours && isElapsed && slotAppointments.length === 0) {
       onElapsedSlotConfirmation(date, hour, minute);
@@ -122,7 +212,13 @@ export const DayView: React.FC<DayViewProps> = ({
 
   const handleSlotDoubleClick = (date: Date, hour: number, minute: number) => {
     const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
     const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+    if (isDuringBreak) {
+      // Don't allow booking during breaks
+      return;
+    }
 
     if (withinWorkingHours && slotAppointments.length === 0) {
       onSlotDoubleClick(date, hour, minute);
@@ -211,8 +307,10 @@ export const DayView: React.FC<DayViewProps> = ({
 
         {timeSlots.map((slot) => {
           const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
+          const slotBreaks = getBreaksForSlot(currentDate, slot.hour, slot.minute);
           const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
           const isElapsed = isTimeSlotElapsed(currentDate, slot.hour, slot.minute);
+          const isDuringBreak = isTimeSlotDuringBreak(currentDate, slot.hour, slot.minute);
           const backgroundColor = getSlotBackgroundColor(currentDate, slot.hour, slot.minute);
 
           return (
@@ -224,12 +322,12 @@ export const DayView: React.FC<DayViewProps> = ({
                 borderColor: "divider",
                 backgroundColor,
                 p: 0.5,
-                cursor: withinWorkingHours ? (slotAppointments.length > 0 ? "default" : "pointer") : "not-allowed",
+                cursor: withinWorkingHours && !isDuringBreak ? (slotAppointments.length > 0 ? "default" : "pointer") : "not-allowed",
                 "&:hover":
                   withinWorkingHours && slotAppointments.length === 0
                     ? {
                         backgroundColor: getHoverBackgroundColor(currentDate, slot.hour, slot.minute),
-                        "& .slot-hint": { opacity: 1 },
+                        "& .slot-hint": { opacity: isDuringBreak ? 0 : 1 },
                       }
                     : {},
                 opacity: !withinWorkingHours ? 0.5 : 1,
@@ -239,7 +337,7 @@ export const DayView: React.FC<DayViewProps> = ({
               onClick={() => handleSlotClick(currentDate, slot.hour, slot.minute)}
               onDoubleClick={() => handleSlotDoubleClick(currentDate, slot.hour, slot.minute)}
             >
-              {!withinWorkingHours && !slotAppointments.length && (
+              {!withinWorkingHours && !slotAppointments.length && !slotBreaks.length && (
                 <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "text.disabled" }}>
                   <Block fontSize="small" sx={{ mr: 0.5 }} />
                   <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
@@ -248,7 +346,15 @@ export const DayView: React.FC<DayViewProps> = ({
                 </Box>
               )}
 
-              {withinWorkingHours && slotAppointments.length === 0 && (
+              {isDuringBreak && slotAppointments.length === 0 && (
+                <Box sx={{ display: "flex", alignItems: "center", height: "100%", color: "warning.main" }}>
+                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                    🚫 Break Time
+                  </Typography>
+                </Box>
+              )}
+
+              {withinWorkingHours && !isDuringBreak && slotAppointments.length === 0 && slotBreaks.length === 0 && (
                 <Typography
                   variant="caption"
                   className="slot-hint"
@@ -270,6 +376,47 @@ export const DayView: React.FC<DayViewProps> = ({
                 </Typography>
               )}
 
+              {/* Render Breaks */}
+              {slotBreaks.map((breakItem) => {
+                const breakStartTime = new Date(breakItem.bLStartTime);
+                const breakStartMinutes = breakStartTime.getHours() * 60 + breakStartTime.getMinutes();
+                const slotStartMinutes = slot.hour * 60 + slot.minute;
+                const nextSlotStartMinutes = slotStartMinutes + 15;
+
+                if (breakStartMinutes >= slotStartMinutes && breakStartMinutes < nextSlotStartMinutes) {
+                  const slotHeight = 40;
+                  const breakDuration = new Date(breakItem.bLEndTime).getTime() - new Date(breakItem.bLStartTime).getTime();
+                  const durationInMinutes = breakDuration / (1000 * 60);
+                  const durationInSlots = durationInMinutes / 15;
+                  const breakHeight = Math.max(durationInSlots * slotHeight - 2, durationInMinutes <= 15 ? 18 : 24);
+
+                  const minuteOffset = breakStartMinutes - slotStartMinutes;
+                  const topOffset = (minuteOffset / 15) * slotHeight;
+
+                  const layoutInfo = breakLayout.find((layout) => layout.breakItem.bLID === breakItem.bLID);
+                  const column = layoutInfo?.column || 0;
+                  const totalColumns = layoutInfo?.totalColumns || 1;
+
+                  return (
+                    <Box
+                      key={`break-${breakItem.bLID}`}
+                      sx={{
+                        position: "absolute",
+                        top: `${topOffset}px`,
+                        left: "4px",
+                        right: "4px",
+                        height: `${breakHeight}px`,
+                        zIndex: 10,
+                      }}
+                    >
+                      <BreakCard breakItem={breakItem} showDetails={true} column={column} totalColumns={totalColumns} onClick={onBreakClick} />
+                    </Box>
+                  );
+                }
+                return null;
+              })}
+
+              {/* Render Appointments */}
               {slotAppointments.map((appointment) => {
                 const appointmentStart = new Date(appointment.abTime);
                 const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
@@ -297,7 +444,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         left: "4px",
                         right: "4px",
                         height: `${appointmentHeight}px`,
-                        zIndex: 15,
+                        zIndex: 20, // Higher than breaks
                       }}
                     >
                       <AppointmentCard

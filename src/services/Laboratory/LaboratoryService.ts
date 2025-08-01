@@ -1,6 +1,6 @@
 import { APIConfig } from "@/apiConfig";
 import { InvestigationListDto, LCompAgeRangeDto, LComponentDto, LComponentEntryTypeDto, LInvMastDto, LTemplateGroupDto } from "@/interfaces/Laboratory/InvestigationListDto";
-import { GetLabRegistersListDto, InvStatusResponseDto, SampleStatusUpdateRequestDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
+import { GetLabRegistersListDto, InvStatusResponseDto, LabEnterResultDto, SampleStatusUpdateRequestDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { CommonApiService } from "../CommonApiService";
 import { GenericEntityService, OperationResult } from "../GenericEntityService/GenericEntityService";
@@ -24,6 +24,12 @@ class ExtendedLaboratoryService extends GenericEntityService<any> {
       `${this.baseEndpoint}/GetInvestigationsStatus?serviceTypeId=${serviceTypeId}&labRegId=${labRegId}`,
       this.getToken()
     );
+  }
+  async getLabEnterResult(labRegId: number, serviceTypeId): Promise<OperationResult<LabEnterResultDto>> {
+    return this.apiService.get<OperationResult<LabEnterResultDto>>(`${this.baseEndpoint}/GetLabResult?serviceTypeId=${serviceTypeId}&labRegId=${labRegId}`, this.getToken());
+  }
+  async saveLabEnterResult(labEnterResultDto: LabEnterResultDto): Promise<OperationResult<LabEnterResultDto>> {
+    return this.apiService.post<OperationResult<LabEnterResultDto>>(`${this.baseEndpoint}/SaveLabResult`, labEnterResultDto, this.getToken());
   }
   async updateSampleCollectionStatus(sampleStatusUpdateRequestDto: SampleStatusUpdateRequestDto[]): Promise<OperationResult<SampleStatusUpdateRequestDto[]>> {
     return this.apiService.post<OperationResult<SampleStatusUpdateRequestDto[]>>(

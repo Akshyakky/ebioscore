@@ -42,7 +42,7 @@ export interface SampleStatusUpdateRequestDto {
 
 //
 
-export interface LabResultSaveRequestDto {
+export interface LabEnterResultDto {
   labRegNo: number;
   serviceTypeId: number;
   technicianId?: number;
@@ -87,7 +87,7 @@ export interface ComponentResultDto {
 }
 export interface ReferenceRangeDto {
   lowerValue?: number;
-  UpperValue?: number;
+  upperValue?: number;
   referenceRange?: string;
   normal?: string;
 }
