@@ -1,14 +1,15 @@
 // src/pages/frontOffice/Appointment/hooks/useSchedulerData.ts
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { BreakListData } from "@/interfaces/FrontOffice/BreakListDto";
+import { BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
+import { breakService } from "@/services/FrontOfficeServices/BreakService";
 import { hospWorkHoursService } from "@/services/FrontOfficeServices/HospWorkHoursService";
 import { useCallback, useEffect, useState } from "react";
 
 export const useSchedulerData = () => {
   const [appointments, setAppointments] = useState<AppointBookingDto[]>([]);
-  const [breaks, setBreaks] = useState<BreakListData[]>([]);
+  const [breaks, setBreaks] = useState<BreakDto[]>([]);
   const [workHours, setWorkHours] = useState<HospWorkHoursDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,6 @@ export const useSchedulerData = () => {
       if (startDate && endDate) {
         result = await appointmentService.getAppointmentsByDateRange(startDate, endDate);
       } else {
-        // Default to today's appointments
         result = await appointmentService.getTodaysAppointments();
       }
 
@@ -43,6 +43,59 @@ export const useSchedulerData = () => {
     }
   }, []);
 
+  // Fetch breaks from API
+  const fetchBreaks = useCallback(async (startDate?: Date, endDate?: Date, hplId?: number) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      let result;
+      if (startDate && endDate) {
+        if (hplId) {
+          result = await breakService.getBreaksByProvider(hplId, startDate, endDate);
+        } else {
+          const allBreaksResult = await breakService.getAllBreaksDetailed();
+          if (allBreaksResult.success && allBreaksResult.data) {
+            // Filter breaks by date range
+            const filteredBreaks = allBreaksResult.data.filter((breakItem) => {
+              const breakStartDate = new Date(breakItem.bLStartDate);
+              const breakEndDate = new Date(breakItem.bLEndDate);
+
+              return (
+                ((breakStartDate >= startDate && breakStartDate <= endDate) ||
+                  (breakEndDate >= startDate && breakEndDate <= endDate) ||
+                  (breakStartDate <= startDate && breakEndDate >= endDate)) &&
+                breakItem.rActiveYN === "Y" &&
+                breakItem.status !== "Suspended"
+              );
+            });
+            result = { success: true, data: filteredBreaks };
+          } else {
+            result = allBreaksResult;
+          }
+        }
+      } else {
+        result = await breakService.getAllBreaksDetailed();
+      }
+
+      if (result.success && result.data) {
+        // Filter out suspended breaks
+        const activeBreaks = result.data.filter((breakItem) => breakItem.rActiveYN === "Y" && breakItem.status !== "Suspended");
+        setBreaks(activeBreaks);
+      } else {
+        setError(result.errorMessage || "Failed to fetch breaks");
+        setBreaks([]);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
+      setBreaks([]);
+      console.error("Error fetching breaks:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Fetch work hours from API
   const fetchWorkHours = useCallback(async () => {
     try {
@@ -52,7 +105,6 @@ export const useSchedulerData = () => {
       const result = await hospWorkHoursService.getAll();
 
       if (result.success && result.data) {
-        // Filter only active work hours
         const activeWorkHours = result.data.filter((wh) => wh.rActiveYN === "Y");
         setWorkHours(activeWorkHours);
       } else {
@@ -78,7 +130,6 @@ export const useSchedulerData = () => {
         const result = await appointmentService.saveAppointment(appointmentData);
 
         if (result.success && result.data) {
-          // Refresh appointments after successful creation
           await fetchAppointments();
           return { success: true, data: result.data };
         } else {
@@ -106,7 +157,6 @@ export const useSchedulerData = () => {
         const result = await appointmentService.saveAppointment(appointmentData);
 
         if (result.success && result.data) {
-          // Refresh appointments after successful update
           await fetchAppointments();
           return { success: true, data: result.data };
         } else {
@@ -134,7 +184,6 @@ export const useSchedulerData = () => {
         const result = await appointmentService.cancelAppointment(appointmentId, cancelReason);
 
         if (result.success) {
-          // Refresh appointments after successful cancellation
           await fetchAppointments();
           return { success: true };
         } else {
@@ -231,9 +280,7 @@ export const useSchedulerData = () => {
   // Get work hours statistics
   const getWorkHoursStats = useCallback(() => {
     const activeDays = new Set(workHours.filter((wh) => wh.rActiveYN === "Y" && wh.wkHoliday === "N").map((wh) => wh.daysDesc)).size;
-
     const languages = new Set(workHours.filter((wh) => wh.rActiveYN === "Y").map((wh) => wh.langType)).size;
-
     const holidayHours = workHours.filter((wh) => wh.rActiveYN === "Y" && wh.wkHoliday === "Y").length;
 
     return {
@@ -245,28 +292,34 @@ export const useSchedulerData = () => {
   }, [workHours]);
 
   // Fetch appointments by provider
-  const fetchAppointmentsByProvider = useCallback(async (hplId: number, startDate: Date, endDate: Date) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const fetchAppointmentsByProvider = useCallback(
+    async (hplId: number, startDate: Date, endDate: Date) => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      const result = await appointmentService.getAppointmentsByProvider(hplId, startDate, endDate);
+        const result = await appointmentService.getAppointmentsByProvider(hplId, startDate, endDate);
 
-      if (result.success && result.data) {
-        setAppointments(result.data);
-      } else {
-        setError(result.errorMessage || "Failed to fetch appointments by provider");
+        if (result.success && result.data) {
+          setAppointments(result.data);
+        } else {
+          setError(result.errorMessage || "Failed to fetch appointments by provider");
+          setAppointments([]);
+        }
+
+        // Also fetch breaks for the same provider and date range
+        await fetchBreaks(startDate, endDate, hplId);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+        setError(errorMessage);
         setAppointments([]);
+        console.error("Error fetching appointments by provider:", err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      setError(errorMessage);
-      setAppointments([]);
-      console.error("Error fetching appointments by provider:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [fetchBreaks]
+  );
 
   // Fetch appointments by patient
   const fetchAppointmentsByPatient = useCallback(async (pChartId: number) => {
@@ -296,12 +349,13 @@ export const useSchedulerData = () => {
   useEffect(() => {
     fetchWorkHours();
     fetchAppointments();
-  }, [fetchWorkHours, fetchAppointments]);
+    fetchBreaks();
+  }, [fetchWorkHours, fetchAppointments, fetchBreaks]);
 
   // Refresh all data
   const refreshData = useCallback(async () => {
-    await Promise.all([fetchWorkHours(), fetchAppointments()]);
-  }, [fetchWorkHours, fetchAppointments]);
+    await Promise.all([fetchWorkHours(), fetchAppointments(), fetchBreaks()]);
+  }, [fetchWorkHours, fetchAppointments, fetchBreaks]);
 
   return {
     // Core data
@@ -324,6 +378,9 @@ export const useSchedulerData = () => {
     updateAppointment,
     cancelAppointment,
     checkAppointmentConflicts,
+
+    // Break operations
+    fetchBreaks,
 
     // Work hours operations
     fetchWorkHours,
