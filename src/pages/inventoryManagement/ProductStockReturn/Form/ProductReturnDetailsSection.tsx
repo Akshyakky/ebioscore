@@ -334,7 +334,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
       transferYN: "N",
       freeRetQty: 0,
       freeRetUnitQty: 0,
-      psdID: 0,
+      psdID: 1,
       hsnCode: grnProduct.hsnCode || "",
       productCode: grnProduct.productCode || "",
       pUnitID: grnProduct.pUnitID || 0,

@@ -100,7 +100,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   const isAddMode = !initialData || copyMode;
   const isCopyMode = copyMode && !!initialData;
   const isEditMode = !!initialData && !copyMode && !viewOnly;
-  const [isViewMode, setIsViewMode] = useState<boolean>(false);
+  const [isViewMode] = useState<boolean>(false);
 
   const supplier = [
     { value: 1, label: "Suplier1" },
@@ -137,7 +137,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     reset,
     setValue,
     getValues,
-    watch,
     formState: { errors, isDirty, isValid },
   } = useForm<ProductStockReturnFormData>({
     defaultValues,
@@ -389,13 +388,9 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     }
   }, [getValues("fromDeptID"), selectedDepartmentId, isAddMode, isCopyMode, isDataLoaded, getValues("returnTypeCode")]);
 
-  // Handle return type change
   useEffect(() => {
     if (isDataLoaded && (isAddMode || isCopyMode)) {
-      // Regenerate return code when return type changes
       generateReturnCodeAsync();
-
-      // Clear toDeptID/supplierID based on return type
       const currentReturnType = getValues("returnTypeCode");
       if (currentReturnType !== ReturnType.Internal) {
         setValue("toDeptID", 0, { shouldValidate: true });
@@ -431,15 +426,14 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
           return;
         }
       }
-
-      // Validate based on return type
       if (data.returnTypeCode === ReturnType.Internal && (!data.toDeptID || data.toDeptID === 0)) {
         showAlert("Warning", "To department is required for Internal Returns. Please select a destination department.", "warning");
         return;
       }
 
-      if (data.returnTypeCode === ReturnType.Supplier && (!data.supplierID || data.supplierID === 0)) {
-        showAlert("Warning", "Supplier is required for Supplier Returns. Please select a supplier.", "warning");
+      if ((data.returnTypeCode === ReturnType.Supplier || data.returnTypeCode === ReturnType.Physician) && (!data.supplierID || data.supplierID === 0)) {
+        const entityType = data.returnTypeCode === ReturnType.Physician ? "Physician" : "Supplier";
+        showAlert("Warning", `${entityType} is required for ${entityType} Returns. Please select a ${entityType.toLowerCase()}.`, "warning");
         return;
       }
 
@@ -452,16 +446,14 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         showAlert("Warning", "At least one product must be added to the return", "warning");
         return;
       }
-
       const fromDept = department?.find((d) => Number(d.value) === data.fromDeptID);
       const toDept = department?.find((d) => Number(d.value) === data.toDeptID);
       const selectedSupplier = supplier?.find((s) => Number(s.value) === data.supplierID);
-
       const stockReturnCompositeDto: ProductStockReturnCompositeDto = {
         productStockReturn: {
           psrID: data.psrID,
           psrDate: data.psrDate,
-          dtID: 0, // Will be set by backend based on return type
+          dtID: 0,
           dtCode: "",
           dtName: "",
           returnTypeCode: data.returnTypeCode,
@@ -479,13 +471,9 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
           approvedYN: data.approvedYN || "N",
           approvedID: data.approvedID || 0,
           approvedBy: data.approvedBy || "",
-          totalItems: data.productStockReturnDetails.length,
-          totalReturnedQty: data.productStockReturnDetails.reduce((sum, detail) => sum + detail.quantity, 0),
           rActiveYN: data.rActiveYN || "Y",
-          returnTypeName: getReturnTypeName(data.returnTypeCode),
         } as ProductStockReturnDto,
         productStockReturnDetails: data.productStockReturnDetails.map((detail) => ({
-          // Ensure all required properties are present
           psrdID: detail.psrdID || 0,
           psrID: detail.psrID || 0,
           productID: detail.productID || 0,
@@ -504,13 +492,13 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
           availableQty: detail.availableQty || 0,
           tax: detail.tax || 0,
           returnReason: detail.returnReason || "",
+          psdID: detail.psrdID || 0,
           psGrpID: 0,
           pGrpID: 0,
           taxID: 0,
           mrp: 0,
           manufacturerID: 0,
           psbid: 0,
-          psdID: 0,
           freeRetQty: 0,
           freeRetUnitQty: 0,
           rActiveYN: detail.rActiveYN || "Y",
@@ -520,7 +508,8 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       const response = await saveReturnWithDetails(stockReturnCompositeDto);
       if (response.success) {
         const actionText = isCopyMode ? "copied" : isAddMode ? "created" : "updated";
-        showAlert("Success", `Stock Return ${actionText} successfully. ${data.productStockReturnDetails.length} products processed.`, "success");
+        const totalItems = data.productStockReturnDetails.length;
+        showAlert("Success", `Stock Return ${actionText} successfully. ${totalItems} products processed.`, "success");
         onClose(true);
       } else {
         showAlert("Error", response.errorMessage || "Failed to save Stock Return", "error");
@@ -545,8 +534,10 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         return "Expired Items";
       case ReturnType.Damaged:
         return "Damaged Items";
+      case ReturnType.Physician:
+        return "Physician Return";
       default:
-        return "Unknown";
+        return returnTypeCode || "Unknown";
     }
   };
 
