@@ -452,7 +452,7 @@ const AppointmentScheduler: React.FC = () => {
   return (
     <Box
       sx={{
-        height: "100vh",
+        height: "112vh",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",

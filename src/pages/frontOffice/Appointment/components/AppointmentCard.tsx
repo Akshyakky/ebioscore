@@ -36,8 +36,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 }) => {
   const theme = useTheme();
   const statusColor = getStatusColor(appointment.abStatus);
-  const isShortAppointment = appointment.abDuration <= 15;
-  const isMediumAppointment = appointment.abDuration > 15 && appointment.abDuration <= 30;
+  // Updated condition: Only appointments shorter than 15 minutes are considered "short"
+  const isShortAppointment = appointment.abDuration < 15;
+  const isMediumAppointment = appointment.abDuration >= 15 && appointment.abDuration <= 30;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -345,8 +346,8 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             </Box>
           </Box>
 
-          {/* Resize Handle - Only for appointments longer than 15 minutes */}
-          {!isShortAppointment && (
+          {/* Resize Handle - Now available for appointments 15 minutes and longer */}
+          {appointment.abDuration >= 15 && (
             <Box
               className="resize-handle"
               onMouseDown={handleResizeMouseDown}
