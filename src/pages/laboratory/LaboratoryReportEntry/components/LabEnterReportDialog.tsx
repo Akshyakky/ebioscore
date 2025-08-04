@@ -380,7 +380,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       open={open}
       onClose={onClose}
       title="Enter Laboratory Report"
-      maxWidth="lg"
+      maxWidth="xl"
       fullWidth
       disableBackdropClick={saving}
       disableEscapeKeyDown={saving}
