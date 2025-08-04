@@ -529,7 +529,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2, height: "100vh" }}>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => {}}>
           {error}
