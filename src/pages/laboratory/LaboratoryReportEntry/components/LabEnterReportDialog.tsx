@@ -413,7 +413,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       ) : labData ? (
         <Box>
           {/* Header Information */}
-          <Paper elevation={1} sx={{ p: 2, mb: 2, bgcolor: "grey.50" }}>
+          <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 3 }}>
                 <Typography variant="body2" color="text.secondary">
