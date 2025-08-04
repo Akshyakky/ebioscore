@@ -6,7 +6,7 @@ export interface LabRegisterData {
   patientRefCode: string;
   labRegisterDate: string;
   referralDoctor: string;
-  sampleStatus: "Pending" | "Partially Collected" | "Collected" | "Rejected";
+  sampleStatus: "Pending" | "Partially Collected" | "Collected" | "Partially Completed" | "Completed" | "Partially Approved" | "Approved" | "Rejected";
   wardName: string;
   roomName: string;
   bedName: string;
@@ -14,6 +14,8 @@ export interface LabRegisterData {
   investigationCount: number;
   invSamplePendingCount: number;
   invSampleCollectedCount: number;
+  invResultCompletedCount: number; // New field
+  invResultApprovedCount: number; // New field
   billedBy: string;
 }
 
@@ -25,7 +27,7 @@ export interface InvStatusResponseDto {
   LabRegNo: number;
   ServiceTypeID: number;
   investigationName: string;
-  sampleStatus: "Pending" | "Partially Collected" | "Collected" | "Rejected";
+  sampleStatus: "Pending" | "Collected" | "Completed" | "Approved" | "Rejected";
   investigationId: number;
   sampleType: string;
   investigationCode: string;
