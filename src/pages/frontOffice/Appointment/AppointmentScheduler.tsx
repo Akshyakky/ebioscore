@@ -22,22 +22,6 @@ import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import BookingDialog from "./components/BookingDialog";
 import { SchedulerHeader } from "./components/SchedulerHeader";
 
-/**
- * AppointmentScheduler Component
- *
- * A comprehensive appointment scheduling interface that provides multiple view modes
- * (day, week, month) for managing healthcare appointments. The component integrates
- * with work hours, break management, and provider scheduling systems.
- *
- * Key Features:
- * - Multiple view modes (day, week, month)
- * - Real-time appointment management
- * - Drag and drop appointment rescheduling
- * - Work hours and break period validation
- * - Provider and resource filtering
- * - Appointment conflict detection
- * - Elapsed time slot confirmation
- */
 const AppointmentScheduler: React.FC = () => {
   const { showAlert } = useAlert();
 
@@ -466,40 +450,85 @@ const AppointmentScheduler: React.FC = () => {
   }
 
   return (
-    <Box padding={1}>
+    <Box
+      sx={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        padding: 1,
+      }}
+    >
       {/* Comprehensive scheduler header with navigation and filtering */}
-      <SchedulerHeader
-        currentDate={currentDate}
-        viewMode={viewMode}
-        bookingMode={bookingMode}
-        selectedProvider={selectedProvider}
-        selectedResource={selectedResource}
-        onDateChange={setCurrentDate}
-        onViewModeChange={setViewMode}
-        onNavigate={handleNavigateDate}
-        onBookingModeChange={setBookingMode}
-        onProviderChange={setSelectedProvider}
-        onResourceChange={setSelectedResource}
-        onBookingClick={() => setShowBookingDialog(true)}
-        providers={providers}
-        resources={resources}
-        getWeekDates={getWeekDates}
-      />
+      <Box sx={{ flexShrink: 0, marginBottom: 1 }}>
+        <SchedulerHeader
+          currentDate={currentDate}
+          viewMode={viewMode}
+          bookingMode={bookingMode}
+          selectedProvider={selectedProvider}
+          selectedResource={selectedResource}
+          onDateChange={setCurrentDate}
+          onViewModeChange={setViewMode}
+          onNavigate={handleNavigateDate}
+          onBookingModeChange={setBookingMode}
+          onProviderChange={setSelectedProvider}
+          onResourceChange={setSelectedResource}
+          onBookingClick={() => setShowBookingDialog(true)}
+          providers={providers}
+          resources={resources}
+          getWeekDates={getWeekDates}
+        />
+      </Box>
 
-      {/* Main scheduler view container */}
-      <Paper variant="outlined">
-        <Box padding={1} marginBottom={1}>
-          <Box minHeight="calc(100vh - 300px)" overflow="auto">
+      {/* Main scheduler view container with proper scrolling */}
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              overflow: "auto",
+              padding: 1,
+              "&::-webkit-scrollbar": {
+                width: "8px",
+                height: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "#f1f1f1",
+                borderRadius: "4px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#c4c4c4",
+                borderRadius: "4px",
+                "&:hover": {
+                  backgroundColor: "#a8a8a8",
+                },
+              },
+              "&::-webkit-scrollbar-corner": {
+                backgroundColor: "#f1f1f1",
+              },
+            }}
+          >
             {renderCurrentView()}
           </Box>
-        </Box>
-      </Paper>
+        </Paper>
+      </Box>
 
-      {/* Visual legend for time slot indicators */}
-      <TimeLegend />
+      {/* Footer components with fixed positioning */}
+      <Box sx={{ flexShrink: 0, marginTop: 1 }}>
+        {/* Visual legend for time slot indicators */}
+        <TimeLegend />
 
-      {/* Scheduler statistics dashboard */}
-      <SchedulerStatistics appointments={filteredAppointments} breaks={breaks} />
+        {/* Scheduler statistics dashboard */}
+        <SchedulerStatistics appointments={filteredAppointments} breaks={breaks} />
+      </Box>
 
       {/* Appointment booking dialog */}
       <BookingDialog
