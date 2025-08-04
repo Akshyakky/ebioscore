@@ -82,10 +82,12 @@ const LaboratoryReportEntryPage: React.FC = () => {
     sampleStatus: string;
     patientStatus: string;
     reportStatus: string;
+    serviceGroup: string;
   }>({
     sampleStatus: "all",
     patientStatus: "all",
     reportStatus: "all",
+    serviceGroup: "all",
   });
 
   useEffect(() => {
@@ -143,8 +145,22 @@ const LaboratoryReportEntryPage: React.FC = () => {
       sampleStatus: "all",
       patientStatus: "all",
       reportStatus: "all",
+      serviceGroup: "all",
     });
   }, []);
+
+  const serviceGroupOptions = useMemo(() => {
+    const options = [{ value: "all", label: "All Service Groups" }];
+    if (serviceGroup && Array.isArray(serviceGroup)) {
+      options.push(
+        ...serviceGroup.map((sg) => ({
+          value: sg.value.toString(),
+          label: sg.label,
+        }))
+      );
+    }
+    return options;
+  }, [serviceGroup]);
 
   const handleRefresh = useCallback(() => {
     refreshData();
@@ -250,9 +266,13 @@ const LaboratoryReportEntryPage: React.FC = () => {
         (filters.reportStatus === "completed" && reg.sampleStatus === "Completed") ||
         (filters.reportStatus === "approved" && (reg.sampleStatus === "Approved" || reg.sampleStatus === "Partially Approved"));
 
-      return matchesSearch && matchesSampleStatus && matchesPatientStatus && matchesReportStatus;
+      // Add service group filtering
+      const matchesServiceGroup = filters.serviceGroup === "all" || (reg.serviceGroups && reg.serviceGroups.some((sg) => sg.serviceGroupId.toString() === filters.serviceGroup));
+
+      return matchesSearch && matchesSampleStatus && matchesPatientStatus && matchesReportStatus && matchesServiceGroup;
     });
   }, [labRegisters, debouncedSearchTerm, filters]);
+
   const handleRowClick = useCallback(
     async (register: GetLabRegistersListDto) => {
       setSelectedRegister(register);
@@ -464,6 +484,25 @@ const LaboratoryReportEntryPage: React.FC = () => {
       formatter: (_value: any, item: GetLabRegistersListDto) => item.labRegister.billedBy || "-",
     },
     {
+      key: "serviceGroups",
+      header: "Service Groups",
+      visible: true,
+      width: 200,
+      render: (item) => (
+        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+          {item.labRegister.serviceGroups && item.labRegister.serviceGroups.length > 0 ? (
+            item.labRegister.serviceGroups.map((sg) => (
+              <Chip key={sg.serviceGroupId} size="small" label={sg.serviceGroupName} color="primary" variant="outlined" sx={{ fontSize: "0.7rem", mb: 0.5 }} />
+            ))
+          ) : (
+            <Typography variant="caption" color="text.secondary">
+              -
+            </Typography>
+          )}
+        </Stack>
+      ),
+    },
+    {
       key: "actions",
       header: "Actions",
       visible: true,
@@ -643,9 +682,18 @@ const LaboratoryReportEntryPage: React.FC = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Tooltip title="Filter Lab Registers">
               <Stack direction="row" spacing={2}>
+                <DropdownSelect
+                  label="Service Group"
+                  name="serviceGroup"
+                  value={filters.serviceGroup}
+                  options={serviceGroupOptions}
+                  onChange={(e) => handleFilterChange("serviceGroup", e.target.value)}
+                  size="small"
+                  defaultText="All Service Groups"
+                />
                 <DropdownSelect
                   label="Sample Status"
                   name="sampleStatus"
