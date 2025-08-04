@@ -1,5 +1,3 @@
-// Fixed ProductStockReturnMainPage.tsx - corrected data fetching and mapping
-
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
@@ -169,155 +167,104 @@ const ProductStockReturnPage: React.FC = () => {
     hookClearError();
   }, [hookClearError]);
 
-  // Fixed: Improved data mapping function for proper field conversion
   const mapCompositeToReturnDto = useCallback((compositeDto: any): ProductStockReturnDto => {
-    const returnDto = compositeDto.productStockReturn || compositeDto;
-    const details = compositeDto.productStockReturnDetails || compositeDto.details || [];
-
-    // Map and convert field names to match frontend interface
+    debugger;
+    if (!compositeDto) {
+      throw new Error("No data received from API");
+    }
+    const returnData = compositeDto.productStockReturn || compositeDto;
+    const detailsData = compositeDto.productStockReturnDetails || compositeDto.details || [];
+    console.log("Processing returnData:", returnData);
+    console.log("Processing detailsData:", detailsData);
     const mappedReturn: ProductStockReturnDto = {
-      // Core fields with proper mapping
-      psrID: returnDto.psrID || returnDto.PsrID || 0,
-      psrCode: returnDto.psrCode || returnDto.PsrCode || "",
-      psrDate: returnDto.psrDate ? new Date(returnDto.psrDate) : new Date(),
-
-      // Document type fields
-      dtID: returnDto.dtID || returnDto.DtID || 0,
-      dtCode: returnDto.dtCode || returnDto.DtCode || "",
-      dtName: returnDto.dtName || returnDto.DtName || "",
-
-      // Return type fields
-      returnTypeCode: returnDto.returnTypeCode || returnDto.ReturnTypeCode || "",
-      returnType: returnDto.returnType || returnDto.ReturnType || "",
-
-      // Department fields
-      fromDeptID: returnDto.fromDeptID || returnDto.FromDeptID || 0,
-      fromDeptName: returnDto.fromDeptName || returnDto.FromDeptName || "",
-      toDeptID: returnDto.toDeptID || returnDto.ToDeptID || undefined,
-      toDeptName: returnDto.toDeptName || returnDto.ToDeptName || "",
-
-      // Supplier fields
-      supplierID: returnDto.supplierID || returnDto.SupplierID || undefined,
-      supplierName: returnDto.supplierName || returnDto.SupplierName || "",
-
-      // Authorization and categorization
-      auGrpID: returnDto.auGrpID || returnDto.AuGrpID || 18,
-      catDesc: returnDto.catDesc || returnDto.CatDesc || "REVENUE",
-      catValue: returnDto.catValue || returnDto.CatValue || "MEDI",
-
-      // Financial fields
-      stkrGrossAmt: returnDto.stkrGrossAmt || returnDto.StkrGrossAmt || 0,
-      stkrRetAmt: returnDto.stkrRetAmt || returnDto.StkrRetAmt || 0,
-      stkrTaxAmt: returnDto.stkrTaxAmt || returnDto.StkrTaxAmt || 0,
-      stkrCoinAdjAmt: returnDto.stkrCoinAdjAmt || returnDto.StkrCoinAdjAmt || 0,
-
-      // Approval fields
-      approvedYN: returnDto.approvedYN || returnDto.ApprovedYN || "N",
-      approvedID: returnDto.approvedID || returnDto.ApprovedID || undefined,
-      approvedBy: returnDto.approvedBy || returnDto.ApprovedBy || "",
-
-      // Calculated fields
-      totalItems: returnDto.totalItems || returnDto.TotalItems || details.length,
-      totalReturnedQty: returnDto.totalReturnedQty || returnDto.TotalReturnedQty || 0,
-
-      // Computed properties
-      returnTypeName: returnDto.returnTypeName || returnDto.ReturnTypeName || getReturnTypeName(returnDto.returnTypeCode || returnDto.ReturnTypeCode || ""),
-      requiresSupplierInfo: returnDto.requiresSupplierInfo || false,
-      supplierLabel: returnDto.supplierLabel || "Supplier",
-
-      // Base fields
-      rActiveYN: returnDto.rActiveYN || returnDto.RActiveYN || "Y",
-      rCreatedBy: returnDto.rCreatedBy || returnDto.RCreatedBy || "",
-      rCreatedID: returnDto.rCreatedID || returnDto.RCreatedID || 0,
-      rCreatedOn: returnDto.rCreatedOn ? new Date(returnDto.rCreatedOn) : new Date(),
-      rModifiedBy: returnDto.rModifiedBy || returnDto.RModifiedBy || "",
-      rModifiedID: returnDto.rModifiedID || returnDto.RModifiedID || 0,
-      rModifiedOn: returnDto.rModifiedOn ? new Date(returnDto.rModifiedOn) : new Date(),
-
-      // Details array with proper mapping
-      details: details.map((detail: any) => ({
-        // Core detail fields
+      psrID: returnData.psrID || returnData.PsrID || 0,
+      psrCode: returnData.psrCode || returnData.PsrCode || "",
+      psrDate: returnData.psrDate ? new Date(returnData.psrDate) : new Date(),
+      dtID: returnData.dtID || returnData.DtID || 0,
+      dtCode: returnData.dtCode || returnData.DtCode || "",
+      dtName: returnData.dtName || returnData.DtName || "",
+      returnTypeCode: returnData.returnTypeCode || returnData.ReturnTypeCode || "",
+      returnType: returnData.returnType || returnData.ReturnType || "",
+      fromDeptID: returnData.fromDeptID || returnData.FromDeptID || 0,
+      fromDeptName: returnData.fromDeptName || returnData.FromDeptName || "",
+      toDeptID: returnData.toDeptID || returnData.ToDeptID || undefined,
+      toDeptName: returnData.toDeptName || returnData.ToDeptName || "",
+      supplierID: returnData.supplierID || returnData.SupplierID || undefined,
+      supplierName: returnData.supplierName || returnData.SupplierName || "",
+      auGrpID: returnData.auGrpID || returnData.AuGrpID || 18,
+      catDesc: returnData.catDesc || returnData.CatDesc || "REVENUE",
+      catValue: returnData.catValue || returnData.CatValue || "MEDI",
+      stkrGrossAmt: returnData.stkrGrossAmt || returnData.StkrGrossAmt || 0,
+      stkrRetAmt: returnData.stkrRetAmt || returnData.StkrRetAmt || 0,
+      stkrTaxAmt: returnData.stkrTaxAmt || returnData.StkrTaxAmt || 0,
+      stkrCoinAdjAmt: returnData.stkrCoinAdjAmt || returnData.StkrCoinAdjAmt || 0,
+      approvedYN: returnData.approvedYN || returnData.ApprovedYN || "N",
+      approvedID: returnData.approvedID || returnData.ApprovedID || undefined,
+      approvedBy: returnData.approvedBy || returnData.ApprovedBy || "",
+      totalItems: returnData.totalItems || returnData.TotalItems || detailsData.length,
+      totalReturnedQty: returnData.totalReturnedQty || returnData.TotalReturnedQty || 0,
+      returnTypeName: returnData.returnTypeName || returnData.ReturnTypeName || getReturnTypeName(returnData.returnTypeCode || returnData.ReturnTypeCode || ""),
+      requiresSupplierInfo: returnData.requiresSupplierInfo || false,
+      supplierLabel: returnData.supplierLabel || "Supplier",
+      rActiveYN: returnData.rActiveYN || returnData.RActiveYN || "Y",
+      rCreatedBy: returnData.rCreatedBy || returnData.RCreatedBy || "",
+      rCreatedID: returnData.rCreatedID || returnData.RCreatedID || 0,
+      rCreatedOn: returnData.rCreatedOn ? new Date(returnData.rCreatedOn) : new Date(),
+      rModifiedBy: returnData.rModifiedBy || returnData.RModifiedBy || "",
+      rModifiedID: returnData.rModifiedID || returnData.RModifiedID || 0,
+      rModifiedOn: returnData.rModifiedOn ? new Date(returnData.rModifiedOn) : new Date(),
+      details: detailsData.map((detail: any) => ({
         psrdID: detail.psrdID || detail.PsrdID || 0,
         psrID: detail.psrID || detail.PsrID || 0,
         productID: detail.productID || detail.ProductID || 0,
         productCode: detail.productCode || detail.ProductCode || "",
         productName: detail.productName || detail.ProductName || "",
-
-        // Quantity and pricing
         quantity: detail.quantity || detail.Quantity || 0,
         unitPrice: detail.unitPrice || detail.UnitPrice || 0,
         totalAmount: detail.totalAmount || detail.TotalAmount || 0,
-
-        // Batch and expiry
         batchID: detail.batchID || detail.BatchID || undefined,
         batchNo: detail.batchNo || detail.BatchNo || "",
         expiryDate: detail.expiryDate ? new Date(detail.expiryDate) : undefined,
         manufacturedDate: detail.manufacturedDate ? new Date(detail.manufacturedDate) : undefined,
         grnDate: detail.grnDate ? new Date(detail.grnDate) : new Date(),
-
-        // Product properties
         prescriptionYN: detail.prescriptionYN || detail.PrescriptionYN || "N",
         expiryYN: detail.expiryYN || detail.ExpiryYN || "N",
         sellableYN: detail.sellableYN || detail.SellableYN || "N",
         taxableYN: detail.taxableYN || detail.TaxableYN || "N",
-
-        // Product grouping
         psGrpID: detail.psGrpID || detail.PsGrpID || 0,
         psGrpName: detail.psGrpName || detail.PsGrpName || "",
         pGrpID: detail.pGrpID || detail.PGrpID || 0,
         pGrpName: detail.pGrpName || detail.PGrpName || "",
-
-        // Manufacturer
         manufacturerID: detail.manufacturerID || detail.ManufacturerID || 0,
         manufacturerCode: detail.manufacturerCode || detail.ManufacturerCode || "",
         manufacturerName: detail.manufacturerName || detail.ManufacturerName || "",
-
-        // Tax information
         taxID: detail.taxID || detail.TaxID || 0,
         taxCode: detail.taxCode || detail.TaxCode || "",
         taxName: detail.taxName || detail.TaxName || "",
         tax: detail.tax || detail.Tax || 0,
-
-        // Additional fields
         mrp: detail.mrp || detail.Mrp || 0,
         psdID: detail.psdID || detail.PsdID || 0,
         hsnCode: detail.hsnCode || detail.HsnCode || "",
-
-        // Unit information
         pUnitID: detail.pUnitID || detail.PUnitID || 0,
         pUnitName: detail.pUnitName || detail.PUnitName || "",
         pUnitsPerPack: detail.pUnitsPerPack || detail.PUnitsPerPack || 1,
         pkgID: detail.pkgID || detail.PkgID || 0,
         pkgName: detail.pkgName || detail.PkgName || "",
-
-        // Availability and pricing
         availableQty: detail.availableQty || detail.AvailableQty || 0,
         psbid: detail.psbid || detail.PSBID || 0,
         sellUnitPrice: detail.sellUnitPrice || detail.SellUnitPrice || 0,
-
-        // Manufacturing details
         mfID: detail.mfID || detail.MfID || 0,
         mfName: detail.mfName || detail.MfName || "",
-
-        // Return specific
         returnReason: detail.returnReason || detail.ReturnReason || "",
         freeRetQty: detail.freeRetQty || detail.FreeRetQty || 0,
         freeRetUnitQty: detail.freeRetUnitQty || detail.FreeRetUnitQty || 0,
-
-        // Tax breakdown
         cgst: detail.cgst || detail.CGST || (detail.tax || detail.Tax || 0) / 2,
         sgst: detail.sgst || detail.SGST || (detail.tax || detail.Tax || 0) / 2,
-
-        // Base fields
         rActiveYN: detail.rActiveYN || detail.RActiveYN || "Y",
-
-        // GRN related fields (for display purposes)
         grnCode: detail.grnCode || detail.GrnCode || "",
         supplierName: detail.supplierName || detail.SupplierName || detail.supplrName || detail.SupplrName || "",
         invoiceNo: detail.invoiceNo || detail.InvoiceNo || "",
         recvdQty: detail.recvdQty || detail.RecvdQty || 0,
-
-        // Additional GRN fields
         invDate: detail.invDate || detail.InvDate || "",
         supplierID: detail.supplierID || detail.SupplierID || detail.supplrID || detail.SupplrID || 0,
         supplrID: detail.supplrID || detail.SupplrID || 0,
@@ -330,7 +277,6 @@ const ProductStockReturnPage: React.FC = () => {
         freeItems: detail.freeItems || detail.FreeItems || 0,
       })),
     };
-
     return mappedReturn;
   }, []);
 
@@ -460,17 +406,21 @@ const ProductStockReturnPage: React.FC = () => {
     setIsFormOpen(true);
   }, []);
 
-  // Fixed: Improved copy handler with proper data mapping
+  // Fixed: Improved copy handler with better error handling and data validation
   const handleCopy = useCallback(
     async (stockReturn: ProductStockReturnDto) => {
       try {
         setIsLoadingDetails(true);
-        console.log("Copying return:", stockReturn.psrID);
+        console.log("Starting copy operation for return ID:", stockReturn.psrID);
+
+        if (!stockReturn.psrID || stockReturn.psrID <= 0) {
+          throw new Error("Invalid return ID for copying");
+        }
 
         const compositeDto = await getReturnWithDetailsById(stockReturn.psrID);
-        console.log("Fetched composite DTO:", compositeDto);
+        console.log("Fetched composite DTO for copy:", compositeDto);
 
-        if (!compositeDto || !compositeDto.productStockReturn) {
+        if (!compositeDto) {
           throw new Error("Failed to load Stock Return details for copying");
         }
 
@@ -478,15 +428,23 @@ const ProductStockReturnPage: React.FC = () => {
         const returnToCopy = mapCompositeToReturnDto(compositeDto);
         console.log("Mapped return to copy:", returnToCopy);
 
+        // Validate that we have the required data
+        if (!returnToCopy.psrID) {
+          throw new Error("Invalid return data received from server");
+        }
+
+        // Set the return data and mode flags
         setSelectedReturn(returnToCopy);
         setIsCopyMode(true);
         setIsViewMode(false);
         setIsFormOpen(true);
 
-        showAlert("Info", `Copying Stock Return "${stockReturn.psrCode}" with ${returnToCopy.details?.length || 0} products. Please review and save.`, "info");
+        const detailsCount = returnToCopy.details?.length || 0;
+        showAlert("Success", `Ready to copy Stock Return "${stockReturn.psrCode}" with ${detailsCount} products. Please review and save.`, "success");
       } catch (error) {
-        console.error("Error initiating copy:", error);
-        showAlert("Error", "Failed to load Stock Return details for copying", "error");
+        console.error("Error in copy operation:", error);
+        const errorMessage = error instanceof Error ? error.message : "Failed to load Stock Return details for copying";
+        showAlert("Error", errorMessage, "error");
       } finally {
         setIsLoadingDetails(false);
       }
@@ -494,7 +452,7 @@ const ProductStockReturnPage: React.FC = () => {
     [getReturnWithDetailsById, mapCompositeToReturnDto, showAlert]
   );
 
-  // Fixed: Improved edit handler with proper data mapping
+  // Fixed: Improved edit handler with better error handling and data validation
   const handleEdit = useCallback(
     async (stockReturn: ProductStockReturnDto) => {
       if (!canEditReturn(stockReturn)) {
@@ -504,12 +462,16 @@ const ProductStockReturnPage: React.FC = () => {
 
       try {
         setIsLoadingDetails(true);
-        console.log("Editing return:", stockReturn.psrID);
+        console.log("Starting edit operation for return ID:", stockReturn.psrID);
+
+        if (!stockReturn.psrID || stockReturn.psrID <= 0) {
+          throw new Error("Invalid return ID for editing");
+        }
 
         const compositeDto = await getReturnWithDetailsById(stockReturn.psrID);
         console.log("Fetched composite DTO for edit:", compositeDto);
 
-        if (!compositeDto || !compositeDto.productStockReturn) {
+        if (!compositeDto) {
           throw new Error("Failed to load Stock Return details for editing");
         }
 
@@ -517,15 +479,23 @@ const ProductStockReturnPage: React.FC = () => {
         const returnToEdit = mapCompositeToReturnDto(compositeDto);
         console.log("Mapped return to edit:", returnToEdit);
 
+        // Validate that we have the required data
+        if (!returnToEdit.psrID) {
+          throw new Error("Invalid return data received from server");
+        }
+
+        // Set the return data and mode flags
         setSelectedReturn(returnToEdit);
         setIsCopyMode(false);
         setIsViewMode(false);
         setIsFormOpen(true);
 
-        showAlert("Info", `Loading Stock Return "${stockReturn.psrCode}" with ${returnToEdit.details?.length || 0} products for editing...`, "info");
+        const detailsCount = returnToEdit.details?.length || 0;
+        showAlert("Success", `Loading Stock Return "${stockReturn.psrCode}" with ${detailsCount} products for editing...`, "success");
       } catch (error) {
-        console.error("Error initiating edit:", error);
-        showAlert("Error", "Failed to load Stock Return details for editing", "error");
+        console.error("Error in edit operation:", error);
+        const errorMessage = error instanceof Error ? error.message : "Failed to load Stock Return details for editing";
+        showAlert("Error", errorMessage, "error");
       } finally {
         setIsLoadingDetails(false);
       }
@@ -533,17 +503,21 @@ const ProductStockReturnPage: React.FC = () => {
     [canEditReturn, getReturnWithDetailsById, mapCompositeToReturnDto, showAlert]
   );
 
-  // Fixed: Improved view handler with proper data mapping
+  // Fixed: Improved view handler with better error handling and data validation
   const handleView = useCallback(
     async (stockReturn: ProductStockReturnDto) => {
       try {
         setIsLoadingDetails(true);
-        console.log("Viewing return:", stockReturn.psrID);
+        console.log("Starting view operation for return ID:", stockReturn.psrID);
+
+        if (!stockReturn.psrID || stockReturn.psrID <= 0) {
+          throw new Error("Invalid return ID for viewing");
+        }
 
         const compositeDto = await getReturnWithDetailsById(stockReturn.psrID);
         console.log("Fetched composite DTO for view:", compositeDto);
 
-        if (!compositeDto || !compositeDto.productStockReturn) {
+        if (!compositeDto) {
           throw new Error("Failed to load Stock Return details for viewing");
         }
 
@@ -551,15 +525,23 @@ const ProductStockReturnPage: React.FC = () => {
         const returnToView = mapCompositeToReturnDto(compositeDto);
         console.log("Mapped return to view:", returnToView);
 
+        // Validate that we have the required data
+        if (!returnToView.psrID) {
+          throw new Error("Invalid return data received from server");
+        }
+
+        // Set the return data and mode flags
         setSelectedReturn(returnToView);
         setIsCopyMode(false);
         setIsViewMode(true);
         setIsFormOpen(true);
 
-        showAlert("Info", `Loading Stock Return "${stockReturn.psrCode}" with ${returnToView.details?.length || 0} products for viewing...`, "info");
+        const detailsCount = returnToView.details?.length || 0;
+        showAlert("Success", `Loading Stock Return "${stockReturn.psrCode}" with ${detailsCount} products for viewing...`, "success");
       } catch (error) {
-        console.error("Error initiating view:", error);
-        showAlert("Error", "Failed to load Stock Return details for viewing", "error");
+        console.error("Error in view operation:", error);
+        const errorMessage = error instanceof Error ? error.message : "Failed to load Stock Return details for viewing";
+        showAlert("Error", errorMessage, "error");
       } finally {
         setIsLoadingDetails(false);
       }
@@ -622,13 +604,21 @@ const ProductStockReturnPage: React.FC = () => {
     setSelectedReturn(null);
   }, [selectedReturn, approveReturn, fetchReturnsForDepartment, showAlert]);
 
+  // Fixed: Improved form close handler with proper state cleanup
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
+      console.log("Closing form, refreshData:", refreshData);
+
+      // Clean up all form-related state
       setIsFormOpen(false);
       setSelectedReturn(null);
       setIsCopyMode(false);
       setIsViewMode(false);
+      setIsLoadingDetails(false);
+
+      // Refresh data if requested
       if (refreshData && deptId) {
+        console.log("Refreshing data after form close");
         fetchReturnsForDepartment();
       }
     },
@@ -1589,6 +1579,7 @@ const ProductStockReturnPage: React.FC = () => {
       </Menu>
 
       <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelectWithReturnsFetch} requireSelection />
+
       <Drawer anchor="right" open={isFilterDrawerOpen} onClose={() => setIsFilterDrawerOpen(false)} sx={{ "& .MuiDrawer-paper": { width: 400, p: 3 } }}>
         <Typography variant="h6" gutterBottom color="primary" fontWeight="600">
           Advanced Filters for {deptName}

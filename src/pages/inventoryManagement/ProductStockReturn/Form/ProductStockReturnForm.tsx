@@ -95,12 +95,13 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
   const { department } = useDropdownValues(["department"]);
   const { showAlert } = useAlert();
   const isAddMode = !initialData || copyMode;
   const isCopyMode = copyMode && !!initialData;
   const isEditMode = !!initialData && !copyMode && !viewOnly;
-  const [isViewMode] = useState<boolean>(false);
+  const [isViewMode] = useState<boolean>(viewOnly);
 
   const supplier = [
     { value: 1, label: "Suplier1" },
@@ -153,113 +154,111 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     name: "productStockReturnDetails",
   });
 
+  // Fixed: Improved detail mapping function with comprehensive field conversion
   const createDetailMappingWithAllFields = useCallback((detail: any, isCopyMode: boolean) => {
+    console.log("Mapping detail:", detail, "isCopyMode:", isCopyMode);
+
     const mappedDetail = { ...detail };
+
+    // Reset IDs for copy mode
     if (isCopyMode) {
       mappedDetail.psrdID = 0;
       mappedDetail.psrID = 0;
     }
 
-    if (detail.expiryDate) {
+    // Handle date conversions safely
+    const safeParseDate = (dateValue: any): Date | undefined => {
+      if (!dateValue) return undefined;
       try {
-        if (detail.expiryDate instanceof Date) {
-          mappedDetail.expiryDate = detail.expiryDate;
-        } else {
-          const parsedDate = new Date(detail.expiryDate);
-          mappedDetail.expiryDate = isNaN(parsedDate.getTime()) ? undefined : parsedDate;
+        if (dateValue instanceof Date) {
+          return dateValue;
         }
+        const parsedDate = new Date(dateValue);
+        return isNaN(parsedDate.getTime()) ? undefined : parsedDate;
       } catch (error) {
-        mappedDetail.expiryDate = undefined;
+        console.warn("Date parsing error:", error);
+        return undefined;
       }
-    }
-
-    if (detail.manufacturedDate) {
-      try {
-        if (detail.manufacturedDate instanceof Date) {
-          mappedDetail.manufacturedDate = detail.manufacturedDate;
-        } else {
-          const parsedDate = new Date(detail.manufacturedDate);
-          mappedDetail.manufacturedDate = isNaN(parsedDate.getTime()) ? undefined : parsedDate;
-        }
-      } catch (error) {
-        mappedDetail.manufacturedDate = undefined;
-      }
-    }
-
-    if (detail.grnDate) {
-      try {
-        if (detail.grnDate instanceof Date) {
-          mappedDetail.grnDate = detail.grnDate;
-        } else {
-          const parsedDate = new Date(detail.grnDate);
-          mappedDetail.grnDate = isNaN(parsedDate.getTime()) ? undefined : parsedDate;
-        }
-      } catch (error) {
-        mappedDetail.grnDate = new Date();
-      }
-    }
-
-    const numericDefaults = {
-      psrdID: 0,
-      psrID: 0,
-      productID: 0,
-      mfID: 0,
-      pUnitID: 0,
-      pUnitsPerPack: 1,
-      pkgID: 0,
-      unitPrice: 0,
-      tax: 0,
-      sellUnitPrice: 0,
-      quantity: 0,
-      totalAmount: 0,
-      availableQty: 0,
-      psGrpID: 0,
-      pGrpID: 0,
-      taxID: 0,
-      mrp: 0,
-      manufacturerID: 0,
-      psbid: 0,
-      psdID: 0,
-      freeRetQty: 0,
-      freeRetUnitQty: 0,
     };
 
-    Object.keys(numericDefaults).forEach((key) => {
-      if (mappedDetail[key] === null || mappedDetail[key] === undefined) {
-        mappedDetail[key] = numericDefaults[key];
-      }
-    });
+    mappedDetail.expiryDate = safeParseDate(detail.expiryDate);
+    mappedDetail.manufacturedDate = safeParseDate(detail.manufacturedDate);
+    mappedDetail.grnDate = safeParseDate(detail.grnDate) || new Date();
 
-    const stringDefaults = {
-      productCode: "",
-      productName: "",
-      catValue: "MEDI",
-      catDesc: "REVENUE",
-      mfName: "",
-      pUnitName: "",
-      pkgName: "",
-      batchNo: "",
-      prescriptionYN: "N",
-      expiryYN: "N",
-      sellableYN: "N",
-      taxableYN: "N",
-      psGrpName: "",
-      pGrpName: "",
-      taxCode: "",
-      taxName: "",
-      hsnCode: "",
-      manufacturerCode: "",
-      manufacturerName: "",
-      returnReason: "",
-      rActiveYN: "Y",
+    // Set numeric defaults with proper conversion
+    const setNumericDefault = (key: string, defaultValue: number) => {
+      const value = detail[key];
+      mappedDetail[key] = value !== null && value !== undefined && !isNaN(Number(value)) ? Number(value) : defaultValue;
     };
 
-    Object.keys(stringDefaults).forEach((key) => {
-      if (mappedDetail[key] === null || mappedDetail[key] === undefined) {
-        mappedDetail[key] = stringDefaults[key];
-      }
-    });
+    // Set string defaults with proper conversion
+    const setStringDefault = (key: string, defaultValue: string) => {
+      mappedDetail[key] = detail[key] !== null && detail[key] !== undefined ? String(detail[key]) : defaultValue;
+    };
 
+    // Apply numeric defaults
+    setNumericDefault("psrdID", isCopyMode ? 0 : detail.psrdID || 0);
+    setNumericDefault("psrID", isCopyMode ? 0 : detail.psrID || 0);
+    setNumericDefault("productID", detail.productID || 0);
+    setNumericDefault("quantity", detail.quantity || 0);
+    setNumericDefault("unitPrice", detail.unitPrice || 0);
+    setNumericDefault("totalAmount", detail.totalAmount || 0);
+    setNumericDefault("availableQty", detail.availableQty || 0);
+    setNumericDefault("tax", detail.tax || 0);
+    setNumericDefault("psGrpID", detail.psGrpID || 0);
+    setNumericDefault("pGrpID", detail.pGrpID || 0);
+    setNumericDefault("manufacturerID", detail.manufacturerID || 0);
+    setNumericDefault("taxID", detail.taxID || 0);
+    setNumericDefault("mrp", detail.mrp || 0);
+    setNumericDefault("psdID", detail.psdID || 0);
+    setNumericDefault("freeRetQty", detail.freeRetQty || 0);
+    setNumericDefault("freeRetUnitQty", detail.freeRetUnitQty || 0);
+    setNumericDefault("pUnitID", detail.pUnitID || 0);
+    setNumericDefault("pUnitsPerPack", detail.pUnitsPerPack || 1);
+    setNumericDefault("pkgID", detail.pkgID || 0);
+    setNumericDefault("psbid", detail.psbid || 0);
+    setNumericDefault("sellUnitPrice", detail.sellUnitPrice || 0);
+    setNumericDefault("mfID", detail.mfID || 0);
+    setNumericDefault("cgst", detail.cgst || (detail.tax || 0) / 2);
+    setNumericDefault("sgst", detail.sgst || (detail.tax || 0) / 2);
+    setNumericDefault("batchID", detail.batchID || 0);
+    setNumericDefault("recvdQty", detail.recvdQty || 0);
+    setNumericDefault("supplierID", detail.supplierID || detail.supplrID || 0);
+    setNumericDefault("supplrID", detail.supplrID || 0);
+    setNumericDefault("freeItems", detail.freeItems || 0);
+
+    // Apply string defaults
+    setStringDefault("productCode", detail.productCode || "");
+    setStringDefault("productName", detail.productName || "");
+    setStringDefault("batchNo", detail.batchNo || "");
+    setStringDefault("prescriptionYN", detail.prescriptionYN || "N");
+    setStringDefault("expiryYN", detail.expiryYN || "N");
+    setStringDefault("sellableYN", detail.sellableYN || "N");
+    setStringDefault("taxableYN", detail.taxableYN || "N");
+    setStringDefault("psGrpName", detail.psGrpName || "");
+    setStringDefault("pGrpName", detail.pGrpName || "");
+    setStringDefault("manufacturerCode", detail.manufacturerCode || "");
+    setStringDefault("manufacturerName", detail.manufacturerName || "");
+    setStringDefault("taxCode", detail.taxCode || "");
+    setStringDefault("taxName", detail.taxName || "");
+    setStringDefault("hsnCode", detail.hsnCode || "");
+    setStringDefault("pUnitName", detail.pUnitName || "");
+    setStringDefault("pkgName", detail.pkgName || "");
+    setStringDefault("returnReason", detail.returnReason || "");
+    setStringDefault("rActiveYN", detail.rActiveYN || "Y");
+    setStringDefault("mfName", detail.mfName || "");
+    setStringDefault("grnCode", detail.grnCode || "");
+    setStringDefault("supplierName", detail.supplierName || detail.supplrName || "");
+    setStringDefault("invoiceNo", detail.invoiceNo || "");
+    setStringDefault("invDate", detail.invDate || "");
+    setStringDefault("supplrName", detail.supplrName || "");
+    setStringDefault("dcNo", detail.dcNo || "");
+    setStringDefault("poNo", detail.poNo || "");
+    setStringDefault("grnType", detail.grnType || "");
+    setStringDefault("grnStatus", detail.grnStatus || "");
+    setStringDefault("grnApprovedYN", detail.grnApprovedYN || "");
+
+    console.log("Mapped detail result:", mappedDetail);
     return mappedDetail;
   }, []);
 
@@ -302,48 +301,70 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     }
   };
 
+  // Fixed: Completely rewritten loadReturnDetails function with better error handling and data processing
   const loadReturnDetails = useCallback(async () => {
-    if (!initialData) return;
+    if (!initialData) {
+      console.log("No initial data provided");
+      return;
+    }
+
     try {
+      setIsLoadingData(true);
       setLoading(true);
-      let compositeDto: ProductStockReturnCompositeDto;
+      console.log("Loading return details for:", initialData);
+
+      let returnData: ProductStockReturnDto;
+      let detailsData: any[] = [];
+
+      // Check if we already have details in initialData
       if (initialData.details && Array.isArray(initialData.details) && initialData.details.length > 0) {
-        compositeDto = {
-          productStockReturn: initialData,
-          productStockReturnDetails: initialData.details,
-        };
+        console.log("Using existing details from initialData:", initialData.details.length, "items");
+        returnData = initialData;
+        detailsData = initialData.details;
       } else {
+        // Fetch fresh data from API
+        console.log("Fetching fresh data from API for ID:", initialData.psrID);
         const fetchedComposite = await getReturnWithDetailsById(initialData.psrID);
+
         if (!fetchedComposite || !fetchedComposite.productStockReturn) {
-          showAlert("Error", "Failed to fetch Product Stock Return details from API", "error");
+          throw new Error("Failed to fetch Product Stock Return details from API");
         }
-        compositeDto = fetchedComposite;
+
+        console.log("Fetched composite data:", fetchedComposite);
+        returnData = fetchedComposite.productStockReturn;
+        detailsData = fetchedComposite.productStockReturnDetails || [];
       }
 
+      // Build form data with proper field mapping
       const formData: ProductStockReturnFormData = {
-        psrID: isCopyMode ? 0 : compositeDto.productStockReturn.psrID,
-        psrDate: isCopyMode ? new Date() : new Date(compositeDto.productStockReturn.psrDate),
-        returnTypeCode: compositeDto.productStockReturn.returnTypeCode || ReturnType.Supplier,
-        fromDeptID: compositeDto.productStockReturn.fromDeptID || 0,
-        fromDeptName: compositeDto.productStockReturn.fromDeptName || "",
-        toDeptID: compositeDto.productStockReturn.toDeptID || 0,
-        toDeptName: compositeDto.productStockReturn.toDeptName || "",
-        supplierID: compositeDto.productStockReturn.supplierID || 0,
-        supplierName: compositeDto.productStockReturn.supplierName || "",
-        auGrpID: compositeDto.productStockReturn.auGrpID || 18,
-        catDesc: compositeDto.productStockReturn.catDesc || "REVENUE",
-        catValue: compositeDto.productStockReturn.catValue || "MEDI",
-        psrCode: isCopyMode ? "" : compositeDto.productStockReturn.psrCode || "",
-        approvedYN: isCopyMode ? "N" : compositeDto.productStockReturn.approvedYN || "N",
-        approvedID: isCopyMode ? 0 : compositeDto.productStockReturn.approvedID || 0,
-        approvedBy: isCopyMode ? "" : compositeDto.productStockReturn.approvedBy || "",
-        rActiveYN: isCopyMode ? "Y" : compositeDto.productStockReturn.rActiveYN || "Y",
-        productStockReturnDetails: (compositeDto.productStockReturnDetails || []).map((detail) => createDetailMappingWithAllFields(detail, isCopyMode)),
+        psrID: isCopyMode ? 0 : returnData.psrID || 0,
+        psrDate: returnData.psrDate ? new Date(returnData.psrDate) : new Date(),
+        returnTypeCode: returnData.returnTypeCode || ReturnType.Supplier,
+        fromDeptID: returnData.fromDeptID || selectedDepartmentId || 0,
+        fromDeptName: returnData.fromDeptName || selectedDepartmentName || "",
+        toDeptID: isCopyMode ? 0 : returnData.toDeptID || 0,
+        toDeptName: isCopyMode ? "" : returnData.toDeptName || "",
+        supplierID: isCopyMode ? 0 : returnData.supplierID || 0,
+        supplierName: isCopyMode ? "" : returnData.supplierName || "",
+        auGrpID: returnData.auGrpID || 18,
+        catDesc: returnData.catDesc || "REVENUE",
+        catValue: returnData.catValue || "MEDI",
+        psrCode: isCopyMode ? "" : returnData.psrCode || "",
+        approvedYN: isCopyMode ? "N" : returnData.approvedYN || "N",
+        approvedID: isCopyMode ? 0 : returnData.approvedID || 0,
+        approvedBy: isCopyMode ? "" : returnData.approvedBy || "",
+        rActiveYN: returnData.rActiveYN || "Y",
+        productStockReturnDetails: detailsData.map((detail) => createDetailMappingWithAllFields(detail, isCopyMode)),
       };
 
+      console.log("Final form data to reset:", formData);
+      console.log("Details count:", formData.productStockReturnDetails.length);
+
+      // Reset form with the prepared data
       reset(formData);
       setIsDataLoaded(true);
 
+      // Generate return code for copy mode
       if (isCopyMode && formData.fromDeptID) {
         setTimeout(() => generateReturnCodeAsync(), 500);
       }
@@ -351,36 +372,68 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       const actionText = isViewMode ? "viewing" : isCopyMode ? "copying" : "editing";
       showAlert("Success", `Stock Return data loaded successfully for ${actionText} (${formData.productStockReturnDetails.length} products)`, "success");
     } catch (error) {
-      showAlert("Error", "Failed to load Stock Return details", "error");
+      console.error("Error loading return details:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load Stock Return details";
+      showAlert("Error", errorMessage, "error");
+      setFormError(errorMessage);
     } finally {
+      setIsLoadingData(false);
       setLoading(false);
     }
-  }, [initialData, isCopyMode, isViewMode, getReturnWithDetailsById, reset, setLoading, showAlert, createDetailMappingWithAllFields]);
+  }, [initialData, isCopyMode, isViewMode, getReturnWithDetailsById, reset, setLoading, showAlert, createDetailMappingWithAllFields, selectedDepartmentId, selectedDepartmentName]);
 
+  // Fixed: Improved useEffect for data loading with better dependency management
   useEffect(() => {
-    if (open && !isDataLoaded) {
-      if (initialData && (isCopyMode || isEditMode || isViewMode)) {
-        loadReturnDetails();
-      } else if (isAddMode && !initialData) {
-        reset(defaultValues);
-        setIsDataLoaded(true);
-      }
+    console.log("Data loading useEffect triggered", {
+      open,
+      isDataLoaded,
+      initialData: !!initialData,
+      isAddMode,
+      isCopyMode,
+      isEditMode,
+      isViewMode,
+    });
+
+    if (!open) {
+      console.log("Dialog not open, skipping data load");
+      return;
+    }
+
+    if (isDataLoaded) {
+      console.log("Data already loaded, skipping");
+      return;
+    }
+
+    if (initialData && (isCopyMode || isEditMode || isViewMode)) {
+      console.log("Loading data for existing return");
+      loadReturnDetails();
+    } else if (isAddMode && !initialData) {
+      console.log("Setting up form for new return");
+      reset(defaultValues);
+      setIsDataLoaded(true);
     }
   }, [open, initialData?.psrID, isAddMode, isCopyMode, isEditMode, isViewMode, isDataLoaded, loadReturnDetails, reset, defaultValues]);
 
+  // Set department data for add mode
   useEffect(() => {
     if (isAddMode && selectedDepartmentId && selectedDepartmentName && !initialData && isDataLoaded) {
+      console.log("Setting department data for add mode:", selectedDepartmentId, selectedDepartmentName);
       setValue("fromDeptID", selectedDepartmentId, { shouldValidate: true, shouldDirty: false });
       setValue("fromDeptName", selectedDepartmentName, { shouldValidate: true, shouldDirty: false });
     }
   }, [isAddMode, selectedDepartmentId, selectedDepartmentName, setValue, initialData, isDataLoaded]);
 
+  // Reset data loaded flag when dialog closes
   useEffect(() => {
     if (!open) {
+      console.log("Dialog closed, resetting data loaded flag");
       setIsDataLoaded(false);
+      setFormError(null);
+      setIsLoadingData(false);
     }
   }, [open]);
 
+  // Generate return code and handle return type changes
   useEffect(() => {
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
     if (deptId && isAddMode && !isCopyMode && isDataLoaded) {
@@ -615,7 +668,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
             </Alert>
           )}
 
-          {!isDataLoaded && (initialData || !isAddMode) && (
+          {isLoadingData && (
             <Alert severity="info" sx={{ mb: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircularProgress size={20} />
