@@ -25,12 +25,12 @@ import SampleStatusUpdateDialog from "../components/SampleStatusUpdateDialog";
 import { useLaboratoryReportEntry } from "../hooks/useLaboratoryReportEntry";
 
 const sampleStatusOptions = [
-  { value: "all", label: "All Samples" },
-  { value: "pending", label: "Pending" },
-  { value: "collected", label: "Collected" },
-  { value: "completed", label: "Completed" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "all", label: "All" },
+  { value: "pending", label: "Sample Pending" },
+  { value: "collected", label: "Sample Collected" },
+  { value: "rejected", label: "Sample Rejected" },
+  { value: "completed", label: "Report Completed" },
+  { value: "approved", label: "Report Approved" },
   { value: "deleted", label: "Deleted" },
 ];
 
@@ -38,14 +38,6 @@ const patientStatusOptions = [
   { value: "all", label: "All Patients" },
   { value: "op", label: "Out-Patient (OP)" },
   { value: "ip", label: "In-Patient (IP)" },
-];
-
-const reportStatusOptions = [
-  { value: "all", label: "All Reports" },
-  { value: "pending", label: "Pending Entry" },
-  { value: "partial", label: "Partially Entered" },
-  { value: "completed", label: "Completed" },
-  { value: "approved", label: "Approved" },
 ];
 
 const LaboratoryReportEntryPage: React.FC = () => {
@@ -695,13 +687,12 @@ const LaboratoryReportEntryPage: React.FC = () => {
                   defaultText="All Service Groups"
                 />
                 <DropdownSelect
-                  label="Sample Status"
+                  label="Report Status"
                   name="sampleStatus"
                   value={filters.sampleStatus}
                   options={sampleStatusOptions}
                   onChange={(e) => handleFilterChange("sampleStatus", e.target.value)}
                   size="small"
-                  defaultText="All Samples"
                 />
                 <DropdownSelect
                   label="Patient Status"
@@ -712,15 +703,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
                   size="small"
                   defaultText="All Patients"
                 />
-                <DropdownSelect
-                  label="Report Status"
-                  name="reportStatus"
-                  value={filters.reportStatus}
-                  options={reportStatusOptions}
-                  onChange={(e) => handleFilterChange("reportStatus", e.target.value)}
-                  size="small"
-                  defaultText="All Reports"
-                />
+
                 <Box display="flex" alignItems="center" gap={1}>
                   {Object.values(filters).some((v) => v !== "all") && (
                     <Chip label={`Filters (${Object.values(filters).filter((v) => v !== "all").length})`} onDelete={handleClearFilters} size="small" color="primary" />
