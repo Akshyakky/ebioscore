@@ -53,7 +53,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [showStats, setShowStats] = useState(false);
-  const { serviceType } = useDropdownValues(["serviceType"]);
+  const { serviceType, serviceGroup } = useDropdownValues(["serviceType", "serviceGroup"]);
   const [labServiceTypes, setLabServiceTypes] = useState<any[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<number | null>(null);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
@@ -74,6 +74,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
     updateSampleStatus,
   } = useLaboratoryReportEntry();
 
+  console.log("serviceGroup", serviceGroup);
   const [openStatusDialog, setOpenStatusDialog] = useState(false);
   const [selectedRegister, setSelectedRegister] = useState<GetLabRegistersListDto | null>(null);
 
