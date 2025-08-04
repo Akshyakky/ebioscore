@@ -585,7 +585,7 @@ export const DayView: React.FC<DayViewProps> = ({
         return;
       }
 
-      if (withinWorkingHours && slotAppointments.length === 0) {
+      if (withinWorkingHours && slotAppointments.length <= 10) {
         onSlotDoubleClick(date, hour, minute);
       }
     },
