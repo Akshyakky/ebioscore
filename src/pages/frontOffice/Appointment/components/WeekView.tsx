@@ -1,7 +1,7 @@
 // src/pages/frontOffice/Appointment/components/WeekView.tsx
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
-import { Box, Grid, Typography, useTheme } from "@mui/material";
+import { Box, Grid, Paper, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
@@ -59,29 +59,36 @@ export const WeekView: React.FC<WeekViewProps> = ({
     return slotDate < currentTime;
   };
 
-  const getSlotBackgroundColor = (date: Date, hour: number, minute: number) => {
+  const getSlotStyles = (date: Date, hour: number, minute: number) => {
     const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
     const isElapsed = isTimeSlotElapsed(date, hour, minute);
 
+    let backgroundColor = "transparent";
+    let opacity = 1;
+    let cursor = "default";
+
     if (!withinWorkingHours) {
-      return isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
-    }
-
-    if (isElapsed) {
-      return isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
-    }
-
-    return "transparent";
-  };
-
-  const getHoverBackgroundColor = (date: Date, hour: number, minute: number) => {
-    const isElapsed = isTimeSlotElapsed(date, hour, minute);
-
-    if (isDarkMode) {
-      return isElapsed ? theme.palette.grey[600] : theme.palette.grey[700];
+      backgroundColor = isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
+      opacity = 0.5;
+      cursor = "not-allowed";
+    } else if (isElapsed) {
+      backgroundColor = isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
+      cursor = "pointer";
     } else {
-      return isElapsed ? "#f5f5f5" : "#f0f0f0";
+      cursor = "pointer";
     }
+
+    return {
+      height: 30,
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      borderRight: `1px solid ${theme.palette.divider}`,
+      backgroundColor,
+      opacity,
+      cursor,
+      padding: theme.spacing(0.25),
+      position: "relative" as const,
+      userSelect: "none" as const,
+    };
   };
 
   const getAppointmentsForDate = (date: Date) => {
@@ -127,47 +134,44 @@ export const WeekView: React.FC<WeekViewProps> = ({
     }
   };
 
+  const HeaderCell = ({ children }: { children: React.ReactNode }) => (
+    <Paper
+      elevation={2}
+      style={{
+        position: "sticky",
+        top: 0,
+        background: isDarkMode ? theme.palette.background.paper : "white",
+        zIndex: 10,
+        padding: theme.spacing(0.5),
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        marginBottom: theme.spacing(0.5),
+      }}
+    >
+      {children}
+    </Paper>
+  );
+
   return (
     <Grid container spacing={0.5}>
       <Grid size={{ xs: 1.5 }}>
-        <Box
-          sx={{
-            position: "sticky",
-            top: 0,
-            background: isDarkMode ? theme.palette.background.paper : "white",
-            zIndex: 10,
-            py: 0.5,
-            borderBottom: 1,
-            borderColor: "divider",
-            mb: 0.5,
-            boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)",
-          }}
-        >
-          <Typography
-            variant="caption"
-            align="center"
-            sx={{
-              fontSize: "0.7rem",
-              color: theme.palette.text.primary,
-            }}
-          >
+        <HeaderCell>
+          <Typography variant="caption" align="center" color="text.primary" style={{ fontSize: "0.7rem" }}>
             Time
           </Typography>
-        </Box>
+        </HeaderCell>
         {timeSlots.map((slot) => (
           <Box
             key={slot.time}
-            sx={{
+            style={{
               height: 30,
               display: "flex",
               alignItems: "center",
-              borderBottom: 1,
-              borderColor: "divider",
-              px: 0.5,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              padding: theme.spacing(0, 0.5),
               backgroundColor: isDarkMode ? theme.palette.background.paper : "transparent",
             }}
           >
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.6rem" }}>
+            <Typography variant="caption" color="text.secondary" style={{ fontSize: "0.6rem" }}>
               {slot.time}
             </Typography>
           </Box>
@@ -179,84 +183,47 @@ export const WeekView: React.FC<WeekViewProps> = ({
         const appointmentLayout = calculateAppointmentLayout(date, dayAppointments);
 
         return (
-          <Grid size={{ xs: 1.5 }} key={index} sx={{ position: "relative" }}>
+          <Grid size={{ xs: 1.5 }} key={index} style={{ position: "relative" }}>
             <CurrentTimeIndicator date={date} height={30} timeSlots={timeSlots} currentTime={currentTime} />
 
-            <Box
-              sx={{
-                position: "sticky",
-                top: 0,
-                background: isDarkMode ? theme.palette.background.paper : "white",
-                zIndex: 10,
-                py: 0.5,
-                borderBottom: 1,
-                borderColor: "divider",
-                mb: 0.5,
-                boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)",
-              }}
-            >
-              <Typography
-                variant="caption"
-                align="center"
-                sx={{
-                  fontSize: "0.7rem",
-                  fontWeight: "bold",
-                  color: theme.palette.text.primary,
-                }}
-              >
+            <HeaderCell>
+              <Typography variant="caption" align="center" fontWeight="bold" color="text.primary" display="block" style={{ fontSize: "0.7rem" }}>
                 {date.toLocaleDateString("en-US", { weekday: "short" })}
               </Typography>
-              <Typography
-                variant="caption"
-                align="center"
-                sx={{
-                  fontSize: "0.6rem",
-                  color: "text.secondary",
-                  display: "block",
-                }}
-              >
+              <Typography variant="caption" align="center" color="text.secondary" display="block" style={{ fontSize: "0.6rem" }}>
                 {date.getDate()}
               </Typography>
-            </Box>
+            </HeaderCell>
 
             {timeSlots.map((slot) => {
               const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);
               const withinWorkingHours = isWithinWorkingHours(date, slot.hour, slot.minute);
               const isElapsed = isTimeSlotElapsed(date, slot.hour, slot.minute);
-              const backgroundColor = getSlotBackgroundColor(date, slot.hour, slot.minute);
+              const slotStyles = getSlotStyles(date, slot.hour, slot.minute);
 
               return (
                 <Box
                   key={`${index}-${slot.time}`}
+                  style={slotStyles}
+                  onClick={() => handleSlotClick(date, slot.hour, slot.minute)}
+                  onDoubleClick={() => handleSlotDoubleClick(date, slot.hour, slot.minute)}
                   sx={{
-                    height: 30,
-                    borderBottom: 1,
-                    borderRight: index < weekDates.length - 1 ? 1 : 0,
-                    borderColor: "divider",
-                    backgroundColor,
-                    p: 0.25,
-                    cursor: withinWorkingHours ? (slotAppointments.length > 0 ? "default" : "pointer") : "not-allowed",
                     "&:hover":
                       withinWorkingHours && slotAppointments.length === 0
                         ? {
-                            backgroundColor: getHoverBackgroundColor(date, slot.hour, slot.minute),
+                            backgroundColor: isDarkMode ? (isElapsed ? theme.palette.grey[600] : theme.palette.grey[700]) : isElapsed ? "#f5f5f5" : "#f0f0f0",
                             "& .slot-hint": { opacity: 1 },
                           }
                         : {},
-                    opacity: !withinWorkingHours ? 0.5 : 1,
-                    position: "relative",
-                    userSelect: "none",
                   }}
-                  onClick={() => handleSlotClick(date, slot.hour, slot.minute)}
-                  onDoubleClick={() => handleSlotDoubleClick(date, slot.hour, slot.minute)}
                 >
                   {withinWorkingHours && slotAppointments.length === 0 && (
                     <Typography
                       variant="caption"
                       className="slot-hint"
-                      sx={{
+                      color={isDarkMode ? "text.secondary" : "text.secondary"}
+                      style={{
                         fontSize: "0.5rem",
-                        color: isDarkMode ? theme.palette.text.secondary : "text.secondary",
                         opacity: 0,
                         transition: "opacity 0.2s",
                         position: "absolute",
@@ -268,7 +235,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                         textAlign: "center",
                         lineHeight: 1,
                         whiteSpace: "nowrap",
-                        fontWeight: isDarkMode ? "500" : "normal",
+                        fontWeight: isDarkMode ? 500 : "normal",
                       }}
                     >
                       {isElapsed ? "Click" : "2x Click"}
@@ -296,7 +263,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                       return (
                         <Box
                           key={appointment.abID}
-                          sx={{
+                          style={{
                             position: "absolute",
                             top: `${topOffset}px`,
                             left: "2px",

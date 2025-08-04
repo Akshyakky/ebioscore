@@ -17,7 +17,7 @@ export const CurrentTimeIndicator: React.FC<CurrentTimeIndicatorProps> = ({ date
 
   return (
     <Box
-      sx={{
+      style={{
         position: "absolute",
         width: "100%",
         height: "2px",
@@ -27,7 +27,7 @@ export const CurrentTimeIndicator: React.FC<CurrentTimeIndicatorProps> = ({ date
       }}
     >
       <Box
-        sx={{
+        style={{
           position: "absolute",
           left: -6,
           top: -3,

@@ -1,6 +1,7 @@
 // src/pages/frontOffice/Appointment/components/AppointmentCard.tsx
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { Box, Typography, useTheme } from "@mui/material";
+import { DragIndicator, Height as ResizeIcon } from "@mui/icons-material";
+import { Box, Card, CardContent, Chip, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { getStatusColor } from "../utils/appointmentUtils";
 
@@ -10,183 +11,251 @@ interface AppointmentCardProps {
   column?: number;
   totalColumns?: number;
   isElapsed?: boolean;
+  isDragging?: boolean;
+  isResizing?: boolean;
   onClick?: (appointment: AppointBookingDto) => void;
+  onDragStart?: (appointment: AppointBookingDto, event: React.DragEvent) => void;
+  onDragEnd?: () => void;
+  onResizeStart?: (appointment: AppointBookingDto, event: React.MouseEvent) => void;
+  onResizeEnd?: () => void;
 }
 
-export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, showDetails = true, column = 0, totalColumns = 1, isElapsed = false, onClick }) => {
+export const AppointmentCard: React.FC<AppointmentCardProps> = ({
+  appointment,
+  showDetails = true,
+  column = 0,
+  totalColumns = 1,
+  isElapsed = false,
+  isDragging = false,
+  isResizing = false,
+  onClick,
+  onDragStart,
+  onDragEnd,
+  onResizeStart,
+  onResizeEnd,
+}) => {
   const theme = useTheme();
-  const isDarkMode = theme.palette.mode === "dark";
-
-  const widthPercentage = 100 / totalColumns;
-  const leftPercentage = (column * 100) / totalColumns;
   const statusColor = getStatusColor(appointment.abStatus);
-
-  const getBackgroundColor = () => {
-    const baseColors = {
-      success: isDarkMode ? "#2e7d32" : "#e8f5e8",
-      warning: isDarkMode ? "#ed6c02" : "#fff3e0",
-      error: isDarkMode ? "#d32f2f" : "#ffebee",
-      default: isDarkMode ? "#1976d2" : "#e3f2fd",
-    };
-
-    const color = baseColors[statusColor as keyof typeof baseColors] || baseColors.default;
-
-    if (isElapsed && isDarkMode) {
-      // For elapsed appointments in dark mode, use slightly lighter variants
-      const elapsedColors = {
-        success: "#388e3c",
-        warning: "#f57c00",
-        error: "#e53935",
-        default: "#1e88e5",
-      };
-      return elapsedColors[statusColor as keyof typeof elapsedColors] || elapsedColors.default;
-    }
-
-    if (isElapsed && !isDarkMode) {
-      // For elapsed appointments in light mode, use slightly more saturated colors
-      const elapsedColors = {
-        success: "#c8e6c9",
-        warning: "#ffe0b2",
-        error: "#ffcdd2",
-        default: "#e1f5fe",
-      };
-      return elapsedColors[statusColor as keyof typeof elapsedColors] || elapsedColors.default;
-    }
-
-    return color;
-  };
-
-  const getBorderColor = () => {
-    const borderColors = {
-      success: isDarkMode ? "#4caf50" : "#4caf50",
-      warning: isDarkMode ? "#ff9800" : "#ff9800",
-      error: isDarkMode ? "#f44336" : "#f44336",
-      default: isDarkMode ? "#2196f3" : "#2196f3",
-    };
-    return borderColors[statusColor as keyof typeof borderColors] || borderColors.default;
-  };
-
-  const getTextColor = () => {
-    if (isDarkMode) {
-      return isElapsed ? "#ffffff" : "#ffffff";
-    } else {
-      return isElapsed ? "#1a1a1a" : "inherit";
-    }
-  };
-
-  const getSecondaryTextColor = () => {
-    if (isDarkMode) {
-      return isElapsed ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.7)";
-    } else {
-      return isElapsed ? "#424242" : "text.secondary";
-    }
-  };
-
-  const backgroundColor = getBackgroundColor();
-  const borderColor = getBorderColor();
-  const textColor = getTextColor();
-  const secondaryTextColor = getSecondaryTextColor();
-
   const isShortAppointment = appointment.abDuration <= 15;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onClick?.(appointment);
+    if (!isDragging && !isResizing) {
+      onClick?.(appointment);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+
+    // Set drag data
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        appointmentId: appointment.abID,
+        duration: appointment.abDuration,
+        patientName: `${appointment.abFName} ${appointment.abLName}`,
+        providerName: appointment.providerName,
+        originalTime: appointment.abTime,
+        originalDate: appointment.abDate,
+        type: "move",
+      })
+    );
+
+    e.dataTransfer.effectAllowed = "move";
+
+    // Create custom drag image
+    const dragElement = e.currentTarget.cloneNode(true) as HTMLElement;
+    dragElement.style.transform = "rotate(5deg)";
+    dragElement.style.opacity = "0.8";
+    document.body.appendChild(dragElement);
+    e.dataTransfer.setDragImage(dragElement, 0, 0);
+
+    // Clean up drag image after drag starts
+    setTimeout(() => {
+      document.body.removeChild(dragElement);
+    }, 0);
+
+    onDragStart?.(appointment, e);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.stopPropagation();
+    onDragEnd?.();
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onResizeStart?.(appointment, e);
+  };
+
+  const getCardStyles = () => {
+    let transform = "none";
+    let zIndex = 20;
+    let boxShadow = theme.shadows[2];
+
+    if (isDragging) {
+      transform = "rotate(5deg) scale(1.05)";
+      zIndex = 30;
+      boxShadow = theme.shadows[8];
+    } else if (isResizing) {
+      zIndex = 25;
+      boxShadow = theme.shadows[6];
+    }
+
+    return {
+      height: "100%",
+      cursor: isDragging ? "grabbing" : isResizing ? "ns-resize" : "grab",
+      opacity: isDragging ? 0.5 : isElapsed ? 0.8 : 1,
+      position: "absolute" as const,
+      width: `${100 / totalColumns - 1}%`,
+      left: `${(column * 100) / totalColumns}%`,
+      zIndex,
+      transition: isDragging || isResizing ? "none" : "all 0.2s ease-in-out",
+      transform,
+      border: isDragging || isResizing ? `2px solid ${theme.palette.primary.main}` : undefined,
+      borderRadius: theme.shape.borderRadius,
+      boxShadow,
+    };
   };
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        p: isShortAppointment ? 0.25 : 0.5,
-        borderRadius: 1,
-        cursor: "pointer",
-        fontSize: isShortAppointment ? "0.65rem" : "0.75rem",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor,
-        borderLeft: `3px solid ${borderColor}`,
-        boxShadow: isDarkMode ? (isElapsed ? "0 3px 6px rgba(0,0,0,0.4)" : "0 2px 4px rgba(0,0,0,0.3)") : isElapsed ? "0 2px 4px rgba(0,0,0,0.2)" : "0 1px 2px rgba(0,0,0,0.1)",
-        "&:hover": {
-          backgroundColor: isDarkMode ? (isElapsed ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)") : isElapsed ? "rgba(255,255,255,0.9)" : "action.hover",
-          transform: "scale(1.02)",
-          boxShadow: isDarkMode ? "0 4px 8px rgba(0,0,0,0.5)" : isElapsed ? "0 4px 8px rgba(0,0,0,0.3)" : 2,
-        },
-        width: `${widthPercentage - 1}%`,
-        left: `${leftPercentage}%`,
-        position: "absolute",
-        transition: "all 0.2s ease-in-out",
-        minHeight: isShortAppointment ? "18px" : "24px",
-        zIndex: 20,
-        color: textColor,
-        fontWeight: isDarkMode ? "500" : isElapsed ? "500" : "normal",
-      }}
+    <Card
+      draggable
+      variant={isElapsed ? "outlined" : "elevation"}
+      elevation={0}
       onClick={handleClick}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      style={getCardStyles()}
+      sx={{
+        "&:hover":
+          !isDragging && !isResizing
+            ? {
+                transform: "scale(1.02)",
+                boxShadow: theme.shadows[4],
+                "& .drag-handle": {
+                  opacity: 1,
+                },
+                "& .resize-handle": {
+                  opacity: 1,
+                },
+              }
+            : {},
+        "& .drag-handle": {
+          opacity: 0,
+          transition: "opacity 0.2s ease-in-out",
+        },
+        "& .resize-handle": {
+          opacity: 0,
+          transition: "opacity 0.2s ease-in-out",
+        },
+      }}
     >
-      <Typography
-        variant="caption"
-        fontWeight="bold"
-        display="block"
-        sx={{
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          lineHeight: isShortAppointment ? 1.1 : 1.2,
-          fontSize: "inherit",
-          mb: isShortAppointment ? 0 : 0.25,
-          color: textColor,
-          textShadow: isDarkMode ? "0 1px 2px rgba(0,0,0,0.3)" : isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
+      <CardContent
+        style={{
+          padding: isShortAppointment ? 2 : 4,
+          paddingBottom: isShortAppointment ? 2 : 4,
+          minHeight: isShortAppointment ? 18 : 24,
+          position: "relative",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        {appointment.abFName} {appointment.abLName}
-      </Typography>
-
-      {showDetails && !isShortAppointment && (
-        <>
-          <Typography
-            variant="caption"
-            display="block"
-            sx={{
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              fontSize: "0.65rem",
-              lineHeight: 1.1,
-              color: secondaryTextColor,
-              textShadow: isDarkMode ? "0 1px 2px rgba(0,0,0,0.3)" : isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
-            }}
-          >
-            {appointment.providerName}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              fontSize: "0.6rem",
-              lineHeight: 1,
-              color: secondaryTextColor,
-              textShadow: isDarkMode ? "0 1px 2px rgba(0,0,0,0.3)" : isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
-            }}
-          >
-            {appointment.abDurDesc}
-          </Typography>
-        </>
-      )}
-
-      {showDetails && isShortAppointment && (
-        <Typography
-          variant="caption"
+        {/* Drag Handle */}
+        <Box
+          className="drag-handle"
           sx={{
-            fontSize: "0.6rem",
-            lineHeight: 1,
-            fontWeight: "medium",
-            color: secondaryTextColor,
-            textShadow: isDarkMode ? "0 1px 2px rgba(0,0,0,0.3)" : isElapsed ? "0 1px 1px rgba(255,255,255,0.8)" : "none",
+            position: "absolute",
+            top: 2,
+            right: 2,
+            color: "text.secondary",
+            cursor: "grab",
+            zIndex: 1,
           }}
         >
-          {appointment.abDurDesc}
-        </Typography>
-      )}
-    </Box>
+          <DragIndicator fontSize="small" style={{ fontSize: "12px" }} />
+        </Box>
+
+        {/* Content */}
+        <Box display="flex" flexDirection="column" height="100%" flex={1}>
+          <Typography
+            variant="caption"
+            component="div"
+            fontWeight="bold"
+            color={isElapsed ? "text.secondary" : "text.primary"}
+            noWrap
+            style={{ paddingRight: "16px" }} // Space for drag handle
+          >
+            {appointment.abFName} {appointment.abLName}
+          </Typography>
+
+          {showDetails && !isShortAppointment && (
+            <>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                {appointment.providerName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {appointment.abDurDesc}
+              </Typography>
+            </>
+          )}
+
+          {showDetails && isShortAppointment && (
+            <Typography variant="caption" color="text.secondary" fontWeight="medium">
+              {appointment.abDurDesc}
+            </Typography>
+          )}
+
+          <Box marginTop="auto">
+            <Chip
+              label={appointment.abStatus}
+              color={statusColor as any}
+              size="small"
+              variant={isElapsed ? "outlined" : "filled"}
+              style={{ fontSize: "0.65rem", height: "18px" }}
+            />
+          </Box>
+        </Box>
+
+        {/* Resize Handle - Only show for appointments longer than 15 minutes */}
+        {!isShortAppointment && (
+          <Box
+            className="resize-handle"
+            onMouseDown={handleResizeMouseDown}
+            sx={{
+              position: "absolute",
+              bottom: -2,
+              left: 0,
+              right: 0,
+              height: 8,
+              cursor: "ns-resize",
+              backgroundColor: theme.palette.primary.main,
+              borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2,
+              "&:hover": {
+                backgroundColor: theme.palette.primary.dark,
+                height: 10,
+              },
+              transition: "all 0.2s ease-in-out",
+            }}
+          >
+            <ResizeIcon
+              fontSize="small"
+              style={{
+                fontSize: "10px",
+                color: "white",
+                transform: "rotate(90deg)",
+              }}
+            />
+          </Box>
+        )}
+      </CardContent>
+    </Card>
   );
 };

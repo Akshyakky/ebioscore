@@ -1,6 +1,6 @@
 // src/frontOffice/components/MonthView.tsx
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { Box, Grid, Paper, Typography, useTheme } from "@mui/material";
+import { Box, Card, CardContent, Grid, PaletteColor, Paper, Stack, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { getStatusColor } from "../utils/appointmentUtils";
 
@@ -29,185 +29,171 @@ export const MonthView: React.FC<MonthViewProps> = ({ currentDate, appointments,
     });
   };
 
-  const getDayBackgroundColor = (date: Date, isCurrentMonth: boolean, isToday: boolean, isPastDate: boolean) => {
+  const getDayCardProps = (date: Date, isCurrentMonth: boolean, isToday: boolean, isPastDate: boolean) => {
+    let backgroundColor = "background.paper";
+    let opacity = 1;
+    let cursor = "pointer";
+    let border = 1;
+    let borderColor = "divider";
+
     if (!isCurrentMonth) {
-      return isDarkMode ? theme.palette.grey[900] : "#f5f5f5";
+      backgroundColor = isDarkMode ? "grey.900" : "grey.100";
+      opacity = 0.6;
     }
 
     if (isToday) {
-      return isDarkMode ? theme.palette.primary.dark : "#e3f2fd";
+      backgroundColor = isDarkMode ? "primary.dark" : "primary.50";
+      borderColor = "primary.main";
+      border = 2;
     }
 
     if (isPastDate) {
-      return isDarkMode ? theme.palette.grey[800] : "#eeeeee";
+      backgroundColor = isDarkMode ? "grey.800" : "grey.50";
+      opacity = 0.7;
+      cursor = "default";
     }
 
-    return isDarkMode ? theme.palette.background.paper : "white";
-  };
-
-  const getHoverBackgroundColor = (isPastDate: boolean) => {
-    if (isPastDate) return undefined; // No hover for past dates
-
-    return isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
+    return {
+      backgroundColor,
+      opacity,
+      cursor,
+      border,
+      borderColor,
+      transition: "all 0.2s ease-in-out",
+      "&:hover": !isPastDate
+        ? {
+            backgroundColor: isDarkMode ? "grey.700" : "grey.100",
+            transform: "scale(1.02)",
+          }
+        : {},
+    };
   };
 
   const getDayTextColor = (isCurrentMonth: boolean, isPastDate: boolean, isToday: boolean) => {
     if (!isCurrentMonth) {
-      return isDarkMode ? theme.palette.text.disabled : "text.disabled";
+      return "text.disabled";
     }
 
     if (isPastDate) {
-      return isDarkMode ? theme.palette.text.secondary : "text.secondary";
+      return "text.secondary";
     }
 
     if (isToday) {
-      return isDarkMode ? theme.palette.primary.light : "text.primary";
+      return isDarkMode ? "primary.light" : "primary.main";
     }
 
-    return isDarkMode ? theme.palette.text.primary : "text.primary";
+    return "text.primary";
   };
 
-  const getAppointmentBackgroundColor = (statusColor: string) => {
-    const appointmentColors = {
-      success: isDarkMode ? "#2e7d32" : "#4caf50",
-      warning: isDarkMode ? "#ed6c02" : "#ff9800",
-      error: isDarkMode ? "#d32f2f" : "#f44336",
-      default: isDarkMode ? "#1976d2" : "#2196f3",
+  const getAppointmentCardColor = (statusColor: string) => {
+    const colors = {
+      success: "success.main",
+      warning: "warning.main",
+      error: "error.main",
+      default: "primary.main",
     };
 
-    return appointmentColors[statusColor as keyof typeof appointmentColors] || appointmentColors.default;
-  };
-
-  const getAppointmentTextColor = () => {
-    return isDarkMode ? "#ffffff" : "white";
+    return colors[statusColor as keyof typeof colors] || colors.default;
   };
 
   return (
     <Box>
-      <Grid container spacing={0.5} sx={{ mb: 1 }}>
+      <Grid container spacing={0.5} marginBottom={1}>
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <Grid size={{ xs: 12 / 7 }} key={day}>
-            <Typography
-              variant="subtitle2"
-              align="center"
-              sx={{
-                fontSize: "0.8rem",
-                fontWeight: "bold",
-                py: 0.5,
-                color: theme.palette.text.primary,
+          <Grid size={12 / 7} key={day}>
+            <Paper
+              elevation={1}
+              style={{
                 backgroundColor: isDarkMode ? theme.palette.grey[800] : theme.palette.grey[100],
-                borderRadius: 1,
+                padding: theme.spacing(0.5),
+                borderRadius: theme.shape.borderRadius,
               }}
             >
-              {day}
-            </Typography>
+              <Typography variant="subtitle2" align="center" fontWeight="bold" color="text.primary">
+                {day}
+              </Typography>
+            </Paper>
           </Grid>
         ))}
       </Grid>
 
       {weeks.map((week, weekIndex) => (
-        <Grid container spacing={0.5} key={weekIndex} sx={{ mb: 0.5 }}>
+        <Grid container spacing={0.5} key={weekIndex} marginBottom={0.5}>
           {week.map((date, dayIndex) => {
             const dayAppointments = getAppointmentsForDate(date);
             const isCurrentMonth = date.getMonth() === currentDate.getMonth();
             const isToday = new Date().toDateString() === date.toDateString();
             const isPastDate = date < new Date().setHours(0, 0, 0, 0);
+            const cardProps = getDayCardProps(date, isCurrentMonth, isToday, isPastDate);
 
             return (
-              <Grid size={{ xs: 12 / 7 }} key={dayIndex}>
-                <Paper
-                  sx={{
-                    height: 100,
-                    p: 0.5,
-                    backgroundColor: getDayBackgroundColor(date, isCurrentMonth, isToday, isPastDate),
-                    cursor: isPastDate ? "default" : "pointer",
-                    "&:hover": !isPastDate
-                      ? {
-                          backgroundColor: getHoverBackgroundColor(isPastDate),
-                        }
-                      : {},
-                    overflow: "hidden",
-                    opacity: isPastDate ? 0.7 : 1,
-                    border: isDarkMode ? `1px solid ${theme.palette.grey[700]}` : "1px solid #e0e0e0",
-                    boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.3)" : "0 1px 3px rgba(0,0,0,0.1)",
-                    transition: "all 0.2s ease-in-out",
-                  }}
+              <Grid size={12 / 7} key={dayIndex}>
+                <Card
+                  variant="outlined"
+                  elevation={isDarkMode ? 2 : 1}
                   onClick={() => !isPastDate && onSlotClick()}
+                  sx={{
+                    ...cardProps,
+                    minHeight: 100,
+                    height: 100,
+                  }}
                 >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontSize: "0.7rem",
-                      fontWeight: isToday ? "bold" : "normal",
-                      color: getDayTextColor(isCurrentMonth, isPastDate, isToday),
-                      display: "block",
-                      mb: 0.5,
-                    }}
-                  >
-                    {date.getDate()}
-                  </Typography>
+                  <CardContent style={{ padding: theme.spacing(0.5) }}>
+                    <Typography
+                      variant="caption"
+                      fontWeight={isToday ? "bold" : "normal"}
+                      color={getDayTextColor(isCurrentMonth, isPastDate, isToday)}
+                      display="block"
+                      marginBottom={0.5}
+                    >
+                      {date.getDate()}
+                    </Typography>
 
-                  <Box sx={{ maxHeight: 70, overflow: "hidden" }}>
-                    {dayAppointments.slice(0, 3).map((appointment) => {
-                      const statusColor = getStatusColor(appointment.abStatus);
-                      const backgroundColor = getAppointmentBackgroundColor(statusColor);
-                      const textColor = getAppointmentTextColor();
+                    <Stack spacing={0.25} style={{ maxHeight: 70, overflow: "hidden" }}>
+                      {dayAppointments.slice(0, 3).map((appointment) => {
+                        const statusColor = getStatusColor(appointment.abStatus);
+                        const cardColor = getAppointmentCardColor(statusColor);
 
-                      return (
-                        <Box
-                          key={appointment.abID}
-                          sx={{
-                            mb: 0.25,
-                            p: 0.25,
-                            borderRadius: 0.5,
-                            fontSize: "0.6rem",
-                            backgroundColor,
-                            color: textColor,
-                            cursor: "pointer",
-                            transition: "all 0.2s ease-in-out",
-                            "&:hover": {
-                              transform: "scale(1.02)",
-                              boxShadow: isDarkMode ? "0 2px 4px rgba(0,0,0,0.5)" : "0 2px 4px rgba(0,0,0,0.2)",
-                            },
-                            boxShadow: isDarkMode ? "0 1px 2px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)",
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAppointmentClick(appointment);
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
+                        return (
+                          <Card
+                            key={appointment.abID}
+                            variant="elevation"
+                            style={{
+                              backgroundColor: (theme.palette[cardColor.split(".")[0] as keyof typeof theme.palette] as PaletteColor)?.main as string,
+                              cursor: "pointer",
+                              transition: "all 0.2s ease-in-out",
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAppointmentClick(appointment);
+                            }}
                             sx={{
-                              fontSize: "0.6rem",
-                              color: textColor,
-                              fontWeight: isDarkMode ? "500" : "normal",
-                              textShadow: isDarkMode ? "0 1px 1px rgba(0,0,0,0.3)" : "none",
+                              "&:hover": {
+                                transform: "scale(1.02)",
+                                boxShadow: 2,
+                              },
                             }}
                           >
-                            {new Date(appointment.abTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}{" "}
-                            {appointment.abFName}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                    {dayAppointments.length > 3 && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontSize: "0.6rem",
-                          color: isDarkMode ? theme.palette.text.secondary : "text.secondary",
-                          fontStyle: "italic",
-                        }}
-                      >
-                        +{dayAppointments.length - 3} more
-                      </Typography>
-                    )}
-                  </Box>
-                </Paper>
+                            <CardContent style={{ padding: theme.spacing(0.25) }}>
+                              <Typography variant="caption" color="white" fontWeight={isDarkMode ? 500 : "normal"} noWrap>
+                                {new Date(appointment.abTime).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}{" "}
+                                {appointment.abFName}
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                      {dayAppointments.length > 3 && (
+                        <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                          +{dayAppointments.length - 3} more
+                        </Typography>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
               </Grid>
             );
           })}
