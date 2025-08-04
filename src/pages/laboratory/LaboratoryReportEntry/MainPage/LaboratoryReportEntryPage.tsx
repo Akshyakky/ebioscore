@@ -28,12 +28,10 @@ const sampleStatusOptions = [
   { value: "all", label: "All Samples" },
   { value: "pending", label: "Pending" },
   { value: "collected", label: "Collected" },
-  { value: "partially collected", label: "Partially Collected" },
   { value: "completed", label: "Completed" },
-  { value: "partially completed", label: "Partially Completed" },
   { value: "approved", label: "Approved" },
-  { value: "partially approved", label: "Partially Approved" },
   { value: "rejected", label: "Rejected" },
+  { value: "deleted", label: "Deleted" },
 ];
 
 const patientStatusOptions = [
@@ -66,7 +64,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
     isLoading,
     error,
     investigationStatuses,
-    selectedLabRegNo,
+    selectedLabRegNo: _selectedLabRegNo,
     statusLoading,
     handleServiceTypeChange,
     refreshData,
@@ -239,7 +237,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
         reg.patientUHID?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         reg.referralDoctor?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      const matchesSampleStatus = filters.sampleStatus === "all" || reg.sampleStatus?.toLowerCase() === filters.sampleStatus.toLowerCase();
+      const matchesSampleStatus = filters.sampleStatus === "all" || reg.sampleStatus?.toLowerCase().includes(filters.sampleStatus.toLowerCase());
 
       const matchesPatientStatus =
         filters.patientStatus === "all" || (filters.patientStatus === "op" && reg.patientStatus === "OP") || (filters.patientStatus === "ip" && reg.patientStatus.startsWith("IP"));
@@ -747,18 +745,18 @@ const LaboratoryReportEntryPage: React.FC = () => {
                       {investigation.investigationName}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Code: {investigation.investigationCode} | ID: {investigation.investigationId}
+                      Code: {investigation.investigationCode}
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <Chip label={investigation.sampleStatus} color={getInvestigationStatusColor(investigation.sampleStatus)} icon={<SampleIcon />} sx={{ fontWeight: 500 }} />
+                    <Chip label={investigation.sampleStatus} color={getInvestigationStatusColor(investigation.sampleStatus)} sx={{ fontWeight: 500 }} />
                   </Grid>
                 </Grid>
               </Paper>
             ))}
 
             {selectedRegister && (
-              <Box mt={2} p={2} bgcolor="grey.50" borderRadius={1}>
+              <Box mt={2} p={2} borderRadius={1}>
                 <Typography variant="subtitle2" gutterBottom>
                   Summary
                 </Typography>
