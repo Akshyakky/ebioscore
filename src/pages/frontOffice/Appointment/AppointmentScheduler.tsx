@@ -32,6 +32,7 @@ import { SchedulerHeader } from "./components/SchedulerHeader";
  * Key Features:
  * - Multiple view modes (day, week, month)
  * - Real-time appointment management
+ * - Drag and drop appointment rescheduling
  * - Work hours and break period validation
  * - Provider and resource filtering
  * - Appointment conflict detection
@@ -338,6 +339,26 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
+  // Enhanced appointment update handler for drag and drop
+  const handleAppointmentUpdate = useCallback(
+    async (appointmentData: AppointBookingDto) => {
+      try {
+        const result = await updateAppointment(appointmentData);
+        return {
+          success: result.success,
+          errorMessage: result.errorMessage,
+        };
+      } catch (error) {
+        console.error("Error updating appointment:", error);
+        return {
+          success: false,
+          errorMessage: error instanceof Error ? error.message : "Failed to update appointment",
+        };
+      }
+    },
+    [updateAppointment]
+  );
+
   // Alternative booking entry point for filter button usage
   const handleSlotClick = () => {
     setBookingForm(initialBookingForm);
@@ -398,7 +419,14 @@ const AppointmentScheduler: React.FC = () => {
 
     switch (viewMode) {
       case "day":
-        return <DayView {...commonProps} onSlotDoubleClick={handleSlotDoubleClick} onElapsedSlotConfirmation={handleElapsedSlotConfirmation} />;
+        return (
+          <DayView
+            {...commonProps}
+            onSlotDoubleClick={handleSlotDoubleClick}
+            onElapsedSlotConfirmation={handleElapsedSlotConfirmation}
+            onAppointmentUpdate={handleAppointmentUpdate}
+          />
+        );
       case "week":
         return <WeekView {...commonProps} getWeekDates={getWeekDates} onSlotDoubleClick={handleSlotDoubleClick} onElapsedSlotConfirmation={handleElapsedSlotConfirmation} />;
       case "month":
@@ -412,7 +440,14 @@ const AppointmentScheduler: React.FC = () => {
           />
         );
       default:
-        return <DayView {...commonProps} onSlotDoubleClick={handleSlotDoubleClick} onElapsedSlotConfirmation={handleElapsedSlotConfirmation} />;
+        return (
+          <DayView
+            {...commonProps}
+            onSlotDoubleClick={handleSlotDoubleClick}
+            onElapsedSlotConfirmation={handleElapsedSlotConfirmation}
+            onAppointmentUpdate={handleAppointmentUpdate}
+          />
+        );
     }
   };
 

@@ -2,14 +2,24 @@
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
+import { useAlert } from "@/providers/AlertProvider";
 import { Block } from "@mui/icons-material";
-import { Box, Grid, Paper, Typography, useTheme } from "@mui/material";
-import React from "react";
+import { Box, CircularProgress, Grid, Paper, Typography, useTheme } from "@mui/material";
+import React, { useCallback, useState } from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
 import { calculateBreakLayout } from "../utils/breakUtils";
 import { AppointmentCard } from "./AppointmentCard";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
+
+interface DragData {
+  appointmentId: number;
+  duration: number;
+  patientName: string;
+  providerName: string;
+  originalTime: string;
+  originalDate: string;
+}
 
 interface DayViewProps {
   currentDate: Date;
@@ -21,6 +31,7 @@ interface DayViewProps {
   selectedProvider?: string;
   onSlotDoubleClick: (date: Date, hour: number, minute: number) => void;
   onAppointmentClick: (appointment: AppointBookingDto) => void;
+  onAppointmentUpdate?: (appointment: AppointBookingDto) => Promise<{ success: boolean; errorMessage?: string }>;
   onBreakClick?: (breakItem: BreakDto) => void;
   onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
 }
@@ -35,140 +46,388 @@ export const DayView: React.FC<DayViewProps> = ({
   selectedProvider,
   onSlotDoubleClick,
   onAppointmentClick,
+  onAppointmentUpdate,
   onBreakClick,
   onElapsedSlotConfirmation,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
+  const { showAlert } = useAlert();
 
-  const isWithinWorkingHours = (date: Date, hour: number, minute: number) => {
-    const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
-    const workHour = workHours.find((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y");
+  // Drag and drop state
+  const [draggedAppointment, setDraggedAppointment] = useState<AppointBookingDto | null>(null);
+  const [dragOverSlot, setDragOverSlot] = useState<{ hour: number; minute: number } | null>(null);
+  const [isDragValid, setIsDragValid] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
-    if (!workHour || !workHour.startTime || !workHour.endTime) return false;
+  const isWithinWorkingHours = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+      const workHour = workHours.find((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y");
 
-    const startHour = new Date(workHour.startTime).getHours();
-    const startMinute = new Date(workHour.startTime).getMinutes();
-    const endHour = new Date(workHour.endTime).getHours();
-    const endMinute = new Date(workHour.endTime).getMinutes();
+      if (!workHour || !workHour.startTime || !workHour.endTime) return false;
 
-    const slotMinutes = hour * 60 + minute;
-    const startMinutes = startHour * 60 + startMinute;
-    const endMinutes = endHour * 60 + endMinute;
+      const startHour = new Date(workHour.startTime).getHours();
+      const startMinute = new Date(workHour.startTime).getMinutes();
+      const endHour = new Date(workHour.endTime).getHours();
+      const endMinute = new Date(workHour.endTime).getMinutes();
 
-    return slotMinutes >= startMinutes && slotMinutes < endMinutes;
-  };
+      const slotMinutes = hour * 60 + minute;
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
 
-  const isTimeSlotElapsed = (date: Date, hour: number, minute: number) => {
-    const slotDate = new Date(date);
-    slotDate.setHours(hour, minute, 0, 0);
-    return slotDate < currentTime;
-  };
+      return slotMinutes >= startMinutes && slotMinutes < endMinutes;
+    },
+    [workHours]
+  );
 
-  const isTimeSlotDuringBreak = (date: Date, hour: number, minute: number) => {
-    const slotMinutes = hour * 60 + minute;
+  const isTimeSlotElapsed = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const slotDate = new Date(date);
+      slotDate.setHours(hour, minute, 0, 0);
+      return slotDate < currentTime;
+    },
+    [currentTime]
+  );
 
-    return breaks.some((breakItem) => {
-      // Check if break applies to selected provider
-      if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
-        return false;
+  const isTimeSlotDuringBreak = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const slotMinutes = hour * 60 + minute;
+
+      return breaks.some((breakItem) => {
+        if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
+          return false;
+        }
+
+        const breakStartDate = new Date(breakItem.bLStartDate);
+        const breakEndDate = new Date(breakItem.bLEndDate);
+
+        if (date < breakStartDate || date > breakEndDate) {
+          return false;
+        }
+
+        const breakStartTime = new Date(breakItem.bLStartTime);
+        const breakEndTime = new Date(breakItem.bLEndTime);
+
+        const breakStartMinutes = breakStartTime.getHours() * 60 + breakStartTime.getMinutes();
+        const breakEndMinutes = breakEndTime.getHours() * 60 + breakEndTime.getMinutes();
+
+        return slotMinutes >= breakStartMinutes && slotMinutes < breakEndMinutes;
+      });
+    },
+    [breaks, selectedProvider]
+  );
+
+  const getAppointmentConflicts = useCallback(
+    (date: Date, startHour: number, startMinute: number, duration: number, excludeId?: number) => {
+      const startTime = new Date(date);
+      startTime.setHours(startHour, startMinute, 0, 0);
+
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + duration);
+
+      return appointments.filter((apt) => {
+        if (excludeId && apt.abID === excludeId) return false;
+
+        const aptDate = new Date(apt.abDate);
+        const aptStartTime = new Date(apt.abTime);
+        const aptEndTime = new Date(apt.abEndTime);
+
+        const dateMatches = aptDate.getDate() === date.getDate() && aptDate.getMonth() === date.getMonth() && aptDate.getFullYear() === date.getFullYear();
+
+        if (!dateMatches) return false;
+
+        // Check for time overlap
+        return startTime < aptEndTime && endTime > aptStartTime;
+      });
+    },
+    [appointments]
+  );
+
+  const validateDropZone = useCallback(
+    (date: Date, hour: number, minute: number, dragData: DragData) => {
+      // Check if within working hours
+      if (!isWithinWorkingHours(date, hour, minute)) {
+        return { valid: false, reason: "Outside working hours" };
       }
 
-      // Check if slot date is within break date range
-      const breakStartDate = new Date(breakItem.bLStartDate);
-      const breakEndDate = new Date(breakItem.bLEndDate);
-
-      if (date < breakStartDate || date > breakEndDate) {
-        return false;
+      // Check if during break
+      if (isTimeSlotDuringBreak(date, hour, minute)) {
+        return { valid: false, reason: "During break time" };
       }
 
-      // Check if slot time is within break time range
-      const breakStartTime = new Date(breakItem.bLStartTime);
-      const breakEndTime = new Date(breakItem.bLEndTime);
+      // Check for appointment conflicts
+      const conflicts = getAppointmentConflicts(date, hour, minute, dragData.duration, dragData.appointmentId);
+      if (conflicts.length > 0) {
+        return { valid: false, reason: `Conflicts with ${conflicts[0].abFName} ${conflicts[0].abLName}` };
+      }
 
-      const breakStartMinutes = breakStartTime.getHours() * 60 + breakStartTime.getMinutes();
-      const breakEndMinutes = breakEndTime.getHours() * 60 + breakEndTime.getMinutes();
+      // Check if appointment would extend beyond working hours
+      const endTime = new Date(date);
+      endTime.setHours(hour, minute + dragData.duration, 0, 0);
 
-      return slotMinutes >= breakStartMinutes && slotMinutes < breakEndMinutes;
-    });
-  };
+      if (!isWithinWorkingHours(date, endTime.getHours(), endTime.getMinutes())) {
+        return { valid: false, reason: "Appointment would extend beyond working hours" };
+      }
 
-  const getSlotStyles = (date: Date, hour: number, minute: number) => {
-    const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
-    const isElapsed = isTimeSlotElapsed(date, hour, minute);
-    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
+      return { valid: true, reason: "" };
+    },
+    [isWithinWorkingHours, isTimeSlotDuringBreak, getAppointmentConflicts]
+  );
 
-    let backgroundColor = "transparent";
-    let opacity = 1;
-    let cursor = "default";
+  const getSlotStyles = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+      const isElapsed = isTimeSlotElapsed(date, hour, minute);
+      const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
+      const isDragOver = dragOverSlot?.hour === hour && dragOverSlot?.minute === minute;
 
-    if (!withinWorkingHours) {
-      backgroundColor = isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
-      opacity = 0.5;
-      cursor = "not-allowed";
-    } else if (isDuringBreak) {
-      backgroundColor = isDarkMode ? "#d84315" : "#ffccbc";
-    } else if (isElapsed) {
-      backgroundColor = isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
-      cursor = "pointer";
-    } else {
-      cursor = "pointer";
+      let backgroundColor = "transparent";
+      let opacity = 1;
+      let cursor = "default";
+      let border = `1px solid ${theme.palette.divider}`;
+
+      if (isDragOver) {
+        if (isDragValid) {
+          backgroundColor = isDarkMode ? theme.palette.success.dark : theme.palette.success.light;
+          border = `2px solid ${theme.palette.success.main}`;
+        } else {
+          backgroundColor = isDarkMode ? theme.palette.error.dark : theme.palette.error.light;
+          border = `2px solid ${theme.palette.error.main}`;
+        }
+        opacity = 0.8;
+      } else if (!withinWorkingHours) {
+        backgroundColor = isDarkMode ? (isElapsed ? theme.palette.grey[800] : theme.palette.grey[900]) : isElapsed ? "#eeeeee" : "#f5f5f5";
+        opacity = 0.5;
+        cursor = "not-allowed";
+      } else if (isDuringBreak) {
+        backgroundColor = isDarkMode ? "#d84315" : "#ffccbc";
+      } else if (isElapsed) {
+        backgroundColor = isDarkMode ? theme.palette.grey[700] : "#f0f0f0";
+        cursor = "pointer";
+      } else {
+        cursor = "pointer";
+      }
+
+      return {
+        backgroundColor,
+        opacity,
+        cursor,
+        border,
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        height: 40,
+        padding: theme.spacing(0.5),
+        position: "relative" as const,
+        userSelect: "none" as const,
+        transition: "all 0.2s ease-in-out",
+      };
+    },
+    [isWithinWorkingHours, isTimeSlotElapsed, isTimeSlotDuringBreak, dragOverSlot, isDragValid, theme, isDarkMode]
+  );
+
+  const getAppointmentsForSlot = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      return appointments.filter((apt) => {
+        const aptDate = new Date(apt.abDate);
+        const aptTime = new Date(apt.abTime);
+        const aptEndTime = new Date(apt.abEndTime);
+
+        const dateMatches = aptDate.getDate() === date.getDate() && aptDate.getMonth() === date.getMonth() && aptDate.getFullYear() === date.getFullYear();
+
+        if (!dateMatches) return false;
+
+        const slotTime = new Date(date);
+        slotTime.setHours(hour, minute, 0, 0);
+
+        return slotTime >= aptTime && slotTime < aptEndTime;
+      });
+    },
+    [appointments]
+  );
+
+  const getBreaksForSlot = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      return breaks.filter((breakItem) => {
+        if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
+          return false;
+        }
+
+        const breakStartDate = new Date(breakItem.bLStartDate);
+        const breakEndDate = new Date(breakItem.bLEndDate);
+
+        if (date < breakStartDate || date > breakEndDate) {
+          return false;
+        }
+
+        const breakStartTime = new Date(breakItem.bLStartTime);
+        const breakEndTime = new Date(breakItem.bLEndTime);
+
+        const slotTime = new Date(date);
+        slotTime.setHours(hour, minute, 0, 0);
+
+        return slotTime >= breakStartTime && slotTime < breakEndTime;
+      });
+    },
+    [breaks, selectedProvider]
+  );
+
+  // Drag and Drop Handlers
+  const handleDragStart = useCallback((appointment: AppointBookingDto, event: React.DragEvent) => {
+    setDraggedAppointment(appointment);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedAppointment(null);
+    setDragOverSlot(null);
+    setIsDragValid(false);
+  }, []);
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, date: Date, hour: number, minute: number) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!draggedAppointment) return;
+
+      const dragData: DragData = {
+        appointmentId: draggedAppointment.abID,
+        duration: draggedAppointment.abDuration,
+        patientName: `${draggedAppointment.abFName} ${draggedAppointment.abLName}`,
+        providerName: draggedAppointment.providerName,
+        originalTime: draggedAppointment.abTime.toString(),
+        originalDate: draggedAppointment.abDate.toString(),
+      };
+
+      const validation = validateDropZone(date, hour, minute, dragData);
+
+      setDragOverSlot({ hour, minute });
+      setIsDragValid(validation.valid);
+
+      e.dataTransfer.dropEffect = validation.valid ? "move" : "none";
+    },
+    [draggedAppointment, validateDropZone]
+  );
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Only clear if we're leaving the slot entirely
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDragOverSlot(null);
+      setIsDragValid(false);
     }
+  }, []);
 
-    return {
-      backgroundColor,
-      opacity,
-      cursor,
-      borderBottom: `1px solid ${theme.palette.divider}`,
-      height: 40,
-      padding: theme.spacing(0.5),
-      position: "relative" as const,
-      userSelect: "none" as const,
-    };
-  };
+  const handleDrop = useCallback(
+    async (e: React.DragEvent, date: Date, hour: number, minute: number) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-  const getAppointmentsForSlot = (date: Date, hour: number, minute: number) => {
-    return appointments.filter((apt) => {
-      const aptDate = new Date(apt.abDate);
-      const aptTime = new Date(apt.abTime);
-      const aptEndTime = new Date(apt.abEndTime);
+      setDragOverSlot(null);
+      setIsDragValid(false);
 
-      const dateMatches = aptDate.getDate() === date.getDate() && aptDate.getMonth() === date.getMonth() && aptDate.getFullYear() === date.getFullYear();
-
-      if (!dateMatches) return false;
-
-      const slotTime = new Date(date);
-      slotTime.setHours(hour, minute, 0, 0);
-
-      return slotTime >= aptTime && slotTime < aptEndTime;
-    });
-  };
-
-  const getBreaksForSlot = (date: Date, hour: number, minute: number) => {
-    return breaks.filter((breakItem) => {
-      // Check if break applies to selected provider
-      if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
-        return false;
+      if (!draggedAppointment || !onAppointmentUpdate) {
+        setDraggedAppointment(null);
+        return;
       }
 
-      // Check if slot date is within break date range
-      const breakStartDate = new Date(breakItem.bLStartDate);
-      const breakEndDate = new Date(breakItem.bLEndDate);
+      const dragData: DragData = {
+        appointmentId: draggedAppointment.abID,
+        duration: draggedAppointment.abDuration,
+        patientName: `${draggedAppointment.abFName} ${draggedAppointment.abLName}`,
+        providerName: draggedAppointment.providerName,
+        originalTime: draggedAppointment.abTime.toString(),
+        originalDate: draggedAppointment.abDate.toString(),
+      };
 
-      if (date < breakStartDate || date > breakEndDate) {
-        return false;
+      const validation = validateDropZone(date, hour, minute, dragData);
+
+      if (!validation.valid) {
+        showAlert("Invalid Drop", validation.reason, "warning");
+        setDraggedAppointment(null);
+        return;
       }
 
-      // Check if slot time is within break time range
-      const breakStartTime = new Date(breakItem.bLStartTime);
-      const breakEndTime = new Date(breakItem.bLEndTime);
+      setIsUpdating(true);
 
-      const slotTime = new Date(date);
-      slotTime.setHours(hour, minute, 0, 0);
+      try {
+        // Create new appointment time
+        const newDateTime = new Date(date);
+        newDateTime.setHours(hour, minute, 0, 0);
 
-      return slotTime >= breakStartTime && slotTime < breakEndTime;
-    });
-  };
+        const newEndDateTime = new Date(newDateTime);
+        newEndDateTime.setMinutes(newEndDateTime.getMinutes() + draggedAppointment.abDuration);
+
+        // Update appointment with new time
+        const updatedAppointment: AppointBookingDto = {
+          ...draggedAppointment,
+          abDate: date,
+          abTime: newDateTime,
+          abEndTime: newEndDateTime,
+        };
+
+        const result = await onAppointmentUpdate(updatedAppointment);
+
+        if (result.success) {
+          showAlert(
+            "Appointment Moved",
+            `${dragData.patientName}'s appointment has been moved to ${newDateTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+            "success"
+          );
+        } else {
+          showAlert("Update Failed", result.errorMessage || "Failed to update appointment", "error");
+        }
+      } catch (error) {
+        console.error("Error updating appointment:", error);
+        showAlert("Error", "An unexpected error occurred while moving the appointment", "error");
+      } finally {
+        setIsUpdating(false);
+        setDraggedAppointment(null);
+      }
+    },
+    [draggedAppointment, onAppointmentUpdate, validateDropZone, showAlert]
+  );
+
+  // Regular click handlers
+  const handleSlotClick = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+      const isElapsed = isTimeSlotElapsed(date, hour, minute);
+      const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
+      const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+      if (isDuringBreak) {
+        return;
+      }
+
+      if (withinWorkingHours && isElapsed && slotAppointments.length === 0) {
+        onElapsedSlotConfirmation(date, hour, minute);
+      }
+    },
+    [isWithinWorkingHours, isTimeSlotElapsed, isTimeSlotDuringBreak, getAppointmentsForSlot, onElapsedSlotConfirmation]
+  );
+
+  const handleSlotDoubleClick = useCallback(
+    (date: Date, hour: number, minute: number) => {
+      const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
+      const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
+      const slotAppointments = getAppointmentsForSlot(date, hour, minute);
+
+      if (isDuringBreak) {
+        return;
+      }
+
+      if (withinWorkingHours && slotAppointments.length === 0) {
+        onSlotDoubleClick(date, hour, minute);
+      }
+    },
+    [isWithinWorkingHours, isTimeSlotDuringBreak, getAppointmentsForSlot, onSlotDoubleClick]
+  );
 
   const dayAppointments = appointments.filter((apt) => {
     const aptDate = new Date(apt.abDate);
@@ -178,7 +437,6 @@ export const DayView: React.FC<DayViewProps> = ({
   });
 
   const dayBreaks = breaks.filter((breakItem) => {
-    // Filter by selected provider if specified
     if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
       return false;
     }
@@ -191,37 +449,6 @@ export const DayView: React.FC<DayViewProps> = ({
 
   const appointmentLayout = calculateAppointmentLayout(currentDate, dayAppointments);
   const breakLayout = calculateBreakLayout(currentDate, dayBreaks);
-
-  const handleSlotClick = (date: Date, hour: number, minute: number) => {
-    const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
-    const isElapsed = isTimeSlotElapsed(date, hour, minute);
-    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
-    const slotAppointments = getAppointmentsForSlot(date, hour, minute);
-
-    if (isDuringBreak) {
-      // Don't allow booking during breaks
-      return;
-    }
-
-    if (withinWorkingHours && isElapsed && slotAppointments.length === 0) {
-      onElapsedSlotConfirmation(date, hour, minute);
-    }
-  };
-
-  const handleSlotDoubleClick = (date: Date, hour: number, minute: number) => {
-    const withinWorkingHours = isWithinWorkingHours(date, hour, minute);
-    const isDuringBreak = isTimeSlotDuringBreak(date, hour, minute);
-    const slotAppointments = getAppointmentsForSlot(date, hour, minute);
-
-    if (isDuringBreak) {
-      // Don't allow booking during breaks
-      return;
-    }
-
-    if (withinWorkingHours && slotAppointments.length === 0) {
-      onSlotDoubleClick(date, hour, minute);
-    }
-  };
 
   return (
     <Grid container spacing={1}>
@@ -264,6 +491,29 @@ export const DayView: React.FC<DayViewProps> = ({
       </Grid>
 
       <Grid size={11} style={{ position: "relative" }}>
+        {/* Loading overlay */}
+        {isUpdating && (
+          <Box
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 100,
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1}>
+              <CircularProgress size={24} />
+              <Typography variant="body2">Updating appointment...</Typography>
+            </Box>
+          </Box>
+        )}
+
         <CurrentTimeIndicator date={currentDate} height={40} timeSlots={timeSlots} currentTime={currentTime} />
 
         <Paper
@@ -282,6 +532,11 @@ export const DayView: React.FC<DayViewProps> = ({
         >
           <Typography variant="subtitle2" align="center" color={isDarkMode ? "primary.light" : "text.primary"}>
             {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+            {draggedAppointment && (
+              <Typography variant="caption" display="block" color="info.main">
+                Moving: {draggedAppointment.abFName} {draggedAppointment.abLName}
+              </Typography>
+            )}
           </Typography>
         </Paper>
 
@@ -299,6 +554,9 @@ export const DayView: React.FC<DayViewProps> = ({
               style={slotStyles}
               onClick={() => handleSlotClick(currentDate, slot.hour, slot.minute)}
               onDoubleClick={() => handleSlotDoubleClick(currentDate, slot.hour, slot.minute)}
+              onDragOver={(e) => handleDragOver(e, currentDate, slot.hour, slot.minute)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, currentDate, slot.hour, slot.minute)}
             >
               {!withinWorkingHours && !slotAppointments.length && !slotBreaks.length && (
                 <Box display="flex" alignItems="center" height="100%" color="text.disabled">
@@ -336,44 +594,6 @@ export const DayView: React.FC<DayViewProps> = ({
                 </Typography>
               )}
 
-              {/* Render Breaks */}
-              {slotBreaks.map((breakItem) => {
-                const breakStartTime = new Date(breakItem.bLStartTime);
-                const breakStartMinutes = breakStartTime.getHours() * 60 + breakStartTime.getMinutes();
-                const slotStartMinutes = slot.hour * 60 + slot.minute;
-                const nextSlotStartMinutes = slotStartMinutes + 15;
-
-                if (breakStartMinutes >= slotStartMinutes && breakStartMinutes < nextSlotStartMinutes) {
-                  const slotHeight = 40;
-                  const breakDuration = new Date(breakItem.bLEndTime).getTime() - new Date(breakItem.bLStartTime).getTime();
-                  const durationInMinutes = breakDuration / (1000 * 60);
-                  const durationInSlots = durationInMinutes / 15;
-                  const breakHeight = Math.max(durationInSlots * slotHeight - 2, durationInMinutes <= 15 ? 18 : 24);
-
-                  const minuteOffset = breakStartMinutes - slotStartMinutes;
-                  const topOffset = (minuteOffset / 15) * slotHeight;
-
-                  const layoutInfo = breakLayout.find((layout) => layout.breakItem.bLID === breakItem.bLID);
-                  const column = layoutInfo?.column || 0;
-                  const totalColumns = layoutInfo?.totalColumns || 1;
-
-                  return (
-                    <Box
-                      key={`break-${breakItem.bLID}`}
-                      style={{
-                        position: "absolute",
-                        top: `${topOffset}px`,
-                        left: "4px",
-                        right: "4px",
-                        height: `${breakHeight}px`,
-                        zIndex: 10,
-                      }}
-                    />
-                  );
-                }
-                return null;
-              })}
-
               {/* Render Appointments */}
               {slotAppointments.map((appointment) => {
                 const appointmentStart = new Date(appointment.abTime);
@@ -402,7 +622,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         left: "4px",
                         right: "4px",
                         height: `${appointmentHeight}px`,
-                        zIndex: 20, // Higher than breaks
+                        zIndex: 20,
                       }}
                     >
                       <AppointmentCard
@@ -411,6 +631,9 @@ export const DayView: React.FC<DayViewProps> = ({
                         column={column}
                         totalColumns={totalColumns}
                         onClick={onAppointmentClick}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        isDragging={draggedAppointment?.abID === appointment.abID}
                         isElapsed={isElapsed}
                       />
                     </Box>
