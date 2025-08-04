@@ -696,7 +696,14 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                         </Grid>
 
                         <Grid size={{ xs: 12, sm: 6 }}>
-                          <EnhancedFormField name="pNatID" control={control} type="select" label="Nationality" size="small" options={nationality} />
+                          <EnhancedFormField
+                            name="pNatID"
+                            control={control}
+                            type="select"
+                            label="Nationality"
+                            size="small"
+                            options={nationality.map((item) => ({ value: item.id, label: item.label }))}
+                          />
                         </Grid>
                       </>
                     )}
