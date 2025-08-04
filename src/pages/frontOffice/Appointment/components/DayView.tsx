@@ -5,7 +5,7 @@ import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { Block } from "@mui/icons-material";
 import { Box, CircularProgress, Grid, Paper, Typography, useTheme } from "@mui/material";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
 import { calculateBreakLayout } from "../utils/breakUtils";
@@ -19,6 +19,16 @@ interface DragData {
   providerName: string;
   originalTime: string;
   originalDate: string;
+  type: "move" | "resize";
+}
+
+interface ResizeState {
+  appointment: AppointBookingDto;
+  startY: number;
+  originalDuration: number;
+  currentDuration: number;
+  isValid: boolean;
+  conflictReason?: string;
 }
 
 interface DayViewProps {
@@ -59,6 +69,10 @@ export const DayView: React.FC<DayViewProps> = ({
   const [dragOverSlot, setDragOverSlot] = useState<{ hour: number; minute: number } | null>(null);
   const [isDragValid, setIsDragValid] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+
+  // Resize state
+  const [resizeState, setResizeState] = useState<ResizeState | null>(null);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
 
   const isWithinWorkingHours = useCallback(
     (date: Date, hour: number, minute: number) => {
@@ -144,6 +158,47 @@ export const DayView: React.FC<DayViewProps> = ({
     [appointments]
   );
 
+  const validateResizeOperation = useCallback(
+    (appointment: AppointBookingDto, newDuration: number) => {
+      const startTime = new Date(appointment.abTime);
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + newDuration);
+
+      // Check minimum duration
+      if (newDuration < 15) {
+        return { valid: false, reason: "Minimum duration is 15 minutes" };
+      }
+
+      // Check maximum duration (8 hours)
+      if (newDuration > 480) {
+        return { valid: false, reason: "Maximum duration is 8 hours" };
+      }
+
+      // Check if new end time is within working hours
+      if (!isWithinWorkingHours(currentDate, endTime.getHours(), endTime.getMinutes())) {
+        return { valid: false, reason: "Appointment would extend beyond working hours" };
+      }
+
+      // Check if new end time conflicts with breaks
+      if (isTimeSlotDuringBreak(currentDate, endTime.getHours(), endTime.getMinutes())) {
+        return { valid: false, reason: "Appointment would extend into break time" };
+      }
+
+      // Check for conflicts with other appointments
+      const conflicts = getAppointmentConflicts(currentDate, startTime.getHours(), startTime.getMinutes(), newDuration, appointment.abID);
+
+      if (conflicts.length > 0) {
+        return {
+          valid: false,
+          reason: `Would conflict with ${conflicts[0].abFName} ${conflicts[0].abLName}`,
+        };
+      }
+
+      return { valid: true, reason: "" };
+    },
+    [currentDate, isWithinWorkingHours, isTimeSlotDuringBreak, getAppointmentConflicts]
+  );
+
   const validateDropZone = useCallback(
     (date: Date, hour: number, minute: number, dragData: DragData) => {
       // Check if within working hours
@@ -174,6 +229,112 @@ export const DayView: React.FC<DayViewProps> = ({
     },
     [isWithinWorkingHours, isTimeSlotDuringBreak, getAppointmentConflicts]
   );
+
+  // Resize event handlers
+  const handleResizeStart = useCallback((appointment: AppointBookingDto, event: React.MouseEvent) => {
+    setIsResizing(true);
+    setResizeState({
+      appointment,
+      startY: event.clientY,
+      originalDuration: appointment.abDuration,
+      currentDuration: appointment.abDuration,
+      isValid: true,
+    });
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (event: MouseEvent) => {
+      if (!resizeState || !isResizing) return;
+
+      const deltaY = event.clientY - resizeState.startY;
+      const slotHeight = 40; // Height of each 15-minute slot
+      const minutesPerSlot = 15;
+      const deltaMinutes = Math.round(deltaY / slotHeight) * minutesPerSlot;
+      const newDuration = Math.max(15, resizeState.originalDuration + deltaMinutes);
+
+      const validation = validateResizeOperation(resizeState.appointment, newDuration);
+
+      setResizeState((prev) =>
+        prev
+          ? {
+              ...prev,
+              currentDuration: newDuration,
+              isValid: validation.valid,
+              conflictReason: validation.reason,
+            }
+          : null
+      );
+    },
+    [resizeState, isResizing, validateResizeOperation]
+  );
+
+  const handleMouseUp = useCallback(async () => {
+    if (!resizeState || !isResizing || !onAppointmentUpdate) {
+      setIsResizing(false);
+      setResizeState(null);
+      return;
+    }
+
+    if (!resizeState.isValid) {
+      showAlert("Invalid Resize", resizeState.conflictReason || "Cannot resize appointment", "warning");
+      setIsResizing(false);
+      setResizeState(null);
+      return;
+    }
+
+    if (resizeState.currentDuration === resizeState.originalDuration) {
+      setIsResizing(false);
+      setResizeState(null);
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      const originalStartTime = new Date(resizeState.appointment.abTime);
+      const newEndTime = new Date(originalStartTime);
+      newEndTime.setMinutes(newEndTime.getMinutes() + resizeState.currentDuration);
+
+      const updatedAppointment: AppointBookingDto = {
+        ...resizeState.appointment,
+        abDuration: resizeState.currentDuration,
+        abDurDesc: `${resizeState.currentDuration} minutes`,
+        abEndTime: newEndTime,
+      };
+
+      const result = await onAppointmentUpdate(updatedAppointment);
+
+      if (result.success) {
+        showAlert(
+          "Appointment Resized",
+          `${resizeState.appointment.abFName} ${resizeState.appointment.abLName}'s appointment has been resized to ${resizeState.currentDuration} minutes`,
+          "success"
+        );
+      } else {
+        showAlert("Resize Failed", result.errorMessage || "Failed to resize appointment", "error");
+      }
+    } catch (error) {
+      console.error("Error resizing appointment:", error);
+      showAlert("Error", "An unexpected error occurred while resizing the appointment", "error");
+    } finally {
+      setIsUpdating(false);
+      setIsResizing(false);
+      setResizeState(null);
+    }
+  }, [resizeState, isResizing, onAppointmentUpdate, showAlert]);
+
+  // Add mouse event listeners for resize
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isResizing, handleMouseMove, handleMouseUp]);
 
   const getSlotStyles = useCallback(
     (date: Date, hour: number, minute: number) => {
@@ -271,7 +432,7 @@ export const DayView: React.FC<DayViewProps> = ({
     [breaks, selectedProvider]
   );
 
-  // Drag and Drop Handlers
+  // Drag and Drop Handlers (existing functionality)
   const handleDragStart = useCallback((appointment: AppointBookingDto, event: React.DragEvent) => {
     setDraggedAppointment(appointment);
   }, []);
@@ -296,6 +457,7 @@ export const DayView: React.FC<DayViewProps> = ({
         providerName: draggedAppointment.providerName,
         originalTime: draggedAppointment.abTime.toString(),
         originalDate: draggedAppointment.abDate.toString(),
+        type: "move",
       };
 
       const validation = validateDropZone(date, hour, minute, dragData);
@@ -343,6 +505,7 @@ export const DayView: React.FC<DayViewProps> = ({
         providerName: draggedAppointment.providerName,
         originalTime: draggedAppointment.abTime.toString(),
         originalDate: draggedAppointment.abDate.toString(),
+        type: "move",
       };
 
       const validation = validateDropZone(date, hour, minute, dragData);
@@ -492,7 +655,7 @@ export const DayView: React.FC<DayViewProps> = ({
 
       <Grid size={11} style={{ position: "relative" }}>
         {/* Loading overlay */}
-        {isUpdating && (
+        {(isUpdating || isResizing) && (
           <Box
             style={{
               position: "absolute",
@@ -509,7 +672,7 @@ export const DayView: React.FC<DayViewProps> = ({
           >
             <Box display="flex" alignItems="center" gap={1}>
               <CircularProgress size={24} />
-              <Typography variant="body2">Updating appointment...</Typography>
+              <Typography variant="body2">{isResizing ? "Resizing appointment..." : "Updating appointment..."}</Typography>
             </Box>
           </Box>
         )}
@@ -535,6 +698,12 @@ export const DayView: React.FC<DayViewProps> = ({
             {draggedAppointment && (
               <Typography variant="caption" display="block" color="info.main">
                 Moving: {draggedAppointment.abFName} {draggedAppointment.abLName}
+              </Typography>
+            )}
+            {resizeState && (
+              <Typography variant="caption" display="block" color={resizeState.isValid ? "success.main" : "error.main"}>
+                Resizing: {resizeState.appointment.abFName} {resizeState.appointment.abLName}({resizeState.currentDuration} min)
+                {!resizeState.isValid && ` - ${resizeState.conflictReason}`}
               </Typography>
             )}
           </Typography>
@@ -603,8 +772,12 @@ export const DayView: React.FC<DayViewProps> = ({
 
                 if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
                   const slotHeight = 40;
-                  const durationInSlots = appointment.abDuration / 15;
-                  const appointmentHeight = Math.max(durationInSlots * slotHeight - 2, appointment.abDuration <= 15 ? 18 : 24);
+
+                  // Use current duration if this appointment is being resized
+                  const currentDuration = resizeState && resizeState.appointment.abID === appointment.abID ? resizeState.currentDuration : appointment.abDuration;
+
+                  const durationInSlots = currentDuration / 15;
+                  const appointmentHeight = Math.max(durationInSlots * slotHeight - 2, currentDuration <= 15 ? 18 : 24);
 
                   const minuteOffset = appointmentStartMinutes - slotStartMinutes;
                   const topOffset = (minuteOffset / 15) * slotHeight;
@@ -633,7 +806,9 @@ export const DayView: React.FC<DayViewProps> = ({
                         onClick={onAppointmentClick}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
+                        onResizeStart={handleResizeStart}
                         isDragging={draggedAppointment?.abID === appointment.abID}
+                        isResizing={resizeState?.appointment.abID === appointment.abID}
                         isElapsed={isElapsed}
                       />
                     </Box>

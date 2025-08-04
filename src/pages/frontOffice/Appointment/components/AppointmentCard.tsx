@@ -1,6 +1,6 @@
 // src/pages/frontOffice/Appointment/components/AppointmentCard.tsx
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { DragIndicator } from "@mui/icons-material";
+import { DragIndicator, Height as ResizeIcon } from "@mui/icons-material";
 import { Box, Card, CardContent, Chip, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { getStatusColor } from "../utils/appointmentUtils";
@@ -12,9 +12,12 @@ interface AppointmentCardProps {
   totalColumns?: number;
   isElapsed?: boolean;
   isDragging?: boolean;
+  isResizing?: boolean;
   onClick?: (appointment: AppointBookingDto) => void;
   onDragStart?: (appointment: AppointBookingDto, event: React.DragEvent) => void;
   onDragEnd?: () => void;
+  onResizeStart?: (appointment: AppointBookingDto, event: React.MouseEvent) => void;
+  onResizeEnd?: () => void;
 }
 
 export const AppointmentCard: React.FC<AppointmentCardProps> = ({
@@ -24,9 +27,12 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   totalColumns = 1,
   isElapsed = false,
   isDragging = false,
+  isResizing = false,
   onClick,
   onDragStart,
   onDragEnd,
+  onResizeStart,
+  onResizeEnd,
 }) => {
   const theme = useTheme();
   const statusColor = getStatusColor(appointment.abStatus);
@@ -34,7 +40,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onClick?.(appointment);
+    if (!isDragging && !isResizing) {
+      onClick?.(appointment);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -50,6 +58,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         providerName: appointment.providerName,
         originalTime: appointment.abTime,
         originalDate: appointment.abDate,
+        type: "move",
       })
     );
 
@@ -75,37 +84,70 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
     onDragEnd?.();
   };
 
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onResizeStart?.(appointment, e);
+  };
+
+  const getCardStyles = () => {
+    let transform = "none";
+    let zIndex = 20;
+    let boxShadow = theme.shadows[2];
+
+    if (isDragging) {
+      transform = "rotate(5deg) scale(1.05)";
+      zIndex = 30;
+      boxShadow = theme.shadows[8];
+    } else if (isResizing) {
+      zIndex = 25;
+      boxShadow = theme.shadows[6];
+    }
+
+    return {
+      height: "100%",
+      cursor: isDragging ? "grabbing" : isResizing ? "ns-resize" : "grab",
+      opacity: isDragging ? 0.5 : isElapsed ? 0.8 : 1,
+      position: "absolute" as const,
+      width: `${100 / totalColumns - 1}%`,
+      left: `${(column * 100) / totalColumns}%`,
+      zIndex,
+      transition: isDragging || isResizing ? "none" : "all 0.2s ease-in-out",
+      transform,
+      border: isDragging || isResizing ? `2px solid ${theme.palette.primary.main}` : undefined,
+      borderRadius: theme.shape.borderRadius,
+      boxShadow,
+    };
+  };
+
   return (
     <Card
       draggable
       variant={isElapsed ? "outlined" : "elevation"}
-      elevation={isElapsed ? 0 : isDragging ? 4 : 2}
+      elevation={0}
       onClick={handleClick}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      style={{
-        height: "100%",
-        cursor: isDragging ? "grabbing" : "grab",
-        opacity: isDragging ? 0.5 : isElapsed ? 0.8 : 1,
-        position: "absolute",
-        width: `${100 / totalColumns - 1}%`,
-        left: `${(column * 100) / totalColumns}%`,
-        zIndex: isDragging ? 30 : 20,
-        transition: isDragging ? "none" : "all 0.2s ease-in-out",
-        transform: isDragging ? "rotate(5deg) scale(1.05)" : "none",
-        border: isDragging ? `2px solid ${theme.palette.primary.main}` : undefined,
-      }}
+      style={getCardStyles()}
       sx={{
-        "&:hover": !isDragging
-          ? {
-              transform: "scale(1.02)",
-              boxShadow: theme.shadows[4],
-              "& .drag-handle": {
-                opacity: 1,
-              },
-            }
-          : {},
+        "&:hover":
+          !isDragging && !isResizing
+            ? {
+                transform: "scale(1.02)",
+                boxShadow: theme.shadows[4],
+                "& .drag-handle": {
+                  opacity: 1,
+                },
+                "& .resize-handle": {
+                  opacity: 1,
+                },
+              }
+            : {},
         "& .drag-handle": {
+          opacity: 0,
+          transition: "opacity 0.2s ease-in-out",
+        },
+        "& .resize-handle": {
           opacity: 0,
           transition: "opacity 0.2s ease-in-out",
         },
@@ -117,6 +159,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           paddingBottom: isShortAppointment ? 2 : 4,
           minHeight: isShortAppointment ? 18 : 24,
           position: "relative",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {/* Drag Handle */}
@@ -128,12 +173,14 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             right: 2,
             color: "text.secondary",
             cursor: "grab",
+            zIndex: 1,
           }}
         >
           <DragIndicator fontSize="small" style={{ fontSize: "12px" }} />
         </Box>
 
-        <Box display="flex" flexDirection="column" height="100%">
+        {/* Content */}
+        <Box display="flex" flexDirection="column" height="100%" flex={1}>
           <Typography
             variant="caption"
             component="div"
@@ -172,6 +219,42 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             />
           </Box>
         </Box>
+
+        {/* Resize Handle - Only show for appointments longer than 15 minutes */}
+        {!isShortAppointment && (
+          <Box
+            className="resize-handle"
+            onMouseDown={handleResizeMouseDown}
+            sx={{
+              position: "absolute",
+              bottom: -2,
+              left: 0,
+              right: 0,
+              height: 8,
+              cursor: "ns-resize",
+              backgroundColor: theme.palette.primary.main,
+              borderRadius: `0 0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2,
+              "&:hover": {
+                backgroundColor: theme.palette.primary.dark,
+                height: 10,
+              },
+              transition: "all 0.2s ease-in-out",
+            }}
+          >
+            <ResizeIcon
+              fontSize="small"
+              style={{
+                fontSize: "10px",
+                color: "white",
+                transform: "rotate(90deg)",
+              }}
+            />
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
