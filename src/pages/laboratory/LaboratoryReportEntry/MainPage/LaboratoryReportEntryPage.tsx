@@ -7,6 +7,8 @@ import { GetLabRegistersListDto } from "@/interfaces/Laboratory/LaboratoryReport
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import {
+  AssignmentTurnedIn as AssignmentTurnedInIcon,
+  CheckCircle as CheckCircleIcon,
   Close as CloseIcon,
   LocalHospital as HospitalIcon,
   Print as PrintIcon,
@@ -26,9 +28,12 @@ const sampleStatusOptions = [
   { value: "all", label: "All Samples" },
   { value: "pending", label: "Pending" },
   { value: "collected", label: "Collected" },
-  { value: "received", label: "Received" },
-  { value: "processing", label: "Processing" },
+  { value: "partially collected", label: "Partially Collected" },
   { value: "completed", label: "Completed" },
+  { value: "partially completed", label: "Partially Completed" },
+  { value: "approved", label: "Approved" },
+  { value: "partially approved", label: "Partially Approved" },
+  { value: "rejected", label: "Rejected" },
 ];
 
 const patientStatusOptions = [
@@ -42,7 +47,7 @@ const reportStatusOptions = [
   { value: "pending", label: "Pending Entry" },
   { value: "partial", label: "Partially Entered" },
   { value: "completed", label: "Completed" },
-  { value: "verified", label: "Verified" },
+  { value: "approved", label: "Approved" },
 ];
 
 const LaboratoryReportEntryPage: React.FC = () => {
@@ -147,6 +152,14 @@ const LaboratoryReportEntryPage: React.FC = () => {
   }, [refreshData]);
   const handleOpenUpdateDialog = useCallback(() => {
     if (investigationStatuses.length > 0) {
+      // Only allow sample status update for pending or collected statuses
+      const hasEditableStatuses = investigationStatuses.some((inv) => inv.sampleStatus === "Pending" || inv.sampleStatus === "Collected");
+
+      if (!hasEditableStatuses) {
+        showAlert("Info", "Sample status can only be updated for investigations that are Pending or Collected", "info");
+        return;
+      }
+
       setOpenUpdateDialog(true);
     } else {
       showAlert("Info", "Please select a lab register first", "info");
@@ -185,6 +198,8 @@ const LaboratoryReportEntryPage: React.FC = () => {
         totalRegisters: 0,
         pendingSamples: 0,
         collectedSamples: 0,
+        completedResults: 0,
+        approvedResults: 0,
         totalInvestigations: 0,
         opPatients: 0,
         ipPatients: 0,
@@ -192,19 +207,19 @@ const LaboratoryReportEntryPage: React.FC = () => {
     }
 
     const pendingSamples = labRegisters.reduce((sum, reg) => sum + reg.labRegister.invSamplePendingCount, 0);
-
     const collectedSamples = labRegisters.reduce((sum, reg) => sum + reg.labRegister.invSampleCollectedCount, 0);
-
+    const completedResults = labRegisters.reduce((sum, reg) => sum + (reg.labRegister.invResultCompletedCount || 0), 0);
+    const approvedResults = labRegisters.reduce((sum, reg) => sum + (reg.labRegister.invResultApprovedCount || 0), 0);
     const totalInvestigations = labRegisters.reduce((sum, reg) => sum + reg.labRegister.investigationCount, 0);
-
     const opPatients = labRegisters.filter((reg) => reg.labRegister.patientStatus === "OP").length;
-
     const ipPatients = labRegisters.filter((reg) => reg.labRegister.patientStatus.startsWith("IP")).length;
 
     return {
       totalRegisters: labRegisters.length,
       pendingSamples,
       collectedSamples,
+      completedResults,
+      approvedResults,
       totalInvestigations,
       opPatients,
       ipPatients,
@@ -229,7 +244,12 @@ const LaboratoryReportEntryPage: React.FC = () => {
       const matchesPatientStatus =
         filters.patientStatus === "all" || (filters.patientStatus === "op" && reg.patientStatus === "OP") || (filters.patientStatus === "ip" && reg.patientStatus.startsWith("IP"));
 
-      const matchesReportStatus = filters.reportStatus === "all" || true;
+      const matchesReportStatus =
+        filters.reportStatus === "all" ||
+        (filters.reportStatus === "pending" && reg.sampleStatus === "Pending") ||
+        (filters.reportStatus === "partial" && (reg.sampleStatus === "Partially Collected" || reg.sampleStatus === "Partially Completed")) ||
+        (filters.reportStatus === "completed" && reg.sampleStatus === "Completed") ||
+        (filters.reportStatus === "approved" && (reg.sampleStatus === "Approved" || reg.sampleStatus === "Partially Approved"));
 
       return matchesSearch && matchesSampleStatus && matchesPatientStatus && matchesReportStatus;
     });
@@ -252,14 +272,16 @@ const LaboratoryReportEntryPage: React.FC = () => {
     switch (status.toLowerCase()) {
       case "pending":
         return "error";
-      case "partially collected":
-        return "warning";
       case "collected":
+        return "warning";
+      case "completed":
+        return "info";
+      case "approved":
         return "success";
       case "rejected":
         return "default";
       default:
-        return "info";
+        return "default";
     }
   };
   const getSampleStatusColor = (status: string) => {
@@ -267,15 +289,34 @@ const LaboratoryReportEntryPage: React.FC = () => {
       case "pending":
         return "error";
       case "partially collected":
-        return "warning";
       case "collected":
-        return "primary";
-      case "rejected":
-        return "secondary";
-      default:
+        return "warning";
+      case "partially completed":
+      case "completed":
         return "info";
+      case "partially approved":
+      case "approved":
+        return "success";
+      case "rejected":
+        return "default";
+      default:
+        return "default";
     }
   };
+
+  const getSampleStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+      case "partially completed":
+        return <AssignmentTurnedInIcon />;
+      case "approved":
+      case "partially approved":
+        return <CheckCircleIcon />;
+      default:
+        return <SampleIcon />;
+    }
+  };
+
   const columns: Column<GetLabRegistersListDto>[] = [
     {
       key: "labRegNo",
@@ -380,22 +421,38 @@ const LaboratoryReportEntryPage: React.FC = () => {
       header: "Sample Status",
       visible: true,
       sortable: true,
-      width: 150,
+      width: 180,
       render: (item) => (
-        <Chip size="small" icon={<SampleIcon />} label={item.labRegister.sampleStatus} color={getSampleStatusColor(item.labRegister.sampleStatus)} sx={{ fontWeight: 500 }} />
+        <Chip
+          size="small"
+          icon={getSampleStatusIcon(item.labRegister.sampleStatus)}
+          label={item.labRegister.sampleStatus}
+          color={getSampleStatusColor(item.labRegister.sampleStatus)}
+          sx={{ fontWeight: 500 }}
+        />
       ),
     },
     {
       key: "investigations",
       header: "Investigations",
       visible: true,
-      width: 200,
+      width: 300,
       render: (item) => (
         <Box>
-          <Stack direction="row" spacing={1}>
-            <Chip size="small" label={`Total: ${item.labRegister.investigationCount}`} color="info" variant="filled" sx={{ fontSize: "0.75rem" }} />
-            <Chip size="small" label={`Pending: ${item.labRegister.invSamplePendingCount}`} color="error" variant="outlined" sx={{ fontSize: "0.75rem" }} />
-            <Chip size="small" label={`Collected: ${item.labRegister.invSampleCollectedCount}`} color="primary" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+            <Chip size="small" label={`Total: ${item.labRegister.investigationCount}`} color="default" variant="filled" sx={{ fontSize: "0.7rem", mb: 0.5 }} />
+            {(item.labRegister.invSamplePendingCount || 0) > 0 && (
+              <Chip size="small" label={`Pending: ${item.labRegister.invSamplePendingCount}`} color="error" variant="outlined" sx={{ fontSize: "0.7rem", mb: 0.5 }} />
+            )}
+            {(item.labRegister.invSampleCollectedCount || 0) > 0 && (
+              <Chip size="small" label={`Collected: ${item.labRegister.invSampleCollectedCount}`} color="warning" variant="outlined" sx={{ fontSize: "0.7rem", mb: 0.5 }} />
+            )}
+            {(item.labRegister.invResultCompletedCount || 0) > 0 && (
+              <Chip size="small" label={`Completed: ${item.labRegister.invResultCompletedCount}`} color="info" variant="outlined" sx={{ fontSize: "0.7rem", mb: 0.5 }} />
+            )}
+            {(item.labRegister.invResultApprovedCount || 0) > 0 && (
+              <Chip size="small" label={`Approved: ${item.labRegister.invResultApprovedCount}`} color="success" variant="outlined" sx={{ fontSize: "0.7rem", mb: 0.5 }} />
+            )}
           </Stack>
         </Box>
       ),
@@ -492,32 +549,32 @@ const LaboratoryReportEntryPage: React.FC = () => {
             </Grid>
             <Grid size={{ xs: 12, sm: 2 }}>
               <Typography variant="h6">Pending Samples</Typography>
-              <Typography variant="h4" color="warning.main">
+              <Typography variant="h4" color="error.main">
                 {stats.pendingSamples}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 2 }}>
               <Typography variant="h6">Collected Samples</Typography>
-              <Typography variant="h4" color="info.main">
+              <Typography variant="h4" color="warning.main">
                 {stats.collectedSamples}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <Typography variant="h6">Completed Results</Typography>
+              <Typography variant="h4" color="info.main">
+                {stats.completedResults}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <Typography variant="h6">Approved Results</Typography>
+              <Typography variant="h4" color="success.main">
+                {stats.approvedResults}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 2 }}>
               <Typography variant="h6">Total Tests</Typography>
               <Typography variant="h4" color="secondary.main">
                 {stats.totalInvestigations}
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <Typography variant="h6">OP Patients</Typography>
-              <Typography variant="h4" color="primary.main">
-                {stats.opPatients}
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <Typography variant="h6">IP Patients</Typography>
-              <Typography variant="h4" color="secondary.main">
-                {stats.ipPatients}
               </Typography>
             </Grid>
           </Grid>
@@ -651,7 +708,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
         actions={
           <>
             <SmartButton text="Close" onClick={handleCloseStatusDialog} variant="outlined" size="small" />
-            {selectedRegister && investigationStatuses.length > 0 && (
+            {selectedRegister && investigationStatuses.length > 0 && investigationStatuses.some((inv) => inv.sampleStatus === "Pending" || inv.sampleStatus === "Collected") && (
               <SmartButton text="Update Sample Status" icon={SampleIcon} onClick={handleOpenUpdateDialog} color="warning" variant="contained" size="small" />
             )}
             {selectedRegister && (
@@ -706,9 +763,19 @@ const LaboratoryReportEntryPage: React.FC = () => {
                   Summary
                 </Typography>
                 <Stack direction="row" spacing={2}>
-                  <Chip size="small" label={`Total Investigations: ${selectedRegister.labRegister.investigationCount}`} color="info" />
-                  <Chip size="small" label={`Pending: ${selectedRegister.labRegister.invSamplePendingCount}`} color="error" variant="outlined" />
-                  <Chip size="small" label={`Collected: ${selectedRegister.labRegister.invSampleCollectedCount}`} color="success" variant="outlined" />
+                  <Chip size="small" label={`Total Investigations: ${selectedRegister.labRegister.investigationCount}`} color="default" />
+                  {(selectedRegister.labRegister.invSamplePendingCount || 0) > 0 && (
+                    <Chip size="small" label={`Pending: ${selectedRegister.labRegister.invSamplePendingCount}`} color="secondary" variant="outlined" />
+                  )}
+                  {(selectedRegister.labRegister.invSampleCollectedCount || 0) > 0 && (
+                    <Chip size="small" label={`Collected: ${selectedRegister.labRegister.invSampleCollectedCount}`} color="warning" variant="outlined" />
+                  )}
+                  {(selectedRegister.labRegister.invResultCompletedCount || 0) > 0 && (
+                    <Chip size="small" label={`Completed: ${selectedRegister.labRegister.invResultCompletedCount}`} color="info" variant="outlined" />
+                  )}
+                  {(selectedRegister.labRegister.invResultApprovedCount || 0) > 0 && (
+                    <Chip size="small" label={`Apporved: ${selectedRegister.labRegister.invResultApprovedCount}`} color="success" variant="outlined" />
+                  )}
                 </Stack>
               </Box>
             )}
