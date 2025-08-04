@@ -25,12 +25,12 @@ import SampleStatusUpdateDialog from "../components/SampleStatusUpdateDialog";
 import { useLaboratoryReportEntry } from "../hooks/useLaboratoryReportEntry";
 
 const sampleStatusOptions = [
-  { value: "all", label: "All Samples" },
-  { value: "pending", label: "Pending" },
-  { value: "collected", label: "Collected" },
-  { value: "completed", label: "Completed" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "all", label: "All Report Status" },
+  { value: "pending", label: "Sample Pending" },
+  { value: "collected", label: "Sample Collected" },
+  { value: "rejected", label: "Sample Rejected" },
+  { value: "completed", label: "Report Completed" },
+  { value: "approved", label: "Report Approved" },
   { value: "deleted", label: "Deleted" },
 ];
 
@@ -40,20 +40,12 @@ const patientStatusOptions = [
   { value: "ip", label: "In-Patient (IP)" },
 ];
 
-const reportStatusOptions = [
-  { value: "all", label: "All Reports" },
-  { value: "pending", label: "Pending Entry" },
-  { value: "partial", label: "Partially Entered" },
-  { value: "completed", label: "Completed" },
-  { value: "approved", label: "Approved" },
-];
-
 const LaboratoryReportEntryPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [showStats, setShowStats] = useState(false);
-  const { serviceType } = useDropdownValues(["serviceType"]);
+  const { serviceType, serviceGroup } = useDropdownValues(["serviceType", "serviceGroup"]);
   const [labServiceTypes, setLabServiceTypes] = useState<any[]>([]);
   const [selectedServiceType, setSelectedServiceType] = useState<number | null>(null);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
@@ -74,6 +66,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
     updateSampleStatus,
   } = useLaboratoryReportEntry();
 
+  console.log("serviceGroup", serviceGroup);
   const [openStatusDialog, setOpenStatusDialog] = useState(false);
   const [selectedRegister, setSelectedRegister] = useState<GetLabRegistersListDto | null>(null);
 
@@ -81,10 +74,12 @@ const LaboratoryReportEntryPage: React.FC = () => {
     sampleStatus: string;
     patientStatus: string;
     reportStatus: string;
+    serviceGroup: string;
   }>({
     sampleStatus: "all",
     patientStatus: "all",
     reportStatus: "all",
+    serviceGroup: "all",
   });
 
   useEffect(() => {
@@ -131,6 +126,9 @@ const LaboratoryReportEntryPage: React.FC = () => {
   }, [debouncedSearch]);
 
   const handleFilterChange = useCallback((field: keyof typeof filters, value: string) => {
+    if (value === "") {
+      value = "all";
+    }
     setFilters((prev) => ({
       ...prev,
       [field]: value,
@@ -142,8 +140,22 @@ const LaboratoryReportEntryPage: React.FC = () => {
       sampleStatus: "all",
       patientStatus: "all",
       reportStatus: "all",
+      serviceGroup: "all",
     });
   }, []);
+
+  const serviceGroupOptions = useMemo(() => {
+    const options = [{ value: "all", label: "All Service Groups" }];
+    if (serviceGroup && Array.isArray(serviceGroup)) {
+      options.push(
+        ...serviceGroup.map((sg) => ({
+          value: sg.value.toString(),
+          label: sg.label,
+        }))
+      );
+    }
+    return options;
+  }, [serviceGroup]);
 
   const handleRefresh = useCallback(() => {
     refreshData();
@@ -249,9 +261,13 @@ const LaboratoryReportEntryPage: React.FC = () => {
         (filters.reportStatus === "completed" && reg.sampleStatus === "Completed") ||
         (filters.reportStatus === "approved" && (reg.sampleStatus === "Approved" || reg.sampleStatus === "Partially Approved"));
 
-      return matchesSearch && matchesSampleStatus && matchesPatientStatus && matchesReportStatus;
+      // Add service group filtering
+      const matchesServiceGroup = filters.serviceGroup === "all" || (reg.serviceGroups && reg.serviceGroups.some((sg) => sg.serviceGroupId.toString() === filters.serviceGroup));
+
+      return matchesSearch && matchesSampleStatus && matchesPatientStatus && matchesReportStatus && matchesServiceGroup;
     });
   }, [labRegisters, debouncedSearchTerm, filters]);
+
   const handleRowClick = useCallback(
     async (register: GetLabRegistersListDto) => {
       setSelectedRegister(register);
@@ -463,6 +479,25 @@ const LaboratoryReportEntryPage: React.FC = () => {
       formatter: (_value: any, item: GetLabRegistersListDto) => item.labRegister.billedBy || "-",
     },
     {
+      key: "serviceGroups",
+      header: "Service Groups",
+      visible: true,
+      width: 200,
+      render: (item) => (
+        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+          {item.labRegister.serviceGroups && item.labRegister.serviceGroups.length > 0 ? (
+            item.labRegister.serviceGroups.map((sg) => (
+              <Chip key={sg.serviceGroupId} size="small" label={sg.serviceGroupName} color="primary" variant="outlined" sx={{ fontSize: "0.7rem", mb: 0.5 }} />
+            ))
+          ) : (
+            <Typography variant="caption" color="text.secondary">
+              -
+            </Typography>
+          )}
+        </Stack>
+      ),
+    },
+    {
       key: "actions",
       header: "Actions",
       visible: true,
@@ -642,17 +677,24 @@ const LaboratoryReportEntryPage: React.FC = () => {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Tooltip title="Filter Lab Registers">
               <Stack direction="row" spacing={2}>
                 <DropdownSelect
-                  label="Sample Status"
+                  label="Service Group"
+                  name="serviceGroup"
+                  value={filters.serviceGroup}
+                  options={serviceGroupOptions}
+                  onChange={(e) => handleFilterChange("serviceGroup", e.target.value)}
+                  size="small"
+                />
+                <DropdownSelect
+                  label="Report Status"
                   name="sampleStatus"
                   value={filters.sampleStatus}
                   options={sampleStatusOptions}
                   onChange={(e) => handleFilterChange("sampleStatus", e.target.value)}
                   size="small"
-                  defaultText="All Samples"
                 />
                 <DropdownSelect
                   label="Patient Status"
@@ -661,17 +703,8 @@ const LaboratoryReportEntryPage: React.FC = () => {
                   options={patientStatusOptions}
                   onChange={(e) => handleFilterChange("patientStatus", e.target.value)}
                   size="small"
-                  defaultText="All Patients"
                 />
-                <DropdownSelect
-                  label="Report Status"
-                  name="reportStatus"
-                  value={filters.reportStatus}
-                  options={reportStatusOptions}
-                  onChange={(e) => handleFilterChange("reportStatus", e.target.value)}
-                  size="small"
-                  defaultText="All Reports"
-                />
+
                 <Box display="flex" alignItems="center" gap={1}>
                   {Object.values(filters).some((v) => v !== "all") && (
                     <Chip label={`Filters (${Object.values(filters).filter((v) => v !== "all").length})`} onDelete={handleClearFilters} size="small" color="primary" />
