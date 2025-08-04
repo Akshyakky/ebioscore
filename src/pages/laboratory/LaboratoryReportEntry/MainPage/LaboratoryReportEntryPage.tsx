@@ -25,7 +25,7 @@ import SampleStatusUpdateDialog from "../components/SampleStatusUpdateDialog";
 import { useLaboratoryReportEntry } from "../hooks/useLaboratoryReportEntry";
 
 const sampleStatusOptions = [
-  { value: "all", label: "All" },
+  { value: "all", label: "All Report Status" },
   { value: "pending", label: "Sample Pending" },
   { value: "collected", label: "Sample Collected" },
   { value: "rejected", label: "Sample Rejected" },
@@ -126,6 +126,9 @@ const LaboratoryReportEntryPage: React.FC = () => {
   }, [debouncedSearch]);
 
   const handleFilterChange = useCallback((field: keyof typeof filters, value: string) => {
+    if (value === "") {
+      value = "all";
+    }
     setFilters((prev) => ({
       ...prev,
       [field]: value,
@@ -684,7 +687,6 @@ const LaboratoryReportEntryPage: React.FC = () => {
                   options={serviceGroupOptions}
                   onChange={(e) => handleFilterChange("serviceGroup", e.target.value)}
                   size="small"
-                  defaultText="All Service Groups"
                 />
                 <DropdownSelect
                   label="Report Status"
@@ -701,7 +703,6 @@ const LaboratoryReportEntryPage: React.FC = () => {
                   options={patientStatusOptions}
                   onChange={(e) => handleFilterChange("patientStatus", e.target.value)}
                   size="small"
-                  defaultText="All Patients"
                 />
 
                 <Box display="flex" alignItems="center" gap={1}>
