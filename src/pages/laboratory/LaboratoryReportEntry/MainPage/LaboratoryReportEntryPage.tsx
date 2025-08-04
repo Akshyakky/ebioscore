@@ -66,7 +66,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
     isLoading,
     error,
     investigationStatuses,
-    selectedLabRegNo,
+    selectedLabRegNo: _selectedLabRegNo,
     statusLoading,
     handleServiceTypeChange,
     refreshData,
@@ -758,7 +758,7 @@ const LaboratoryReportEntryPage: React.FC = () => {
             ))}
 
             {selectedRegister && (
-              <Box mt={2} p={2} bgcolor="grey.50" borderRadius={1}>
+              <Box mt={2} p={2} borderRadius={1}>
                 <Typography variant="subtitle2" gutterBottom>
                   Summary
                 </Typography>
