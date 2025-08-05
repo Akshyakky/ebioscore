@@ -406,34 +406,22 @@ const ProductStockReturnPage: React.FC = () => {
     setIsFormOpen(true);
   }, []);
 
-  // Fixed: Improved copy handler with better error handling and data validation
   const handleCopy = useCallback(
     async (stockReturn: ProductStockReturnDto) => {
       try {
         setIsLoadingDetails(true);
-        console.log("Starting copy operation for return ID:", stockReturn.psrID);
-
         if (!stockReturn.psrID || stockReturn.psrID <= 0) {
           throw new Error("Invalid return ID for copying");
         }
-
         const compositeDto = await getReturnWithDetailsById(stockReturn.psrID);
-        console.log("Fetched composite DTO for copy:", compositeDto);
-
         if (!compositeDto) {
           throw new Error("Failed to load Stock Return details for copying");
         }
-
-        // Use the improved mapping function
         const returnToCopy = mapCompositeToReturnDto(compositeDto);
-        console.log("Mapped return to copy:", returnToCopy);
-
-        // Validate that we have the required data
         if (!returnToCopy.psrID) {
           throw new Error("Invalid return data received from server");
         }
 
-        // Set the return data and mode flags
         setSelectedReturn(returnToCopy);
         setIsCopyMode(true);
         setIsViewMode(false);
@@ -442,7 +430,6 @@ const ProductStockReturnPage: React.FC = () => {
         const detailsCount = returnToCopy.details?.length || 0;
         showAlert("Success", `Ready to copy Stock Return "${stockReturn.psrCode}" with ${detailsCount} products. Please review and save.`, "success");
       } catch (error) {
-        console.error("Error in copy operation:", error);
         const errorMessage = error instanceof Error ? error.message : "Failed to load Stock Return details for copying";
         showAlert("Error", errorMessage, "error");
       } finally {
@@ -452,7 +439,6 @@ const ProductStockReturnPage: React.FC = () => {
     [getReturnWithDetailsById, mapCompositeToReturnDto, showAlert]
   );
 
-  // Fixed: Improved edit handler with better error handling and data validation
   const handleEdit = useCallback(
     async (stockReturn: ProductStockReturnDto) => {
       if (!canEditReturn(stockReturn)) {
@@ -462,29 +448,18 @@ const ProductStockReturnPage: React.FC = () => {
 
       try {
         setIsLoadingDetails(true);
-        console.log("Starting edit operation for return ID:", stockReturn.psrID);
-
         if (!stockReturn.psrID || stockReturn.psrID <= 0) {
           throw new Error("Invalid return ID for editing");
         }
-
         const compositeDto = await getReturnWithDetailsById(stockReturn.psrID);
-        console.log("Fetched composite DTO for edit:", compositeDto);
-
         if (!compositeDto) {
           throw new Error("Failed to load Stock Return details for editing");
         }
-
-        // Use the improved mapping function
         const returnToEdit = mapCompositeToReturnDto(compositeDto);
-        console.log("Mapped return to edit:", returnToEdit);
-
-        // Validate that we have the required data
         if (!returnToEdit.psrID) {
           throw new Error("Invalid return data received from server");
         }
 
-        // Set the return data and mode flags
         setSelectedReturn(returnToEdit);
         setIsCopyMode(false);
         setIsViewMode(false);
@@ -503,34 +478,21 @@ const ProductStockReturnPage: React.FC = () => {
     [canEditReturn, getReturnWithDetailsById, mapCompositeToReturnDto, showAlert]
   );
 
-  // Fixed: Improved view handler with better error handling and data validation
   const handleView = useCallback(
     async (stockReturn: ProductStockReturnDto) => {
       try {
         setIsLoadingDetails(true);
-        console.log("Starting view operation for return ID:", stockReturn.psrID);
-
         if (!stockReturn.psrID || stockReturn.psrID <= 0) {
           throw new Error("Invalid return ID for viewing");
         }
-
         const compositeDto = await getReturnWithDetailsById(stockReturn.psrID);
-        console.log("Fetched composite DTO for view:", compositeDto);
-
         if (!compositeDto) {
           throw new Error("Failed to load Stock Return details for viewing");
         }
-
-        // Use the improved mapping function
         const returnToView = mapCompositeToReturnDto(compositeDto);
-        console.log("Mapped return to view:", returnToView);
-
-        // Validate that we have the required data
         if (!returnToView.psrID) {
           throw new Error("Invalid return data received from server");
         }
-
-        // Set the return data and mode flags
         setSelectedReturn(returnToView);
         setIsCopyMode(false);
         setIsViewMode(true);
@@ -539,7 +501,6 @@ const ProductStockReturnPage: React.FC = () => {
         const detailsCount = returnToView.details?.length || 0;
         showAlert("Success", `Loading Stock Return "${stockReturn.psrCode}" with ${detailsCount} products for viewing...`, "success");
       } catch (error) {
-        console.error("Error in view operation:", error);
         const errorMessage = error instanceof Error ? error.message : "Failed to load Stock Return details for viewing";
         showAlert("Error", errorMessage, "error");
       } finally {
@@ -604,21 +565,14 @@ const ProductStockReturnPage: React.FC = () => {
     setSelectedReturn(null);
   }, [selectedReturn, approveReturn, fetchReturnsForDepartment, showAlert]);
 
-  // Fixed: Improved form close handler with proper state cleanup
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
-      console.log("Closing form, refreshData:", refreshData);
-
-      // Clean up all form-related state
       setIsFormOpen(false);
       setSelectedReturn(null);
       setIsCopyMode(false);
       setIsViewMode(false);
       setIsLoadingDetails(false);
-
-      // Refresh data if requested
       if (refreshData && deptId) {
-        console.log("Refreshing data after form close");
         fetchReturnsForDepartment();
       }
     },
