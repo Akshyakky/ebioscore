@@ -14,13 +14,19 @@ export interface LabRegisterData {
   investigationCount: number;
   invSamplePendingCount: number;
   invSampleCollectedCount: number;
-  invResultCompletedCount: number; // New field
-  invResultApprovedCount: number; // New field
+  invResultCompletedCount: number;
+  invResultApprovedCount: number;
   billedBy: string;
+  serviceGroups: ServiceGroup[];
 }
 
 export interface GetLabRegistersListDto {
   labRegister: LabRegisterData;
+}
+
+interface ServiceGroup {
+  serviceGroupId: number;
+  serviceGroupName: string;
 }
 
 export interface InvStatusResponseDto {

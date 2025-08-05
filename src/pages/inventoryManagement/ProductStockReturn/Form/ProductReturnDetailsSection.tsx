@@ -48,7 +48,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Control, FieldArrayWithId, FieldErrors, UseFieldArrayAppend, UseFieldArrayRemove, UseFormSetValue, useWatch } from "react-hook-form";
 import * as z from "zod";
 import { GrnProductSearch, GrnProductSearchRef } from "../../CommonPage/GrnProduct/GrnProductSearchForm";
@@ -69,7 +69,6 @@ const returnDetailSchema = z.object({
   sellableYN: z.string().optional(),
   taxableYN: z.string().optional(),
   availableQty: z.number().optional(),
-
   tax: z.number().optional(),
   returnReason: z.string().optional(),
   rActiveYN: z.string().default("Y"),
@@ -290,6 +289,35 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
 
+  // Fixed: Initialize quantities from existing form data when component mounts or fields change
+  useEffect(() => {
+    const newQuantities: { [key: string]: number } = {};
+    fields.forEach((field) => {
+      newQuantities[field.id] = field.quantity || 0;
+    });
+    setQuantities(newQuantities);
+    console.log("Initialized quantities from fields:", newQuantities);
+  }, [fields]);
+
+  // Fixed: Sync form values with local quantities state
+  useEffect(() => {
+    const currentQuantities: { [key: string]: number } = {};
+    watchedDetails?.forEach((detail, index) => {
+      const field = fields[index];
+      if (field) {
+        currentQuantities[field.id] = detail.quantity || 0;
+      }
+    });
+
+    // Only update if there are meaningful differences
+    const hasChanges = Object.keys(currentQuantities).some((key) => currentQuantities[key] !== quantities[key]);
+
+    if (hasChanges) {
+      setQuantities(currentQuantities);
+      console.log("Synced quantities with form data:", currentQuantities);
+    }
+  }, [watchedDetails, fields]);
+
   const clearTemporaryFields = useCallback(() => {
     setSelectedGrnProduct(null);
     setSelectedQuantity(undefined);
@@ -361,18 +389,40 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
     } as ProductStockReturnDetailDto;
   }, []);
 
-  const handleQuantityChange = (rowId: string | number, value: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [rowId]: value,
-    }));
+  // Fixed: Enhanced quantity change handler with proper form integration
+  const handleQuantityChange = useCallback(
+    (rowId: string | number, value: number) => {
+      console.log("Quantity change for row:", rowId, "new value:", value);
 
-    // Also update the form
-    const rowIndex = fields.findIndex((field) => field.id === rowId);
-    if (rowIndex !== -1) {
-      setValue(`productStockReturnDetails.${rowIndex}.quantity`, value);
-    }
-  };
+      // Update local quantities state
+      setQuantities((prev) => ({
+        ...prev,
+        [rowId]: value,
+      }));
+
+      // Find the row index and update the form
+      const rowIndex = fields.findIndex((field) => field.id === rowId);
+      if (rowIndex !== -1) {
+        console.log("Updating form field at index:", rowIndex, "with quantity:", value);
+        setValue(`productStockReturnDetails.${rowIndex}.quantity`, value, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+
+        // Also update total amount if unit price is available
+        const unitPrice = fields[rowIndex].unitPrice || 0;
+        const totalAmount = value * unitPrice;
+        setValue(`productStockReturnDetails.${rowIndex}.totalAmount`, totalAmount, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        console.log("Updated total amount:", totalAmount);
+      } else {
+        console.warn("Could not find row with id:", rowId);
+      }
+    },
+    [fields, setValue]
+  );
 
   const getDefaultReasonByReturnType = (type: string): string => {
     switch (type) {
@@ -1172,6 +1222,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                     {paginatedRows.map((row, index) => {
                       const isSelected = selectedRows.has(row.id);
                       const warning = getExpiryWarning(row.expiryDate);
+                      const currentQuantity = quantities[row.id] || row.quantity || 0;
 
                       return (
                         <TableRow
@@ -1215,7 +1266,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                             <TextField
                               size="small"
                               type="number"
-                              value={quantities[row.id] || 0}
+                              value={currentQuantity}
                               onChange={(e) => {
                                 const value = parseInt(e.target.value) || 0;
                                 handleQuantityChange(row.id, value);
@@ -1223,6 +1274,8 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                               sx={{ width: "100px" }}
                               inputProps={{
                                 style: { textAlign: "right" },
+                                min: 0,
+                                max: row.availableQty || undefined,
                               }}
                               disabled={isViewMode}
                             />
@@ -1238,7 +1291,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                           </TableCell>
                           <TableCell align="right">₹{(row.unitPrice || 0).toFixed(2)}</TableCell>
                           <TableCell align="right">
-                            <Typography sx={{ fontWeight: 500 }}>₹{(row.totalAmount || 0).toFixed(2)}</Typography>
+                            <Typography sx={{ fontWeight: 500 }}>₹{(currentQuantity * (row.unitPrice || 0)).toFixed(2)}</Typography>
                           </TableCell>
                           <TableCell align="right">{(row.tax || 0).toFixed(2)}%</TableCell>
                           <TableCell align="right">{(row.cgst || 0).toFixed(2)}%</TableCell>
@@ -1251,6 +1304,12 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                                 onClick={() => {
                                   const rowIndex = fields.findIndex((field) => field.id === row.id);
                                   remove(rowIndex);
+                                  // Remove from quantities state as well
+                                  setQuantities((prev) => {
+                                    const newQuantities = { ...prev };
+                                    delete newQuantities[row.id];
+                                    return newQuantities;
+                                  });
                                   showAlert("Info", `Product "${row.productName}" removed from return`, "info");
                                 }}
                                 disabled={isViewMode}
