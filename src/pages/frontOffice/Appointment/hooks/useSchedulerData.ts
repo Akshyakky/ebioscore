@@ -52,30 +52,8 @@ export const useSchedulerData = () => {
       let result;
       if (startDate && endDate) {
         if (hplId) {
-          result = await breakService.getBreaksByProvider(hplId, startDate, endDate);
-        } else {
-          const allBreaksResult = await breakService.getAllBreaksDetailed();
-          if (allBreaksResult.success && allBreaksResult.data) {
-            // Filter breaks by date range
-            const filteredBreaks = allBreaksResult.data.filter((breakItem) => {
-              const breakStartDate = new Date(breakItem.bLStartDate);
-              const breakEndDate = new Date(breakItem.bLEndDate);
-
-              return (
-                ((breakStartDate >= startDate && breakStartDate <= endDate) ||
-                  (breakEndDate >= startDate && breakEndDate <= endDate) ||
-                  (breakStartDate <= startDate && breakEndDate >= endDate)) &&
-                breakItem.rActiveYN === "Y" &&
-                breakItem.status !== "Suspended"
-              );
-            });
-            result = { success: true, data: filteredBreaks };
-          } else {
-            result = allBreaksResult;
-          }
+          result = await breakService.getActiveBreaks(startDate, endDate, hplId);
         }
-      } else {
-        result = await breakService.getAllBreaksDetailed();
       }
 
       if (result.success && result.data) {
