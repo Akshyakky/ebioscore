@@ -1,34 +1,18 @@
 import SmartButton from "@/components/Button/SmartButton";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useContactMastByCategory from "@/hooks/hospitalAdministration/useContactMastByCategory";
 import { ComponentResultDto, LabEnterResultDto, LabResultItemDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
 import { useAlert } from "@/providers/AlertProvider";
 import { laboratoryService } from "@/services/Laboratory/LaboratoryService";
-import { Person as PersonIcon, Save as SaveIcon, Science as ScienceIcon } from "@mui/icons-material";
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Radio,
-  Select,
-  Stack,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { LCENT_ID } from "@/types/lCentConstants";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save as SaveIcon } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Chip, CircularProgress, Divider, Grid, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import * as z from "zod";
 
 interface LabEnterReportDialogProps {
   open: boolean;
@@ -55,6 +39,52 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Create dynamic schema based on component types
+const createComponentSchema = (components: ComponentResultDto[]) => {
+  const shape: Record<string, any> = {
+    technicianApproval: z.string(),
+    consultantApproval: z.string(),
+    technicianId: z.number().optional(),
+    consultantId: z.number().optional(),
+  };
+
+  components.forEach((component) => {
+    const fieldName = `component_${component.componentId}`;
+
+    switch (component.resultTypeId) {
+      case LCENT_ID.SINGLELINE_NUMERIC_VALUES: // Single Line [Numbers only]
+      case LCENT_ID.REFERENCE_VALUES: // Reference Values [Numeric Only]
+        shape[fieldName] = z
+          .string()
+          .nonempty(`${component.componentName} is required`)
+          .refine((val) => !isNaN(Number(val)), {
+            message: "Please enter a valid number",
+          });
+        break;
+      case LCENT_ID.MULTIPLE_SELECTION: // Selection Type
+        shape[fieldName] = z.string().nonempty(`Please select a value for ${component.componentName}`);
+        break;
+      default:
+        shape[fieldName] = z.string().nonempty(`${component.componentName} is required`);
+        break;
+    }
+
+    // Add fields for remarks and comments if needed
+    shape[`${fieldName}_remarks`] = z.string().optional();
+    shape[`${fieldName}_comments`] = z.string().optional();
+  });
+
+  return z.object(shape);
+};
+
+type LabReportFormData = {
+  technicianApproval: "Y" | "N";
+  consultantApproval: "Y" | "N";
+  technicianId?: number;
+  consultantId?: number;
+  [key: string]: any; // For dynamic component fields
+};
+
 const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClose, labRegNo, serviceTypeId, patientName = "Unknown Patient", onSave }) => {
   const { showAlert } = useAlert();
   const { setLoading } = useLoading();
@@ -63,14 +93,35 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [componentValues, setComponentValues] = useState<Record<number, string>>({});
-  const [validationErrors, setValidationErrors] = useState<Record<number, string>>({});
-  const [technicianApproval, setTechnicianApproval] = useState(false);
-  const [consultantApproval, setConsultantApproval] = useState(false);
+  const [componentSchema, setComponentSchema] = useState<z.ZodSchema<any> | null>(null);
+
   const { contacts: labTechnicians } = useContactMastByCategory({ consValue: "PHY" });
   const { contacts: labConsultants } = useContactMastByCategory({ consValue: "PHY" });
-  console.log("labTechnicians", labTechnicians);
-  console.log("labConsultants", labConsultants);
+
+  // Initialize form with default values
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue: _setValue,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<LabReportFormData>({
+    defaultValues: {
+      technicianApproval: "N",
+      consultantApproval: "N",
+      technicianId: undefined,
+      consultantId: undefined,
+    },
+    resolver: componentSchema ? zodResolver(componentSchema) : undefined,
+    mode: "onChange",
+  });
+
+  // Watch all form values for validation
+  const formValues = useWatch({ control });
+  useEffect(() => {
+    console.log("formValues", formValues);
+  }, [formValues]);
   // Fetch lab result data when dialog opens
   useEffect(() => {
     if (open && labRegNo && serviceTypeId) {
@@ -85,17 +136,37 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       const response = await laboratoryService.getLabEnterResult(labRegNo, serviceTypeId);
       if (response.success && response.data) {
         setLabData(response.data);
-        setTechnicianApproval(response.data.isTechnicianApproved || false);
-        setConsultantApproval(response.data.isLabConsultantApproved || false);
+
+        // Create schema based on components
+        const allComponents: ComponentResultDto[] = [];
+        response.data.results.forEach((investigation) => {
+          if (investigation.componentResults) {
+            allComponents.push(...investigation.componentResults);
+          }
+        });
+
+        const schema = createComponentSchema(allComponents);
+        setComponentSchema(schema);
+
+        // Set form default values
+        const defaultValues: LabReportFormData = {
+          technicianApproval: response.data.isTechnicianApproved || "N",
+          consultantApproval: response.data.isLabConsultantApproved || "N",
+          technicianId: response.data.technicianId,
+          consultantId: response.data.labConsultantId,
+        };
 
         // Initialize component values
-        const initialValues: Record<number, string> = {};
         response.data.results.forEach((investigation) => {
           investigation.componentResults?.forEach((component) => {
-            initialValues[component.componentId] = component.patuentValue || "";
+            defaultValues[`component_${component.componentId}`] = component.patuentValue || "";
+            if (component.comments) {
+              defaultValues[`component_${component.componentId}_comments`] = component.comments;
+            }
           });
         });
-        setComponentValues(initialValues);
+
+        reset(defaultValues);
       } else {
         setError(response.errorMessage || "Failed to fetch lab result data");
       }
@@ -111,125 +182,137 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     setActiveTab(newValue);
   };
 
-  const handleComponentValueChange = (componentId: number, value: string, resultTypeId: number) => {
-    setComponentValues((prev) => ({
-      ...prev,
-      [componentId]: value,
-    }));
-
-    // Clear validation error when value changes
-    setValidationErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[componentId];
-      return newErrors;
-    });
-
-    // Validate numeric fields
-    if (resultTypeId === 3 || resultTypeId === 6) {
-      // Numeric only types
-      if (value && isNaN(Number(value))) {
-        setValidationErrors((prev) => ({
-          ...prev,
-          [componentId]: "Please enter a valid number",
-        }));
+  const getComponentStatus = (component: ComponentResultDto, value: string): "Normal" | "Abnormal" => {
+    if (component.resultTypeId === 6 && value && component.referenceRange) {
+      const numValue = Number(value);
+      const { lowerValue = 0, upperValue = 0 } = component.referenceRange;
+      if (numValue < lowerValue || numValue > upperValue) {
+        return "Abnormal";
       }
+    }
+    return "Normal";
+  };
+
+  const getStatusChip = (component: ComponentResultDto) => {
+    const value = watch(`component_${component.componentId}`);
+    if (!value) return null;
+
+    const status = getComponentStatus(component, value);
+    return <Chip size="small" label={status} color={status === "Normal" ? "success" : "error"} />;
+  };
+
+  const renderComponentField = (component: ComponentResultDto) => {
+    const fieldName = `component_${component.componentId}`;
+    const errorMessage = errors[fieldName]?.message;
+
+    switch (component.resultTypeId) {
+      case LCENT_ID.SINGLELINE_ALPHANUMERIC_VALUES: // Single Line [Alpha Numeric]
+        return <FormField name={fieldName} control={control} label={component.componentName} type="text" required size="small" fullWidth placeholder="Enter value" />;
+
+      case LCENT_ID.SINGLELINE_NUMERIC_VALUES: // Single Line [Numbers only]
+      case LCENT_ID.REFERENCE_VALUES: // Reference Values [Numeric Only]
+        return (
+          <Box>
+            <FormField
+              name={fieldName}
+              control={control}
+              label={component.componentName}
+              type="number"
+              required
+              size="small"
+              fullWidth
+              placeholder="Enter numeric value"
+              adornment={component.unit}
+              adornmentPosition="end"
+            />
+            {component.resultTypeId === 6 && component.referenceRange && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                Reference Range: {component.referenceRange.referenceRange} {component.unit}
+              </Typography>
+            )}
+          </Box>
+        );
+
+      case LCENT_ID.MULTILINE_VALUES: // Multi Line [Alpha Numeric]
+        return (
+          <FormField
+            name={fieldName}
+            control={control}
+            label={component.componentName}
+            type="textarea"
+            required
+            size="small"
+            fullWidth
+            rows={3}
+            placeholder="Enter detailed text"
+          />
+        );
+
+      case LCENT_ID.MULTIPLE_SELECTION: // Selection Type [Alpha Numeric]
+        // In a real implementation, you would fetch these options from the backend
+        const selectionOptions = [
+          { value: "Positive", label: "Positive" },
+          { value: "Negative", label: "Negative" },
+          { value: "Not Detected", label: "Not Detected" },
+        ];
+
+        return <FormField name={fieldName} control={control} label={component.componentName} type="select" required size="small" fullWidth options={selectionOptions} />;
+
+      case LCENT_ID.TEMPLATE_VALUES: // Template Values [Alpha Numeric]
+        return (
+          <FormField
+            name={fieldName}
+            control={control}
+            label={component.componentName}
+            type="textarea"
+            required
+            size="small"
+            fullWidth
+            rows={5}
+            placeholder="Enter or modify template text"
+          />
+        );
+
+      default:
+        return <FormField name={fieldName} control={control} label={component.componentName} type="text" required size="small" fullWidth placeholder="Enter value" />;
     }
   };
 
-  const validateComponentValue = (component: ComponentResultDto, value: string): { isValid: boolean; error?: string } => {
-    // Check if value is required (you might want to add a required field to the component)
-    if (!value && component.resultTypeId !== 7) {
-      // Template values might be optional
-      return { isValid: false, error: "This field is required" };
-    }
-
-    // Validate numeric fields
-    if ((component.resultTypeId === 3 || component.resultTypeId === 6) && value) {
-      if (isNaN(Number(value))) {
-        return { isValid: false, error: "Please enter a valid number" };
-      }
-
-      // Check reference range for Reference Values type
-      if (component.resultTypeId === 6 && component.referenceRange) {
-        const numValue = Number(value);
-        const { lowerValue = 0, upperValue = 0 } = component.referenceRange;
-        if (numValue < lowerValue || numValue > upperValue) {
-          // This is not an error, but we'll mark it as abnormal
-          // You might want to show a warning instead
-        }
-      }
-    }
-
-    return { isValid: true };
-  };
-
-  const validateAllComponents = (): boolean => {
-    if (!labData) return false;
-
-    let isValid = true;
-    const errors: Record<number, string> = {};
-
-    labData.results.forEach((investigation) => {
-      investigation.componentResults?.forEach((component) => {
-        const value = componentValues[component.componentId] || "";
-        const validation = validateComponentValue(component, value);
-        if (!validation.isValid) {
-          isValid = false;
-          errors[component.componentId] = validation.error || "Invalid value";
-        }
-      });
-    });
-
-    setValidationErrors(errors);
-    return isValid;
-  };
-
-  const prepareDataForSave = (): LabEnterResultDto => {
+  const prepareDataForSave = (formData: LabReportFormData): LabEnterResultDto => {
     if (!labData) throw new Error("No lab data available");
 
     const updatedResults = labData.results.map((investigation) => ({
       ...investigation,
       componentResults: investigation.componentResults?.map((component) => {
-        const value = componentValues[component.componentId] || "";
-        let status = "Normal";
-
-        // Determine status based on reference range for numeric values
-        if (component.resultTypeId === 6 && value && component.referenceRange) {
-          const numValue = Number(value);
-          const { lowerValue = 0, upperValue = 0 } = component.referenceRange;
-          if (numValue < lowerValue || numValue > upperValue) {
-            status = "Abnormal";
-          }
-        }
+        const value = formData[`component_${component.componentId}`] || "";
+        const status = getComponentStatus(component, value);
 
         return {
           ...component,
           patuentValue: value,
           status: status,
           resultStatus: status,
+          comments: formData[`component_${component.componentId}_comments`] || component.comments,
         };
       }),
     }));
 
     return {
       ...labData,
-      isTechnicianApproved: technicianApproval,
-      isLabConsultantApproved: consultantApproval,
+      technicianId: formData.technicianId,
+      isTechnicianApproved: formData.technicianApproval,
+      labConsultantId: formData.consultantId,
+      isLabConsultantApproved: formData.consultantApproval,
       results: updatedResults as unknown as LabResultItemDto[],
     };
   };
 
-  const handleSave = async () => {
-    if (!validateAllComponents()) {
-      showAlert("Error", "Please fill all required fields correctly", "error");
-      return;
-    }
-
+  const onSubmit = async (formData: LabReportFormData) => {
     setSaving(true);
     setLoading(true);
 
     try {
-      const dataToSave = prepareDataForSave();
+      const dataToSave = prepareDataForSave(formData);
       const response = await laboratoryService.saveLabEnterResult(dataToSave);
 
       if (response.success) {
@@ -248,134 +331,16 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     }
   };
 
-  const renderComponentInput = (component: ComponentResultDto) => {
-    const value = componentValues[component.componentId] || "";
-    const error = validationErrors[component.componentId];
+  // Prepare options for technicians and consultants dropdowns
+  const technicianOptions = labTechnicians.map((tech) => ({
+    value: Number(tech.value) || 0,
+    label: tech.label || "",
+  }));
 
-    switch (component.resultTypeId) {
-      case 1: // Single Line [Alpha Numeric]
-      case 2: // Single Line [Alpha Numeric]
-        return (
-          <TextField
-            fullWidth
-            size="small"
-            value={value}
-            onChange={(e) => handleComponentValueChange(component.componentId, e.target.value, component.resultTypeId)}
-            error={!!error}
-            helperText={error}
-            placeholder="Enter value"
-          />
-        );
-
-      case 3: // Single Line [Numbers only]
-      case 6: // Reference Values [Numeric Only]
-        return (
-          <Box>
-            <TextField
-              fullWidth
-              size="small"
-              type="number"
-              value={value}
-              onChange={(e) => handleComponentValueChange(component.componentId, e.target.value, component.resultTypeId)}
-              error={!!error}
-              helperText={error}
-              placeholder="Enter numeric value"
-              InputProps={{
-                endAdornment: component.unit && (
-                  <Typography variant="body2" color="text.secondary">
-                    {component.unit}
-                  </Typography>
-                ),
-              }}
-            />
-            {component.resultTypeId === 6 && component.referenceRange && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                Reference Range: {component.referenceRange.referenceRange} {component.unit}
-              </Typography>
-            )}
-          </Box>
-        );
-
-      case 4: // Multi Line [Alpha Numeric]
-        return (
-          <TextField
-            fullWidth
-            size="small"
-            multiline
-            rows={3}
-            value={value}
-            onChange={(e) => handleComponentValueChange(component.componentId, e.target.value, component.resultTypeId)}
-            error={!!error}
-            helperText={error}
-            placeholder="Enter detailed text"
-          />
-        );
-
-      case 5: // Selection Type [Alpha Numeric]
-        // In a real implementation, you would fetch the selection options
-        // For now, we'll use a simple example
-        return (
-          <FormControl fullWidth size="small" error={!!error}>
-            <InputLabel>Select Value</InputLabel>
-            <Select value={value} onChange={(e) => handleComponentValueChange(component.componentId, e.target.value as string, component.resultTypeId)} label="Select Value">
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="Positive">Positive</MenuItem>
-              <MenuItem value="Negative">Negative</MenuItem>
-              <MenuItem value="Not Detected">Not Detected</MenuItem>
-            </Select>
-            {error && (
-              <Typography variant="caption" color="error">
-                {error}
-              </Typography>
-            )}
-          </FormControl>
-        );
-
-      case 7: // Template Values [Alpha Numeric]
-        return (
-          <TextField
-            fullWidth
-            size="small"
-            multiline
-            rows={5}
-            value={value}
-            onChange={(e) => handleComponentValueChange(component.componentId, e.target.value, component.resultTypeId)}
-            error={!!error}
-            helperText={error || "You can modify the template text as needed"}
-            placeholder="Enter or modify template text"
-          />
-        );
-
-      default:
-        return (
-          <TextField
-            fullWidth
-            size="small"
-            value={value}
-            onChange={(e) => handleComponentValueChange(component.componentId, e.target.value, component.resultTypeId)}
-            error={!!error}
-            helperText={error}
-            placeholder="Enter value"
-          />
-        );
-    }
-  };
-
-  const getStatusChip = (component: ComponentResultDto) => {
-    const value = componentValues[component.componentId];
-    if (!value) return null;
-
-    if (component.resultTypeId === 6 && component.referenceRange) {
-      const numValue = Number(value);
-      const { lowerValue = 0, upperValue = 0 } = component.referenceRange;
-      if (numValue < lowerValue || numValue > upperValue) {
-        return <Chip size="small" label="Abnormal" color="error" />;
-      }
-      return <Chip size="small" label="Normal" color="success" />;
-    }
-
-    return null;
-  };
+  const consultantOptions = labConsultants.map((cons) => ({
+    value: Number(cons.value) || 0,
+    label: cons.label || "",
+  }));
 
   if (!open) return null;
 
@@ -395,10 +360,10 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           <SmartButton
             text="Save Results"
             icon={SaveIcon}
-            onClick={handleSave}
+            onClick={handleSubmit(onSubmit)}
             variant="contained"
             color="primary"
-            disabled={saving || dataLoading}
+            disabled={saving || dataLoading || !isValid}
             loadingText="Saving..."
             asynchronous={true}
             showLoadingIndicator={true}
@@ -415,7 +380,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           {error}
         </Alert>
       ) : labData ? (
-        <Box>
+        <Box component="form" noValidate>
           {/* Header Information */}
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2}>
@@ -449,33 +414,33 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
               <Divider sx={{ mb: 2 }} />
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <PersonIcon color="action" />
-                    <Box flex={1}>
-                      <Typography variant="body2">Technician</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {labData.technicianName || "Not assigned"}
-                      </Typography>
-                    </Box>
-                    <FormControlLabel
-                      control={<Radio checked={technicianApproval} onChange={(e) => setTechnicianApproval(e.target.checked)} disabled={!labData.technicianId} />}
-                      label="Approved"
+                  <Stack spacing={2}>
+                    <FormField
+                      name="technicianId"
+                      control={control}
+                      label="Technician"
+                      type="select"
+                      size="small"
+                      fullWidth
+                      options={technicianOptions}
+                      placeholder="Select Technician"
                     />
+                    <FormField name="technicianApproval" control={control} label="Technician Approved" type="switch" size="small" disabled={!watch("technicianId")} />
                   </Stack>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <ScienceIcon color="action" />
-                    <Box flex={1}>
-                      <Typography variant="body2">Lab Consultant</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {labData.labConsultantName || "Not assigned"}
-                      </Typography>
-                    </Box>
-                    <FormControlLabel
-                      control={<Radio checked={consultantApproval} onChange={(e) => setConsultantApproval(e.target.checked)} disabled={!labData.labConsultantId} />}
-                      label="Approved"
+                  <Stack spacing={2}>
+                    <FormField
+                      name="consultantId"
+                      control={control}
+                      label="Lab Consultant"
+                      type="select"
+                      size="small"
+                      fullWidth
+                      options={consultantOptions}
+                      placeholder="Select Consultant"
                     />
+                    <FormField name="consultantApproval" control={control} label="Consultant Approved" type="switch" size="small" disabled={!watch("consultantId")} />
                   </Stack>
                 </Grid>
               </Grid>
@@ -485,7 +450,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           {/* Investigation Tabs */}
           <Paper sx={{ mb: 2 }}>
             <Tabs value={activeTab} onChange={handleTabChange} aria-label="investigation tabs" variant="scrollable" scrollButtons="auto">
-              {labData.results.map((investigation, _index) => (
+              {labData.results.map((investigation) => (
                 <Tab
                   key={investigation.investigationId}
                   label={
@@ -509,7 +474,6 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                     <Typography variant="body2" color="text.secondary">
                       Code: {investigation.investigationCode}
                     </Typography>
-                    {investigation.remarks && <TextField fullWidth size="small" label="Investigation Remarks" value={investigation.remarks} multiline rows={2} sx={{ mt: 2 }} />}
                   </Box>
 
                   {/* Group components by subtitle */}
@@ -534,15 +498,10 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                                 <Card variant="outlined">
                                   <CardContent>
                                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
-                                      <Box>
-                                        <Typography variant="subtitle2">{component.componentName}</Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                          {component.componentCode} | {component.resultTypeName}
-                                        </Typography>
-                                      </Box>
-                                      {getStatusChip(component)}
+                                      <Box flex={1}>{renderComponentField(component)}</Box>
+                                      <Box ml={1}>{getStatusChip(component)}</Box>
                                     </Stack>
-                                    <Box sx={{ mt: 2 }}>{renderComponentInput(component)}</Box>
+
                                     {component.interpretation && (
                                       <Box sx={{ mt: 2 }}>
                                         <Typography variant="caption" color="text.secondary">
@@ -551,7 +510,18 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                                         <Typography variant="body2">{component.interpretation}</Typography>
                                       </Box>
                                     )}
-                                    {component.comments && <TextField fullWidth size="small" label="Comments" value={component.comments} multiline rows={2} sx={{ mt: 2 }} />}
+
+                                    <Box sx={{ mt: 2 }}>
+                                      <FormField
+                                        name={`component_${component.componentId}_comments`}
+                                        control={control}
+                                        label="Comments"
+                                        type="textarea"
+                                        size="small"
+                                        fullWidth
+                                        rows={2}
+                                      />
+                                    </Box>
                                   </CardContent>
                                 </Card>
                               </Grid>

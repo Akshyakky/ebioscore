@@ -55,10 +55,10 @@ export interface LabEnterResultDto {
   serviceTypeId: number;
   technicianId?: number;
   technicianName?: string;
-  isTechnicianApproved?: boolean;
+  isTechnicianApproved?: "Y" | "N";
   labConsultantId?: number;
   labConsultantName?: string;
-  isLabConsultantApproved?: boolean;
+  isLabConsultantApproved?: "Y" | "N";
   departmentId: number;
   departmentName: string;
   results: LabResultItemDto[];
