@@ -1,12 +1,14 @@
-// Create a new file: SampleStatusUpdateDialog.tsx
 import SmartButton from "@/components/Button/SmartButton";
-import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { InvStatusResponseDto, SampleStatusUpdateRequestDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
 import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, Error as ErrorIcon, HourglassEmpty } from "@mui/icons-material";
-import { Box, Chip, Divider, FormControl, Grid, Paper, Stack, TextField, Typography } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import { Box, Card, CardContent, Chip, Divider, Grid, Paper, Stack, Typography } from "@mui/material";
+import React, { useCallback, useEffect } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import * as z from "zod";
 
 interface SampleStatusUpdateDialogProps {
   open: boolean;
@@ -19,67 +21,118 @@ interface SampleStatusUpdateDialogProps {
 }
 
 const sampleStatusUpdateOptions = [
-  { value: "P", label: "Pending", icon: <HourglassEmpty /> },
-  { value: "C", label: "Collected", icon: <CheckCircle /> },
-  { value: "R", label: "Rejected", icon: <ErrorIcon /> },
+  { value: "P", label: "Pending" },
+  { value: "C", label: "Collected" },
+  { value: "R", label: "Rejected" },
 ];
+
+// Create schema for bulk update
+const bulkUpdateSchema = z
+  .object({
+    bulkStatus: z.string().optional(),
+    bulkReason: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.bulkStatus === "R" && !data.bulkReason?.trim()) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Rejection reason is required when status is Rejected",
+      path: ["bulkReason"],
+    }
+  );
+
+// Create schema for individual investigations
+const investigationUpdateSchema = z
+  .object({
+    investigationId: z.number(),
+    investigationName: z.string(),
+    investigationCode: z.string(),
+    currentStatus: z.string(),
+    status: z.string(),
+    reason: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.status === "R" && !data.reason?.trim()) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Rejection reason is required",
+      path: ["reason"],
+    }
+  );
+
+const formSchema = z.object({
+  bulkStatus: z.string().optional(),
+  bulkReason: z.string().optional(),
+  investigations: z.array(investigationUpdateSchema),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ open, onClose, investigations, labRegNo, serviceTypeId, onUpdate, loading = false }) => {
   const { showAlert } = useAlert();
-  const [statusUpdates, setStatusUpdates] = useState<Record<number, { status: string; reason: string }>>({});
-  const [errors, setErrors] = useState<Record<number, string>>({});
-  const [bulkStatus, setBulkStatus] = useState<string>("");
-  const [bulkReason, setBulkReason] = useState<string>("");
 
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<FormData>({
+    defaultValues: {
+      bulkStatus: "",
+      bulkReason: "",
+      investigations: [],
+    },
+    resolver: zodResolver(formSchema),
+    mode: "onChange",
+  });
+
+  const { fields, update } = useFieldArray({
+    control,
+    name: "investigations",
+  });
+
+  const bulkStatus = watch("bulkStatus");
+  const bulkReason = watch("bulkReason");
+
+  // Initialize form when dialog opens
   useEffect(() => {
     if (open && investigations.length > 0) {
-      const initialStatuses: Record<number, { status: string; reason: string }> = {};
-      investigations.forEach((inv) => {
-        initialStatuses[inv.investigationId] = {
-          status: inv.sampleStatus === "Pending" ? "P" : inv.sampleStatus === "Collected" ? "C" : inv.sampleStatus === "Rejected" ? "R" : "P",
-          reason: "",
-        };
+      const investigationData = investigations.map((inv) => ({
+        investigationId: inv.investigationId,
+        investigationName: inv.investigationName,
+        investigationCode: inv.investigationCode,
+        currentStatus: inv.sampleStatus,
+        status: inv.sampleStatus === "Pending" ? "P" : inv.sampleStatus === "Collected" ? "C" : inv.sampleStatus === "Rejected" ? "R" : "P",
+        reason: "",
+      }));
+
+      reset({
+        bulkStatus: "",
+        bulkReason: "",
+        investigations: investigationData,
       });
-      setStatusUpdates(initialStatuses);
-      setErrors({});
-      setBulkStatus("");
-      setBulkReason("");
     }
-  }, [open, investigations]);
+  }, [open, investigations, reset]);
 
-  const handleStatusChange = useCallback((investigationId: number, status: string) => {
-    setStatusUpdates((prev) => ({
-      ...prev,
-      [investigationId]: {
-        ...prev[investigationId],
-        status,
-        reason: status !== "R" ? "" : prev[investigationId]?.reason || "",
-      },
-    }));
-    // Clear error when status changes
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[investigationId];
-      return newErrors;
-    });
-  }, []);
-
-  const handleReasonChange = useCallback((investigationId: number, reason: string) => {
-    setStatusUpdates((prev) => ({
-      ...prev,
-      [investigationId]: {
-        ...prev[investigationId],
-        reason,
-      },
-    }));
-  }, []);
-
-  const handleBulkStatusChange = useCallback((status: string) => {
-    setBulkStatus(status);
-    if (status !== "R") {
-      setBulkReason("");
-    }
-  }, []);
+  const handleBulkStatusChange = useCallback(
+    (value: string) => {
+      setValue("bulkStatus", value);
+      if (value !== "R") {
+        setValue("bulkReason", "");
+      }
+    },
+    [setValue]
+  );
 
   const applyBulkUpdate = useCallback(() => {
     if (!bulkStatus) {
@@ -87,52 +140,30 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
       return;
     }
 
-    if (bulkStatus === "R" && !bulkReason.trim()) {
+    if (bulkStatus === "R" && !bulkReason?.trim()) {
       showAlert("Error", "Please provide a rejection reason for bulk rejection", "error");
       return;
     }
 
-    const newStatusUpdates: Record<number, { status: string; reason: string }> = {};
-    investigations.forEach((inv) => {
-      newStatusUpdates[inv.investigationId] = {
+    fields.forEach((_, index) => {
+      update(index, {
+        ...fields[index],
         status: bulkStatus,
         reason: bulkStatus === "R" ? bulkReason : "",
-      };
+      });
     });
 
-    setStatusUpdates(newStatusUpdates);
-    setErrors({});
     showAlert("Success", `Applied ${sampleStatusUpdateOptions.find((opt) => opt.value === bulkStatus)?.label} status to all investigations`, "success");
-  }, [bulkStatus, bulkReason, investigations, showAlert]);
+  }, [bulkStatus, bulkReason, fields, update, showAlert]);
 
-  const validateUpdates = useCallback(() => {
-    const newErrors: Record<number, string> = {};
-    let isValid = true;
-
-    Object.entries(statusUpdates).forEach(([invId, update]) => {
-      if (update.status === "R" && !update.reason.trim()) {
-        newErrors[parseInt(invId)] = "Rejection reason is required";
-        isValid = false;
-      }
-    });
-
-    setErrors(newErrors);
-    return isValid;
-  }, [statusUpdates]);
-
-  const handleSubmit = useCallback(async () => {
-    if (!validateUpdates()) {
-      showAlert("Error", "Please provide rejection reasons for all rejected samples", "error");
-      return;
-    }
-
-    const updates: SampleStatusUpdateRequestDto[] = Object.entries(statusUpdates).map(([invId, update]) => ({
+  const onSubmit = async (data: FormData) => {
+    const updates: SampleStatusUpdateRequestDto[] = data.investigations.map((inv) => ({
       LabRegNo: labRegNo,
       ServiceTypeID: serviceTypeId,
-      InvestigationID: parseInt(invId),
-      SampleCollectionStatus: update.status as "Pending" | "Collected" | "Rejected",
+      InvestigationID: inv.investigationId,
+      SampleCollectionStatus: inv.status as "Pending" | "Collected" | "Rejected",
       SampleCollectionDate: new Date(),
-      SampleRejectionReason: update.reason,
+      SampleRejectionReason: inv.reason || "",
     }));
 
     const result = await onUpdate(updates);
@@ -142,7 +173,7 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
     } else {
       showAlert("Error", result.message, "error");
     }
-  }, [statusUpdates, validateUpdates, labRegNo, serviceTypeId, onUpdate, showAlert, onClose]);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -154,6 +185,19 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
         return "error";
       default:
         return "default";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "P":
+        return <HourglassEmpty />;
+      case "C":
+        return <CheckCircle />;
+      case "R":
+        return <ErrorIcon />;
+      default:
+        return null;
     }
   };
 
@@ -170,11 +214,11 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
           <SmartButton text="Cancel" onClick={onClose} variant="outlined" size="small" disabled={loading} />
           <SmartButton
             text="Update Status"
-            onClick={handleSubmit}
+            onClick={handleSubmit(onSubmit)}
             color="primary"
             variant="contained"
             size="small"
-            disabled={loading || investigations.length === 0}
+            disabled={loading || investigations.length === 0 || !isValid}
             loadingText="Updating..."
             asynchronous={true}
             showLoadingIndicator={true}
@@ -182,110 +226,131 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
         </>
       }
     >
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" color="text.secondary">
-          Lab Reg No: {labRegNo} | Total Investigations: {investigations.length}
-        </Typography>
-      </Box>
+      <Box component="form" noValidate>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            Lab Reg No: {labRegNo} | Total Investigations: {investigations.length}
+          </Typography>
+        </Box>
 
-      {/* Bulk Update Section */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
-        <Grid container spacing={2} alignItems="flex-end">
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <FormControl fullWidth size="small">
-              <DropdownSelect
+        {/* Bulk Update Section */}
+        <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Bulk Update
+          </Typography>
+          <Grid container spacing={2} alignItems="flex-end">
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <FormField
+                name="bulkStatus"
+                control={control}
                 label="Apply Status to All"
-                name="bulk-status"
-                value={bulkStatus}
-                options={sampleStatusUpdateOptions}
-                onChange={(e) => handleBulkStatusChange(e.target.value)}
+                type="select"
                 size="small"
-                defaultText="Select Status"
-              />
-            </FormControl>
-          </Grid>
-
-          {bulkStatus === "R" && (
-            <Grid size={{ xs: 12, sm: 5 }}>
-              <TextField
                 fullWidth
-                size="small"
-                label="Rejection Reason (Applied to All)"
-                value={bulkReason}
-                onChange={(e) => setBulkReason(e.target.value)}
-                required
-                multiline
-                rows={2}
+                options={sampleStatusUpdateOptions}
+                defaultText="Select Status"
+                onChange={(value: any) => handleBulkStatusChange(value.value)}
               />
             </Grid>
-          )}
 
-          <Grid size={{ xs: 12, sm: bulkStatus === "R" ? 3 : 8 }}>
-            <SmartButton text="Apply to All" onClick={applyBulkUpdate} variant="contained" color="secondary" size="small" disabled={!bulkStatus || loading} />
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Divider sx={{ mb: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          Individual Investigation Updates
-        </Typography>
-      </Divider>
-
-      {/* Individual Investigation Updates */}
-      <Stack spacing={2}>
-        {investigations.map((investigation) => (
-          <Paper key={investigation.investigationId} elevation={1} sx={{ p: 2 }}>
-            <Grid container spacing={2} alignItems="flex-start">
+            {bulkStatus === "R" && (
               <Grid size={{ xs: 12, sm: 5 }}>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {investigation.investigationName}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Code: {investigation.investigationCode}
-                </Typography>
-                <Chip
+                <FormField
+                  name="bulkReason"
+                  control={control}
+                  label="Rejection Reason (Applied to All)"
+                  type="textarea"
                   size="small"
-                  label={`Current: ${investigation.sampleStatus}`}
-                  color={getStatusColor(statusUpdates[investigation.investigationId]?.status || "P")}
-                  sx={{ mt: 1 }}
+                  fullWidth
+                  required
+                  rows={2}
+                  helperText={errors.bulkReason?.message}
                 />
               </Grid>
+            )}
 
-              <Grid size={{ xs: 12, sm: 3 }}>
-                <FormControl fullWidth size="small" error={!!errors[investigation.investigationId]}>
-                  <DropdownSelect
-                    label="New Status"
-                    name={`status-${investigation.investigationId}`}
-                    value={statusUpdates[investigation.investigationId]?.status || "P"}
-                    options={sampleStatusUpdateOptions}
-                    onChange={(e) => handleStatusChange(investigation.investigationId, e.target.value)}
-                    size="small"
-                    defaultText="Select Status"
-                  />
-                </FormControl>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 4 }}>
-                {statusUpdates[investigation.investigationId]?.status === "R" && (
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Rejection Reason"
-                    value={statusUpdates[investigation.investigationId]?.reason || ""}
-                    onChange={(e) => handleReasonChange(investigation.investigationId, e.target.value)}
-                    error={!!errors[investigation.investigationId]}
-                    helperText={errors[investigation.investigationId]}
-                    required
-                    multiline
-                    rows={2}
-                  />
-                )}
-              </Grid>
+            <Grid size={{ xs: 12, sm: bulkStatus === "R" ? 3 : 8 }}>
+              <SmartButton text="Apply to All" onClick={applyBulkUpdate} variant="contained" color="secondary" size="small" disabled={!bulkStatus || loading} />
             </Grid>
-          </Paper>
-        ))}
-      </Stack>
+          </Grid>
+        </Paper>
+
+        <Divider sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Individual Investigation Updates
+          </Typography>
+        </Divider>
+
+        {/* Individual Investigation Updates */}
+        <Stack spacing={2}>
+          {fields.map((field, index) => {
+            const watchedStatus = watch(`investigations.${index}.status`);
+            const fieldErrors = errors.investigations?.[index];
+
+            return (
+              <Card key={field.id} variant="outlined">
+                <CardContent>
+                  <Grid container spacing={2} alignItems="flex-start">
+                    <Grid size={{ xs: 12, sm: 5 }}>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {field.investigationName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Code: {field.investigationCode}
+                      </Typography>
+                      <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                        <Chip size="small" label={`Current: ${field.currentStatus}`} color="default" />
+                        <Chip
+                          size="small"
+                          icon={getStatusIcon(watchedStatus)}
+                          label={`New: ${sampleStatusUpdateOptions.find((opt) => opt.value === watchedStatus)?.label || "Unknown"}`}
+                          color={getStatusColor(watchedStatus)}
+                        />
+                      </Stack>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 3 }}>
+                      <FormField
+                        name={`investigations.${index}.status`}
+                        control={control}
+                        label="New Status"
+                        type="select"
+                        size="small"
+                        fullWidth
+                        options={sampleStatusUpdateOptions}
+                        defaultText="Select Status"
+                        onChange={(value: any) => {
+                          update(index, {
+                            ...field,
+                            status: value.value,
+                            reason: value.value !== "R" ? "" : field.reason,
+                          });
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      {watchedStatus === "R" && (
+                        <FormField
+                          name={`investigations.${index}.reason`}
+                          control={control}
+                          label="Rejection Reason"
+                          type="textarea"
+                          size="small"
+                          fullWidth
+                          required
+                          rows={2}
+                          helperText={fieldErrors?.reason?.message}
+                        />
+                      )}
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Stack>
+      </Box>
     </GenericDialog>
   );
 };
