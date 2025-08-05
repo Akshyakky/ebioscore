@@ -115,43 +115,41 @@ const AppointmentScheduler: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Data fetching based on view mode and filter changes
-  useEffect(() => {
-    const fetchData = async () => {
-      if (selectedProvider) {
-        const startDate = new Date(currentDate);
-        const endDate = new Date(currentDate);
+  // Enhanced booking mode change handler to clear inactive selections
+  const handleBookingModeChange = useCallback((mode: string) => {
+    setBookingMode(mode);
 
-        // Adjust date range based on current view mode
-        if (viewMode === "week") {
-          const weekDates = getWeekDates(currentDate);
-          startDate.setTime(weekDates[0].getTime());
-          endDate.setTime(weekDates[6].getTime());
-        } else if (viewMode === "month") {
-          startDate.setDate(1);
-          endDate.setMonth(endDate.getMonth() + 1, 0);
-        }
+    // Clear the non-active selection when switching modes
+    if (mode === "physician") {
+      setSelectedResource("");
+    } else if (mode === "resource") {
+      setSelectedProvider("");
+    }
+  }, []);
 
-        await fetchAppointmentsByProvider(Number(selectedProvider), startDate, endDate);
-      } else {
-        const startDate = new Date(currentDate);
-        const endDate = new Date(currentDate);
-
-        if (viewMode === "week") {
-          const weekDates = getWeekDates(currentDate);
-          startDate.setTime(weekDates[0].getTime());
-          endDate.setTime(weekDates[6].getTime());
-        } else if (viewMode === "month") {
-          startDate.setDate(1);
-          endDate.setMonth(endDate.getMonth() + 1, 0);
-        }
-
-        await fetchAppointments(startDate, endDate);
+  // Enhanced provider change handler
+  const handleProviderChange = useCallback(
+    (provider: string) => {
+      setSelectedProvider(provider);
+      // Ensure resource is cleared when provider is selected
+      if (provider && selectedResource) {
+        setSelectedResource("");
       }
-    };
+    },
+    [selectedResource]
+  );
 
-    fetchData();
-  }, [currentDate, viewMode, selectedProvider, fetchAppointments, fetchAppointmentsByProvider]);
+  // Enhanced resource change handler
+  const handleResourceChange = useCallback(
+    (resource: string) => {
+      setSelectedResource(resource);
+      // Ensure provider is cleared when resource is selected
+      if (resource && selectedProvider) {
+        setSelectedProvider("");
+      }
+    },
+    [selectedProvider]
+  );
 
   // Date navigation utility functions
   const getWeekDates = useCallback((date: Date) => {
@@ -168,6 +166,33 @@ const AppointmentScheduler: React.FC = () => {
     }
     return week;
   }, []);
+
+  // Data fetching based on view mode and filter changes
+  useEffect(() => {
+    const fetchData = async () => {
+      const startDate = new Date(currentDate);
+      const endDate = new Date(currentDate);
+
+      // Adjust date range based on current view mode
+      if (viewMode === "week") {
+        const weekDates = getWeekDates(currentDate);
+        startDate.setTime(weekDates[0].getTime());
+        endDate.setTime(weekDates[6].getTime());
+      } else if (viewMode === "month") {
+        startDate.setDate(1);
+        endDate.setMonth(endDate.getMonth() + 1, 0);
+      }
+
+      // Fetch data based on booking mode and selected filter
+      if (bookingMode === "physician" && selectedProvider) {
+        await fetchAppointmentsByProvider(Number(selectedProvider), startDate, endDate);
+      } else {
+        await fetchAppointments(startDate, endDate);
+      }
+    };
+
+    fetchData();
+  }, [currentDate, viewMode, bookingMode, selectedProvider, selectedResource, fetchAppointments, fetchAppointmentsByProvider, getWeekDates]);
 
   const getMonthDates = useCallback((date: Date) => {
     const year = date.getFullYear();
@@ -216,13 +241,17 @@ const AppointmentScheduler: React.FC = () => {
         dateInRange = aptDate.getMonth() === currentDate.getMonth() && aptDate.getFullYear() === currentDate.getFullYear();
       }
 
-      // Apply provider and resource filtering
-      const providerMatch = selectedProvider === "" || apt.hplID.toString() === selectedProvider;
-      const resourceMatch = selectedResource === "" || apt.rlID.toString() === selectedResource;
+      // Apply unified provider/resource filtering based on booking mode
+      let filterMatch = true;
+      if (bookingMode === "physician" && selectedProvider !== "") {
+        filterMatch = apt.hplID.toString() === selectedProvider;
+      } else if (bookingMode === "resource" && selectedResource !== "") {
+        filterMatch = apt.rlID.toString() === selectedResource;
+      }
 
-      return dateInRange && providerMatch && resourceMatch;
+      return dateInRange && filterMatch;
     });
-  }, [appointments, currentDate, viewMode, selectedProvider, selectedResource, getWeekDates]);
+  }, [appointments, currentDate, viewMode, bookingMode, selectedProvider, selectedResource, getWeekDates]);
 
   // Navigation handlers for date movement and view changes
   const handleNavigateDate = (direction: "prev" | "next" | "today") => {
@@ -260,13 +289,15 @@ const AppointmentScheduler: React.FC = () => {
     const selectedDateTime = new Date(date);
     selectedDateTime.setHours(hour, minute, 0, 0);
 
+    const endDateTime = new Date(selectedDateTime.getTime() + 30 * 60000); // Default 30-minute duration
+
     setBookingForm((prev) => ({
       ...prev,
       abDate: date,
       abTime: selectedDateTime,
-      abEndTime: new Date(selectedDateTime.getTime() + 30 * 60000), // Default 30-minute duration
-      hplID: selectedProvider ? Number(selectedProvider) : 0,
-      rlID: selectedResource ? Number(selectedResource) : 0,
+      abEndTime: endDateTime,
+      hplID: bookingMode === "physician" && selectedProvider ? Number(selectedProvider) : 0,
+      rlID: bookingMode === "resource" && selectedResource ? Number(selectedResource) : 0,
     }));
 
     setShowBookingDialog(true);
@@ -409,6 +440,7 @@ const AppointmentScheduler: React.FC = () => {
             onSlotDoubleClick={handleSlotDoubleClick}
             onElapsedSlotConfirmation={handleElapsedSlotConfirmation}
             onAppointmentUpdate={handleAppointmentUpdate}
+            selectedProvider={bookingMode === "physician" ? selectedProvider : undefined}
           />
         );
       case "week":
@@ -430,6 +462,7 @@ const AppointmentScheduler: React.FC = () => {
             onSlotDoubleClick={handleSlotDoubleClick}
             onElapsedSlotConfirmation={handleElapsedSlotConfirmation}
             onAppointmentUpdate={handleAppointmentUpdate}
+            selectedProvider={bookingMode === "physician" ? selectedProvider : undefined}
           />
         );
     }
@@ -459,7 +492,7 @@ const AppointmentScheduler: React.FC = () => {
         padding: 1,
       }}
     >
-      {/* Comprehensive scheduler header with navigation and filtering */}
+      {/* Comprehensive scheduler header with unified navigation and filtering */}
       <Box sx={{ flexShrink: 0, marginBottom: 1 }}>
         <SchedulerHeader
           currentDate={currentDate}
@@ -470,9 +503,9 @@ const AppointmentScheduler: React.FC = () => {
           onDateChange={setCurrentDate}
           onViewModeChange={setViewMode}
           onNavigate={handleNavigateDate}
-          onBookingModeChange={setBookingMode}
-          onProviderChange={setSelectedProvider}
-          onResourceChange={setSelectedResource}
+          onBookingModeChange={handleBookingModeChange}
+          onProviderChange={handleProviderChange}
+          onResourceChange={handleResourceChange}
           onBookingClick={() => setShowBookingDialog(true)}
           providers={providers}
           resources={resources}
