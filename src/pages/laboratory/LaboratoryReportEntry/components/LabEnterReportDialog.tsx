@@ -1,6 +1,7 @@
 import SmartButton from "@/components/Button/SmartButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useContactMastByCategory from "@/hooks/hospitalAdministration/useContactMastByCategory";
 import { ComponentResultDto, LabEnterResultDto, LabResultItemDto } from "@/interfaces/Laboratory/LaboratoryReportEntry";
 import { useAlert } from "@/providers/AlertProvider";
 import { laboratoryService } from "@/services/Laboratory/LaboratoryService";
@@ -66,7 +67,10 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
   const [validationErrors, setValidationErrors] = useState<Record<number, string>>({});
   const [technicianApproval, setTechnicianApproval] = useState(false);
   const [consultantApproval, setConsultantApproval] = useState(false);
-
+  const { contacts: labTechnicians } = useContactMastByCategory({ consValue: "PHY" });
+  const { contacts: labConsultants } = useContactMastByCategory({ consValue: "PHY" });
+  console.log("labTechnicians", labTechnicians);
+  console.log("labConsultants", labConsultants);
   // Fetch lab result data when dialog opens
   useEffect(() => {
     if (open && labRegNo && serviceTypeId) {
