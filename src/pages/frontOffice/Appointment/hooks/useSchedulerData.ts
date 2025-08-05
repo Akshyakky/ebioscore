@@ -1,6 +1,6 @@
 // src/pages/frontOffice/Appointment/hooks/useSchedulerData.ts
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
+import { BreakDto, BreakListDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { appointmentService } from "@/services/FrontOfficeServices/AppointmentService";
 import { breakService } from "@/services/FrontOfficeServices/BreakService";
@@ -13,6 +13,43 @@ export const useSchedulerData = () => {
   const [workHours, setWorkHours] = useState<HospWorkHoursDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Transform BreakListDto to BreakDto for backward compatibility with existing components
+  const transformBreakListToBreakDto = useCallback((breakListWithDetails: BreakListDto[]): BreakDto[] => {
+    const breakDtos: BreakDto[] = [];
+
+    breakListWithDetails.forEach((breakListItem) => {
+      const { breakList, breakConDetails } = breakListItem;
+
+      // If there are no details, create a break entry without assignment
+      if (!breakConDetails || breakConDetails.length === 0) {
+        breakDtos.push({
+          ...breakList,
+          hPLID: 0,
+          bCDID: 0,
+          status: breakList.rActiveYN === "Y" ? "Active" : "Inactive",
+          bCSID: undefined,
+          bCSStartDate: undefined,
+          bCSEndDate: undefined,
+        });
+      } else {
+        // Create a break entry for each detail
+        breakConDetails.forEach((detail) => {
+          breakDtos.push({
+            ...breakList,
+            hPLID: detail.hPLID || 0,
+            bCDID: detail.bCDID,
+            status: detail.rActiveYN === "Y" ? "Active" : "Inactive",
+            bCSID: undefined,
+            bCSStartDate: undefined,
+            bCSEndDate: undefined,
+          });
+        });
+      }
+    });
+
+    return breakDtos;
+  }, []);
 
   // Fetch appointments from API
   const fetchAppointments = useCallback(async (startDate?: Date, endDate?: Date) => {
@@ -43,36 +80,47 @@ export const useSchedulerData = () => {
     }
   }, []);
 
-  // Fetch breaks from API
-  const fetchBreaks = useCallback(async (startDate?: Date, endDate?: Date, hplId?: number) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  // Fetch breaks from API with updated structure handling
+  const fetchBreaks = useCallback(
+    async (startDate?: Date, endDate?: Date, hplId?: number) => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      let result;
-      if (startDate && endDate) {
-        if (hplId) {
+        let result;
+        if (startDate && endDate) {
           result = await breakService.getActiveBreaks(startDate, endDate, hplId);
+        } else {
+          // For backward compatibility, fetch today's breaks
+          const today = new Date();
+          const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+          result = await breakService.getActiveBreaks(startOfDay, endOfDay, hplId);
         }
-      }
 
-      if (result.success && result.data) {
-        // Filter out suspended breaks
-        const activeBreaks = result.data.filter((breakItem) => breakItem.rActiveYN === "Y" && breakItem.status !== "Suspended");
-        setBreaks(activeBreaks);
-      } else {
-        setError(result.errorMessage || "Failed to fetch breaks");
+        if (result.success && result.data) {
+          // Transform the new BreakListDto structure to BreakDto for compatibility
+          const transformedBreaks = transformBreakListToBreakDto(result.data);
+
+          // Filter out suspended breaks and ensure only active ones
+          const activeBreaks = transformedBreaks.filter((breakItem) => breakItem.rActiveYN === "Y" && breakItem.status !== "Suspended");
+
+          setBreaks(activeBreaks);
+        } else {
+          setError(result.errorMessage || "Failed to fetch breaks");
+          setBreaks([]);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+        setError(errorMessage);
         setBreaks([]);
+        console.error("Error fetching breaks:", err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      setError(errorMessage);
-      setBreaks([]);
-      console.error("Error fetching breaks:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [transformBreakListToBreakDto]
+  );
 
   // Fetch work hours from API
   const fetchWorkHours = useCallback(async () => {
@@ -269,7 +317,7 @@ export const useSchedulerData = () => {
     };
   }, [workHours]);
 
-  // Fetch appointments by provider
+  // Fetch appointments by provider with updated break handling
   const fetchAppointmentsByProvider = useCallback(
     async (hplId: number, startDate: Date, endDate: Date) => {
       try {
