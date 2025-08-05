@@ -1,43 +1,43 @@
 import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
-export interface IpDischargeDetailsDto extends BaseDto {
+export interface IpDischargeDetailDto extends BaseDto {
   dischgDetID: number;
   dischgID: number;
-  dchNotes?: string;
-  admitDate: Date;
-  AdviceOnDischarge?: string;
-  birthHistory?: string;
-  cheifCompliant?: string;
-  conditionOnDischarge?: string;
+  dchNotes?: string | null;
+  admitDate: string; // ISO date string
+  adviceOnDischarge?: string | null;
+  birthHistory?: string | null;
+  cheifCompliant?: string | null;
+  conditionOnDischarge?: string | null;
   consultantID: number;
   specialityID: number;
-  speciality?: string;
-  consultants?: string;
-  consultant?: string;
-  courseInHospital?: string;
-  deliveryDet?: string;
-  development?: string;
-  dischgDate: Date;
-  familyHistory?: string;
-  finalDiagnosis?: string;
-  followUp?: string;
-  history?: string;
-  immunisation?: string;
-  intraoperativeFinding?: string;
-  investigations?: string;
-  localExam?: string;
-  menstrualExam?: string;
-  neonatalDet?: string;
-  obstericHistory?: string;
-  otFindings?: string;
-  pastHistory?: string;
-  personalHistory?: string;
-  physicalExam?: string;
-  postOperTreatment?: string;
-  procedureDone?: string;
-  reportDate: Date;
-  reviewDate: Date;
-  riskFactor?: string;
-  systemicExam?: string;
-  treatmentGiven?: string;
-  vaccination?: string;
+  speciality?: string | null;
+  consultants?: string | null;
+  consultant?: string | null;
+  courseInHospital?: string | null;
+  deliveryDet?: string | null;
+  development?: string | null;
+  dischgDate: string; // ISO date string
+  familyHistory?: string | null;
+  finalDiagnosis?: string | null;
+  followUp?: string | null;
+  history?: string | null;
+  immunisation?: string | null;
+  intraoperativeFinding?: string | null;
+  investigations?: string | null;
+  localExam?: string | null;
+  menstrualExam?: string | null;
+  neonatalDet?: string | null;
+  obstericHistory?: string | null;
+  otFindings?: string | null;
+  pastHistory?: string | null;
+  personalHistory?: string | null;
+  physicalExam?: string | null;
+  postOperTreatment?: string | null;
+  procedureDone?: string | null;
+  reportDate: string; // ISO date string
+  reviewDate: string; // ISO date string
+  riskFactor?: string | null;
+  systemicExam?: string | null;
+  treatmentGiven?: string | null;
+  vaccination?: string | null;
 }

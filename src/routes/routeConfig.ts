@@ -64,6 +64,7 @@ const AdvanceReceiptListPage = lazy(() => import("@/pages/billing/AdvanceReceipt
 const DepartmentConsumptionPage = lazy(() => import("@/pages/inventoryManagement/ProductConsumption/MainPage/ProductConsumptionList"));
 const ProductStockReturnPage = lazy(() => import("@/pages/inventoryManagement/ProductStockReturn/MainPage/ProductStockReturnMainPage "));
 const PhysicianStockReturnPage = lazy(() => import("@/pages/inventoryManagement/PhysicianStockReturn/MainPage/PhysicianStockReturnMainPage"));
+const DischargeSummaryPage = lazy(() => import("@/pages/patientAdministration/DischargeSummary/MainPage/DischargeSummaryPage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -505,16 +506,16 @@ const routeConfig: RouteConfig[] = [
       category: "clinical",
     },
   },
-  // {
-  //   path: "/ComponentEntryTypePage",
-  //   component: wrapWithSuspense(ComponentEntryTypePage),
-  //   protected: true,
-  //   providers: [AlertProvider],
-  //   metadata: {
-  //     title: "Component Entry Types",
-  //     category: "clinical",
-  //   },
-  // },
+  {
+    path: "/DischargeSummaryPage",
+    component: wrapWithSuspense(DischargeSummaryPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Discharge Summary",
+      category: "patient",
+    },
+  },
   {
     path: "/PurchaseOrderPage",
     component: wrapWithSuspense(PurchaseOrderPage),
