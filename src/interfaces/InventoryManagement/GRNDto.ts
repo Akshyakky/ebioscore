@@ -125,16 +125,15 @@ export interface GrnDetailDto extends BaseDto {
   // ADDED: Enhanced property for issual integration
   productIssuuals: GrnProductIssualDto[];
 }
+export interface GrnDto {
+  grnMastDto: GrnMastDto;
+  grnDetailDto: GrnDetailDto[];
+}
 
 export interface GrnGridItemDto extends GrnDetailDto {
   rol?: number;
   currentStock?: number;
   stockValue?: number;
-}
-
-export interface GrnDto {
-  grnMastDto: GrnMastDto;
-  grnDetailDto: GrnDetailDto[];
 }
 
 export interface GrnSearchRequest {

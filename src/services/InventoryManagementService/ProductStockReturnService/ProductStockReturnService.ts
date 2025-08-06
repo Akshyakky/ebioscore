@@ -14,7 +14,6 @@ import { GenericEntityService } from "@/services/GenericEntityService/GenericEnt
 
 class ProductStockReturnService extends GenericEntityService<ProductStockReturnDto> {
   private readonly compositeEndpoint = "ProductStockReturnComposite";
-
   constructor() {
     super(
       new CommonApiService({
@@ -361,7 +360,6 @@ class ProductStockReturnService extends GenericEntityService<ProductStockReturnD
         params.append("returnType", returnType);
       }
       const url = `${this.compositeEndpoint}/GetReturnsByDateRange?${params.toString()}`;
-
       return await this.apiService.get<OperationResult<ProductStockReturnDto[]>>(url, this.getToken());
     } catch (error) {
       return {
