@@ -3,4 +3,4 @@ import { IpDischargeDetailDto } from "@/interfaces/PatientAdministration/IpDisch
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
 export const dischargeStatusService = createEntityService<DischargeStatusDto>("DischargeStatus", "patientAdministrationURL");
-export const dischargeSummaryService = createEntityService<IpDischargeDetailDto>("DischargeDetail", "patientAdministrationURL");
+export const dischargeSummaryService = createEntityService<IpDischargeDetailDto>("IpDischargeDetail", "patientAdministrationURL");
