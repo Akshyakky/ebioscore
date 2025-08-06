@@ -3,7 +3,7 @@ export interface IpDischargeDetailDto extends BaseDto {
   dischgDetID: number;
   dischgID: number;
   dchNotes?: string | null;
-  admitDate: string; // ISO date string
+  admitDate: Date;
   adviceOnDischarge?: string | null;
   birthHistory?: string | null;
   cheifCompliant?: string | null;
@@ -16,7 +16,7 @@ export interface IpDischargeDetailDto extends BaseDto {
   courseInHospital?: string | null;
   deliveryDet?: string | null;
   development?: string | null;
-  dischgDate: string; // ISO date string
+  dischgDate: Date;
   familyHistory?: string | null;
   finalDiagnosis?: string | null;
   followUp?: string | null;
@@ -34,8 +34,8 @@ export interface IpDischargeDetailDto extends BaseDto {
   physicalExam?: string | null;
   postOperTreatment?: string | null;
   procedureDone?: string | null;
-  reportDate: string; // ISO date string
-  reviewDate: string; // ISO date string
+  reportDate: Date;
+  reviewDate: Date;
   riskFactor?: string | null;
   systemicExam?: string | null;
   treatmentGiven?: string | null;
