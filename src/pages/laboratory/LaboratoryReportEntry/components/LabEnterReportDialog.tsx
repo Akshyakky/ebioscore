@@ -45,7 +45,9 @@ const createComponentSchema = (components: ComponentResultDto[]) => {
     technicianApproval: z.string(),
     consultantApproval: z.string(),
     technicianId: z.number().optional(),
+    technicianName: z.string().optional(),
     consultantId: z.number().optional(),
+    consultantName: z.string().optional(),
   };
 
   components.forEach((component) => {
@@ -81,7 +83,9 @@ type LabReportFormData = {
   technicianApproval: "Y" | "N";
   consultantApproval: "Y" | "N";
   technicianId?: number;
+  technicianName?: string;
   consultantId?: number;
+  consultantName?: string;
   [key: string]: any; // For dynamic component fields
 };
 
@@ -103,7 +107,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     control,
     handleSubmit,
     reset,
-    setValue: _setValue,
+    setValue,
     watch,
     formState: { errors, isValid },
   } = useForm<LabReportFormData>({
@@ -112,6 +116,8 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       consultantApproval: "N",
       technicianId: undefined,
       consultantId: undefined,
+      technicianName: "",
+      consultantName: "",
     },
     resolver: componentSchema ? zodResolver(componentSchema) : undefined,
     mode: "onChange",
@@ -154,6 +160,8 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           consultantApproval: response.data.isLabConsultantApproved || "N",
           technicianId: response.data.technicianId,
           consultantId: response.data.labConsultantId,
+          technicianName: response.data.technicianName || "",
+          consultantName: response.data.labConsultantName || "",
         };
 
         // Initialize component values
@@ -303,6 +311,8 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       isTechnicianApproved: formData.technicianApproval,
       labConsultantId: formData.consultantId,
       isLabConsultantApproved: formData.consultantApproval,
+      technicianName: formData.technicianName,
+      labConsultantName: formData.consultantName,
       results: updatedResults as unknown as LabResultItemDto[],
     };
   };
@@ -424,6 +434,12 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                       fullWidth
                       options={technicianOptions}
                       placeholder="Select Technician"
+                      onChange={(value) => {
+                        const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
+                        if (selectedTechnician) {
+                          setValue("technicianName", selectedTechnician.label || "");
+                        }
+                      }}
                     />
                     <FormField name="technicianApproval" control={control} label="Technician Approved" type="switch" size="small" disabled={!watch("technicianId")} />
                   </Stack>
@@ -439,6 +455,12 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                       fullWidth
                       options={consultantOptions}
                       placeholder="Select Consultant"
+                      onChange={(value) => {
+                        const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value);
+                        if (selectedConsultant) {
+                          setValue("consultantName", selectedConsultant.label || "");
+                        }
+                      }}
                     />
                     <FormField name="consultantApproval" control={control} label="Consultant Approved" type="switch" size="small" disabled={!watch("consultantId")} />
                   </Stack>
