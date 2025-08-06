@@ -154,11 +154,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
   return (
     <Grid container spacing={0.5}>
       <Grid size={{ xs: 1.5 }}>
-        <HeaderCell>
-          <Typography variant="caption" align="center" color="text.primary" style={{ fontSize: "0.7rem" }}>
-            Time
-          </Typography>
-        </HeaderCell>
         {timeSlots.map((slot) => (
           <Box
             key={slot.time}
@@ -185,15 +180,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
         return (
           <Grid size={{ xs: 1.5 }} key={index} style={{ position: "relative" }}>
             <CurrentTimeIndicator date={date} height={30} timeSlots={timeSlots} currentTime={currentTime} />
-
-            <HeaderCell>
-              <Typography variant="caption" align="center" fontWeight="bold" color="text.primary" display="block" style={{ fontSize: "0.7rem" }}>
-                {date.toLocaleDateString("en-US", { weekday: "short" })}
-              </Typography>
-              <Typography variant="caption" align="center" color="text.secondary" display="block" style={{ fontSize: "0.6rem" }}>
-                {date.getDate()}
-              </Typography>
-            </HeaderCell>
 
             {timeSlots.map((slot) => {
               const slotAppointments = getAppointmentsForSlot(date, slot.hour, slot.minute);

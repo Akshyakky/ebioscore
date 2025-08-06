@@ -1,6 +1,6 @@
 // src/frontOffice/components/MonthView.tsx
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { Box, Card, CardContent, Grid, PaletteColor, Paper, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Card, CardContent, Grid, PaletteColor, Stack, Typography, useTheme } from "@mui/material";
 import React from "react";
 import { getStatusColor } from "../utils/appointmentUtils";
 
@@ -98,25 +98,6 @@ export const MonthView: React.FC<MonthViewProps> = ({ currentDate, appointments,
 
   return (
     <Box>
-      <Grid container spacing={0.5} marginBottom={1}>
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <Grid size={12 / 7} key={day}>
-            <Paper
-              elevation={1}
-              style={{
-                backgroundColor: isDarkMode ? theme.palette.grey[800] : theme.palette.grey[100],
-                padding: theme.spacing(0.5),
-                borderRadius: theme.shape.borderRadius,
-              }}
-            >
-              <Typography variant="subtitle2" align="center" fontWeight="bold" color="text.primary">
-                {day}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-
       {weeks.map((week, weekIndex) => (
         <Grid container spacing={0.5} key={weekIndex} marginBottom={0.5}>
           {week.map((date, dayIndex) => {
