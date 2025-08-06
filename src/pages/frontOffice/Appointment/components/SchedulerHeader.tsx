@@ -1,5 +1,5 @@
 // src/pages/frontOffice/Appointment/components/SchedulerHeader.tsx
-import { Add as AddIcon, NavigateBefore, NavigateNext, Today } from "@mui/icons-material";
+import { NavigateBefore, NavigateNext, Today, Warning as WarningIcon } from "@mui/icons-material";
 import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import React from "react";
 
@@ -9,6 +9,7 @@ interface SchedulerHeaderProps {
   bookingMode: string;
   selectedProvider: string;
   selectedResource: string;
+  isBookingAllowed?: boolean;
   onDateChange: (date: Date) => void;
   onViewModeChange: (mode: string) => void;
   onNavigate: (direction: "prev" | "next" | "today") => void;
@@ -32,6 +33,7 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   bookingMode,
   selectedProvider,
   selectedResource,
+  isBookingAllowed = true,
   onDateChange,
   onViewModeChange,
   onNavigate,
@@ -81,6 +83,24 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   // Get the appropriate "All" option text
   const getAllOptionText = () => {
     return bookingMode === "physician" ? "All Providers" : "All Resources";
+  };
+
+  // Check if current selection is required but missing
+  const isSelectionRequired = () => {
+    return (bookingMode === "physician" && !selectedProvider) || (bookingMode === "resource" && !selectedResource);
+  };
+
+  // Get tooltip text for disabled booking button
+  const getBookingButtonTooltip = () => {
+    if (!isBookingAllowed) {
+      if (bookingMode === "physician" && !selectedProvider) {
+        return "Please select a provider before booking appointments";
+      }
+      if (bookingMode === "resource" && !selectedResource) {
+        return "Please select a resource before booking appointments";
+      }
+    }
+    return "Book new appointment";
   };
 
   return (
@@ -171,10 +191,33 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
           </FormControl>
         </Grid>
 
-        {/* Unified Provider/Resource Selection */}
+        {/* Unified Provider/Resource Selection with Visual Indicators */}
         <Grid size={{ xs: 6, md: 3.5 }}>
-          <FormControl size="small" fullWidth>
-            <InputLabel style={{ fontSize: "0.8rem" }}>{getCurrentLabel()}</InputLabel>
+          <FormControl
+            size="small"
+            fullWidth
+            error={isSelectionRequired()}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "&.Mui-error": {
+                  "& fieldset": {
+                    borderColor: "warning.main",
+                  },
+                },
+              },
+            }}
+          >
+            <InputLabel
+              style={{
+                fontSize: "0.8rem",
+                color: isSelectionRequired() ? "#ed6c02" : undefined,
+              }}
+            >
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                {getCurrentLabel()}
+                {isSelectionRequired() && <WarningIcon fontSize="small" />}
+              </Stack>
+            </InputLabel>
             <Select value={getCurrentSelectionValue()} onChange={(e) => handleSelectionChange(e.target.value)} label={getCurrentLabel()} style={{ fontSize: "0.8rem" }}>
               <MenuItem value="">{getAllOptionText()}</MenuItem>
               {getCurrentOptions().map((option) => (
@@ -184,13 +227,6 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
               ))}
             </Select>
           </FormControl>
-        </Grid>
-
-        {/* Book Appointment Button */}
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={onBookingClick} fullWidth size="small" style={{ fontSize: "0.8rem" }}>
-            Book Appointment
-          </Button>
         </Grid>
       </Grid>
     </Paper>

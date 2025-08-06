@@ -28,11 +28,15 @@ import {
   Box,
   Chip,
   Divider,
+  FormControl,
   FormControlLabel,
   Grid,
+  InputLabel,
+  MenuItem,
   Paper,
   Radio,
   RadioGroup,
+  Select,
   Stack,
   Switch,
   Typography,
@@ -60,8 +64,8 @@ const appointmentBookingSchema = z
     // Reason and duration
     arlID: z.number().optional().default(0),
     arlName: z.string().optional().default(""),
-    abDuration: z.number().min(15, "Duration must be at least 15 minutes").default(30),
-    abDurDesc: z.string().default("30 minutes"),
+    abDuration: z.number().min(15, "Duration must be at least 15 minutes").default(15),
+    abDurDesc: z.string().default("15 minutes"),
 
     // Date and time - with proper validation
     abDate: z.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
@@ -131,6 +135,14 @@ const appointmentBookingSchema = z
   )
   .refine(
     (data) => {
+      // Validate that appointment time is in 15-minute intervals
+      const minutes = data.abTime.getMinutes();
+      return minutes % 15 === 0;
+    },
+    { message: "Appointment time must be in 15-minute intervals (00, 15, 30, 45)", path: ["abTime"] }
+  )
+  .refine(
+    (data) => {
       // Validate patient information based on registration status
       if (data.patRegisterYN === "Y") {
         return data.pChartID && data.pChartID > 0;
@@ -184,6 +196,24 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
     isLoading: dropdownLoading,
   } = useDropdownValues(["reasonList", "attendingPhy", "resourceList", "title", "nationality", "area", "city", "country", "consultantRole"]);
 
+  // Generate 15-minute time intervals for the time selector
+  const timeIntervals = useMemo(() => {
+    const intervals = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        const date = new Date();
+        date.setHours(hour, minute, 0, 0);
+        intervals.push({
+          value: timeString,
+          label: timeString,
+          dateValue: date,
+        });
+      }
+    }
+    return intervals;
+  }, []);
+
   // Form setup with default values
   const defaultValues: BookingFormData = useMemo(
     () => ({
@@ -198,8 +228,8 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
       rlName: existingAppointment?.rlName || bookingForm.rlName || "",
       arlID: existingAppointment?.arlID || bookingForm.arlID || 0,
       arlName: existingAppointment?.arlName || bookingForm.arlName || "",
-      abDuration: existingAppointment?.abDuration || bookingForm.abDuration || 30,
-      abDurDesc: existingAppointment?.abDurDesc || bookingForm.abDurDesc || "30 minutes",
+      abDuration: existingAppointment?.abDuration || bookingForm.abDuration || 15,
+      abDurDesc: existingAppointment?.abDurDesc || bookingForm.abDurDesc || "15 minutes",
       abDate: existingAppointment?.abDate ? new Date(existingAppointment.abDate) : bookingForm.abDate ? new Date(bookingForm.abDate) : serverDate,
       abTime: existingAppointment?.abTime ? new Date(existingAppointment.abTime) : bookingForm.abTime ? new Date(bookingForm.abTime) : serverDate,
       abEndTime: existingAppointment?.abEndTime ? new Date(existingAppointment.abEndTime) : bookingForm.abEndTime ? new Date(bookingForm.abEndTime) : serverDate,
@@ -215,7 +245,7 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
           : "Y",
       appPhone1: existingAppointment?.appPhone1 || bookingForm.appPhone1 || "",
       appPhone2: existingAppointment?.appPhone2 || bookingForm.appPhone2 || "",
-      email: "",
+      email: existingAppointment?.email || bookingForm.email || "",
       city: existingAppointment?.city || bookingForm.city || "",
       dob: existingAppointment?.dob ? new Date(existingAppointment.dob) : bookingForm.dob ? new Date(bookingForm.dob) : undefined,
       procNotes: existingAppointment?.procNotes || bookingForm.procNotes || "",
@@ -326,8 +356,8 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                 setValue("dob", new Date(patientRegisters.pDob), { shouldValidate: true, shouldDirty: true });
               }
 
-              setValue("intIdPsprt", patientRegisters.intIdPsprt || "", { shouldValidate: true, shouldDirty: true });
-              setValue("pssnId", patientRegisters.intIdPsprt || "", { shouldValidate: true, shouldDirty: true });
+              setValue("pssnId", patientRegisters.pssnId || patientRegisters.pSSNId || "", { shouldValidate: true, shouldDirty: true });
+              setValue("intIdPsprt", patientRegisters.intIdPsprt || patientRegisters.pIntIdPsprt || "", { shouldValidate: true, shouldDirty: true });
             }
 
             // Address and contact information
@@ -371,8 +401,8 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
           "city",
           "email",
           "dob",
-          "intIdPsprt",
           "pssnId",
+          "intIdPsprt",
           "pNatID",
           "pNatName",
           "pChartCompID",
@@ -402,6 +432,12 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
 
       if (data.patRegisterYN === "N" && (!data.abFName || !data.abLName || !data.appPhone1)) {
         throw new Error("Please provide patient name and contact information");
+      }
+
+      // Validate that appointment time is in 15-minute intervals
+      const minutes = data.abTime.getMinutes();
+      if (minutes % 15 !== 0) {
+        throw new Error("Appointment time must be in 15-minute intervals (00, 15, 30, 45)");
       }
 
       // Transform form data to AppointBookingDto
@@ -451,7 +487,7 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
         cancelReason: data.cancelReason,
         city: data.city,
         dob: data.dob,
-        email: "",
+        email: data.email,
         pChartCompID: data.pChartCompID,
         rSchdleID: data.rSchdleID,
         rschdleBy: data.rschdleBy,
@@ -496,12 +532,34 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
     [resources, setValue]
   );
 
+  const getDurationDescription = (minutes: number): string => {
+    if (minutes === 0) return "";
+    if (minutes <= 15) return "15 minutes";
+    if (minutes <= 30) return "30 minutes";
+    if (minutes <= 45) return "45 minutes";
+    if (minutes <= 60) return "1 hour";
+    if (minutes <= 90) return "1.5 hours";
+    if (minutes <= 120) return "2 hours";
+    return `${minutes} minutes`;
+  };
+
   const handleReasonChange = useCallback(
     (value: any) => {
       const selectedReason = reasonList.find((reason) => Number(reason.value) === Number(value.value));
       if (selectedReason) {
+        // Set reason information
         setValue("arlID", Number(selectedReason.value), { shouldValidate: true, shouldDirty: true });
         setValue("arlName", selectedReason.label, { shouldValidate: true, shouldDirty: true });
+
+        // Auto-populate duration from the selected reason
+        const reasonData = selectedReason as any;
+        if (reasonData.arlDuration) {
+          setValue("abDuration", Number(reasonData.arlDuration), { shouldValidate: true, shouldDirty: true });
+
+          // Set duration description
+          const durationDesc = reasonData.arlDurDesc || getDurationDescription(Number(reasonData.arlDuration));
+          setValue("abDurDesc", durationDesc, { shouldValidate: true, shouldDirty: true });
+        }
       }
     },
     [reasonList, setValue]
@@ -516,6 +574,18 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
       }
     },
     [setValue]
+  );
+
+  const handleTimeChange = useCallback(
+    (value: any) => {
+      const selectedTime = timeIntervals.find((time) => time.value === value.value);
+      if (selectedTime) {
+        const newTime = new Date(watchedAbDate);
+        newTime.setHours(selectedTime.dateValue.getHours(), selectedTime.dateValue.getMinutes(), 0, 0);
+        setValue("abTime", newTime, { shouldValidate: true, shouldDirty: true });
+      }
+    },
+    [timeIntervals, setValue, watchedAbDate]
   );
 
   const handlePatientTypeChange = useCallback(
@@ -688,14 +758,18 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                         </Grid>
 
                         <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="email" control={control} type="email" label="Email Address" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <EnhancedFormField name="dob" control={control} type="datepicker" label="Date of Birth" size="small" />
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <EnhancedFormField name="city" control={control} type="select" label="City" size="small" options={city} />
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <EnhancedFormField
                             name="pNatID"
                             control={control}
@@ -724,7 +798,7 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
               </AccordionDetails>
             </Accordion>
 
-            {/* Appointment Details Section */}
+            {/* Appointment Details Section - Reordered with Reason Before Time */}
             <Accordion expanded={appointmentAccordionExpanded} onChange={() => setAppointmentAccordionExpanded(!appointmentAccordionExpanded)} variant="outlined">
               <AccordionSummary expandIcon={<ExpandMoreIcon />} style={{ backgroundColor: "rgba(46, 125, 50, 0.04)" }}>
                 <Box display="flex" alignItems="center" gap={1}>
@@ -754,16 +828,13 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                     />
                   </Grid>
 
-                  {/* Date and Time */}
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <EnhancedFormField name="abDate" control={control} type="datepicker" label="Appointment Date" required size="small" />
+                  {/* Reason for Visit - Now comes before time selection */}
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField name="arlID" control={control} type="select" label="Reason for Visit" size="small" options={reasonList} onChange={handleReasonChange} />
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <EnhancedFormField name="abTime" control={control} type="timepicker" label="Start Time" required size="small" />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  {/* Duration */}
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <EnhancedFormField
                       name="abDuration"
                       control={control}
@@ -776,9 +847,36 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                     />
                   </Grid>
 
-                  {/* Reason */}
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <EnhancedFormField name="arlID" control={control} type="select" label="Reason for Visit" size="small" options={reasonList} onChange={handleReasonChange} />
+                  {/* Date and Time - Time with 15-minute intervals */}
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <EnhancedFormField name="abDate" control={control} type="datepicker" label="Appointment Date" required size="small" />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormControl size="small" fullWidth required>
+                      <InputLabel>Appointment Time</InputLabel>
+                      <Select
+                        value={watchedAbTime ? `${watchedAbTime.getHours().toString().padStart(2, "0")}:${watchedAbTime.getMinutes().toString().padStart(2, "0")}` : ""}
+                        onChange={(e) => handleTimeChange({ value: e.target.value })}
+                        label="Appointment Time"
+                        error={!!errors.abTime}
+                      >
+                        {timeIntervals.map((time) => (
+                          <MenuItem key={time.value} value={time.value}>
+                            {time.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {errors.abTime && (
+                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                          {errors.abTime.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <EnhancedFormField name="abEndTime" control={control} type="timepicker" label="End Time" size="small" disabled />
                   </Grid>
 
                   {/* Notes */}
@@ -856,12 +954,19 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                     <Divider />
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <EnhancedFormField name="pssnId" control={control} type="text" label="ABHA Number" size="small" />
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField name="pssnId" control={control} type="text" label="ABHA Number" size="small" disabled={watchedPatRegisterYN === "Y" && !!selectedPatient} />
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <EnhancedFormField name="intIdPsprt" control={control} type="text" label="International ID/Passport" size="small" />
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField
+                      name="intIdPsprt"
+                      control={control}
+                      type="text"
+                      label="International ID/Passport"
+                      size="small"
+                      disabled={watchedPatRegisterYN === "Y" && !!selectedPatient}
+                    />
                   </Grid>
                 </Grid>
               </AccordionDetails>

@@ -618,6 +618,8 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: ReasonListDto) => ({
           value: item.arlID || 0,
           label: item.arlName || "",
+          arlDuration: item.arlDuration,
+          arlDurDesc: item.arlDurDesc,
           ...item,
         }));
       },
