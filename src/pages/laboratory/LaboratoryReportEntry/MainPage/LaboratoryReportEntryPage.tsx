@@ -100,15 +100,17 @@ const LaboratoryReportEntryPage: React.FC = () => {
     if (Array.isArray(serviceType) && serviceType.length > 0) {
       const filteredServiceTypes = serviceType.filter((type) => type.labYN === "Y");
       setLabServiceTypes(filteredServiceTypes);
-
-      if (!selectedServiceType && filteredServiceTypes.length > 0) {
-        const defaultServiceType = filteredServiceTypes[0];
-        setSelectedServiceType(defaultServiceType.bchID);
-        setValue("serviceType", defaultServiceType.bchID.toString());
-        handleServiceTypeChange(defaultServiceType.bchID);
-      }
     }
-  }, [serviceType, selectedServiceType, setValue, handleServiceTypeChange]);
+  }, [serviceType]);
+
+  useEffect(() => {
+    if (!selectedServiceType && labServiceTypes.length > 0) {
+      const defaultServiceType = labServiceTypes[0];
+      setSelectedServiceType(defaultServiceType.bchID);
+      setValue("serviceType", defaultServiceType.bchID.toString());
+      handleServiceTypeChange(defaultServiceType.bchID);
+    }
+  }, [labServiceTypes.length]);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 

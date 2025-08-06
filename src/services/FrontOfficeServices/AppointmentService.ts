@@ -56,6 +56,46 @@ class AppointmentService extends GenericEntityService<AppointBookingDto> {
   }
 
   /**
+   * Retrieves appointments by resource ID and date range
+   * @param rlId The resource ID
+   * @param startDate Start date for the search range
+   * @param endDate End date for the search range
+   * @returns Promise containing operation result with list of appointments
+   */
+  async getAppointmentsByResource(rlId: number, startDate: Date, endDate: Date): Promise<OperationResult<AppointBookingDto[]>> {
+    try {
+      if (!rlId || rlId <= 0) {
+        return {
+          success: false,
+          errorMessage: "Valid resource ID is required",
+          data: undefined,
+        };
+      }
+
+      if (startDate > endDate) {
+        return {
+          success: false,
+          errorMessage: "Start date cannot be later than end date",
+          data: undefined,
+        };
+      }
+
+      const params = new URLSearchParams({
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      });
+
+      return await this.apiService.get<OperationResult<AppointBookingDto[]>>(`${this.baseEndpoint}/GetByResource/${rlId}?${params.toString()}`, this.getToken());
+    } catch (error) {
+      return {
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "Failed to retrieve appointments by resource",
+        data: undefined,
+      };
+    }
+  }
+
+  /**
    * Retrieves appointments by date range
    * @param startDate Start date for the search range
    * @param endDate End date for the search range

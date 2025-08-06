@@ -51,22 +51,19 @@ const AppointmentScheduler: React.FC = () => {
     isLoading,
     error,
     isTimeWithinWorkingHours,
-    getAvailableTimeRanges,
-    isWorkingDay,
-    getWorkHoursStats,
     refreshData,
     createAppointment,
     updateAppointment,
     cancelAppointment,
-    checkAppointmentConflicts,
     fetchAppointments,
     fetchAppointmentsByProvider,
+    fetchAppointmentsByResource,
   } = useSchedulerData();
 
   const timeSlots = useTimeSlots();
 
   // Load dropdown values for provider and resource selection
-  const { appointmentConsultants = [], roomList = [], isLoading: dropdownLoading } = useDropdownValues(["appointmentConsultants", "roomList"]);
+  const { appointmentConsultants = [], roomList = [] } = useDropdownValues(["appointmentConsultants", "roomList"]);
 
   // Transform dropdown data to standardized format for component consumption
   const providers = useMemo(() => {
@@ -106,6 +103,30 @@ const AppointmentScheduler: React.FC = () => {
   };
 
   const [bookingForm, setBookingForm] = useState<AppointBookingDto>(initialBookingForm);
+
+  // Validation function to check if required selections are made
+  const validateBookingRequirements = useCallback((): { isValid: boolean; message: string } => {
+    if (bookingMode === "physician" && !selectedProvider) {
+      return {
+        isValid: false,
+        message: "Please select a provider before booking an appointment in Physician mode. Use the Provider dropdown in the header to make your selection.",
+      };
+    }
+
+    if (bookingMode === "resource" && !selectedResource) {
+      return {
+        isValid: false,
+        message: "Please select a resource before booking an appointment in Resource mode. Use the Resource dropdown in the header to make your selection.",
+      };
+    }
+
+    return { isValid: true, message: "" };
+  }, [bookingMode, selectedProvider, selectedResource]);
+
+  // Check if booking is allowed based on current selections
+  const isBookingAllowed = useMemo(() => {
+    return validateBookingRequirements().isValid;
+  }, [validateBookingRequirements]);
 
   // Real-time clock updates for current time indicator
   useEffect(() => {
@@ -167,7 +188,7 @@ const AppointmentScheduler: React.FC = () => {
     return week;
   }, []);
 
-  // Data fetching based on view mode and filter changes
+  // Enhanced data fetching based on view mode and filter changes with complete resource support
   useEffect(() => {
     const fetchData = async () => {
       const startDate = new Date(currentDate);
@@ -183,16 +204,18 @@ const AppointmentScheduler: React.FC = () => {
         endDate.setMonth(endDate.getMonth() + 1, 0);
       }
 
-      // Fetch data based on booking mode and selected filter
+      // Fetch data based on booking mode and selected filter with comprehensive resource support
       if (bookingMode === "physician" && selectedProvider) {
         await fetchAppointmentsByProvider(Number(selectedProvider), startDate, endDate);
+      } else if (bookingMode === "resource" && selectedResource) {
+        await fetchAppointmentsByResource(Number(selectedResource), startDate, endDate);
       } else {
         await fetchAppointments(startDate, endDate);
       }
     };
 
     fetchData();
-  }, [currentDate, viewMode, bookingMode, selectedProvider, selectedResource, fetchAppointments, fetchAppointmentsByProvider, getWeekDates]);
+  }, [currentDate, viewMode, bookingMode, selectedProvider, selectedResource, fetchAppointments, fetchAppointmentsByProvider, fetchAppointmentsByResource, getWeekDates]);
 
   const getMonthDates = useCallback((date: Date) => {
     const year = date.getFullYear();
@@ -285,6 +308,13 @@ const AppointmentScheduler: React.FC = () => {
 
   // Enhanced appointment booking workflow with comprehensive validation
   const handleSlotDoubleClick = async (date: Date, hour: number, minute: number) => {
+    // Validate booking requirements first
+    const validation = validateBookingRequirements();
+    if (!validation.isValid) {
+      showAlert("Selection Required", validation.message, "warning");
+      return;
+    }
+
     // Pre-populate booking form with selected time slot information
     const selectedDateTime = new Date(date);
     selectedDateTime.setHours(hour, minute, 0, 0);
@@ -316,6 +346,15 @@ const AppointmentScheduler: React.FC = () => {
 
   const handleElapsedSlotConfirmed = () => {
     if (pendingElapsedSlot) {
+      // Validate booking requirements first
+      const validation = validateBookingRequirements();
+      if (!validation.isValid) {
+        showAlert("Selection Required", validation.message, "warning");
+        setPendingElapsedSlot(null);
+        setShowElapsedConfirmation(false);
+        return;
+      }
+
       handleSlotDoubleClick(pendingElapsedSlot.date, pendingElapsedSlot.hour, pendingElapsedSlot.minute);
     }
     setPendingElapsedSlot(null);
@@ -374,9 +413,20 @@ const AppointmentScheduler: React.FC = () => {
     [updateAppointment]
   );
 
-  // Alternative booking entry point for filter button usage
+  // Alternative booking entry point for filter button usage with validation
   const handleSlotClick = () => {
-    setBookingForm(initialBookingForm);
+    // Validate booking requirements first
+    const validation = validateBookingRequirements();
+    if (!validation.isValid) {
+      showAlert("Selection Required", validation.message, "warning");
+      return;
+    }
+
+    setBookingForm({
+      ...initialBookingForm,
+      hplID: bookingMode === "physician" && selectedProvider ? Number(selectedProvider) : 0,
+      rlID: bookingMode === "resource" && selectedResource ? Number(selectedResource) : 0,
+    });
     setShowBookingDialog(true);
   };
 
@@ -468,9 +518,6 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
-  // Generate work hours statistics for display
-  const workHoursStats = getWorkHoursStats();
-
   // Error handling with retry functionality
   if (error) {
     return (
@@ -506,10 +553,11 @@ const AppointmentScheduler: React.FC = () => {
           onBookingModeChange={handleBookingModeChange}
           onProviderChange={handleProviderChange}
           onResourceChange={handleResourceChange}
-          onBookingClick={() => setShowBookingDialog(true)}
+          onBookingClick={handleSlotClick}
           providers={providers}
           resources={resources}
           getWeekDates={getWeekDates}
+          isBookingAllowed={isBookingAllowed}
         />
       </Box>
 
