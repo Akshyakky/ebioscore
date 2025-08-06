@@ -206,7 +206,6 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
       open={open}
       onClose={onClose}
       title="Update Sample Collection Status"
-      maxWidth="md"
       fullWidth
       showCloseButton={true}
       actions={
@@ -226,7 +225,7 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
         </>
       }
     >
-      <Box component="form" noValidate>
+      <Box component="form" noValidate sx={{ minHeight: "50vh" }}>
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">
             Lab Reg No: {labRegNo} | Total Investigations: {investigations.length}
@@ -234,53 +233,55 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
         </Box>
 
         {/* Bulk Update Section */}
-        <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Bulk Update
-          </Typography>
-          <Grid container spacing={2} alignItems="flex-end">
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormField
-                name="bulkStatus"
-                control={control}
-                label="Apply Status to All"
-                type="select"
-                size="small"
-                fullWidth
-                options={sampleStatusUpdateOptions}
-                defaultText="Select Status"
-                onChange={(value: any) => handleBulkStatusChange(value.value)}
-              />
-            </Grid>
+        {investigations.length > 1 && (
+          <>
+            <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Bulk Update
+              </Typography>
+              <Grid container spacing={2} alignItems="flex-end">
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormField
+                    name="bulkStatus"
+                    control={control}
+                    label="Apply Status to All"
+                    type="select"
+                    size="small"
+                    fullWidth
+                    options={sampleStatusUpdateOptions}
+                    defaultText="Select Status"
+                    onChange={(value: any) => handleBulkStatusChange(value.value)}
+                  />
+                </Grid>
 
-            {bulkStatus === "R" && (
-              <Grid size={{ xs: 12, sm: 5 }}>
-                <FormField
-                  name="bulkReason"
-                  control={control}
-                  label="Rejection Reason (Applied to All)"
-                  type="textarea"
-                  size="small"
-                  fullWidth
-                  required
-                  rows={2}
-                  helperText={errors.bulkReason?.message}
-                />
+                {bulkStatus === "R" && (
+                  <Grid size={{ xs: 12, sm: 5 }}>
+                    <FormField
+                      name="bulkReason"
+                      control={control}
+                      label="Rejection Reason (Applied to All)"
+                      type="textarea"
+                      size="small"
+                      fullWidth
+                      required
+                      rows={2}
+                      helperText={errors.bulkReason?.message}
+                    />
+                  </Grid>
+                )}
+
+                <Grid size={{ xs: 12, sm: bulkStatus === "R" ? 3 : 8 }}>
+                  <SmartButton text="Apply to All" onClick={applyBulkUpdate} variant="contained" color="secondary" size="small" disabled={!bulkStatus || loading} />
+                </Grid>
               </Grid>
-            )}
-
-            <Grid size={{ xs: 12, sm: bulkStatus === "R" ? 3 : 8 }}>
-              <SmartButton text="Apply to All" onClick={applyBulkUpdate} variant="contained" color="secondary" size="small" disabled={!bulkStatus || loading} />
-            </Grid>
-          </Grid>
-        </Paper>
-
-        <Divider sx={{ mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Individual Investigation Updates
-          </Typography>
-        </Divider>
-
+            </Paper>
+            <Divider sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Individual Investigation Updates
+              </Typography>
+            </Divider>
+          </>
+        )}
         {/* Individual Investigation Updates */}
         <Stack spacing={2}>
           {fields.map((field, index) => {

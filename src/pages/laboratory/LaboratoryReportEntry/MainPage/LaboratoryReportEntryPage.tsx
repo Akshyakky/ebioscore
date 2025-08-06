@@ -761,64 +761,66 @@ const LaboratoryReportEntryPage: React.FC = () => {
           </>
         }
       >
-        {selectedRegister && (
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>
-            Lab Reg No: {selectedRegister.labRegister.labRegNo} | Patient: {selectedRegister.labRegister.patientFullName}
-          </Typography>
-        )}
+        <Box sx={{ minHeight: "50vh" }}>
+          {selectedRegister && (
+            <Typography variant="subtitle2" sx={{ mb: 2 }}>
+              Lab Reg No: {selectedRegister.labRegister.labRegNo} | Patient: {selectedRegister.labRegister.patientFullName}
+            </Typography>
+          )}
 
-        {statusLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-            <CircularProgress />
-          </Box>
-        ) : investigationStatuses.length > 0 ? (
-          <Stack spacing={2}>
-            {investigationStatuses.map((investigation, index) => (
-              <Paper key={index} elevation={1} sx={{ p: 2 }}>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid size={{ xs: 12, sm: 8 }}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {investigation.investigationName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Code: {investigation.investigationCode}
-                    </Typography>
+          {statusLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+              <CircularProgress />
+            </Box>
+          ) : investigationStatuses.length > 0 ? (
+            <Stack spacing={2}>
+              {investigationStatuses.map((investigation, index) => (
+                <Paper key={index} elevation={1} sx={{ p: 2 }}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid size={{ xs: 12, sm: 8 }}>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {investigation.investigationName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Code: {investigation.investigationCode}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <Chip label={investigation.sampleStatus} color={getInvestigationStatusColor(investigation.sampleStatus)} sx={{ fontWeight: 500 }} />
+                    </Grid>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <Chip label={investigation.sampleStatus} color={getInvestigationStatusColor(investigation.sampleStatus)} sx={{ fontWeight: 500 }} />
-                  </Grid>
-                </Grid>
-              </Paper>
-            ))}
+                </Paper>
+              ))}
 
-            {selectedRegister && (
-              <Box mt={2} p={2} borderRadius={1}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Summary
-                </Typography>
-                <Stack direction="row" spacing={2}>
-                  <Chip size="small" label={`Total Investigations: ${selectedRegister.labRegister.investigationCount}`} color="default" />
-                  {(selectedRegister.labRegister.invSamplePendingCount || 0) > 0 && (
-                    <Chip size="small" label={`Pending: ${selectedRegister.labRegister.invSamplePendingCount}`} color="secondary" variant="outlined" />
-                  )}
-                  {(selectedRegister.labRegister.invSampleCollectedCount || 0) > 0 && (
-                    <Chip size="small" label={`Collected: ${selectedRegister.labRegister.invSampleCollectedCount}`} color="warning" variant="outlined" />
-                  )}
-                  {(selectedRegister.labRegister.invResultCompletedCount || 0) > 0 && (
-                    <Chip size="small" label={`Completed: ${selectedRegister.labRegister.invResultCompletedCount}`} color="info" variant="outlined" />
-                  )}
-                  {(selectedRegister.labRegister.invResultApprovedCount || 0) > 0 && (
-                    <Chip size="small" label={`Approved: ${selectedRegister.labRegister.invResultApprovedCount}`} color="success" variant="outlined" />
-                  )}
-                </Stack>
-              </Box>
-            )}
-          </Stack>
-        ) : (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-            <Typography color="text.secondary">No investigation data available</Typography>
-          </Box>
-        )}
+              {selectedRegister && (
+                <Box mt={2} p={2} borderRadius={1}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Summary
+                  </Typography>
+                  <Stack direction="row" spacing={2}>
+                    <Chip size="small" label={`Total Investigations: ${selectedRegister.labRegister.investigationCount}`} color="default" />
+                    {(selectedRegister.labRegister.invSamplePendingCount || 0) > 0 && (
+                      <Chip size="small" label={`Pending: ${selectedRegister.labRegister.invSamplePendingCount}`} color="secondary" variant="outlined" />
+                    )}
+                    {(selectedRegister.labRegister.invSampleCollectedCount || 0) > 0 && (
+                      <Chip size="small" label={`Collected: ${selectedRegister.labRegister.invSampleCollectedCount}`} color="warning" variant="outlined" />
+                    )}
+                    {(selectedRegister.labRegister.invResultCompletedCount || 0) > 0 && (
+                      <Chip size="small" label={`Completed: ${selectedRegister.labRegister.invResultCompletedCount}`} color="info" variant="outlined" />
+                    )}
+                    {(selectedRegister.labRegister.invResultApprovedCount || 0) > 0 && (
+                      <Chip size="small" label={`Approved: ${selectedRegister.labRegister.invResultApprovedCount}`} color="success" variant="outlined" />
+                    )}
+                  </Stack>
+                </Box>
+              )}
+            </Stack>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+              <Typography color="text.secondary">No investigation data available</Typography>
+            </Box>
+          )}
+        </Box>
       </GenericDialog>
 
       {selectedRegister && (
