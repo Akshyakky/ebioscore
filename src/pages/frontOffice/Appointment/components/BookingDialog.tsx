@@ -215,7 +215,7 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
           : "Y",
       appPhone1: existingAppointment?.appPhone1 || bookingForm.appPhone1 || "",
       appPhone2: existingAppointment?.appPhone2 || bookingForm.appPhone2 || "",
-      email: "",
+      email: existingAppointment?.email || bookingForm.email || "",
       city: existingAppointment?.city || bookingForm.city || "",
       dob: existingAppointment?.dob ? new Date(existingAppointment.dob) : bookingForm.dob ? new Date(bookingForm.dob) : undefined,
       procNotes: existingAppointment?.procNotes || bookingForm.procNotes || "",
@@ -326,8 +326,11 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                 setValue("dob", new Date(patientRegisters.pDob), { shouldValidate: true, shouldDirty: true });
               }
 
-              setValue("intIdPsprt", patientRegisters.intIdPsprt || "", { shouldValidate: true, shouldDirty: true });
-              setValue("pssnId", patientRegisters.intIdPsprt || "", { shouldValidate: true, shouldDirty: true });
+              // Set ABHA Number from pssnId field or similar field in patient data
+              setValue("pssnId", patientRegisters.pssnId || patientRegisters.pSSNId || "", { shouldValidate: true, shouldDirty: true });
+
+              // Set International ID/Passport from intIdPsprt field
+              setValue("intIdPsprt", patientRegisters.intIdPsprt || patientRegisters.pIntIdPsprt || "", { shouldValidate: true, shouldDirty: true });
             }
 
             // Address and contact information
@@ -371,8 +374,8 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
           "city",
           "email",
           "dob",
-          "intIdPsprt",
           "pssnId",
+          "intIdPsprt",
           "pNatID",
           "pNatName",
           "pChartCompID",
@@ -451,7 +454,7 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
         cancelReason: data.cancelReason,
         city: data.city,
         dob: data.dob,
-        email: "",
+        email: data.email,
         pChartCompID: data.pChartCompID,
         rSchdleID: data.rSchdleID,
         rschdleBy: data.rschdleBy,
@@ -688,14 +691,18 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                         </Grid>
 
                         <Grid size={{ xs: 12, sm: 4 }}>
+                          <EnhancedFormField name="email" control={control} type="email" label="Email Address" size="small" />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <EnhancedFormField name="dob" control={control} type="datepicker" label="Date of Birth" size="small" />
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <EnhancedFormField name="city" control={control} type="select" label="City" size="small" options={city} />
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                           <EnhancedFormField
                             name="pNatID"
                             control={control}
@@ -856,12 +863,19 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
                     <Divider />
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <EnhancedFormField name="pssnId" control={control} type="text" label="ABHA Number" size="small" />
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField name="pssnId" control={control} type="text" label="ABHA Number" size="small" disabled={watchedPatRegisterYN === "Y" && !!selectedPatient} />
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <EnhancedFormField name="intIdPsprt" control={control} type="text" label="International ID/Passport" size="small" />
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EnhancedFormField
+                      name="intIdPsprt"
+                      control={control}
+                      type="text"
+                      label="International ID/Passport"
+                      size="small"
+                      disabled={watchedPatRegisterYN === "Y" && !!selectedPatient}
+                    />
                   </Grid>
                 </Grid>
               </AccordionDetails>
