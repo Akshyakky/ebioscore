@@ -347,6 +347,36 @@ export const useSchedulerData = () => {
     [fetchBreaks]
   );
 
+  // Fetch appointments by resource with updated break handling
+  const fetchAppointmentsByResource = useCallback(
+    async (rlId: number, startDate: Date, endDate: Date) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const result = await appointmentService.getAppointmentsByResource(rlId, startDate, endDate);
+
+        if (result.success && result.data) {
+          setAppointments(result.data);
+        } else {
+          setError(result.errorMessage || "Failed to fetch appointments by resource");
+          setAppointments([]);
+        }
+
+        // Also fetch breaks for the same resource and date range
+        await fetchBreaks(startDate, endDate, rlId);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+        setError(errorMessage);
+        setAppointments([]);
+        console.error("Error fetching appointments by resource:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchBreaks]
+  );
+
   // Fetch appointments by patient
   const fetchAppointmentsByPatient = useCallback(async (pChartId: number) => {
     try {
@@ -399,6 +429,7 @@ export const useSchedulerData = () => {
     // Appointment operations
     fetchAppointments,
     fetchAppointmentsByProvider,
+    fetchAppointmentsByResource,
     fetchAppointmentsByPatient,
     createAppointment,
     updateAppointment,
