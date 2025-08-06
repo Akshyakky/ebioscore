@@ -3,7 +3,7 @@ import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { DragIndicator, Height as ResizeIcon } from "@mui/icons-material";
 import { Box, Card, CardContent, Chip, Tooltip, Typography, useTheme } from "@mui/material";
 import React from "react";
-import { getStatusColor } from "../utils/appointmentUtils";
+import { calculateAppointmentWidth, getStatusColor } from "../utils/appointmentUtils";
 
 interface AppointmentCardProps {
   appointment: AppointBookingDto;
@@ -24,7 +24,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   appointment,
   showDetails = true,
   column = 0,
-  totalColumns = 1,
+  totalColumns = 5, // Default to 5 for consistent sizing
   isElapsed = false,
   isDragging = false,
   isResizing = false,
@@ -36,9 +36,13 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 }) => {
   const theme = useTheme();
   const statusColor = getStatusColor(appointment.abStatus);
+
   // Updated condition: Only appointments shorter than 15 minutes are considered "short"
   const isShortAppointment = appointment.abDuration < 15;
   const isMediumAppointment = appointment.abDuration >= 15 && appointment.abDuration <= 30;
+
+  // Calculate optimal width based on total columns
+  const { width: calculatedWidth, shouldStack } = calculateAppointmentWidth(totalColumns);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -103,13 +107,19 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
       boxShadow = theme.shadows[6];
     }
 
+    // Calculate positioning based on minimum 5 columns or actual columns if more
+    const effectiveTotalColumns = Math.max(5, totalColumns);
+    const columnWidth = 100 / effectiveTotalColumns;
+    const cardWidth = columnWidth - 1; // 1% margin between cards
+    const leftPosition = column * columnWidth;
+
     return {
       height: "100%",
       cursor: isDragging ? "grabbing" : isResizing ? "ns-resize" : "grab",
       opacity: isDragging ? 0.5 : isElapsed ? 0.8 : 1,
       position: "absolute" as const,
-      width: `${100 / totalColumns - 1}%`,
-      left: `${(column * 100) / totalColumns}%`,
+      width: `${cardWidth}%`,
+      left: `${leftPosition}%`,
       zIndex,
       transition: isDragging || isResizing ? "none" : "all 0.2s ease-in-out",
       transform,
@@ -132,9 +142,16 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   };
 
   const getFontSize = () => {
-    if (isShortAppointment) return "0.65rem";
-    if (isMediumAppointment) return "0.75rem";
-    return "0.8rem";
+    // Adjust font size based on available width to prevent text overflow
+    const effectiveTotalColumns = Math.max(5, totalColumns);
+
+    if (effectiveTotalColumns > 8) {
+      return isShortAppointment ? "0.55rem" : "0.65rem";
+    } else if (effectiveTotalColumns > 5) {
+      return isShortAppointment ? "0.6rem" : "0.7rem";
+    } else {
+      return isShortAppointment ? "0.65rem" : isMediumAppointment ? "0.75rem" : "0.8rem";
+    }
   };
 
   const patientFullName = `${appointment.abFName} ${appointment.abLName}`.trim();
@@ -142,6 +159,9 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  // Determine if we should show condensed view based on width constraints
+  const showCondensedView = totalColumns > 7 || shouldStack;
 
   return (
     <Tooltip
@@ -214,20 +234,22 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             overflow: "hidden",
           }}
         >
-          {/* Drag Handle */}
-          <Box
-            className="drag-handle"
-            sx={{
-              position: "absolute",
-              top: 2,
-              right: 2,
-              color: "text.secondary",
-              cursor: "grab",
-              zIndex: 1,
-            }}
-          >
-            <DragIndicator fontSize="small" style={{ fontSize: "10px" }} />
-          </Box>
+          {/* Drag Handle - Only show if not in condensed view */}
+          {!showCondensedView && (
+            <Box
+              className="drag-handle"
+              sx={{
+                position: "absolute",
+                top: 2,
+                right: 2,
+                color: "text.secondary",
+                cursor: "grab",
+                zIndex: 1,
+              }}
+            >
+              <DragIndicator fontSize="small" style={{ fontSize: "10px" }} />
+            </Box>
+          )}
 
           {/* Main Content */}
           <Box
@@ -235,7 +257,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             flexDirection="column"
             height="100%"
             flex={1}
-            sx={{ paddingRight: "14px" }} // Space for drag handle
+            sx={{ paddingRight: showCondensedView ? "2px" : "14px" }} // Less padding in condensed view
           >
             {/* Patient Name - Always visible */}
             <Typography
@@ -249,23 +271,23 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
                 wordBreak: "break-word",
                 hyphens: "auto",
                 display: "-webkit-box",
-                WebkitLineClamp: isShortAppointment ? 1 : 2,
+                WebkitLineClamp: isShortAppointment ? 1 : showCondensedView ? 1 : 2,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
                 marginBottom: isShortAppointment ? 0 : 0.25,
               }}
               title={patientFullName}
             >
-              {patientFullName}
+              {showCondensedView ? patientFullName.split(" ")[0] : patientFullName}
             </Typography>
 
-            {/* Time - Always visible for short appointments */}
-            {isShortAppointment && (
+            {/* Time - Always visible for short appointments or condensed view */}
+            {(isShortAppointment || showCondensedView) && (
               <Typography
                 variant="caption"
                 color="text.secondary"
                 sx={{
-                  fontSize: "0.6rem",
+                  fontSize: showCondensedView ? "0.55rem" : "0.6rem",
                   lineHeight: 1,
                   fontWeight: "medium",
                 }}
@@ -274,8 +296,8 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
               </Typography>
             )}
 
-            {/* Detailed Information - Only for medium and long appointments */}
-            {showDetails && !isShortAppointment && (
+            {/* Detailed Information - Only for medium and long appointments in normal view */}
+            {showDetails && !isShortAppointment && !showCondensedView && (
               <Box flex={1} display="flex" flexDirection="column">
                 <Typography
                   variant="caption"
@@ -331,23 +353,23 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             {/* Status Chip - Always at bottom */}
             <Box marginTop="auto" display="flex" justifyContent="flex-start">
               <Chip
-                label={appointment.abStatus}
+                label={showCondensedView ? appointment.abStatus.substring(0, 4) : appointment.abStatus}
                 color={statusColor as any}
                 size="small"
                 variant={isElapsed ? "outlined" : "filled"}
                 sx={{
-                  fontSize: isShortAppointment ? "0.55rem" : "0.65rem",
+                  fontSize: showCondensedView ? "0.5rem" : isShortAppointment ? "0.55rem" : "0.65rem",
                   height: isShortAppointment ? "16px" : "18px",
                   "& .MuiChip-label": {
-                    paddingX: isShortAppointment ? 0.5 : 0.75,
+                    paddingX: showCondensedView ? 0.25 : isShortAppointment ? 0.5 : 0.75,
                   },
                 }}
               />
             </Box>
           </Box>
 
-          {/* Resize Handle - Now available for appointments 15 minutes and longer */}
-          {appointment.abDuration >= 15 && (
+          {/* Resize Handle - Now available for appointments 15 minutes and longer, but not in condensed view */}
+          {appointment.abDuration >= 15 && !showCondensedView && (
             <Box
               className="resize-handle"
               onMouseDown={handleResizeMouseDown}
