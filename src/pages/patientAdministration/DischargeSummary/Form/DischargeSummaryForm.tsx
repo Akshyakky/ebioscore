@@ -34,7 +34,7 @@ const dischargeSummarySchema = z.object({
   dischgDetID: z.number().default(0),
   dischgID: z.number().min(1, "Discharge ID is required"),
   dchNotes: z.string().optional().nullable(),
-  admitDate: z.string(),
+  admitDate: z.date().optional().nullable(),
   adviceOnDischarge: z.string().optional().nullable(),
   birthHistory: z.string().optional().nullable(),
   cheifCompliant: z.string().optional().nullable(),
@@ -47,7 +47,7 @@ const dischargeSummarySchema = z.object({
   courseInHospital: z.string().optional().nullable(),
   deliveryDet: z.string().optional().nullable(),
   development: z.string().optional().nullable(),
-  dischgDate: z.string(),
+  dischgDate: z.date().optional().nullable(),
   familyHistory: z.string().optional().nullable(),
   finalDiagnosis: z.string().optional().nullable(),
   followUp: z.string().optional().nullable(),
@@ -65,8 +65,8 @@ const dischargeSummarySchema = z.object({
   physicalExam: z.string().optional().nullable(),
   postOperTreatment: z.string().optional().nullable(),
   procedureDone: z.string().optional().nullable(),
-  reportDate: z.string(),
-  reviewDate: z.string(),
+  reportDate: z.date().optional().nullable(),
+  reviewDate: z.date().optional().nullable(),
   riskFactor: z.string().optional().nullable(),
   systemicExam: z.string().optional().nullable(),
   treatmentGiven: z.string().optional().nullable(),
@@ -128,7 +128,6 @@ const DischargeSummaryForm: React.FC<DischargeSummaryFormProps> = ({ open, onClo
     resolver: zodResolver(dischargeSummarySchema),
     mode: "onChange",
   });
-
   // Initialize form data
   useEffect(() => {
     if (open && discharge && !isInitialized) {
@@ -145,7 +144,7 @@ const DischargeSummaryForm: React.FC<DischargeSummaryFormProps> = ({ open, onClo
     if (!discharge || !admission) return;
 
     const admissionData = admission.ipAdmissionDto;
-    const reportDate = serverDate.toISOString();
+    const reportDate = serverDate;
     const reviewDate = new Date(serverDate);
     reviewDate.setDate(reviewDate.getDate() + 7); // Default review after 7 days
 
@@ -154,20 +153,20 @@ const DischargeSummaryForm: React.FC<DischargeSummaryFormProps> = ({ open, onClo
       reset({
         ...existingSummary,
         reportDate: existingSummary.reportDate || reportDate,
-        reviewDate: existingSummary.reviewDate || reviewDate.toISOString(),
+        reviewDate: existingSummary.reviewDate || reviewDate,
       });
     } else {
       // Initialize new summary
       reset({
         dischgDetID: 0,
         dischgID: discharge.dischgID,
-        admitDate: admissionData.admitDate.toISOString(),
-        dischgDate: discharge.dischgDate.toISOString(),
+        admitDate: new Date(),
+        dischgDate: discharge.dischgDate,
         consultantID: admissionData.attendingPhysicianID || 0,
         consultant: admissionData.attendingPhysicianName || "",
         specialityID: 0,
         reportDate,
-        reviewDate: reviewDate.toISOString(),
+        reviewDate: reviewDate,
         // Initialize other fields as empty
         dchNotes: "",
         adviceOnDischarge: "",
@@ -240,6 +239,7 @@ const DischargeSummaryForm: React.FC<DischargeSummaryFormProps> = ({ open, onClo
   // Form submission
   const handleFormSubmit = async (data: DischargeSummaryFormData) => {
     try {
+      console.log("Submitting discharge summary:", data);
       const summaryDto: IpDischargeDetailDto = {
         ...data,
         baseDto: {
@@ -273,7 +273,7 @@ const DischargeSummaryForm: React.FC<DischargeSummaryFormProps> = ({ open, onClo
 
   // Get patient and admission info
   const patientInfo = useMemo(() => {
-    if (!patient || !admission || !discharge) return null;
+    // if (!patient || !admission || !discharge) return null;
 
     const admissionData = admission.ipAdmissionDto;
     const patientName = `${admissionData.pTitle} ${admissionData.pfName} ${admissionData.pmName || ""} ${admissionData.plName}`.trim();
@@ -310,7 +310,7 @@ const DischargeSummaryForm: React.FC<DischargeSummaryFormProps> = ({ open, onClo
         icon={SummaryIcon}
         onAsyncClick={handleSubmit(handleFormSubmit)}
         asynchronous
-        disabled={!isValid || !isDirty}
+        // disabled={!isValid || (!isEditMode && !isDirty)}
         color="primary"
         loadingText={isEditMode ? "Updating..." : "Creating..."}
         successText={isEditMode ? "Updated!" : "Created!"}
@@ -328,8 +328,7 @@ const DischargeSummaryForm: React.FC<DischargeSummaryFormProps> = ({ open, onClo
       open={open}
       onClose={handleClose}
       title={isEditMode ? "Update Discharge Summary" : "Create Discharge Summary"}
-      maxWidth="xl"
-      fullWidth
+      fullScreen
       disableBackdropClick={isSubmitting}
       disableEscapeKeyDown={isSubmitting}
       actions={dialogActions}
