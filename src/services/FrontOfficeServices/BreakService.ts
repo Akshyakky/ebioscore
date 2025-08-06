@@ -1,7 +1,7 @@
 // src/services/FrontOfficeServices/BreakService.ts
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { BreakDto, BreakListData, BreakListDto } from "@/interfaces/FrontOffice/BreakListDto";
+import { BreakDto, BreakListDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 
@@ -32,13 +32,13 @@ class BreakService extends GenericEntityService<BreakListDto> {
   }
 
   /**
-   * Retrieves active breaks for a specific date range and optional provider/resource
+   * Retrieves active breaks with details for a specific date range and optional provider/resource
    * @param startDate Start date for the search range
    * @param endDate End date for the search range
    * @param hplId Optional provider/resource ID to filter by
-   * @returns Promise containing operation result with list of active breaks
+   * @returns Promise containing operation result with list of active breaks with details
    */
-  async getActiveBreaks(startDate: Date, endDate: Date, hplId?: number): Promise<OperationResult<BreakListData[]>> {
+  async getActiveBreaks(startDate: Date, endDate: Date, hplId?: number): Promise<OperationResult<BreakListDto[]>> {
     try {
       if (startDate > endDate) {
         return {
@@ -57,95 +57,11 @@ class BreakService extends GenericEntityService<BreakListDto> {
         params.append("hplId", hplId.toString());
       }
 
-      return await this.apiService.get<OperationResult<BreakListData[]>>(`${this.baseEndpoint}/GetActiveBreaks?${params.toString()}`, this.getToken());
+      return await this.apiService.get<OperationResult<BreakListDto[]>>(`${this.baseEndpoint}/GetActiveBreaks?${params.toString()}`, this.getToken());
     } catch (error) {
       return {
         success: false,
         errorMessage: error instanceof Error ? error.message : "Failed to retrieve active breaks",
-        data: undefined,
-      };
-    }
-  }
-
-  /**
-   * Saves a break list with associated break connection details
-   * @param breakListDto The break list data to save
-   * @returns Promise containing operation result with saved break data
-   */
-  async saveBreakList(breakListDto: BreakListDto): Promise<OperationResult<BreakListDto>> {
-    try {
-      if (!breakListDto) {
-        return {
-          success: false,
-          errorMessage: "Break list data is required",
-          data: undefined,
-        };
-      }
-
-      return await this.apiService.post<OperationResult<BreakListDto>>(`${this.baseEndpoint}/Save`, breakListDto, this.getToken());
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to save break list",
-        data: undefined,
-      };
-    }
-  }
-
-  /**
-   * Checks for break conflicts with appointment scheduling
-   * @param hplId Provider/resource ID
-   * @param appointmentDate Appointment date
-   * @param startTime Start time
-   * @param endTime End time
-   * @returns Promise containing boolean result indicating if there are conflicts
-   */
-  async checkBreakConflicts(hplId: number, appointmentDate: Date, startTime: Date, endTime: Date): Promise<OperationResult<boolean>> {
-    try {
-      if (!hplId || hplId <= 0) {
-        return {
-          success: false,
-          errorMessage: "Valid provider/resource ID is required",
-          data: undefined,
-        };
-      }
-
-      const dateOnlyStart = new Date(appointmentDate);
-      dateOnlyStart.setHours(0, 0, 0, 0);
-
-      const dateOnlyEnd = new Date(appointmentDate);
-      dateOnlyEnd.setHours(23, 59, 59, 999);
-
-      // Get active breaks for the specific date and provider/resource
-      const breaksResult = await this.getActiveBreaks(dateOnlyStart, dateOnlyEnd, hplId);
-
-      if (!breaksResult.success || !breaksResult.data) {
-        return {
-          success: true,
-          data: false, // No breaks found, no conflict
-        };
-      }
-
-      // Check if appointment time conflicts with any break
-      const hasConflict = breaksResult.data.some((breakItem) => {
-        const breakStart = new Date(breakItem.bLStartDate);
-        breakStart.setHours(new Date(breakItem.bLStartTime).getHours(), new Date(breakItem.bLStartTime).getMinutes());
-
-        const breakEnd = new Date(breakItem.bLEndDate);
-        breakEnd.setHours(new Date(breakItem.bLEndTime).getHours(), new Date(breakItem.bLEndTime).getMinutes());
-
-        // Check for time overlap
-        return startTime < breakEnd && endTime > breakStart;
-      });
-
-      return {
-        success: true,
-        data: hasConflict,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        errorMessage: error instanceof Error ? error.message : "Failed to check break conflicts",
         data: undefined,
       };
     }
@@ -192,6 +108,69 @@ class BreakService extends GenericEntityService<BreakListDto> {
       return {
         success: false,
         errorMessage: error instanceof Error ? error.message : "Failed to get breaks by provider",
+        data: undefined,
+      };
+    }
+  }
+
+  /**
+   * Transforms BreakListDto array to BreakDto array for compatibility with existing components
+   * @param breakListWithDetails Array of BreakListDto objects
+   * @returns Array of BreakDto objects
+   */
+  private transformBreakListToBreakDto(breakListWithDetails: BreakListDto[]): BreakDto[] {
+    const breakDtos: BreakDto[] = [];
+
+    breakListWithDetails.forEach((breakListItem) => {
+      const { breakList, breakConDetails } = breakListItem;
+
+      breakConDetails.forEach((detail) => {
+        breakDtos.push({
+          ...breakList,
+          hPLID: detail.hPLID || 0,
+          bCDID: detail.bCDID,
+          assignedName: undefined, // This would need to be populated from contact/resource data
+          status: breakList.rActiveYN === "Y" ? "Active" : "Inactive",
+          bCSID: undefined,
+          bCSStartDate: undefined,
+          bCSEndDate: undefined,
+        });
+      });
+    });
+
+    return breakDtos;
+  }
+
+  /**
+   * Gets active breaks and transforms them to BreakDto format for backward compatibility
+   * @param startDate Start date
+   * @param endDate End date
+   * @param hplId Optional provider/resource ID
+   * @returns Promise containing BreakDto array
+   */
+  async getActiveBreaksAsDto(startDate: Date, endDate: Date, hplId?: number): Promise<OperationResult<BreakDto[]>> {
+    try {
+      const result = await this.getActiveBreaks(startDate, endDate, hplId);
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          errorMessage: result.errorMessage || "Failed to retrieve active breaks",
+          data: undefined,
+        };
+      }
+
+      const transformedData = this.transformBreakListToBreakDto(result.data);
+
+      return {
+        success: true,
+        data: transformedData,
+        affectedRows: result.affectedRows,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        errorMessage: error instanceof Error ? error.message : "Failed to get active breaks as DTO",
         data: undefined,
       };
     }

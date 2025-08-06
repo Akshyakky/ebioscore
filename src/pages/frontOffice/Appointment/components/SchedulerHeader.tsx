@@ -54,6 +54,35 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
     }
   };
 
+  // Get the current selection value based on booking mode
+  const getCurrentSelectionValue = () => {
+    return bookingMode === "physician" ? selectedProvider : selectedResource;
+  };
+
+  // Handle selection change based on booking mode
+  const handleSelectionChange = (value: string) => {
+    if (bookingMode === "physician") {
+      onProviderChange(value);
+    } else {
+      onResourceChange(value);
+    }
+  };
+
+  // Get the appropriate options based on booking mode
+  const getCurrentOptions = () => {
+    return bookingMode === "physician" ? providers : resources;
+  };
+
+  // Get the appropriate label based on booking mode
+  const getCurrentLabel = () => {
+    return bookingMode === "physician" ? "Provider" : "Resource";
+  };
+
+  // Get the appropriate "All" option text
+  const getAllOptionText = () => {
+    return bookingMode === "physician" ? "All Providers" : "All Resources";
+  };
+
   return (
     <Paper variant="outlined" style={{ padding: 8, marginBottom: 8 }}>
       <Grid container spacing={1} alignItems="center">
@@ -128,7 +157,7 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
           </Tabs>
         </Grid>
 
-        {/* Filters Section */}
+        {/* Booking Mode Selection */}
         <Grid size={{ xs: 6, md: 1.5 }}>
           <FormControl size="small" fullWidth>
             <InputLabel style={{ fontSize: "0.8rem" }}>Mode</InputLabel>
@@ -142,37 +171,25 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 6, md: 2 }}>
+        {/* Unified Provider/Resource Selection */}
+        <Grid size={{ xs: 6, md: 3.5 }}>
           <FormControl size="small" fullWidth>
-            <InputLabel style={{ fontSize: "0.8rem" }}>Provider</InputLabel>
-            <Select value={selectedProvider} onChange={(e) => onProviderChange(e.target.value)} label="Provider" style={{ fontSize: "0.8rem" }}>
-              <MenuItem value="">All Providers</MenuItem>
-              {providers.map((provider) => (
-                <MenuItem key={provider.value} value={provider.value.toString()}>
-                  {provider.label}
+            <InputLabel style={{ fontSize: "0.8rem" }}>{getCurrentLabel()}</InputLabel>
+            <Select value={getCurrentSelectionValue()} onChange={(e) => handleSelectionChange(e.target.value)} label={getCurrentLabel()} style={{ fontSize: "0.8rem" }}>
+              <MenuItem value="">{getAllOptionText()}</MenuItem>
+              {getCurrentOptions().map((option) => (
+                <MenuItem key={option.value} value={option.value.toString()}>
+                  {option.label}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 6, md: 2 }}>
-          <FormControl size="small" fullWidth>
-            <InputLabel style={{ fontSize: "0.8rem" }}>Resource</InputLabel>
-            <Select value={selectedResource} onChange={(e) => onResourceChange(e.target.value)} label="Resource" style={{ fontSize: "0.8rem" }}>
-              <MenuItem value="">All Resources</MenuItem>
-              {resources.map((resource) => (
-                <MenuItem key={resource.value} value={resource.value.toString()}>
-                  {resource.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1.5 }}>
+        {/* Book Appointment Button */}
+        <Grid size={{ xs: 12, md: 2 }}>
           <Button variant="contained" startIcon={<AddIcon />} onClick={onBookingClick} fullWidth size="small" style={{ fontSize: "0.8rem" }}>
-            Book
+            Book Appointment
           </Button>
         </Grid>
       </Grid>
