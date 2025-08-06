@@ -701,7 +701,7 @@ export const DayView: React.FC<DayViewProps> = ({
             ref={timeLabelsScrollRef}
             onScroll={handleTimeLabelsScroll}
             sx={{
-              maxHeight: "calc(100vh - 300px)",
+              maxHeight: "calc(100vh - 250px)",
               overflowY: "auto",
               overflowX: "hidden",
               "&::-webkit-scrollbar": {
@@ -768,7 +768,7 @@ export const DayView: React.FC<DayViewProps> = ({
             ref={appointmentSlotsScrollRef}
             onScroll={handleAppointmentSlotsScroll}
             sx={{
-              maxHeight: "calc(100vh - 300px)",
+              maxHeight: "calc(100vh - 250px)",
               overflowY: "auto",
               overflowX: "hidden",
               position: "relative",
