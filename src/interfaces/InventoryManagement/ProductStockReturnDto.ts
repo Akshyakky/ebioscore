@@ -2,16 +2,13 @@
 
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
-// Return types enum - Updated to include Physician return
 export enum ReturnType {
   Supplier = "SUP",
   Internal = "INT",
   Expired = "EXP",
   Damaged = "DAM",
-  Physician = "PHY", // New physician return type
+  Physician = "PHY",
 }
-
-// Main stock return entity - Aligned with backend DTO
 export interface ProductStockReturnDto extends BaseDto {
   psrID: number;
   psrDate: Date;
@@ -35,24 +32,11 @@ export interface ProductStockReturnDto extends BaseDto {
   stkrTaxAmt?: number;
   supplierID?: number;
   supplierName?: string;
-  approvedYN: string; // Changed from char to string for frontend consistency
+  approvedYN: string;
   approvedID?: number;
   approvedBy?: string;
-
-  // // Backend calculated properties - Now required as backend sets these
-  // totalItems: number;
-  // totalReturnedQty: number;
-
-  // // Computed properties from backend
-  // returnTypeName: string;
-  // requiresSupplierInfo: boolean;
-  // supplierLabel: string;
-
-  // Additional fields for UI
   details?: ProductStockReturnDetailDto[];
 }
-
-// Stock return detail entity - Aligned with backend
 export interface ProductStockReturnDetailDto extends BaseDto {
   psrdID: number;
   psrID: number;
@@ -66,7 +50,7 @@ export interface ProductStockReturnDetailDto extends BaseDto {
   expiryDate?: Date;
   manufacturedDate?: Date;
   grnDate: Date;
-  prescriptionYN: string; // Backend uses char, frontend uses string
+  prescriptionYN: string;
   expiryYN: string;
   sellableYN: string;
   taxableYN: string;
@@ -76,15 +60,13 @@ export interface ProductStockReturnDetailDto extends BaseDto {
   manufacturerCode?: string;
   manufacturerName?: string;
   taxID?: number;
-  taxCode?: string; // Backend uses char?, frontend uses string?
+  taxCode?: string;
   taxName?: string;
   mrp?: number;
   freeRetQty?: number;
   freeRetUnitQty?: number;
-  psdID: number; // Required field from backend
+  psdID: number;
   hsnCode?: string;
-
-  // Additional business logic properties
   productCode?: string;
   pUnitID?: number;
   pUnitName?: string;
@@ -92,7 +74,7 @@ export interface ProductStockReturnDetailDto extends BaseDto {
   pkgID?: number;
   pkgName?: string;
   availableQty?: number;
-  psbid?: number; // Backend uses PSBID (uppercase)
+  psbid?: number;
   returnReason?: string;
   tax?: number;
   sellUnitPrice?: number;
@@ -100,17 +82,13 @@ export interface ProductStockReturnDetailDto extends BaseDto {
   mfName?: string;
   pGrpID?: number;
   pGrpName?: string;
-  cgst?: number; // Not in backend DTO - may need to be removed or added to backend
-  sgst?: number; // Not in backend DTO - may need to be removed or added to backend
+  cgst?: number;
+  sgst?: number;
 }
-
-// Composite DTO for operations involving both header and details
 export interface ProductStockReturnCompositeDto {
   productStockReturn: ProductStockReturnDto;
   productStockReturnDetails: ProductStockReturnDetailDto[];
 }
-
-// Search and filter parameters - Updated to include physician support
 export interface ProductStockReturnSearchRequest {
   pageIndex?: number;
   pageSize?: number;
@@ -120,10 +98,10 @@ export interface ProductStockReturnSearchRequest {
   fromDepartmentID?: number;
   toDepartmentID?: number;
   supplierID?: number;
-  physicianID?: number; // New property for physician filtering
+  physicianID?: number;
   psrCode?: string;
   returnTypeCode?: string;
-  approvedStatus?: string; // Backend uses char?, frontend uses string?
+  approvedStatus?: string;
   sortBy?: string;
   sortAscending?: boolean;
 }
@@ -135,14 +113,10 @@ export enum DateFilterType {
   LastThreeMonths = "LastThreeMonths",
   Custom = "Custom",
 }
-
-// Validation request
 export interface ValidateReturnStockRequest {
   fromDepartmentId: number;
   returnDetails: ProductStockReturnDetailDto[];
 }
-
-// New DTOs for Physician Return functionality
 export interface PhysicianReturnDto {
   physicianId: number;
   physicianName: string;
@@ -171,8 +145,6 @@ export interface PhysicianReturnSummaryDto {
   totalQuantity: number;
   topPhysicians: PhysicianReturnDto[];
 }
-
-// Stock balance interface for available stock
 export interface ProductStockBalance {
   psbid: number;
   deptID: number;
@@ -193,7 +165,6 @@ export interface ProductStockBalance {
   manufacturerName?: string;
 }
 
-// Helper function to get return type name - Matching backend logic
 export const getReturnTypeName = (returnTypeCode?: string): string => {
   switch (returnTypeCode) {
     case ReturnType.Supplier:
@@ -211,12 +182,10 @@ export const getReturnTypeName = (returnTypeCode?: string): string => {
   }
 };
 
-// Helper function to check if return type requires supplier/physician info
 export const requiresSupplierInfo = (returnTypeCode?: string): boolean => {
   return returnTypeCode === ReturnType.Supplier || returnTypeCode === ReturnType.Physician;
 };
 
-// Helper function to get supplier label based on return type
 export const getSupplierLabel = (returnTypeCode?: string): string => {
   switch (returnTypeCode) {
     case ReturnType.Physician:
@@ -228,7 +197,6 @@ export const getSupplierLabel = (returnTypeCode?: string): string => {
   }
 };
 
-// Helper function to format currency
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",

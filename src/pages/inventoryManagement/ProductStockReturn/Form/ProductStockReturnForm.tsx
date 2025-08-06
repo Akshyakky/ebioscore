@@ -27,43 +27,95 @@ interface ProductStockReturnFormProps {
 }
 
 const returnDetailSchema = z.object({
-  psrdID: z.number(),
-  psrID: z.number(),
+  // Core identification fields
+  psrdID: z.number().default(0),
+  psrID: z.number().default(0),
+
+  // Product information
   productID: z.number().min(1, "Product is required"),
   productCode: z.string().optional(),
   productName: z.string().min(1, "Product name is required"),
+
+  // Quantity and pricing
   quantity: z.number().min(1, "Quantity must be at least 1"),
   unitPrice: z.number().min(0, "Unit price must be non-negative"),
   totalAmount: z.number().min(0, "Total amount must be non-negative"),
+  sellUnitPrice: z.number().optional(),
+  mrp: z.number().optional(),
+
+  // Batch information
+  batchID: z.number().optional(),
   batchNo: z.string().optional(),
   expiryDate: z.date().optional(),
-  prescriptionYN: z.string().optional(),
-  expiryYN: z.string().optional(),
-  sellableYN: z.string().optional(),
-  taxableYN: z.string().optional(),
-  availableQty: z.number().optional(),
-  tax: z.number().optional(),
-  returnReason: z.string().optional(),
+  manufacturedDate: z.date().optional(),
+  grnDate: z.date().default(() => new Date()),
+
+  // Status flags
+  prescriptionYN: z.string().default("N"),
+  expiryYN: z.string().default("N"),
+  sellableYN: z.string().default("Y"),
+  taxableYN: z.string().default("Y"),
   rActiveYN: z.string().default("Y"),
+
+  // Product group information
+  psGrpID: z.number().optional(),
+  psGrpName: z.string().optional(),
+  pGrpID: z.number().optional(),
+  pGrpName: z.string().optional(),
+
+  // Manufacturer information
+  manufacturerID: z.number().optional(),
+  manufacturerCode: z.string().optional(),
+  manufacturerName: z.string().optional(),
+  mfID: z.number().optional(),
+  mfName: z.string().optional(),
+
+  // Tax information
+  taxID: z.number().optional(),
+  taxName: z.string().optional(),
+  tax: z.number().optional(),
+  cgst: z.number().optional(),
+  sgst: z.number().optional(),
+  pUnitID: z.number().optional(),
+  pUnitName: z.string().optional(),
+  pUnitsPerPack: z.number().default(1),
+  pkgID: z.number().optional(),
+  pkgName: z.string().optional(),
+  hsnCode: z.string().optional(),
+  availableQty: z.number().optional(),
+  freeRetQty: z.number().default(0),
+  freeRetUnitQty: z.number().default(0),
+  psdID: z.number().default(1),
+  psbid: z.number().optional(),
+  returnReason: z.string().optional(),
 });
 
 const schema = z.object({
-  psrID: z.number(),
-  psrDate: z.date(),
+  psrID: z.number().default(0),
+  psrDate: z.date().default(() => new Date()),
+  dtID: z.number().default(0),
+  dtCode: z.string().optional(),
+  dtName: z.string().default(""),
   returnTypeCode: z.string().min(1, "Return type is required"),
+  returnType: z.string().optional(),
   fromDeptID: z.number().min(1, "From department is required"),
-  fromDeptName: z.string(),
+  fromDeptName: z.string().default(""),
   toDeptID: z.number().optional(),
   toDeptName: z.string().optional(),
   supplierID: z.number().optional(),
   supplierName: z.string().optional(),
-  auGrpID: z.number().optional(),
-  catDesc: z.string().optional(),
-  catValue: z.string().optional(),
+  auGrpID: z.number().default(18),
+  authorisedBy: z.string().optional(),
+  catDesc: z.string().default("REVENUE"),
+  catValue: z.string().default("MEDI"),
   psrCode: z.string().optional(),
-  approvedYN: z.string(),
+  approvedYN: z.string().default("N"),
   approvedID: z.number().optional(),
   approvedBy: z.string().optional(),
+  stkrCoinAdjAmt: z.number().optional(),
+  stkrGrossAmt: z.number().optional(),
+  stkrRetAmt: z.number().optional(),
+  stkrTaxAmt: z.number().optional(),
   rActiveYN: z.string().default("Y"),
   productStockReturnDetails: z.array(returnDetailSchema).min(1, "At least one product detail is required"),
 });
@@ -104,28 +156,37 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   const [isViewMode] = useState<boolean>(viewOnly);
 
   const supplier = [
-    { value: 1, label: "Suplier1" },
-    { value: 2, label: "Suplier2" },
+    { value: 1, label: "Supplier1" },
+    { value: 2, label: "Supplier2" },
   ];
 
   const defaultValues: ProductStockReturnFormData = useMemo(
     () => ({
       psrID: 0,
       psrDate: new Date(),
+      dtID: 0,
+      dtCode: "",
+      dtName: "",
       returnTypeCode: ReturnType.Supplier,
+      returnType: "",
       fromDeptID: selectedDepartmentId || 0,
       fromDeptName: selectedDepartmentName || "",
-      toDeptID: 0,
+      toDeptID: undefined,
       toDeptName: "",
-      supplierID: 0,
+      supplierID: undefined,
       supplierName: "",
       auGrpID: 18,
+      authorisedBy: "",
       catDesc: "REVENUE",
       catValue: "MEDI",
       psrCode: "",
       approvedYN: "N",
-      approvedID: 0,
+      approvedID: undefined,
       approvedBy: "",
+      stkrCoinAdjAmt: undefined,
+      stkrGrossAmt: undefined,
+      stkrRetAmt: undefined,
+      stkrTaxAmt: undefined,
       rActiveYN: "Y",
       productStockReturnDetails: [],
     }),
@@ -148,130 +209,70 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   const activeStatusValue = useWatch({ control, name: "rActiveYN" });
   const approvalStatusValue = useWatch({ control, name: "approvedYN" });
   const returnTypeValue = useWatch({ control, name: "returnTypeCode" });
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: "productStockReturnDetails",
   });
 
-  // Fixed: Improved detail mapping function with comprehensive field conversion
   const createDetailMappingWithAllFields = useCallback((detail: any, isCopyMode: boolean) => {
-    console.log("Mapping detail:", detail, "isCopyMode:", isCopyMode);
-
-    const mappedDetail = { ...detail };
-
-    // Reset IDs for copy mode
-    if (isCopyMode) {
-      mappedDetail.psrdID = 0;
-      mappedDetail.psrID = 0;
-    }
-
-    // Handle date conversions safely
-    const safeParseDate = (dateValue: any): Date | undefined => {
-      if (!dateValue) return undefined;
-      try {
-        if (dateValue instanceof Date) {
-          return dateValue;
-        }
-        const parsedDate = new Date(dateValue);
-        return isNaN(parsedDate.getTime()) ? undefined : parsedDate;
-      } catch (error) {
-        console.warn("Date parsing error:", error);
-        return undefined;
-      }
+    return {
+      psrdID: isCopyMode ? 0 : detail.psrdID || 0,
+      psrID: isCopyMode ? 0 : detail.psrID || 0,
+      productID: detail.productID || 0,
+      productCode: detail.productCode || "",
+      productName: detail.productName || "",
+      quantity: detail.quantity || 0,
+      unitPrice: detail.unitPrice || detail.sellUnitPrice || detail.defaultPrice || 0,
+      totalAmount: detail.totalAmount || 0,
+      sellUnitPrice: detail.sellUnitPrice || detail.unitPrice || 0,
+      mrp: detail.mrp || detail.itemMrpValue || 0,
+      batchID: detail.batchID,
+      batchNo: detail.batchNo || "",
+      expiryDate: detail.expiryDate ? new Date(detail.expiryDate) : undefined,
+      manufacturedDate: detail.manufacturedDate ? new Date(detail.manufacturedDate) : undefined,
+      grnDate: detail.grnDate ? new Date(detail.grnDate) : new Date(),
+      prescriptionYN: detail.prescriptionYN || "N",
+      expiryYN: detail.expiryYN || "N",
+      sellableYN: detail.sellableYN || "Y",
+      taxableYN: detail.taxableYN || "Y",
+      rActiveYN: detail.rActiveYN || "Y",
+      psGrpID: detail.psGrpID,
+      psGrpName: detail.psGrpName || "",
+      pGrpID: detail.pGrpID,
+      pGrpName: detail.pGrpName || "",
+      manufacturerID: detail.manufacturerID,
+      manufacturerCode: detail.manufacturerCode || "",
+      manufacturerName: detail.manufacturerName || detail.mfName || "",
+      mfID: detail.mfID,
+      mfName: detail.mfName || detail.manufacturerName || "",
+      taxID: detail.taxID,
+      taxCode: detail.taxCode || "",
+      taxName: detail.taxName || "",
+      tax: detail.tax || 0,
+      cgst: detail.cgst || detail.cgstPerValue || (detail.tax ? detail.tax / 2 : 0),
+      sgst: detail.sgst || detail.sgstPerValue || (detail.tax ? detail.tax / 2 : 0),
+      pUnitID: detail.pUnitID,
+      pUnitName: detail.pUnitName || "",
+      pUnitsPerPack: detail.pUnitsPerPack || 1,
+      pkgID: detail.pkgID,
+      pkgName: detail.pkgName || "",
+      hsnCode: detail.hsnCode || "",
+      availableQty: detail.availableQty || detail.acceptQty || detail.recvdQty || 0,
+      freeRetQty: detail.freeRetQty || 0,
+      freeRetUnitQty: detail.freeRetUnitQty || 0,
+      psdID: detail.psdID || 1,
+      psbid: detail.psbid || detail.grnDetID,
+      returnReason: detail.returnReason || "",
     };
-
-    mappedDetail.expiryDate = safeParseDate(detail.expiryDate);
-    mappedDetail.manufacturedDate = safeParseDate(detail.manufacturedDate);
-    mappedDetail.grnDate = safeParseDate(detail.grnDate) || new Date();
-
-    // Set numeric defaults with proper conversion
-    const setNumericDefault = (key: string, defaultValue: number) => {
-      const value = detail[key];
-      mappedDetail[key] = value !== null && value !== undefined && !isNaN(Number(value)) ? Number(value) : defaultValue;
-    };
-
-    // Set string defaults with proper conversion
-    const setStringDefault = (key: string, defaultValue: string) => {
-      mappedDetail[key] = detail[key] !== null && detail[key] !== undefined ? String(detail[key]) : defaultValue;
-    };
-
-    // Apply numeric defaults
-    setNumericDefault("psrdID", isCopyMode ? 0 : detail.psrdID || 0);
-    setNumericDefault("psrID", isCopyMode ? 0 : detail.psrID || 0);
-    setNumericDefault("productID", detail.productID || 0);
-    setNumericDefault("quantity", detail.quantity || 0);
-    setNumericDefault("unitPrice", detail.unitPrice || 0);
-    setNumericDefault("totalAmount", detail.totalAmount || 0);
-    setNumericDefault("availableQty", detail.availableQty || 0);
-    setNumericDefault("tax", detail.tax || 0);
-    setNumericDefault("psGrpID", detail.psGrpID || 0);
-    setNumericDefault("pGrpID", detail.pGrpID || 0);
-    setNumericDefault("manufacturerID", detail.manufacturerID || 0);
-    setNumericDefault("taxID", detail.taxID || 0);
-    setNumericDefault("mrp", detail.mrp || 0);
-    setNumericDefault("psdID", detail.psdID || 0);
-    setNumericDefault("freeRetQty", detail.freeRetQty || 0);
-    setNumericDefault("freeRetUnitQty", detail.freeRetUnitQty || 0);
-    setNumericDefault("pUnitID", detail.pUnitID || 0);
-    setNumericDefault("pUnitsPerPack", detail.pUnitsPerPack || 1);
-    setNumericDefault("pkgID", detail.pkgID || 0);
-    setNumericDefault("psbid", detail.psbid || 0);
-    setNumericDefault("sellUnitPrice", detail.sellUnitPrice || 0);
-    setNumericDefault("mfID", detail.mfID || 0);
-    setNumericDefault("cgst", detail.cgst || (detail.tax || 0) / 2);
-    setNumericDefault("sgst", detail.sgst || (detail.tax || 0) / 2);
-    setNumericDefault("batchID", detail.batchID || 0);
-    setNumericDefault("recvdQty", detail.recvdQty || 0);
-    setNumericDefault("supplierID", detail.supplierID || detail.supplrID || 0);
-    setNumericDefault("supplrID", detail.supplrID || 0);
-    setNumericDefault("freeItems", detail.freeItems || 0);
-
-    // Apply string defaults
-    setStringDefault("productCode", detail.productCode || "");
-    setStringDefault("productName", detail.productName || "");
-    setStringDefault("batchNo", detail.batchNo || "");
-    setStringDefault("prescriptionYN", detail.prescriptionYN || "N");
-    setStringDefault("expiryYN", detail.expiryYN || "N");
-    setStringDefault("sellableYN", detail.sellableYN || "N");
-    setStringDefault("taxableYN", detail.taxableYN || "N");
-    setStringDefault("psGrpName", detail.psGrpName || "");
-    setStringDefault("pGrpName", detail.pGrpName || "");
-    setStringDefault("manufacturerCode", detail.manufacturerCode || "");
-    setStringDefault("manufacturerName", detail.manufacturerName || "");
-    setStringDefault("taxCode", detail.taxCode || "");
-    setStringDefault("taxName", detail.taxName || "");
-    setStringDefault("hsnCode", detail.hsnCode || "");
-    setStringDefault("pUnitName", detail.pUnitName || "");
-    setStringDefault("pkgName", detail.pkgName || "");
-    setStringDefault("returnReason", detail.returnReason || "");
-    setStringDefault("rActiveYN", detail.rActiveYN || "Y");
-    setStringDefault("mfName", detail.mfName || "");
-    setStringDefault("grnCode", detail.grnCode || "");
-    setStringDefault("supplierName", detail.supplierName || detail.supplrName || "");
-    setStringDefault("invoiceNo", detail.invoiceNo || "");
-    setStringDefault("invDate", detail.invDate || "");
-    setStringDefault("supplrName", detail.supplrName || "");
-    setStringDefault("dcNo", detail.dcNo || "");
-    setStringDefault("poNo", detail.poNo || "");
-    setStringDefault("grnType", detail.grnType || "");
-    setStringDefault("grnStatus", detail.grnStatus || "");
-    setStringDefault("grnApprovedYN", detail.grnApprovedYN || "");
-
-    console.log("Mapped detail result:", mappedDetail);
-    return mappedDetail;
   }, []);
 
   const generateReturnCodeAsync = async () => {
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
     const returnType = getValues("returnTypeCode");
-
     if (!isAddMode || !deptId || !returnType) return;
-
     try {
       setIsGeneratingCode(true);
       let code: string | null = null;
-
       switch (returnType) {
         case ReturnType.Supplier:
           code = await generateSupplierReturnCode(deptId);
@@ -288,7 +289,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         default:
           code = await generateReturnCode(deptId, returnType);
       }
-
       if (code) {
         setValue("psrCode", code, { shouldValidate: true, shouldDirty: true });
       } else {
@@ -301,74 +301,60 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     }
   };
 
-  // Fixed: Completely rewritten loadReturnDetails function with better error handling and data processing
   const loadReturnDetails = useCallback(async () => {
     if (!initialData) {
-      console.log("No initial data provided");
       return;
     }
-
     try {
       setIsLoadingData(true);
       setLoading(true);
-      console.log("Loading return details for:", initialData);
-
       let returnData: ProductStockReturnDto;
       let detailsData: any[] = [];
-
-      // Check if we already have details in initialData
       if (initialData.details && Array.isArray(initialData.details) && initialData.details.length > 0) {
-        console.log("Using existing details from initialData:", initialData.details.length, "items");
         returnData = initialData;
         detailsData = initialData.details;
       } else {
-        // Fetch fresh data from API
-        console.log("Fetching fresh data from API for ID:", initialData.psrID);
         const fetchedComposite = await getReturnWithDetailsById(initialData.psrID);
-
         if (!fetchedComposite || !fetchedComposite.productStockReturn) {
           throw new Error("Failed to fetch Product Stock Return details from API");
         }
-
-        console.log("Fetched composite data:", fetchedComposite);
         returnData = fetchedComposite.productStockReturn;
         detailsData = fetchedComposite.productStockReturnDetails || [];
       }
-
-      // Build form data with proper field mapping
       const formData: ProductStockReturnFormData = {
         psrID: isCopyMode ? 0 : returnData.psrID || 0,
         psrDate: returnData.psrDate ? new Date(returnData.psrDate) : new Date(),
+        dtID: returnData.dtID || 0,
+        dtCode: isCopyMode ? "" : returnData.dtCode || "",
+        dtName: returnData.dtName || "",
         returnTypeCode: returnData.returnTypeCode || ReturnType.Supplier,
+        returnType: returnData.returnType || "",
         fromDeptID: returnData.fromDeptID || selectedDepartmentId || 0,
         fromDeptName: returnData.fromDeptName || selectedDepartmentName || "",
-        toDeptID: isCopyMode ? 0 : returnData.toDeptID || 0,
+        toDeptID: isCopyMode ? undefined : returnData.toDeptID,
         toDeptName: isCopyMode ? "" : returnData.toDeptName || "",
-        supplierID: isCopyMode ? 0 : returnData.supplierID || 0,
+        supplierID: isCopyMode ? undefined : returnData.supplierID,
         supplierName: isCopyMode ? "" : returnData.supplierName || "",
         auGrpID: returnData.auGrpID || 18,
+        authorisedBy: isCopyMode ? "" : returnData.authorisedBy || "",
         catDesc: returnData.catDesc || "REVENUE",
         catValue: returnData.catValue || "MEDI",
         psrCode: isCopyMode ? "" : returnData.psrCode || "",
         approvedYN: isCopyMode ? "N" : returnData.approvedYN || "N",
-        approvedID: isCopyMode ? 0 : returnData.approvedID || 0,
+        approvedID: isCopyMode ? undefined : returnData.approvedID,
         approvedBy: isCopyMode ? "" : returnData.approvedBy || "",
+        stkrCoinAdjAmt: returnData.stkrCoinAdjAmt,
+        stkrGrossAmt: returnData.stkrGrossAmt,
+        stkrRetAmt: returnData.stkrRetAmt,
+        stkrTaxAmt: returnData.stkrTaxAmt,
         rActiveYN: returnData.rActiveYN || "Y",
         productStockReturnDetails: detailsData.map((detail) => createDetailMappingWithAllFields(detail, isCopyMode)),
       };
-
-      console.log("Final form data to reset:", formData);
-      console.log("Details count:", formData.productStockReturnDetails.length);
-
-      // Reset form with the prepared data
       reset(formData);
       setIsDataLoaded(true);
-
-      // Generate return code for copy mode
       if (isCopyMode && formData.fromDeptID) {
         setTimeout(() => generateReturnCodeAsync(), 500);
       }
-
       const actionText = isViewMode ? "viewing" : isCopyMode ? "copying" : "editing";
       showAlert("Success", `Stock Return data loaded successfully for ${actionText} (${formData.productStockReturnDetails.length} products)`, "success");
     } catch (error) {
@@ -382,7 +368,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     }
   }, [initialData, isCopyMode, isViewMode, getReturnWithDetailsById, reset, setLoading, showAlert, createDetailMappingWithAllFields, selectedDepartmentId, selectedDepartmentName]);
 
-  // Fixed: Improved useEffect for data loading with better dependency management
   useEffect(() => {
     console.log("Data loading useEffect triggered", {
       open,
@@ -414,7 +399,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     }
   }, [open, initialData?.psrID, isAddMode, isCopyMode, isEditMode, isViewMode, isDataLoaded, loadReturnDetails, reset, defaultValues]);
 
-  // Set department data for add mode
   useEffect(() => {
     if (isAddMode && selectedDepartmentId && selectedDepartmentName && !initialData && isDataLoaded) {
       console.log("Setting department data for add mode:", selectedDepartmentId, selectedDepartmentName);
@@ -423,7 +407,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     }
   }, [isAddMode, selectedDepartmentId, selectedDepartmentName, setValue, initialData, isDataLoaded]);
 
-  // Reset data loaded flag when dialog closes
   useEffect(() => {
     if (!open) {
       console.log("Dialog closed, resetting data loaded flag");
@@ -433,7 +416,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     }
   }, [open]);
 
-  // Generate return code and handle return type changes
   useEffect(() => {
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
     if (deptId && isAddMode && !isCopyMode && isDataLoaded) {
@@ -446,12 +428,12 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       generateReturnCodeAsync();
       const currentReturnType = getValues("returnTypeCode");
       if (currentReturnType !== ReturnType.Internal) {
-        setValue("toDeptID", 0, { shouldValidate: true });
+        setValue("toDeptID", undefined, { shouldValidate: true });
         setValue("toDeptName", "", { shouldValidate: true });
       }
 
       if (currentReturnType !== ReturnType.Supplier) {
-        setValue("supplierID", 0, { shouldValidate: true });
+        setValue("supplierID", undefined, { shouldValidate: true });
         setValue("supplierName", "", { shouldValidate: true });
       }
     }
@@ -459,15 +441,16 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
 
   const handleReturnTypeChange = (value: string) => {
     setValue("returnTypeCode", value, { shouldValidate: true, shouldDirty: true });
+    setValue("returnType", getReturnTypeName(value), { shouldValidate: true, shouldDirty: true });
   };
 
   const onSubmit = async (data: ProductStockReturnFormData) => {
+    debugger;
     if (isViewMode) return;
     setFormError(null);
     try {
       setIsSaving(true);
       setLoading(true);
-
       if (!data.fromDeptID || data.fromDeptID === 0) {
         if (selectedDepartmentId) {
           setValue("fromDeptID", selectedDepartmentId);
@@ -479,14 +462,14 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
           return;
         }
       }
+
       if (data.returnTypeCode === ReturnType.Internal && (!data.toDeptID || data.toDeptID === 0)) {
         showAlert("Warning", "To department is required for Internal Returns. Please select a destination department.", "warning");
         return;
       }
 
-      if ((data.returnTypeCode === ReturnType.Supplier || data.returnTypeCode === ReturnType.Physician) && (!data.supplierID || data.supplierID === 0)) {
-        const entityType = data.returnTypeCode === ReturnType.Physician ? "Physician" : "Supplier";
-        showAlert("Warning", `${entityType} is required for ${entityType} Returns. Please select a ${entityType.toLowerCase()}.`, "warning");
+      if (data.returnTypeCode === ReturnType.Supplier && (!data.supplierID || data.supplierID === 0)) {
+        showAlert("Warning", "Supplier is required for Supplier Returns. Please select a supplier.", "warning");
         return;
       }
 
@@ -499,6 +482,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         showAlert("Warning", "At least one product must be added to the return", "warning");
         return;
       }
+
       const fromDept = department?.find((d) => Number(d.value) === data.fromDeptID);
       const toDept = department?.find((d) => Number(d.value) === data.toDeptID);
       const selectedSupplier = supplier?.find((s) => Number(s.value) === data.supplierID);
@@ -506,55 +490,78 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         productStockReturn: {
           psrID: data.psrID,
           psrDate: data.psrDate,
-          dtID: 0,
-          dtCode: "",
-          dtName: "",
+          dtID: data.dtID,
+          dtCode: data.dtCode || "",
+          dtName: data.dtName,
           returnTypeCode: data.returnTypeCode,
-          returnType: getReturnTypeName(data.returnTypeCode),
+          returnType: data.returnType || getReturnTypeName(data.returnTypeCode),
           fromDeptID: data.fromDeptID,
           fromDeptName: fromDept?.label || data.fromDeptName,
-          toDeptID: data.toDeptID || undefined,
+          toDeptID: data.toDeptID,
           toDeptName: toDept?.label || data.toDeptName,
-          supplierID: data.supplierID || undefined,
+          supplierID: data.supplierID,
           supplierName: selectedSupplier?.label || data.supplierName,
           auGrpID: data.auGrpID || 18,
+          authorisedBy: data.authorisedBy,
           catDesc: data.catDesc || "REVENUE",
           catValue: data.catValue || "MEDI",
           psrCode: data.psrCode || "",
           approvedYN: data.approvedYN || "N",
-          approvedID: data.approvedID || 0,
-          approvedBy: data.approvedBy || "",
+          approvedID: data.approvedID,
+          approvedBy: data.approvedBy,
+          stkrCoinAdjAmt: data.stkrCoinAdjAmt,
+          stkrGrossAmt: data.stkrGrossAmt,
+          stkrRetAmt: data.stkrRetAmt,
+          stkrTaxAmt: data.stkrTaxAmt,
           rActiveYN: data.rActiveYN || "Y",
         } as ProductStockReturnDto,
         productStockReturnDetails: data.productStockReturnDetails.map((detail) => ({
           psrdID: detail.psrdID || 0,
           psrID: detail.psrID || 0,
-          productID: detail.productID || 0,
-          productName: detail.productName || "",
-          quantity: detail.quantity || 0,
-          unitPrice: detail.unitPrice || 0,
-          totalAmount: detail.totalAmount || 0,
-          batchNo: detail.batchNo || "",
-          expiryDate: detail.expiryDate || new Date(),
-          manufacturedDate: new Date(),
-          grnDate: new Date(),
+          productID: detail.productID,
+          productCode: detail.productCode,
+          productName: detail.productName,
+          quantity: detail.quantity,
+          unitPrice: detail.unitPrice,
+          totalAmount: detail.totalAmount,
+          sellUnitPrice: detail.sellUnitPrice,
+          mrp: detail.mrp,
+          batchID: detail.batchID,
+          batchNo: detail.batchNo,
+          expiryDate: detail.expiryDate,
+          manufacturedDate: detail.manufacturedDate,
+          grnDate: detail.grnDate,
           prescriptionYN: detail.prescriptionYN || "N",
           expiryYN: detail.expiryYN || "N",
-          sellableYN: detail.sellableYN || "N",
-          taxableYN: detail.taxableYN || "N",
-          availableQty: detail.availableQty || 0,
-          tax: detail.tax || 0,
-          returnReason: detail.returnReason || "",
-          psdID: detail.psrdID || 0,
-          psGrpID: 0,
-          pGrpID: 0,
-          taxID: 0,
-          mrp: 0,
-          manufacturerID: 0,
-          psbid: 0,
-          freeRetQty: 0,
-          freeRetUnitQty: 0,
+          sellableYN: detail.sellableYN || "Y",
+          taxableYN: detail.taxableYN || "Y",
           rActiveYN: detail.rActiveYN || "Y",
+          psGrpID: detail.psGrpID,
+          psGrpName: detail.psGrpName,
+          pGrpID: detail.pGrpID,
+          pGrpName: detail.pGrpName,
+          manufacturerID: detail.manufacturerID,
+          manufacturerCode: detail.manufacturerCode,
+          manufacturerName: detail.manufacturerName,
+          mfID: detail.mfID,
+          mfName: detail.mfName,
+          taxID: detail.taxID,
+          taxName: detail.taxName,
+          tax: detail.tax,
+          cgst: detail.cgst,
+          sgst: detail.sgst,
+          pUnitID: detail.pUnitID,
+          pUnitName: detail.pUnitName,
+          pUnitsPerPack: detail.pUnitsPerPack || 1,
+          pkgID: detail.pkgID,
+          pkgName: detail.pkgName,
+          hsnCode: detail.hsnCode,
+          availableQty: detail.availableQty,
+          freeRetQty: detail.freeRetQty || 0,
+          freeRetUnitQty: detail.freeRetUnitQty || 0,
+          psdID: detail.psdID || 1,
+          psbid: detail.psbid,
+          returnReason: detail.returnReason,
         })),
       };
 
@@ -587,8 +594,6 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         return "Expired Items";
       case ReturnType.Damaged:
         return "Damaged Items";
-      case ReturnType.Physician:
-        return "Physician Return";
       default:
         return returnTypeCode || "Unknown";
     }

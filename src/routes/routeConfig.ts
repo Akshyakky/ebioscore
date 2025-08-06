@@ -1,6 +1,3 @@
-import BillingPage from "@/pages/billing/Billing/MainPage/BillingPage";
-import TemplateListPage from "@/pages/clinicalManagement/TemplateList/MainPage/TemplateListPage";
-import LaboratoryReportEntryPage from "@/pages/laboratory/LaboratoryReportEntry/MainPage/LaboratoryReportEntryPage";
 import { AlertProvider } from "@/providers/AlertProvider";
 import React, { lazy, Suspense } from "react";
 
@@ -65,6 +62,9 @@ const DepartmentConsumptionPage = lazy(() => import("@/pages/inventoryManagement
 const ProductStockReturnPage = lazy(() => import("@/pages/inventoryManagement/ProductStockReturn/MainPage/ProductStockReturnMainPage "));
 const PhysicianStockReturnPage = lazy(() => import("@/pages/inventoryManagement/PhysicianStockReturn/MainPage/PhysicianStockReturnMainPage"));
 const DischargeSummaryPage = lazy(() => import("@/pages/patientAdministration/DischargeSummary/MainPage/DischargeSummaryPage"));
+const TemplateListPage = lazy(() => import("@/pages/clinicalManagement/TemplateList/MainPage/TemplateListPage"));
+const BillingPage = lazy(() => import("@/pages/billing/Billing/MainPage/BillingPage"));
+const LaboratoryReportEntryPage = lazy(() => import("@/pages/laboratory/LaboratoryReportEntry/MainPage/LaboratoryReportEntryPage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {

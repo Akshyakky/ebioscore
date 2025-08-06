@@ -72,7 +72,6 @@ const returnDetailSchema = z.object({
   tax: z.number().optional(),
   returnReason: z.string().optional(),
   rActiveYN: z.string().default("Y"),
-  // Add missing fields from DTO
   grnDate: z.date().optional(),
   manufacturedDate: z.date().optional(),
   psGrpID: z.number().optional(),
@@ -102,15 +101,9 @@ const returnDetailSchema = z.object({
   pGrpName: z.string().optional(),
   cgst: z.number().optional(),
   sgst: z.number().optional(),
-  // Additional fields from GRN
-  grnCode: z.string().optional(),
-  supplierName: z.string().optional(),
   invoiceNo: z.string().optional(),
   recvdQty: z.number().optional(),
   invDate: z.string().optional(),
-  supplierID: z.number().optional(),
-  supplrID: z.number().optional(),
-  supplrName: z.string().optional(),
   dcNo: z.string().optional(),
   poNo: z.string().optional(),
   grnType: z.string().optional(),
@@ -127,8 +120,6 @@ const schema = z.object({
   fromDeptName: z.string(),
   toDeptID: z.number().optional(),
   toDeptName: z.string().optional(),
-  supplierID: z.number().optional(),
-  supplierName: z.string().optional(),
   auGrpID: z.number().optional(),
   catDesc: z.string().optional(),
   catValue: z.string().optional(),
@@ -147,103 +138,38 @@ interface TablePaginationActionsProps {
   onPageChange: (event: React.MouseEvent<HTMLButtonElement>, newPage: number) => void;
 }
 
-function TablePaginationActions(props: TablePaginationActionsProps) {
+const TablePaginationActions: React.FC<TablePaginationActionsProps> = ({ count, page, rowsPerPage, onPageChange }) => {
   const theme = useTheme();
-  const { count, page, rowsPerPage, onPageChange } = props;
+  const maxPage = Math.max(0, Math.ceil(count / rowsPerPage) - 1);
 
-  const handleFirstPageButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onPageChange(event, 0);
+  const handleClick = (newPage: number) => (event: React.MouseEvent<HTMLButtonElement>) => onPageChange(event, newPage);
+
+  const iconButtonStyle = {
+    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+    "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.04) },
   };
 
-  const handleBackButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onPageChange(event, page - 1);
-  };
-
-  const handleNextButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onPageChange(event, page + 1);
-  };
-
-  const handleLastPageButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
-  };
+  const buttons = [
+    { onClick: handleClick(0), disabled: page === 0, icon: theme.direction === "rtl" ? <LastPage /> : <FirstPage />, title: "First page" },
+    { onClick: handleClick(page - 1), disabled: page === 0, icon: theme.direction === "rtl" ? <KeyboardArrowRight /> : <KeyboardArrowLeft />, title: "Previous page" },
+    { onClick: handleClick(page + 1), disabled: page >= maxPage, icon: theme.direction === "rtl" ? <KeyboardArrowLeft /> : <KeyboardArrowRight />, title: "Next page" },
+    { onClick: handleClick(maxPage), disabled: page >= maxPage, icon: theme.direction === "rtl" ? <FirstPage /> : <LastPage />, title: "Last page" },
+  ];
 
   return (
     <Box sx={{ flexShrink: 0, ml: 2.5, display: "flex", alignItems: "center", gap: 0.5 }}>
-      <Tooltip title="First page">
-        <span>
-          <IconButton
-            onClick={handleFirstPageButtonClick}
-            disabled={page === 0}
-            aria-label="first page"
-            size="small"
-            sx={{
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            {theme.direction === "rtl" ? <LastPage fontSize="small" /> : <FirstPage fontSize="small" />}
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title="Previous page">
-        <span>
-          <IconButton
-            onClick={handleBackButtonClick}
-            disabled={page === 0}
-            aria-label="previous page"
-            size="small"
-            sx={{
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            {theme.direction === "rtl" ? <KeyboardArrowRight fontSize="small" /> : <KeyboardArrowLeft fontSize="small" />}
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title="Next page">
-        <span>
-          <IconButton
-            onClick={handleNextButtonClick}
-            disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-            aria-label="next page"
-            size="small"
-            sx={{
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            {theme.direction === "rtl" ? <KeyboardArrowLeft fontSize="small" /> : <KeyboardArrowRight fontSize="small" />}
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title="Last page">
-        <span>
-          <IconButton
-            onClick={handleLastPageButtonClick}
-            disabled={page >= Math.ceil(count / rowsPerPage) - 1}
-            aria-label="last page"
-            size="small"
-            sx={{
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            {theme.direction === "rtl" ? <FirstPage fontSize="small" /> : <LastPage fontSize="small" />}
-          </IconButton>
-        </span>
-      </Tooltip>
+      {buttons.map((btn, idx) => (
+        <Tooltip key={idx} title={btn.title}>
+          <span>
+            <IconButton onClick={btn.onClick} disabled={btn.disabled} size="small" sx={iconButtonStyle}>
+              {React.cloneElement(btn.icon, { fontSize: "small" })}
+            </IconButton>
+          </span>
+        </Tooltip>
+      ))}
     </Box>
   );
-}
+};
 
 type ProductStockReturnFormData = z.infer<typeof schema>;
 
@@ -260,236 +186,193 @@ interface ProductDetailsSectionProps {
 
 const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ control, fields, append, remove, setValue, errors, isViewMode, showAlert }) => {
   const theme = useTheme();
-  const [selectedGrnProduct, setSelectedGrnProduct] = useState<GrnProductSearchResult | null>(null);
-  const [selectedQuantity, setSelectedQuantity] = useState<number | undefined>(undefined);
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
-  const [isLoadingBatches, setIsLoadingBatches] = useState(false);
-  const [editingProductIndex, setEditingProductIndex] = useState<number | null>(null);
-  const [isEditingExistingProduct, setIsEditingExistingProduct] = useState(false);
-  const [grnProductSearchSelection, setGrnProductSearchSelection] = useState<any>(null);
-  const [, setGrnProductSearchInputValue] = useState<string>("");
-  const [clearGrnProductSearchTrigger, setClearGrnProductSearchTrigger] = useState(0);
-  const [returnReason, setReturnReason] = useState<string>("");
   const grnProductSearchRef = useRef<GrnProductSearchRef>(null);
+
+  // Consolidated state
+  const [state, setState] = useState({
+    selectedGrnProduct: null as GrnProductSearchResult | null,
+    selectedQuantity: undefined as number | undefined,
+    isAddingProduct: false,
+    isLoadingBatches: false,
+    editingProductIndex: null as number | null,
+    isEditingExistingProduct: false,
+    grnProductSearchSelection: null as any,
+    grnProductSearchInputValue: "",
+    clearGrnProductSearchTrigger: 0,
+    returnReason: "",
+    page: 0,
+    rowsPerPage: 10,
+    selectedRows: new Set<string | number>(),
+    globalFilter: "",
+    columnFilters: {} as Record<string, string>,
+    sortField: "",
+    sortDirection: "asc" as "asc" | "desc",
+    showColumnFilters: false,
+    viewType: "all" as "all" | "expired" | "nonExpired",
+    isRefreshing: false,
+    quantities: {} as { [key: string]: number },
+  });
+
+  const updateState = (updates: Partial<typeof state>) => setState((prev) => ({ ...prev, ...updates }));
+
   const watchedDetails = useWatch({ control, name: "productStockReturnDetails" });
   const fromDeptID = useWatch({ control, name: "fromDeptID" });
   const returnTypeCode = useWatch({ control, name: "returnTypeCode" });
   const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, closeDialog: closeBatchDialog } = useBatchSelection();
 
-  // Enhanced grid state
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [selectedRows, setSelectedRows] = useState<Set<string | number>>(new Set());
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
-  const [sortField, setSortField] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [showColumnFilters, setShowColumnFilters] = useState(false);
-  const [viewType, setViewType] = useState<"all" | "expired" | "nonExpired">("all");
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
-
-  // Fixed: Initialize quantities from existing form data when component mounts or fields change
+  // Effects
   useEffect(() => {
-    const newQuantities: { [key: string]: number } = {};
-    fields.forEach((field) => {
-      newQuantities[field.id] = field.quantity || 0;
-    });
-    setQuantities(newQuantities);
-    console.log("Initialized quantities from fields:", newQuantities);
+    const newQuantities = Object.fromEntries(fields.map((field) => [field.id, field.quantity || 0]));
+    updateState({ quantities: newQuantities });
   }, [fields]);
 
-  // Fixed: Sync form values with local quantities state
   useEffect(() => {
-    const currentQuantities: { [key: string]: number } = {};
-    watchedDetails?.forEach((detail, index) => {
-      const field = fields[index];
-      if (field) {
-        currentQuantities[field.id] = detail.quantity || 0;
-      }
-    });
+    const currentQuantities = Object.fromEntries(watchedDetails?.map((detail, index) => [fields[index]?.id, detail.quantity || 0]).filter(([id]) => id) || []);
+    const hasChanges = Object.keys(currentQuantities).some((key) => currentQuantities[key] !== state.quantities[key]);
+    if (hasChanges) updateState({ quantities: currentQuantities });
+  }, [watchedDetails, fields, state.quantities]);
 
-    // Only update if there are meaningful differences
-    const hasChanges = Object.keys(currentQuantities).some((key) => currentQuantities[key] !== quantities[key]);
-
-    if (hasChanges) {
-      setQuantities(currentQuantities);
-      console.log("Synced quantities with form data:", currentQuantities);
-    }
-  }, [watchedDetails, fields]);
-
+  // Utility functions
   const clearTemporaryFields = useCallback(() => {
-    setSelectedGrnProduct(null);
-    setSelectedQuantity(undefined);
-    setIsAddingProduct(false);
-    setIsLoadingBatches(false);
-    setEditingProductIndex(null);
-    setIsEditingExistingProduct(false);
-    setGrnProductSearchSelection(null);
-    setGrnProductSearchInputValue("");
-    setReturnReason("");
-    setClearGrnProductSearchTrigger((prev) => prev + 1);
-  }, []);
+    updateState({
+      selectedGrnProduct: null,
+      selectedQuantity: undefined,
+      isAddingProduct: false,
+      isLoadingBatches: false,
+      editingProductIndex: null,
+      isEditingExistingProduct: false,
+      grnProductSearchSelection: null,
+      grnProductSearchInputValue: "",
+      returnReason: "",
+      clearGrnProductSearchTrigger: state.clearGrnProductSearchTrigger + 1,
+    });
+  }, [state.clearGrnProductSearchTrigger]);
 
-  const mapGrnProductToReturnDetail = useCallback((grnProduct: GrnProductSearchResult, quantity: number = 0, reason: string = ""): ProductStockReturnDetailDto => {
-    // Don't set default quantity, let user enter the value
-    const userQuantity = quantity > 0 ? quantity : 0;
-    return {
-      psrdID: 0,
-      psrID: 0,
-      productID: grnProduct.productID,
-      productName: grnProduct.productName || "",
-      quantity: userQuantity,
-      unitPrice: grnProduct.unitPrice || 0,
-      totalAmount: userQuantity * (grnProduct.unitPrice || 0),
-      batchNo: grnProduct.batchNo || "",
-      expiryDate: grnProduct.expiryDate,
-      manufacturedDate: undefined,
-      grnDate: grnProduct.grnDate || new Date(),
-      prescriptionYN: grnProduct.prescriptionYN || "N",
-      expiryYN: grnProduct.expiryYN || "N",
-      sellableYN: grnProduct.sellableYN || "N",
-      taxableYN: grnProduct.taxableYN || "N",
-      psGrpID: grnProduct.psGrpID || 0,
-      psGrpName: grnProduct.psGrpName || "",
-      manufacturerID: grnProduct.manufacturerID || 0,
-      manufacturerCode: grnProduct.manufacturerCode || "",
-      manufacturerName: grnProduct.manufacturerName || grnProduct.mfName || "",
-      taxID: grnProduct.taxID || 0,
-      taxCode: grnProduct.taxCode || "",
-      taxName: grnProduct.taxName || "",
-      mrp: grnProduct.mrp || 0,
-      transferYN: "N",
-      freeRetQty: 0,
-      freeRetUnitQty: 0,
-      psdID: 1,
-      hsnCode: grnProduct.hsnCode || "",
-      productCode: grnProduct.productCode || "",
-      pUnitID: grnProduct.pUnitID || 0,
-      pUnitName: grnProduct.pUnitName || "",
-      pUnitsPerPack: grnProduct.pUnitsPerPack || 1,
-      pkgID: grnProduct.pkgID || 0,
-      pkgName: grnProduct.pkgName || "",
-      availableQty: grnProduct.availableQty || 0,
-      psbid: grnProduct.grnDetID || 0,
-      returnReason: reason,
-      tax: grnProduct.tax || 0,
-      sellUnitPrice: grnProduct.sellUnitPrice || grnProduct.unitPrice || 0,
-      mfID: grnProduct.mfID || 0,
-      mfName: grnProduct.mfName || "",
-      pGrpID: grnProduct.pGrpID || 0,
-      pGrpName: grnProduct.pGrpName || "",
-      cgst: (grnProduct.tax || 0) / 2,
-      sgst: (grnProduct.tax || 0) / 2,
-      rActiveYN: "Y",
-      grnCode: grnProduct.grnCode || "",
-      supplierName: grnProduct.supplierName || grnProduct.supplrName || "",
-      invoiceNo: grnProduct.invoiceNo || "",
-      recvdQty: grnProduct.recvdQty || 0,
-    } as ProductStockReturnDetailDto;
-  }, []);
-
-  // Fixed: Enhanced quantity change handler with proper form integration
-  const handleQuantityChange = useCallback(
-    (rowId: string | number, value: number) => {
-      console.log("Quantity change for row:", rowId, "new value:", value);
-
-      // Update local quantities state
-      setQuantities((prev) => ({
-        ...prev,
-        [rowId]: value,
-      }));
-
-      // Find the row index and update the form
-      const rowIndex = fields.findIndex((field) => field.id === rowId);
-      if (rowIndex !== -1) {
-        console.log("Updating form field at index:", rowIndex, "with quantity:", value);
-        setValue(`productStockReturnDetails.${rowIndex}.quantity`, value, {
-          shouldValidate: true,
-          shouldDirty: true,
-        });
-
-        // Also update total amount if unit price is available
-        const unitPrice = fields[rowIndex].unitPrice || 0;
-        const totalAmount = value * unitPrice;
-        setValue(`productStockReturnDetails.${rowIndex}.totalAmount`, totalAmount, {
-          shouldValidate: true,
-          shouldDirty: true,
-        });
-        console.log("Updated total amount:", totalAmount);
-      } else {
-        console.warn("Could not find row with id:", rowId);
-      }
-    },
-    [fields, setValue]
+  const mapGrnProductToReturnDetail = useCallback(
+    (grnProduct: GrnProductSearchResult, quantity = 0, reason = ""): ProductStockReturnDetailDto =>
+      ({
+        psrdID: 0,
+        psrID: 0,
+        productID: grnProduct.productID,
+        productName: grnProduct.productName || "",
+        quantity: Math.max(quantity, 0),
+        unitPrice: grnProduct.unitPrice || 0,
+        totalAmount: Math.max(quantity, 0) * (grnProduct.unitPrice || 0),
+        batchNo: grnProduct.batchNo || "",
+        expiryDate: grnProduct.expiryDate,
+        manufacturedDate: undefined,
+        grnDate: grnProduct.grnDate || new Date(),
+        prescriptionYN: grnProduct.prescriptionYN || "N",
+        expiryYN: grnProduct.expiryYN || "N",
+        sellableYN: grnProduct.sellableYN || "N",
+        taxableYN: grnProduct.taxableYN || "N",
+        psGrpID: grnProduct.psGrpID || 0,
+        psGrpName: grnProduct.psGrpName || "",
+        manufacturerID: grnProduct.manufacturerID || 0,
+        manufacturerCode: grnProduct.manufacturerCode || "",
+        manufacturerName: grnProduct.manufacturerName || grnProduct.mfName || "",
+        taxID: grnProduct.taxID || 0,
+        taxCode: grnProduct.taxCode || "",
+        taxName: grnProduct.taxName || "",
+        mrp: grnProduct.mrp || 0,
+        transferYN: "N",
+        freeRetQty: 0,
+        freeRetUnitQty: 0,
+        psdID: 1,
+        hsnCode: grnProduct.hsnCode || "",
+        productCode: grnProduct.productCode || "",
+        pUnitID: grnProduct.pUnitID || 0,
+        pUnitName: grnProduct.pUnitName || "",
+        pUnitsPerPack: grnProduct.pUnitsPerPack || 1,
+        pkgID: grnProduct.pkgID || 0,
+        pkgName: grnProduct.pkgName || "",
+        availableQty: grnProduct.availableQty || 0,
+        psbid: grnProduct.grnDetID || 0,
+        returnReason: reason,
+        tax: grnProduct.tax || 0,
+        sellUnitPrice: grnProduct.sellUnitPrice || grnProduct.unitPrice || 0,
+        mfID: grnProduct.mfID || 0,
+        mfName: grnProduct.mfName || "",
+        pGrpID: grnProduct.pGrpID || 0,
+        pGrpName: grnProduct.pGrpName || "",
+        cgst: (grnProduct.tax || 0) / 2,
+        sgst: (grnProduct.tax || 0) / 2,
+        rActiveYN: "Y",
+        invoiceNo: grnProduct.invoiceNo || "",
+        recvdQty: grnProduct.recvdQty || 0,
+      } as ProductStockReturnDetailDto),
+    []
   );
 
-  const getDefaultReasonByReturnType = (type: string): string => {
-    switch (type) {
-      case ReturnType.Supplier:
-        return "Quality issues - returning to supplier";
-      case ReturnType.Internal:
-        return "Department transfer adjustment";
-      case ReturnType.Expired:
-        return "Item has reached expiry date";
-      case ReturnType.Damaged:
-        return "Item damaged in storage";
-      default:
-        return "Stock adjustment";
-    }
+  const getDefaultReasonByReturnType = (type: string): string =>
+    ({
+      [ReturnType.Supplier]: "Quality issues - returning to supplier",
+      [ReturnType.Internal]: "Department transfer adjustment",
+      [ReturnType.Expired]: "Item has reached expiry date",
+      [ReturnType.Damaged]: "Item damaged in storage",
+    }[type] || "Stock adjustment");
+
+  const getReturnTypeLabel = () =>
+    ({
+      [ReturnType.Supplier]: "Supplier Return",
+      [ReturnType.Internal]: "Internal Transfer Return",
+      [ReturnType.Expired]: "Expired Items Return",
+      [ReturnType.Damaged]: "Damaged Items Return",
+    }[returnTypeCode] || "Product Return");
+
+  const getExpiryWarning = (expiryDate?: Date) => {
+    if (!expiryDate) return null;
+    const diffDays = Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays <= 0 ? "expired" : diffDays <= 30 ? "warning" : null;
   };
+
+  // Event handlers
+  const handleQuantityChange = useCallback(
+    (rowId: string | number, value: number) => {
+      updateState({ quantities: { ...state.quantities, [rowId]: value } });
+      const rowIndex = fields.findIndex((field) => field.id === rowId);
+      if (rowIndex !== -1) {
+        setValue(`productStockReturnDetails.${rowIndex}.quantity`, value, { shouldValidate: true, shouldDirty: true });
+        setValue(`productStockReturnDetails.${rowIndex}.totalAmount`, value * (fields[rowIndex].unitPrice || 0), { shouldValidate: true, shouldDirty: true });
+      }
+    },
+    [fields, setValue, state.quantities]
+  );
 
   const handleGrnProductSelect = useCallback(
     async (grnProduct: GrnProductSearchResult | null) => {
-      if (!grnProduct?.productID) {
-        clearTemporaryFields();
-        return;
-      }
-
-      if (!fromDeptID) {
-        showAlert("Warning", "Please select a department first for the return", "warning");
-        return;
-      }
-
-      if (!isEditingExistingProduct && fields.find((d) => d.productID === grnProduct.productID && d.batchNo === grnProduct.batchNo)) {
+      if (!grnProduct?.productID) return clearTemporaryFields();
+      if (!fromDeptID) return showAlert("Warning", "Please select a department first for the return", "warning");
+      if (!state.isEditingExistingProduct && fields.find((d) => d.productID === grnProduct.productID && d.batchNo === grnProduct.batchNo)) {
         showAlert("Warning", `"${grnProduct.productName}" with batch "${grnProduct.batchNo}" is already added to the return list.`, "warning");
-        grnProductSearchRef.current?.clearSelection();
-        return;
+        return grnProductSearchRef.current?.clearSelection();
       }
 
       try {
-        setSelectedGrnProduct(grnProduct);
-        setIsAddingProduct(true);
-        setIsLoadingBatches(true);
-        const newProductDetail = mapGrnProductToReturnDetail(grnProduct, selectedQuantity || 0, returnReason || getDefaultReasonByReturnType(returnTypeCode));
+        updateState({ selectedGrnProduct: grnProduct, isAddingProduct: true, isLoadingBatches: true });
+        const newProductDetail = mapGrnProductToReturnDetail(grnProduct, state.selectedQuantity || 0, state.returnReason || getDefaultReasonByReturnType(returnTypeCode));
 
-        if (isEditingExistingProduct && editingProductIndex !== null) {
-          setValue(`productStockReturnDetails.${editingProductIndex}`, newProductDetail, {
-            shouldValidate: true,
-            shouldDirty: true,
-          });
+        if (state.isEditingExistingProduct && state.editingProductIndex !== null) {
+          setValue(`productStockReturnDetails.${state.editingProductIndex}`, newProductDetail, { shouldValidate: true, shouldDirty: true });
           showAlert("Success", `Return product "${grnProduct.productName}" updated successfully`, "success");
         } else {
           append(newProductDetail);
-          showAlert("Success", `Product "${grnProduct.productName}" added for return from GRN: ${grnProduct.grnCode}, Batch: ${grnProduct.batchNo}`, "success");
+          showAlert("Success", `Product "${grnProduct.productName}" Batch: ${grnProduct.batchNo}`, "success");
         }
-
         clearTemporaryFields();
       } catch (error) {
-        console.error("Error adding GRN product:", error);
-        showAlert("Error", `Failed to add GRN product for return. Please try again.`, "error");
+        showAlert("Error", "Failed to add GRN product for return. Please try again.", "error");
         clearTemporaryFields();
       } finally {
-        setIsAddingProduct(false);
-        setIsLoadingBatches(false);
+        updateState({ isAddingProduct: false, isLoadingBatches: false });
       }
     },
     [
-      selectedQuantity,
-      returnReason,
+      state.selectedQuantity,
+      state.returnReason,
       returnTypeCode,
-      isEditingExistingProduct,
-      editingProductIndex,
+      state.isEditingExistingProduct,
+      state.editingProductIndex,
       append,
       setValue,
       showAlert,
@@ -500,236 +383,154 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
     ]
   );
 
+  // Statistics and filtering
   const statistics = useMemo(() => {
     const totalProducts = watchedDetails?.length || 0;
     const totalReturnQuantity = watchedDetails?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
-    const expiredItems =
-      watchedDetails?.filter((item) => {
-        if (!item.expiryDate) return false;
-        return new Date(item.expiryDate) < new Date();
-      }).length || 0;
+    const expiredItems = watchedDetails?.filter((item) => item.expiryDate && new Date(item.expiryDate) < new Date()).length || 0;
     const zeroQohItems = watchedDetails?.filter((item) => (item.availableQty || 0) === 0).length || 0;
-
-    return {
-      totalProducts,
-      totalReturnQuantity,
-      expiredItems,
-      zeroQohItems,
-    };
+    return { totalProducts, totalReturnQuantity, expiredItems, zeroQohItems };
   }, [watchedDetails]);
 
-  // Filter and sort data
   const filteredRows = useMemo(() => {
     let filtered = [...fields];
 
-    // Apply view type filter
-    if (viewType === "expired") {
-      filtered = filtered.filter((row) => {
-        if (!row.expiryDate) return false;
-        return new Date(row.expiryDate) < new Date();
-      });
-    } else if (viewType === "nonExpired") {
-      filtered = filtered.filter((row) => {
-        if (!row.expiryDate) return true;
-        return new Date(row.expiryDate) >= new Date();
-      });
+    if (state.viewType === "expired") {
+      filtered = filtered.filter((row) => row.expiryDate && new Date(row.expiryDate) < new Date());
+    } else if (state.viewType === "nonExpired") {
+      filtered = filtered.filter((row) => !row.expiryDate || new Date(row.expiryDate) >= new Date());
     }
 
-    // Apply global filter
-    if (globalFilter) {
+    if (state.globalFilter) {
       filtered = filtered.filter((row) =>
-        Object.entries(row).some(([key, value]) => {
-          if (typeof value === "string" || typeof value === "number") {
-            return String(value).toLowerCase().includes(globalFilter.toLowerCase());
-          }
-          return false;
-        })
+        Object.values(row).some((value) => (typeof value === "string" || typeof value === "number") && String(value).toLowerCase().includes(state.globalFilter.toLowerCase()))
       );
     }
 
-    // Apply column filters
-    Object.entries(columnFilters).forEach(([key, value]) => {
+    Object.entries(state.columnFilters).forEach(([key, value]) => {
       if (value) {
         filtered = filtered.filter((row) => {
           const rowValue = row[key as keyof typeof row];
-          if (rowValue === undefined || rowValue === null) return false;
-          return String(rowValue).toLowerCase().includes(value.toLowerCase());
+          return rowValue && String(rowValue).toLowerCase().includes(value.toLowerCase());
         });
       }
     });
 
-    // Apply sorting
-    if (sortField) {
+    if (state.sortField) {
       filtered.sort((a, b) => {
-        const aValue = a[sortField as keyof typeof a];
-        const bValue = b[sortField as keyof typeof b];
+        const aValue = a[state.sortField as keyof typeof a];
+        const bValue = b[state.sortField as keyof typeof b];
+        if (!aValue && !bValue) return 0;
+        if (!aValue) return state.sortDirection === "asc" ? -1 : 1;
+        if (!bValue) return state.sortDirection === "asc" ? 1 : -1;
 
-        // Handle undefined or null values
-        if (aValue === undefined || aValue === null) return sortDirection === "asc" ? -1 : 1;
-        if (bValue === undefined || bValue === null) return sortDirection === "asc" ? 1 : -1;
-
-        // Compare values based on their types
         if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+          return state.sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }
-
-        // For dates, convert to timestamp for comparison
         if (aValue instanceof Date && bValue instanceof Date) {
-          return sortDirection === "asc" ? aValue.getTime() - bValue.getTime() : bValue.getTime() - aValue.getTime();
+          return state.sortDirection === "asc" ? aValue.getTime() - bValue.getTime() : bValue.getTime() - aValue.getTime();
         }
-
-        // For numbers or mixed types, use standard comparison
-        return sortDirection === "asc" ? (aValue < bValue ? -1 : aValue > bValue ? 1 : 0) : bValue < aValue ? -1 : bValue > aValue ? 1 : 0;
+        return state.sortDirection === "asc" ? (aValue < bValue ? -1 : 1) : bValue < aValue ? -1 : 1;
       });
     }
 
     return filtered;
-  }, [fields, viewType, globalFilter, columnFilters, sortField, sortDirection]);
+  }, [fields, state.viewType, state.globalFilter, state.columnFilters, state.sortField, state.sortDirection]);
 
-  // Get paginated data
   const paginatedRows = useMemo(() => {
-    const startIndex = page * rowsPerPage;
-    return filteredRows.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredRows, page, rowsPerPage]);
+    const startIndex = state.page * state.rowsPerPage;
+    return filteredRows.slice(startIndex, startIndex + state.rowsPerPage);
+  }, [filteredRows, state.page, state.rowsPerPage]);
 
-  const handleChangePage = useCallback((event: unknown, newPage: number) => {
-    setPage(newPage);
-  }, []);
-
+  // Pagination and table handlers
+  const handleChangePage = useCallback((event: unknown, newPage: number) => updateState({ page: newPage }), []);
   const handleChangeRowsPerPage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    updateState({ rowsPerPage: parseInt(event.target.value, 10), page: 0 });
   }, []);
 
-  const handleColumnFilterChange = useCallback((columnId: string, value: string) => {
-    setColumnFilters((prev) => ({
-      ...prev,
-      [columnId]: value,
-    }));
-    setPage(0);
-  }, []);
+  const handleColumnFilterChange = useCallback(
+    (columnId: string, value: string) => {
+      updateState({ columnFilters: { ...state.columnFilters, [columnId]: value }, page: 0 });
+    },
+    [state.columnFilters]
+  );
 
-  const handleGlobalFilterChange = useCallback((value: string) => {
-    setGlobalFilter(value);
-    setPage(0);
-  }, []);
-
-  const handleClearFilters = useCallback(() => {
-    setColumnFilters({});
-    setGlobalFilter("");
-    setPage(0);
-  }, []);
+  const handleGlobalFilterChange = useCallback((value: string) => updateState({ globalFilter: value, page: 0 }), []);
+  const handleClearFilters = useCallback(() => updateState({ columnFilters: {}, globalFilter: "", page: 0 }), []);
 
   const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
+    updateState({ isRefreshing: true });
     await new Promise((resolve) => setTimeout(resolve, 800));
-    setIsRefreshing(false);
+    updateState({ isRefreshing: false });
     showAlert("Success", "Data refreshed successfully", "success");
   }, [showAlert]);
 
   const handleSortColumn = useCallback(
     (columnId: string) => {
-      if (sortField === columnId) {
-        setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      if (state.sortField === columnId) {
+        updateState({ sortDirection: state.sortDirection === "asc" ? "desc" : "asc" });
       } else {
-        setSortField(columnId);
-        setSortDirection("asc");
+        updateState({ sortField: columnId, sortDirection: "asc" });
       }
     },
-    [sortField]
+    [state.sortField, state.sortDirection]
   );
 
   const handleSelectAllClick = useCallback(() => {
-    if (selectedRows.size === paginatedRows.length) {
-      setSelectedRows(new Set());
-    } else {
-      setSelectedRows(new Set(paginatedRows.map((row) => row.id)));
-    }
-  }, [paginatedRows, selectedRows.size]);
+    updateState({ selectedRows: state.selectedRows.size === paginatedRows.length ? new Set() : new Set(paginatedRows.map((row) => row.id)) });
+  }, [paginatedRows, state.selectedRows.size]);
 
-  const handleSelectRow = useCallback((id: string | number) => {
-    setSelectedRows((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  }, []);
+  const handleSelectRow = useCallback(
+    (id: string | number) => {
+      const newSet = new Set(state.selectedRows);
+      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      updateState({ selectedRows: newSet });
+    },
+    [state.selectedRows]
+  );
 
   const handleDeleteSelected = useCallback(() => {
-    if (selectedRows.size === 0) return;
+    if (state.selectedRows.size === 0) return;
+    const rowsToKeep = fields.filter((field) => !state.selectedRows.has(field.id));
+    const deletedCount = state.selectedRows.size;
 
-    const rowsToKeep = fields.filter((field) => !selectedRows.has(field.id));
-    const deletedCount = selectedRows.size;
+    rowsToKeep.forEach((row, i) => setValue(`productStockReturnDetails.${i}`, row));
+    for (let i = fields.length - 1; i >= rowsToKeep.length; i--) remove(i);
 
-    for (let i = rowsToKeep.length - 1; i >= 0; i--) {
-      setValue(`productStockReturnDetails.${i}`, rowsToKeep[i]);
-    }
-
-    for (let i = fields.length - 1; i >= rowsToKeep.length; i--) {
-      remove(i);
-    }
-
-    setSelectedRows(new Set());
+    updateState({ selectedRows: new Set() });
     showAlert("Success", `${deletedCount} items removed from return list`, "success");
-  }, [fields, remove, selectedRows, setValue, showAlert]);
+  }, [fields, remove, state.selectedRows, setValue, showAlert]);
 
-  const getExpiryWarning = (expiryDate?: Date) => {
-    if (!expiryDate) return null;
-    const today = new Date();
-    const diffTime = new Date(expiryDate).getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays <= 0) return "expired";
-    if (diffDays <= 30) return "warning";
-    return null;
-  };
+  // Component helpers
+  const ColumnFilter: React.FC<{ columnId: string; label: string }> = ({ columnId, label }) => (
+    <TextField
+      size="small"
+      placeholder={`Filter ${label}...`}
+      value={state.columnFilters[columnId] || ""}
+      onChange={(e) => handleColumnFilterChange(columnId, e.target.value)}
+      InputProps={{ sx: { fontSize: "0.75rem", "& .MuiOutlinedInput-input": { padding: "4px 8px" } } }}
+      sx={{ width: "100%", minWidth: "120px", "& .MuiOutlinedInput-root": { backgroundColor: alpha(theme.palette.background.paper, 0.8) } }}
+    />
+  );
 
-  const getReturnTypeLabel = () => {
-    switch (returnTypeCode) {
-      case ReturnType.Supplier:
-        return "Supplier Return";
-      case ReturnType.Internal:
-        return "Internal Transfer Return";
-      case ReturnType.Expired:
-        return "Expired Items Return";
-      case ReturnType.Damaged:
-        return "Damaged Items Return";
-      default:
-        return "Product Return";
-    }
-  };
-
-  // Column filter component
-  const ColumnFilter = ({ columnId, label }: { columnId: string; label: string }) => {
-    const filterValue = columnFilters[columnId] || "";
-
-    return (
-      <TextField
-        size="small"
-        placeholder={`Filter ${label}...`}
-        value={filterValue}
-        onChange={(e) => handleColumnFilterChange(columnId, e.target.value)}
-        InputProps={{
-          sx: {
-            fontSize: "0.75rem",
-            "& .MuiOutlinedInput-input": {
-              padding: "4px 8px",
-            },
-          },
-        }}
-        sx={{
-          width: "100%",
-          minWidth: "120px",
-          "& .MuiOutlinedInput-root": {
-            backgroundColor: alpha(theme.palette.background.paper, 0.8),
-          },
-        }}
-      />
-    );
-  };
+  const tableColumns = [
+    { id: "grnDate", label: "GRN Date", sortable: true, minWidth: 100 },
+    { id: "invoiceNo", label: "INV No.", sortable: true, minWidth: 100, filterable: true },
+    { id: "productName", label: "Product Name", sortable: true, minWidth: 200, filterable: true },
+    { id: "hsnCode", label: "HSN Code", sortable: true, minWidth: 80, filterable: true },
+    { id: "manufacturerName", label: "Manufacturer", sortable: true, minWidth: 120, filterable: true },
+    { id: "batchNo", label: "Batch No.", sortable: true, minWidth: 100, filterable: true },
+    { id: "recvdQty", label: "GRN Qty", sortable: true, minWidth: 80, align: "right" },
+    { id: "availableQty", label: "QOH", sortable: true, minWidth: 80, align: "right" },
+    { id: "quantity", label: "Return Qty", minWidth: 120 },
+    { id: "expiryDate", label: "Expiry Date", sortable: true, minWidth: 110 },
+    { id: "unitPrice", label: "Unit Price", sortable: true, minWidth: 100, align: "right" },
+    { id: "totalAmount", label: "Return Amount", sortable: true, minWidth: 120, align: "right" },
+    { id: "tax", label: "GST %", sortable: true, minWidth: 80, align: "right" },
+    { id: "cgst", label: "CGST %", minWidth: 80, align: "right" },
+    { id: "sgst", label: "SGST %", minWidth: 80, align: "right" },
+    { id: "returnReason", label: "Return Reason", sortable: true, minWidth: 150, filterable: true },
+  ];
 
   return (
     <>
@@ -744,17 +545,17 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                 ref={grnProductSearchRef}
                 departmentId={fromDeptID}
                 onProductSelect={handleGrnProductSelect}
-                clearTrigger={clearGrnProductSearchTrigger}
+                clearTrigger={state.clearGrnProductSearchTrigger}
                 label={`Search GRN Product for ${returnTypeCode} Return`}
                 placeholder={fromDeptID ? "Search by product name, code, or batch..." : "Select department first..."}
-                disabled={isViewMode || isAddingProduct || !fromDeptID}
-                initialSelection={grnProductSearchSelection}
-                setInputValue={setGrnProductSearchInputValue}
-                setSelectedProduct={setGrnProductSearchSelection}
+                disabled={isViewMode || state.isAddingProduct || !fromDeptID}
+                initialSelection={state.grnProductSearchSelection}
+                setInputValue={(value) => updateState({ grnProductSearchInputValue: value })}
+                setSelectedProduct={(product) => updateState({ grnProductSearchSelection: product })}
                 approvedGrnsOnly={true}
                 availableStockOnly={true}
               />
-              {isAddingProduct && (
+              {state.isAddingProduct && (
                 <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
                   <CircularProgress size={16} sx={{ mr: 1 }} />
                   <Typography variant="caption" color="text.secondary">
@@ -768,27 +569,23 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
               <TextField
                 label="Return Quantity"
                 type="number"
-                value={selectedQuantity || ""}
-                onChange={(e) => setSelectedQuantity(parseFloat(e.target.value) || undefined)}
-                disabled={isViewMode || !selectedGrnProduct || isAddingProduct}
+                value={state.selectedQuantity || ""}
+                onChange={(e) => updateState({ selectedQuantity: parseFloat(e.target.value) || undefined })}
+                disabled={isViewMode || !state.selectedGrnProduct || state.isAddingProduct}
                 size="small"
                 fullWidth
-                inputProps={{
-                  min: 1,
-                  max: selectedGrnProduct?.availableQty || undefined,
-                  step: 1,
-                }}
+                inputProps={{ min: 1, max: state.selectedGrnProduct?.availableQty, step: 1 }}
                 placeholder="Qty"
-                helperText={selectedGrnProduct ? `Avail: ${selectedGrnProduct.availableQty}` : ""}
+                helperText={state.selectedGrnProduct ? `Avail: ${state.selectedGrnProduct.availableQty}` : ""}
               />
             </Grid>
 
             <Grid size={{ sm: 6, md: 4 }}>
               <TextField
                 label="Return Reason"
-                value={returnReason}
-                onChange={(e) => setReturnReason(e.target.value)}
-                disabled={isViewMode || !selectedGrnProduct || isAddingProduct}
+                value={state.returnReason}
+                onChange={(e) => updateState({ returnReason: e.target.value })}
+                disabled={isViewMode || !state.selectedGrnProduct || state.isAddingProduct}
                 size="small"
                 fullWidth
                 placeholder={`Reason for ${returnTypeCode} return`}
@@ -806,19 +603,11 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
           overflow: "hidden",
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
           transition: "box-shadow 0.3s ease",
-          "&:hover": {
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          },
+          "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
           border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
         }}
       >
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: alpha(theme.palette.primary.main, 0.04),
-            borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-          }}
-        >
+        <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04), borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}` }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center" gap={1.5}>
               <Box
@@ -839,7 +628,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
               </Typography>
               <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: alpha(theme.palette.primary.main, 0.2) }} />
               <Typography variant="body2" color="text.secondary">
-                {viewType === "all" ? "All products" : viewType === "expired" ? "Expired products" : "Non-expired products"}
+                {state.viewType === "all" ? "All products" : state.viewType === "expired" ? "Expired products" : "Non-expired products"}
               </Typography>
             </Box>
             <Box display="flex" alignItems="center" gap={1}>
@@ -852,23 +641,14 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                 size="small"
                 sx={{ fontWeight: "600", borderWidth: 2 }}
               />
-              {selectedRows.size > 0 && <Chip label={`${selectedRows.size} Selected`} variant="filled" color="secondary" size="small" sx={{ fontWeight: "600" }} />}
+              {state.selectedRows.size > 0 && <Chip label={`${state.selectedRows.size} Selected`} variant="filled" color="secondary" size="small" sx={{ fontWeight: "600" }} />}
             </Box>
           </Box>
 
-          <Toolbar
-            variant="dense"
-            sx={{
-              pl: 0,
-              pr: 0,
-              minHeight: "auto !important",
-              gap: 2,
-              flexWrap: "wrap",
-            }}
-          >
+          <Toolbar variant="dense" sx={{ pl: 0, pr: 0, minHeight: "auto !important", gap: 2, flexWrap: "wrap" }}>
             <FormControl size="small" sx={{ minWidth: 250 }}>
               <OutlinedInput
-                value={globalFilter}
+                value={state.globalFilter}
                 onChange={(e) => handleGlobalFilterChange(e.target.value)}
                 placeholder="Search all columns..."
                 startAdornment={
@@ -877,7 +657,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                   </InputAdornment>
                 }
                 endAdornment={
-                  globalFilter && (
+                  state.globalFilter && (
                     <InputAdornment position="end">
                       <IconButton size="small" onClick={() => handleGlobalFilterChange("")}>
                         <ClearIcon fontSize="small" />
@@ -885,68 +665,32 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                     </InputAdornment>
                   )
                 }
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: theme.palette.background.paper,
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { backgroundColor: theme.palette.background.paper } }}
               />
             </FormControl>
 
             <Tabs
-              value={viewType}
+              value={state.viewType}
               onChange={(_, newValue) => {
-                setViewType(newValue);
-                setPage(0);
+                updateState({ viewType: newValue, page: 0 });
               }}
             >
-              <Tab
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <span>All Products</span>
-                    <Chip label={fields.length} size="small" color="primary" sx={{ height: 18, minWidth: 24 }} />
-                  </Box>
-                }
-                value="all"
-              />
-              <Tab
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <span>Expired</span>
-                    <Chip
-                      label={
-                        fields.filter((row) => {
-                          if (!row.expiryDate) return false;
-                          return new Date(row.expiryDate) < new Date();
-                        }).length
-                      }
-                      size="small"
-                      color="error"
-                      sx={{ height: 18, minWidth: 24 }}
-                    />
-                  </Box>
-                }
-                value="expired"
-              />
-              <Tab
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <span>Non-Expired</span>
-                    <Chip
-                      label={
-                        fields.filter((row) => {
-                          if (!row.expiryDate) return true;
-                          return new Date(row.expiryDate) >= new Date();
-                        }).length
-                      }
-                      size="small"
-                      color="success"
-                      sx={{ height: 18, minWidth: 24 }}
-                    />
-                  </Box>
-                }
-                value="nonExpired"
-              />
+              {[
+                { value: "all", label: "All Products", count: fields.length },
+                { value: "expired", label: "Expired", count: fields.filter((row) => row.expiryDate && new Date(row.expiryDate) < new Date()).length, color: "error" },
+                { value: "nonExpired", label: "Non-Expired", count: fields.filter((row) => !row.expiryDate || new Date(row.expiryDate) >= new Date()).length, color: "success" },
+              ].map((tab) => (
+                <Tab
+                  key={tab.value}
+                  value={tab.value}
+                  label={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <span>{tab.label}</span>
+                      <Chip label={tab.count} size="small" color={"primary"} sx={{ height: 18, minWidth: 24 }} />
+                    </Box>
+                  }
+                />
+              ))}
             </Tabs>
 
             <Box sx={{ flex: 1 }} />
@@ -956,20 +700,26 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                 size="small"
                 variant="outlined"
                 startIcon={<FilterIcon />}
-                onClick={() => setShowColumnFilters(!showColumnFilters)}
-                color={showColumnFilters ? "primary" : "inherit"}
+                onClick={() => updateState({ showColumnFilters: !state.showColumnFilters })}
+                color={state.showColumnFilters ? "primary" : "inherit"}
               >
                 Filters
               </Button>
-              <Button size="small" variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={isRefreshing}>
-                {isRefreshing ? <CircularProgress size={16} /> : "Refresh"}
+              <Button size="small" variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={state.isRefreshing}>
+                {state.isRefreshing ? <CircularProgress size={16} /> : "Refresh"}
               </Button>
-              <Button size="small" variant="outlined" startIcon={<ClearIcon />} onClick={handleClearFilters} disabled={!globalFilter && Object.keys(columnFilters).length === 0}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ClearIcon />}
+                onClick={handleClearFilters}
+                disabled={!state.globalFilter && Object.keys(state.columnFilters).length === 0}
+              >
                 Clear Filters
               </Button>
-              {selectedRows.size > 0 && (
+              {state.selectedRows.size > 0 && (
                 <Button size="small" variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleDeleteSelected} disabled={isViewMode}>
-                  Delete Selected ({selectedRows.size})
+                  Delete Selected ({state.selectedRows.size})
                 </Button>
               )}
             </Stack>
@@ -977,15 +727,8 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
         </Box>
 
         <CardContent sx={{ p: 0 }}>
-          {isAddingProduct ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: 200,
-              }}
-            >
+          {state.isAddingProduct ? (
+            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 200 }}>
               <LocalFireDepartment sx={{ fontSize: 40, color: theme.palette.primary.main }} />
               <Typography variant="body1" sx={{ ml: 2 }} color="primary">
                 Adding product...
@@ -1000,20 +743,13 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                   maxHeight: 500,
                   borderRadius: 0,
                   border: "none",
-                  "& ::-webkit-scrollbar": {
-                    width: "12px",
-                    height: "12px",
-                  },
-                  "& ::-webkit-scrollbar-track": {
-                    borderRadius: "6px",
-                  },
+                  "& ::-webkit-scrollbar": { width: "12px", height: "12px" },
+                  "& ::-webkit-scrollbar-track": { borderRadius: "6px" },
                   "& ::-webkit-scrollbar-thumb": {
                     backgroundColor: alpha(theme.palette.primary.main, 0.6),
                     borderRadius: "6px",
                     border: `2px solid ${alpha(theme.palette.background.paper, 1)}`,
-                    "&:hover": {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.8),
-                    },
+                    "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.8) },
                   },
                   scrollbarWidth: "thin",
                 }}
@@ -1035,137 +771,34 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
-                          checked={selectedRows.size === paginatedRows.length && paginatedRows.length > 0}
-                          indeterminate={selectedRows.size > 0 && selectedRows.size < paginatedRows.length}
+                          checked={state.selectedRows.size === paginatedRows.length && paginatedRows.length > 0}
+                          indeterminate={state.selectedRows.size > 0 && state.selectedRows.size < paginatedRows.length}
                           onChange={handleSelectAllClick}
                           size="small"
                           disabled={isViewMode}
                         />
                       </TableCell>
                       <TableCell align="center">Sl. No</TableCell>
-                      <TableCell sx={{ minWidth: 120 }}>
-                        <TableSortLabel
-                          active={sortField === "supplierName"}
-                          direction={sortField === "supplierName" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("supplierName")}
-                        >
-                          Supplier
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 100 }}>
-                        <TableSortLabel active={sortField === "grnCode"} direction={sortField === "grnCode" ? sortDirection : "asc"} onClick={() => handleSortColumn("grnCode")}>
-                          GRN No.
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 100 }}>
-                        <TableSortLabel active={sortField === "grnDate"} direction={sortField === "grnDate" ? sortDirection : "asc"} onClick={() => handleSortColumn("grnDate")}>
-                          GRN Date
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 100 }}>
-                        <TableSortLabel
-                          active={sortField === "invoiceNo"}
-                          direction={sortField === "invoiceNo" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("invoiceNo")}
-                        >
-                          INV No.
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 200 }}>
-                        <TableSortLabel
-                          active={sortField === "productName"}
-                          direction={sortField === "productName" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("productName")}
-                        >
-                          Product Name
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 80 }}>
-                        <TableSortLabel active={sortField === "hsnCode"} direction={sortField === "hsnCode" ? sortDirection : "asc"} onClick={() => handleSortColumn("hsnCode")}>
-                          HSN Code
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 120 }}>
-                        <TableSortLabel
-                          active={sortField === "manufacturerName"}
-                          direction={sortField === "manufacturerName" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("manufacturerName")}
-                        >
-                          Manufacturer
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 100 }}>
-                        <TableSortLabel active={sortField === "batchNo"} direction={sortField === "batchNo" ? sortDirection : "asc"} onClick={() => handleSortColumn("batchNo")}>
-                          Batch No.
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 80 }}>
-                        <TableSortLabel active={sortField === "recvdQty"} direction={sortField === "recvdQty" ? sortDirection : "asc"} onClick={() => handleSortColumn("recvdQty")}>
-                          GRN Qty
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 80 }}>
-                        <TableSortLabel
-                          active={sortField === "availableQty"}
-                          direction={sortField === "availableQty" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("availableQty")}
-                        >
-                          QOH
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 120 }}>Return Qty</TableCell>
-                      <TableCell sx={{ minWidth: 110 }}>
-                        <TableSortLabel
-                          active={sortField === "expiryDate"}
-                          direction={sortField === "expiryDate" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("expiryDate")}
-                        >
-                          Expiry Date
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 100 }}>
-                        <TableSortLabel
-                          active={sortField === "unitPrice"}
-                          direction={sortField === "unitPrice" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("unitPrice")}
-                        >
-                          Unit Price
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 120 }}>
-                        <TableSortLabel
-                          active={sortField === "totalAmount"}
-                          direction={sortField === "totalAmount" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("totalAmount")}
-                        >
-                          Return Amount
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 80 }}>
-                        <TableSortLabel active={sortField === "tax"} direction={sortField === "tax" ? sortDirection : "asc"} onClick={() => handleSortColumn("tax")}>
-                          GST %
-                        </TableSortLabel>
-                      </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 80 }}>
-                        CGST %
-                      </TableCell>
-                      <TableCell align="right" sx={{ minWidth: 80 }}>
-                        SGST %
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 150 }}>
-                        <TableSortLabel
-                          active={sortField === "returnReason"}
-                          direction={sortField === "returnReason" ? sortDirection : "asc"}
-                          onClick={() => handleSortColumn("returnReason")}
-                        >
-                          Return Reason
-                        </TableSortLabel>
-                      </TableCell>
+                      {tableColumns.map((col) => (
+                        <TableCell key={col.id} align={"left"} sx={{ minWidth: col.minWidth }}>
+                          {col.sortable ? (
+                            <TableSortLabel
+                              active={state.sortField === col.id}
+                              direction={state.sortField === col.id ? state.sortDirection : "asc"}
+                              onClick={() => handleSortColumn(col.id)}
+                            >
+                              {col.label}
+                            </TableSortLabel>
+                          ) : (
+                            col.label
+                          )}
+                        </TableCell>
+                      ))}
                       <TableCell align="center" sx={{ minWidth: 80 }}>
                         Actions
                       </TableCell>
                     </TableRow>
-                    {showColumnFilters && (
+                    {state.showColumnFilters && (
                       <TableRow
                         sx={{
                           "& th": {
@@ -1180,72 +813,34 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                       >
                         <TableCell padding="checkbox"></TableCell>
                         <TableCell></TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="supplierName" label="Supplier" />
-                        </TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="grnCode" label="GRN No." />
-                        </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="invoiceNo" label="Invoice" />
-                        </TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="productName" label="Product" />
-                        </TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="hsnCode" label="HSN" />
-                        </TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="manufacturerName" label="Manufacturer" />
-                        </TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="batchNo" label="Batch" />
-                        </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell>
-                          <ColumnFilter columnId="returnReason" label="Reason" />
-                        </TableCell>
+                        {tableColumns.map((col) => (
+                          <TableCell key={col.id}>{col.filterable && <ColumnFilter columnId={col.id} label={col.label} />}</TableCell>
+                        ))}
                         <TableCell></TableCell>
                       </TableRow>
                     )}
                   </TableHead>
                   <TableBody>
                     {paginatedRows.map((row, index) => {
-                      const isSelected = selectedRows.has(row.id);
+                      const isSelected = state.selectedRows.has(row.id);
                       const warning = getExpiryWarning(row.expiryDate);
-                      const currentQuantity = quantities[row.id] || row.quantity || 0;
+                      const currentQuantity = state.quantities[row.id] || row.quantity || 0;
 
                       return (
                         <TableRow
                           key={row.id}
                           hover
                           selected={isSelected}
-                          sx={{
-                            bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.08) : "inherit",
-                            "&:hover": {
-                              bgcolor: alpha(theme.palette.primary.main, 0.04),
-                            },
-                          }}
+                          sx={{ bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.08) : "inherit", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
                         >
                           <TableCell padding="checkbox">
                             <Checkbox checked={isSelected} onChange={() => handleSelectRow(row.id)} size="small" disabled={isViewMode} />
                           </TableCell>
                           <TableCell align="center">
                             <Typography variant="body2" fontWeight={500}>
-                              {page * rowsPerPage + index + 1}
+                              {state.page * state.rowsPerPage + index + 1}
                             </Typography>
                           </TableCell>
-                          <TableCell>{row.supplierName}</TableCell>
-                          <TableCell>{row.grnCode}</TableCell>
                           <TableCell>{row.grnDate ? new Date(row.grnDate).toLocaleDateString() : ""}</TableCell>
                           <TableCell>{row.invoiceNo}</TableCell>
                           <TableCell>
@@ -1261,31 +856,19 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                           <TableCell>{row.batchNo}</TableCell>
                           <TableCell align="right">{row.recvdQty}</TableCell>
                           <TableCell align="right">{row.availableQty}</TableCell>
-
                           <TableCell>
                             <TextField
                               size="small"
                               type="number"
                               value={currentQuantity}
-                              onChange={(e) => {
-                                const value = parseInt(e.target.value) || 0;
-                                handleQuantityChange(row.id, value);
-                              }}
+                              onChange={(e) => handleQuantityChange(row.id, parseInt(e.target.value) || 0)}
                               sx={{ width: "100px" }}
-                              inputProps={{
-                                style: { textAlign: "right" },
-                                min: 0,
-                                max: row.availableQty || undefined,
-                              }}
+                              inputProps={{ style: { textAlign: "right" }, min: 0, max: row.availableQty }}
                               disabled={isViewMode}
                             />
                           </TableCell>
                           <TableCell>
-                            <Typography
-                              sx={{
-                                color: warning === "expired" ? "error.main" : warning === "warning" ? "warning.main" : "inherit",
-                              }}
-                            >
+                            <Typography sx={{ color: warning === "expired" ? "error.main" : warning === "warning" ? "warning.main" : "inherit" }}>
                               {row.expiryDate ? new Date(row.expiryDate).toLocaleDateString() : ""}
                             </Typography>
                           </TableCell>
@@ -1304,12 +887,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                                 onClick={() => {
                                   const rowIndex = fields.findIndex((field) => field.id === row.id);
                                   remove(rowIndex);
-                                  // Remove from quantities state as well
-                                  setQuantities((prev) => {
-                                    const newQuantities = { ...prev };
-                                    delete newQuantities[row.id];
-                                    return newQuantities;
-                                  });
+                                  updateState({ quantities: Object.fromEntries(Object.entries(state.quantities).filter(([key]) => key !== row.id)) });
                                   showAlert("Info", `Product "${row.productName}" removed from return`, "info");
                                 }}
                                 disabled={isViewMode}
@@ -1330,26 +908,16 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                 rowsPerPageOptions={[5, 10, 25, 50, 100]}
                 component="div"
                 count={filteredRows.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
+                rowsPerPage={state.rowsPerPage}
+                page={state.page}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 ActionsComponent={TablePaginationActions}
-                sx={{
-                  borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                }}
+                sx={{ borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}` }}
               />
             </>
           ) : (
-            <Paper
-              sx={{
-                p: 4,
-                textAlign: "center",
-                borderRadius: 2,
-                border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
-                m: 2,
-              }}
-            >
+            <Paper sx={{ p: 4, textAlign: "center", borderRadius: 2, border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`, m: 2 }}>
               <Box
                 sx={{
                   display: "flex",
@@ -1366,14 +934,14 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                 <ReturnIcon sx={{ fontSize: 32, color: alpha(theme.palette.primary.main, 0.7) }} />
               </Box>
               <Typography variant="h6" fontWeight="600" color="text.primary" gutterBottom>
-                {globalFilter || Object.keys(columnFilters).length > 0 ? "No products match your filters" : "No Products Added for Return"}
+                {state.globalFilter || Object.keys(state.columnFilters).length > 0 ? "No products match your filters" : "No Products Added for Return"}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 500, mx: "auto" }}>
-                {globalFilter || Object.keys(columnFilters).length > 0
+                {state.globalFilter || Object.keys(state.columnFilters).length > 0
                   ? "Try adjusting your search criteria or clearing the filters to see more results."
                   : `Use the search above to add products for ${getReturnTypeLabel()}.`}
               </Typography>
-              {(globalFilter || Object.keys(columnFilters).length > 0) && (
+              {(state.globalFilter || Object.keys(state.columnFilters).length > 0) && (
                 <Button variant="outlined" onClick={handleClearFilters} sx={{ mt: 2 }} startIcon={<ClearIcon />}>
                   Clear All Filters
                 </Button>
@@ -1388,46 +956,23 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
           Return Summary
         </Typography>
         <Grid container spacing={2}>
-          <Grid size={{ sm: 3, xs: 6 }}>
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="h6" color="primary">
-                {statistics.totalProducts}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Total Products
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid size={{ sm: 3, xs: 6 }}>
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="h6" color="info.main">
-                {statistics.totalReturnQuantity}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Total Return Qty
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid size={{ sm: 3, xs: 6 }}>
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="h6" color={statistics.expiredItems > 0 ? "error.main" : "text.primary"}>
-                {statistics.expiredItems}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Expired Items
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid size={{ sm: 3, xs: 6 }}>
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="h6" color={statistics.zeroQohItems > 0 ? "warning.main" : "text.primary"}>
-                {statistics.zeroQohItems}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Zero Stock
-              </Typography>
-            </Box>
-          </Grid>
+          {[
+            { label: "Total Products", value: statistics.totalProducts, color: "primary" },
+            { label: "Total Return Qty", value: statistics.totalReturnQuantity, color: "info.main" },
+            { label: "Expired Items", value: statistics.expiredItems, color: statistics.expiredItems > 0 ? "error.main" : "text.primary" },
+            { label: "Zero Stock", value: statistics.zeroQohItems, color: statistics.zeroQohItems > 0 ? "warning.main" : "text.primary" },
+          ].map((stat, index) => (
+            <Grid key={index} size={{ sm: 3, xs: 6 }}>
+              <Box sx={{ textAlign: "center" }}>
+                <Typography variant="h6" color={stat.color}>
+                  {stat.value}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {stat.label}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
         </Grid>
       </Box>
 

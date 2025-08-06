@@ -53,12 +53,6 @@ export interface SampleStatusUpdateRequestDto {
 export interface LabEnterResultDto {
   labRegNo: number;
   serviceTypeId: number;
-  technicianId?: number;
-  technicianName?: string;
-  isTechnicianApproved?: "Y" | "N";
-  labConsultantId?: number;
-  labConsultantName?: string;
-  isLabConsultantApproved?: "Y" | "N";
   departmentId: number;
   departmentName: string;
   results: LabResultItemDto[];
@@ -70,6 +64,12 @@ export interface LabResultItemDto {
   investigationName: string;
   remarks?: string;
   printOrder: number;
+  technicianId?: number;
+  technicianName?: string;
+  isTechnicianApproved?: "Y" | "N";
+  labConsultantId?: number;
+  labConsultantName?: string;
+  isLabConsultantApproved?: "Y" | "N";
   componentResults?: ComponentResultDto[];
 }
 export interface ComponentResultDto {
