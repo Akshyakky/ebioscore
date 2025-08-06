@@ -87,7 +87,7 @@ const DischargeSummaryPage: React.FC = () => {
         plName: discharge.plName,
         pTitle: discharge.pTitle,
         // Add other required fields
-      } as PatientSearchResult;
+      } as unknown as PatientSearchResult;
       const admissionData: AdmissionDto = {
         ipAdmissionDto: {
           admitID: discharge.admitID || 0,
@@ -103,7 +103,7 @@ const DischargeSummaryPage: React.FC = () => {
           attendingPhysicianName: discharge.dischgPhyName || "",
           deptName: discharge.departmentName || "General",
         },
-      } as AdmissionDto;
+      } as unknown as AdmissionDto;
       setSelectedPatient(patientData);
 
       setSelectedAdmission(admissionData);
