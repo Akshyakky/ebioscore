@@ -25,7 +25,13 @@ const schema = z.object({
   arlID: z.number(),
   arlCode: z.string().nonempty("Reason code is required"),
   arlName: z.string().nonempty("Reason name is required"),
-  arlDuration: z.any(),
+  arlDuration: z
+    .number({
+      required_error: "Duration is required",
+      invalid_type_error: "Duration must be a number",
+    })
+    .min(0, "Duration cannot be negative")
+    .refine((val) => val % 15 === 0, "Duration must be in multiples of 15 minutes (e.g., 15, 30, 45, 60, etc.)"),
   arlDurDesc: z.string().optional(),
   arlColor: z.number().min(0, "Color must be a positive number"),
   rActiveYN: z.string(),
@@ -53,7 +59,7 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
     arlID: 0,
     arlCode: "",
     arlName: "",
-    arlDuration: 0,
+    arlDuration: 15, // Default to 15 minutes (first valid increment)
     arlDurDesc: "",
     arlColor: 1,
     rActiveYN: "Y",
@@ -68,6 +74,7 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors, isDirty, isValid },
   } = useForm<ReasonListFormData>({
     defaultValues,
@@ -76,6 +83,23 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
   });
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
+  const currentDuration = watch("arlDuration");
+
+  // Helper function to get duration description based on minutes
+  const getDurationDescription = (minutes: number): string => {
+    if (minutes === 0) return "";
+    if (minutes < 30) return "Short";
+    if (minutes <= 60) return "Medium";
+    return "Long";
+  };
+
+  // Auto-update duration description when duration changes
+  useEffect(() => {
+    if (typeof currentDuration === "number" && currentDuration >= 0) {
+      const description = getDurationDescription(currentDuration);
+      setValue("arlDurDesc", description, { shouldValidate: false });
+    }
+  }, [currentDuration, setValue]);
 
   const generateReasonCode = async () => {
     if (!isAddMode) return;
@@ -118,7 +142,7 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
         arlCode: data.arlCode,
         arlName: data.arlName,
         arlDuration: Number(data.arlDuration),
-        arlDurDesc: data.arlDurDesc || "",
+        arlDurDesc: data.arlDurDesc || getDurationDescription(Number(data.arlDuration)),
         arlColor: data.arlColor,
         rActiveYN: data.rActiveYN || "Y",
         rNotes: data.rNotes || "",
@@ -305,7 +329,20 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="arlDuration" control={control} label="Duration (minutes)" type="number" required disabled={viewOnly} size="small" inputProps={{ min: 0 }} />
+                      <FormField
+                        name="arlDuration"
+                        control={control}
+                        label="Duration (minutes)"
+                        type="number"
+                        required
+                        disabled={viewOnly}
+                        size="small"
+                        inputProps={{
+                          min: 0,
+                          step: 15, // Helps with input stepping, though validation is still needed
+                        }}
+                        helperText="Duration must be in multiples of 15 minutes (e.g., 15, 30, 45, 60)"
+                      />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
@@ -314,10 +351,10 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
                         control={control}
                         label="Duration Description"
                         type="text"
-                        disabled={viewOnly}
+                        disabled={true} // Auto-generated based on duration
                         size="small"
                         fullWidth
-                        placeholder="E.g., Short, Medium, Long"
+                        helperText="Auto-generated based on duration"
                       />
                     </Grid>
                     <Grid size={{ sm: 12, md: 6 }}>

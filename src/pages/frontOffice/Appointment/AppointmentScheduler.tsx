@@ -61,6 +61,7 @@ const AppointmentScheduler: React.FC = () => {
     checkAppointmentConflicts,
     fetchAppointments,
     fetchAppointmentsByProvider,
+    fetchAppointmentsByResource,
   } = useSchedulerData();
 
   const timeSlots = useTimeSlots();
@@ -167,7 +168,7 @@ const AppointmentScheduler: React.FC = () => {
     return week;
   }, []);
 
-  // Data fetching based on view mode and filter changes
+  // Enhanced data fetching based on view mode and filter changes with complete resource support
   useEffect(() => {
     const fetchData = async () => {
       const startDate = new Date(currentDate);
@@ -183,16 +184,18 @@ const AppointmentScheduler: React.FC = () => {
         endDate.setMonth(endDate.getMonth() + 1, 0);
       }
 
-      // Fetch data based on booking mode and selected filter
+      // Fetch data based on booking mode and selected filter with comprehensive resource support
       if (bookingMode === "physician" && selectedProvider) {
         await fetchAppointmentsByProvider(Number(selectedProvider), startDate, endDate);
+      } else if (bookingMode === "resource" && selectedResource) {
+        await fetchAppointmentsByResource(Number(selectedResource), startDate, endDate);
       } else {
         await fetchAppointments(startDate, endDate);
       }
     };
 
     fetchData();
-  }, [currentDate, viewMode, bookingMode, selectedProvider, selectedResource, fetchAppointments, fetchAppointmentsByProvider, getWeekDates]);
+  }, [currentDate, viewMode, bookingMode, selectedProvider, selectedResource, fetchAppointments, fetchAppointmentsByProvider, fetchAppointmentsByResource, getWeekDates]);
 
   const getMonthDates = useCallback((date: Date) => {
     const year = date.getFullYear();
