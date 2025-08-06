@@ -8,7 +8,6 @@ import { Box, CircularProgress, Grid, Paper, Typography, useTheme } from "@mui/m
 import React, { useCallback, useEffect, useState } from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
-import { calculateBreakLayout } from "../utils/breakUtils";
 import { AppointmentCard } from "./AppointmentCard";
 import { CurrentTimeIndicator } from "./CurrentTimeIndicator";
 
@@ -57,7 +56,6 @@ export const DayView: React.FC<DayViewProps> = ({
   onSlotDoubleClick,
   onAppointmentClick,
   onAppointmentUpdate,
-  onBreakClick,
   onElapsedSlotConfirmation,
 }) => {
   const theme = useTheme();
@@ -433,7 +431,7 @@ export const DayView: React.FC<DayViewProps> = ({
   );
 
   // Drag and Drop Handlers (existing functionality)
-  const handleDragStart = useCallback((appointment: AppointBookingDto, event: React.DragEvent) => {
+  const handleDragStart = useCallback((appointment: AppointBookingDto) => {
     setDraggedAppointment(appointment);
   }, []);
 
@@ -599,19 +597,7 @@ export const DayView: React.FC<DayViewProps> = ({
     return aptDateOnly.getTime() === currentDateOnly.getTime();
   });
 
-  const dayBreaks = breaks.filter((breakItem) => {
-    if (selectedProvider && breakItem.hPLID !== parseInt(selectedProvider)) {
-      return false;
-    }
-
-    const breakStartDate = new Date(breakItem.bLStartDate);
-    const breakEndDate = new Date(breakItem.bLEndDate);
-
-    return currentDate >= breakStartDate && currentDate <= breakEndDate;
-  });
-
   const appointmentLayout = calculateAppointmentLayout(currentDate, dayAppointments);
-  const breakLayout = calculateBreakLayout(currentDate, dayBreaks);
 
   return (
     <Grid container spacing={1}>
