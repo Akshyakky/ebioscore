@@ -4,7 +4,7 @@ import { BreakDto } from "@/interfaces/FrontOffice/BreakListDto";
 import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { Block } from "@mui/icons-material";
-import { Box, CircularProgress, Grid, Paper, Typography, useTheme } from "@mui/material";
+import { Box, CircularProgress, Grid, Typography, useTheme } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
@@ -602,24 +602,6 @@ export const DayView: React.FC<DayViewProps> = ({
   return (
     <Grid container spacing={1}>
       <Grid size={1}>
-        <Paper
-          elevation={2}
-          style={{
-            position: "sticky",
-            top: 0,
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${theme.palette.grey[800]} 0%, ${theme.palette.grey[700]} 100%)`
-              : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-            zIndex: 30,
-            padding: theme.spacing(0.5),
-            borderBottom: `2px solid ${theme.palette.primary.main}`,
-            marginBottom: theme.spacing(0.5),
-          }}
-        >
-          <Typography variant="subtitle2" align="center" fontWeight="bold" color={isDarkMode ? "primary.light" : "primary.main"}>
-            Time
-          </Typography>
-        </Paper>
         {timeSlots.map((slot) => (
           <Box
             key={slot.time}
@@ -664,36 +646,6 @@ export const DayView: React.FC<DayViewProps> = ({
         )}
 
         <CurrentTimeIndicator date={currentDate} height={40} timeSlots={timeSlots} currentTime={currentTime} />
-
-        <Paper
-          elevation={2}
-          style={{
-            position: "sticky",
-            top: 0,
-            background: isDarkMode
-              ? `linear-gradient(135deg, ${theme.palette.grey[800]} 0%, ${theme.palette.grey[700]} 100%)`
-              : "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-            zIndex: 30,
-            padding: theme.spacing(0.5),
-            borderBottom: `2px solid ${theme.palette.primary.main}`,
-            marginBottom: theme.spacing(0.5),
-          }}
-        >
-          <Typography variant="subtitle2" align="center" color={isDarkMode ? "primary.light" : "text.primary"}>
-            {currentDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-            {draggedAppointment && (
-              <Typography variant="caption" display="block" color="info.main">
-                Moving: {draggedAppointment.abFName} {draggedAppointment.abLName}
-              </Typography>
-            )}
-            {resizeState && (
-              <Typography variant="caption" display="block" color={resizeState.isValid ? "success.main" : "error.main"}>
-                Resizing: {resizeState.appointment.abFName} {resizeState.appointment.abLName}({resizeState.currentDuration} min)
-                {!resizeState.isValid && ` - ${resizeState.conflictReason}`}
-              </Typography>
-            )}
-          </Typography>
-        </Paper>
 
         {timeSlots.map((slot) => {
           const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
