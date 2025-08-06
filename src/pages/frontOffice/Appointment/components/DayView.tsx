@@ -5,7 +5,7 @@ import { HospWorkHoursDto } from "@/interfaces/FrontOffice/HospWorkHoursDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { Block } from "@mui/icons-material";
 import { Box, CircularProgress, Grid, Typography, useTheme } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TimeSlot } from "../types";
 import { calculateAppointmentLayout } from "../utils/appointmentUtils";
 import { AppointmentCard } from "./AppointmentCard";
@@ -43,6 +43,8 @@ interface DayViewProps {
   onAppointmentUpdate?: (appointment: AppointBookingDto) => Promise<{ success: boolean; errorMessage?: string }>;
   onBreakClick?: (breakItem: BreakDto) => void;
   onElapsedSlotConfirmation: (date: Date, hour: number, minute: number) => void;
+  shouldScrollToTime?: boolean;
+  scrollTrigger?: number;
 }
 
 export const DayView: React.FC<DayViewProps> = ({
@@ -57,10 +59,16 @@ export const DayView: React.FC<DayViewProps> = ({
   onAppointmentClick,
   onAppointmentUpdate,
   onElapsedSlotConfirmation,
+  shouldScrollToTime = true,
+  scrollTrigger = 0,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
   const { showAlert } = useAlert();
+
+  // Refs for synchronized scrolling
+  const timeLabelsScrollRef = useRef<HTMLDivElement>(null);
+  const appointmentSlotsScrollRef = useRef<HTMLDivElement>(null);
 
   // Drag and drop state
   const [draggedAppointment, setDraggedAppointment] = useState<AppointBookingDto | null>(null);
@@ -71,6 +79,104 @@ export const DayView: React.FC<DayViewProps> = ({
   // Resize state
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [isResizing, setIsResizing] = useState<boolean>(false);
+
+  // Auto-scroll functionality
+  const getScrollPosition = useCallback(() => {
+    const isToday = currentDate.toDateString() === new Date().toDateString();
+    const slotHeight = 40; // Height of each 15-minute slot in pixels
+
+    if (isToday && shouldScrollToTime) {
+      // Scroll to current time
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = Math.floor(now.getMinutes() / 15) * 15; // Round to nearest 15-minute interval
+      const totalMinutesFromMidnight = currentHour * 60 + currentMinute;
+      const slotIndex = totalMinutesFromMidnight / 15;
+
+      // Add some offset to show context before current time
+      const offsetSlots = 2; // Show 30 minutes before current time
+      const targetSlotIndex = Math.max(0, slotIndex - offsetSlots);
+
+      return targetSlotIndex * slotHeight;
+    } else {
+      // Scroll to start of work hours
+      const dayName = currentDate.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
+      const dayWorkHours = workHours.find((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y" && wh.startTime);
+
+      if (dayWorkHours && dayWorkHours.startTime) {
+        const startTime = new Date(dayWorkHours.startTime);
+        const startHour = startTime.getHours();
+        const startMinute = Math.floor(startTime.getMinutes() / 15) * 15;
+        const totalMinutesFromMidnight = startHour * 60 + startMinute;
+        const slotIndex = totalMinutesFromMidnight / 15;
+
+        // Add small offset to show some context before work starts
+        const offsetSlots = 1;
+        const targetSlotIndex = Math.max(0, slotIndex - offsetSlots);
+
+        return targetSlotIndex * slotHeight;
+      }
+    }
+
+    // Default: scroll to 8 AM if no work hours defined
+    const defaultStartHour = 8;
+    const defaultSlotIndex = (defaultStartHour * 60) / 15;
+    return defaultSlotIndex * slotHeight;
+  }, [currentDate, workHours, shouldScrollToTime]);
+
+  const scrollToPosition = useCallback((position: number, smooth: boolean = true) => {
+    // Synchronize scrolling for both time labels and appointment slots
+    const scrollOptions = {
+      top: position,
+      behavior: smooth ? ("smooth" as const) : ("auto" as const),
+    };
+
+    if (timeLabelsScrollRef.current) {
+      timeLabelsScrollRef.current.scrollTo(scrollOptions);
+    }
+    if (appointmentSlotsScrollRef.current) {
+      appointmentSlotsScrollRef.current.scrollTo(scrollOptions);
+    }
+  }, []);
+
+  // Synchronized scroll handler
+  const handleTimeLabelsScroll = useCallback(() => {
+    if (timeLabelsScrollRef.current && appointmentSlotsScrollRef.current) {
+      appointmentSlotsScrollRef.current.scrollTop = timeLabelsScrollRef.current.scrollTop;
+    }
+  }, []);
+
+  const handleAppointmentSlotsScroll = useCallback(() => {
+    if (appointmentSlotsScrollRef.current && timeLabelsScrollRef.current) {
+      timeLabelsScrollRef.current.scrollTop = appointmentSlotsScrollRef.current.scrollTop;
+    }
+  }, []);
+
+  // Auto-scroll effect - triggered on date change, provider change, or scroll trigger
+  useEffect(() => {
+    if (shouldScrollToTime) {
+      // Small delay to ensure DOM is rendered
+      const timer = setTimeout(() => {
+        const scrollPosition = getScrollPosition();
+        scrollToPosition(scrollPosition, true);
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentDate, shouldScrollToTime, getScrollPosition, scrollToPosition, scrollTrigger]);
+
+  // Initial scroll on mount
+  useEffect(() => {
+    if (shouldScrollToTime) {
+      // Initial scroll without animation for immediate positioning
+      const timer = setTimeout(() => {
+        const scrollPosition = getScrollPosition();
+        scrollToPosition(scrollPosition, false);
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const isWithinWorkingHours = useCallback(
     (date: Date, hour: number, minute: number) => {
@@ -149,7 +255,6 @@ export const DayView: React.FC<DayViewProps> = ({
 
         if (!dateMatches) return false;
 
-        // Check for time overlap
         return startTime < aptEndTime && endTime > aptStartTime;
       });
     },
@@ -162,27 +267,22 @@ export const DayView: React.FC<DayViewProps> = ({
       const endTime = new Date(startTime);
       endTime.setMinutes(endTime.getMinutes() + newDuration);
 
-      // Check minimum duration
       if (newDuration < 15) {
         return { valid: false, reason: "Minimum duration is 15 minutes" };
       }
 
-      // Check maximum duration (8 hours)
       if (newDuration > 480) {
         return { valid: false, reason: "Maximum duration is 8 hours" };
       }
 
-      // Check if new end time is within working hours
       if (!isWithinWorkingHours(currentDate, endTime.getHours(), endTime.getMinutes())) {
         return { valid: false, reason: "Appointment would extend beyond working hours" };
       }
 
-      // Check if new end time conflicts with breaks
       if (isTimeSlotDuringBreak(currentDate, endTime.getHours(), endTime.getMinutes())) {
         return { valid: false, reason: "Appointment would extend into break time" };
       }
 
-      // Check for conflicts with other appointments
       const conflicts = getAppointmentConflicts(currentDate, startTime.getHours(), startTime.getMinutes(), newDuration, appointment.abID);
 
       if (conflicts.length > 0) {
@@ -199,23 +299,19 @@ export const DayView: React.FC<DayViewProps> = ({
 
   const validateDropZone = useCallback(
     (date: Date, hour: number, minute: number, dragData: DragData) => {
-      // Check if within working hours
       if (!isWithinWorkingHours(date, hour, minute)) {
         return { valid: false, reason: "Outside working hours" };
       }
 
-      // Check if during break
       if (isTimeSlotDuringBreak(date, hour, minute)) {
         return { valid: false, reason: "During break time" };
       }
 
-      // Check for appointment conflicts
       const conflicts = getAppointmentConflicts(date, hour, minute, dragData.duration, dragData.appointmentId);
       if (conflicts.length > 0) {
         return { valid: false, reason: `Conflicts with ${conflicts[0].abFName} ${conflicts[0].abLName}` };
       }
 
-      // Check if appointment would extend beyond working hours
       const endTime = new Date(date);
       endTime.setHours(hour, minute + dragData.duration, 0, 0);
 
@@ -245,7 +341,7 @@ export const DayView: React.FC<DayViewProps> = ({
       if (!resizeState || !isResizing) return;
 
       const deltaY = event.clientY - resizeState.startY;
-      const slotHeight = 40; // Height of each 15-minute slot
+      const slotHeight = 40;
       const minutesPerSlot = 15;
       const deltaMinutes = Math.round(deltaY / slotHeight) * minutesPerSlot;
       const newDuration = Math.max(15, resizeState.originalDuration + deltaMinutes);
@@ -430,7 +526,7 @@ export const DayView: React.FC<DayViewProps> = ({
     [breaks, selectedProvider]
   );
 
-  // Drag and Drop Handlers (existing functionality)
+  // Drag and Drop Handlers
   const handleDragStart = useCallback((appointment: AppointBookingDto) => {
     setDraggedAppointment(appointment);
   }, []);
@@ -472,7 +568,6 @@ export const DayView: React.FC<DayViewProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    // Only clear if we're leaving the slot entirely
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
@@ -517,14 +612,12 @@ export const DayView: React.FC<DayViewProps> = ({
       setIsUpdating(true);
 
       try {
-        // Create new appointment time
         const newDateTime = new Date(date);
         newDateTime.setHours(hour, minute, 0, 0);
 
         const newEndDateTime = new Date(newDateTime);
         newEndDateTime.setMinutes(newEndDateTime.getMinutes() + draggedAppointment.abDuration);
 
-        // Update appointment with new time
         const updatedAppointment: AppointBookingDto = {
           ...draggedAppointment,
           abDate: date,
@@ -599,50 +692,56 @@ export const DayView: React.FC<DayViewProps> = ({
 
   const appointmentLayout = calculateAppointmentLayout(currentDate, dayAppointments);
 
-  // Helper function to get day work hours info
-  const getDayWorkHours = () => {
-    const dayName = currentDate.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
-    const dayWorkHours = workHours.filter((wh) => wh.daysDesc.toUpperCase() === dayName && wh.rActiveYN === "Y");
-
-    if (dayWorkHours.length === 0) {
-      return "No working hours defined";
-    }
-
-    const workHourRanges = dayWorkHours.map((wh) => {
-      const startTime = new Date(wh.startTime);
-      const endTime = new Date(wh.endTime);
-      return `${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-    });
-
-    return workHourRanges.join(", ");
-  };
-
   return (
     <Box>
-      {/* Day View Content */}
       <Grid container spacing={1}>
+        {/* Time Labels Column with Synchronized Scrolling */}
         <Grid size={1}>
-          {timeSlots.map((slot) => (
-            <Box
-              key={slot.time}
-              style={{
-                height: 40,
-                display: "flex",
-                alignItems: "center",
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                padding: theme.spacing(0, 1),
-                backgroundColor: isDarkMode ? theme.palette.background.paper : "transparent",
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {slot.time}
-              </Typography>
-            </Box>
-          ))}
+          <Box
+            ref={timeLabelsScrollRef}
+            onScroll={handleTimeLabelsScroll}
+            sx={{
+              maxHeight: "calc(100vh - 300px)",
+              overflowY: "auto",
+              overflowX: "hidden",
+              "&::-webkit-scrollbar": {
+                width: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "#f1f1f1",
+                borderRadius: "4px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#c4c4c4",
+                borderRadius: "4px",
+                "&:hover": {
+                  backgroundColor: "#a8a8a8",
+                },
+              },
+            }}
+          >
+            {timeSlots.map((slot) => (
+              <Box
+                key={slot.time}
+                style={{
+                  height: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  padding: theme.spacing(0, 1),
+                  backgroundColor: isDarkMode ? theme.palette.background.paper : "transparent",
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  {slot.time}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
         </Grid>
 
+        {/* Appointment Slots Column with Synchronized Scrolling */}
         <Grid size={11} style={{ position: "relative" }}>
-          {/* Loading overlay */}
           {(isUpdating || isResizing) && (
             <Box
               style={{
@@ -665,118 +764,138 @@ export const DayView: React.FC<DayViewProps> = ({
             </Box>
           )}
 
-          <CurrentTimeIndicator date={currentDate} height={40} timeSlots={timeSlots} currentTime={currentTime} />
+          <Box
+            ref={appointmentSlotsScrollRef}
+            onScroll={handleAppointmentSlotsScroll}
+            sx={{
+              maxHeight: "calc(100vh - 300px)",
+              overflowY: "auto",
+              overflowX: "hidden",
+              position: "relative",
+              "&::-webkit-scrollbar": {
+                width: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "#f1f1f1",
+                borderRadius: "4px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#c4c4c4",
+                borderRadius: "4px",
+                "&:hover": {
+                  backgroundColor: "#a8a8a8",
+                },
+              },
+            }}
+          >
+            <CurrentTimeIndicator date={currentDate} height={40} timeSlots={timeSlots} currentTime={currentTime} />
 
-          {timeSlots.map((slot) => {
-            const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
-            const slotBreaks = getBreaksForSlot(currentDate, slot.hour, slot.minute);
-            const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
-            const isElapsed = isTimeSlotElapsed(currentDate, slot.hour, slot.minute);
-            const isDuringBreak = isTimeSlotDuringBreak(currentDate, slot.hour, slot.minute);
-            const slotStyles = getSlotStyles(currentDate, slot.hour, slot.minute);
+            {timeSlots.map((slot) => {
+              const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minute);
+              const slotBreaks = getBreaksForSlot(currentDate, slot.hour, slot.minute);
+              const withinWorkingHours = isWithinWorkingHours(currentDate, slot.hour, slot.minute);
+              const isElapsed = isTimeSlotElapsed(currentDate, slot.hour, slot.minute);
+              const isDuringBreak = isTimeSlotDuringBreak(currentDate, slot.hour, slot.minute);
+              const slotStyles = getSlotStyles(currentDate, slot.hour, slot.minute);
 
-            return (
-              <Box
-                key={slot.time}
-                style={slotStyles}
-                onClick={() => handleSlotClick(currentDate, slot.hour, slot.minute)}
-                onDoubleClick={() => handleSlotDoubleClick(currentDate, slot.hour, slot.minute)}
-                onDragOver={(e) => handleDragOver(e, currentDate, slot.hour, slot.minute)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, currentDate, slot.hour, slot.minute)}
-              >
-                {!withinWorkingHours && !slotAppointments.length && !slotBreaks.length && (
-                  <Box display="flex" alignItems="center" height="100%" color="text.disabled">
-                    <Block fontSize="small" />
-                    <Typography variant="caption" marginLeft={0.5}>
-                      Outside hours
+              return (
+                <Box
+                  key={slot.time}
+                  style={slotStyles}
+                  onClick={() => handleSlotClick(currentDate, slot.hour, slot.minute)}
+                  onDoubleClick={() => handleSlotDoubleClick(currentDate, slot.hour, slot.minute)}
+                  onDragOver={(e) => handleDragOver(e, currentDate, slot.hour, slot.minute)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, currentDate, slot.hour, slot.minute)}
+                >
+                  {!withinWorkingHours && !slotAppointments.length && !slotBreaks.length && (
+                    <Box display="flex" alignItems="center" height="100%" color="text.disabled">
+                      <Block fontSize="small" />
+                      <Typography variant="caption" marginLeft={0.5}>
+                        Outside hours
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {isDuringBreak && slotAppointments.length === 0 && (
+                    <Box display="flex" alignItems="center" height="100%" color="warning.main">
+                      <Typography variant="caption">🚫 Break Time</Typography>
+                    </Box>
+                  )}
+
+                  {withinWorkingHours && !isDuringBreak && slotAppointments.length === 0 && slotBreaks.length === 0 && (
+                    <Typography
+                      variant="caption"
+                      color={isDarkMode ? "text.secondary" : "text.secondary"}
+                      style={{
+                        opacity: 0,
+                        transition: "opacity 0.2s",
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        pointerEvents: "none",
+                        fontStyle: "italic",
+                        fontWeight: isDarkMode ? 500 : "normal",
+                      }}
+                      className="slot-hint"
+                    >
+                      {isElapsed ? "Click for elapsed booking" : "Double-click to book"}
                     </Typography>
-                  </Box>
-                )}
+                  )}
 
-                {isDuringBreak && slotAppointments.length === 0 && (
-                  <Box display="flex" alignItems="center" height="100%" color="warning.main">
-                    <Typography variant="caption">🚫 Break Time</Typography>
-                  </Box>
-                )}
+                  {slotAppointments.map((appointment) => {
+                    const appointmentStart = new Date(appointment.abTime);
+                    const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
+                    const slotStartMinutes = slot.hour * 60 + slot.minute;
+                    const nextSlotStartMinutes = slotStartMinutes + 15;
 
-                {withinWorkingHours && !isDuringBreak && slotAppointments.length === 0 && slotBreaks.length === 0 && (
-                  <Typography
-                    variant="caption"
-                    color={isDarkMode ? "text.secondary" : "text.secondary"}
-                    style={{
-                      opacity: 0,
-                      transition: "opacity 0.2s",
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      pointerEvents: "none",
-                      fontStyle: "italic",
-                      fontWeight: isDarkMode ? 500 : "normal",
-                    }}
-                    className="slot-hint"
-                  >
-                    {isElapsed ? "Click for elapsed booking" : "Double-click to book"}
-                  </Typography>
-                )}
+                    if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
+                      const slotHeight = 40;
+                      const currentDuration = resizeState && resizeState.appointment.abID === appointment.abID ? resizeState.currentDuration : appointment.abDuration;
+                      const durationInSlots = currentDuration / 15;
+                      const appointmentHeight = Math.max(durationInSlots * slotHeight - 2, currentDuration <= 15 ? 18 : 24);
+                      const minuteOffset = appointmentStartMinutes - slotStartMinutes;
+                      const topOffset = (minuteOffset / 15) * slotHeight;
 
-                {/* Render Appointments */}
-                {slotAppointments.map((appointment) => {
-                  const appointmentStart = new Date(appointment.abTime);
-                  const appointmentStartMinutes = appointmentStart.getHours() * 60 + appointmentStart.getMinutes();
-                  const slotStartMinutes = slot.hour * 60 + slot.minute;
-                  const nextSlotStartMinutes = slotStartMinutes + 15;
+                      const layoutInfo = appointmentLayout.find((layout) => layout.appointment.abID === appointment.abID);
+                      const column = layoutInfo?.column || 0;
+                      const totalColumns = layoutInfo?.totalColumns || 1;
 
-                  if (appointmentStartMinutes >= slotStartMinutes && appointmentStartMinutes < nextSlotStartMinutes) {
-                    const slotHeight = 40;
-
-                    // Use current duration if this appointment is being resized
-                    const currentDuration = resizeState && resizeState.appointment.abID === appointment.abID ? resizeState.currentDuration : appointment.abDuration;
-
-                    const durationInSlots = currentDuration / 15;
-                    const appointmentHeight = Math.max(durationInSlots * slotHeight - 2, currentDuration <= 15 ? 18 : 24);
-
-                    const minuteOffset = appointmentStartMinutes - slotStartMinutes;
-                    const topOffset = (minuteOffset / 15) * slotHeight;
-
-                    const layoutInfo = appointmentLayout.find((layout) => layout.appointment.abID === appointment.abID);
-                    const column = layoutInfo?.column || 0;
-                    const totalColumns = layoutInfo?.totalColumns || 1;
-
-                    return (
-                      <Box
-                        key={appointment.abID}
-                        style={{
-                          position: "absolute",
-                          top: `${topOffset}px`,
-                          left: "4px",
-                          right: "4px",
-                          height: `${appointmentHeight}px`,
-                          zIndex: 20,
-                        }}
-                      >
-                        <AppointmentCard
-                          appointment={appointment}
-                          showDetails={true}
-                          column={column}
-                          totalColumns={totalColumns}
-                          onClick={onAppointmentClick}
-                          onDragStart={handleDragStart}
-                          onDragEnd={handleDragEnd}
-                          onResizeStart={handleResizeStart}
-                          isDragging={draggedAppointment?.abID === appointment.abID}
-                          isResizing={resizeState?.appointment.abID === appointment.abID}
-                          isElapsed={isElapsed}
-                        />
-                      </Box>
-                    );
-                  }
-                  return null;
-                })}
-              </Box>
-            );
-          })}
+                      return (
+                        <Box
+                          key={appointment.abID}
+                          style={{
+                            position: "absolute",
+                            top: `${topOffset}px`,
+                            left: "4px",
+                            right: "4px",
+                            height: `${appointmentHeight}px`,
+                            zIndex: 20,
+                          }}
+                        >
+                          <AppointmentCard
+                            appointment={appointment}
+                            showDetails={true}
+                            column={column}
+                            totalColumns={totalColumns}
+                            onClick={onAppointmentClick}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                            onResizeStart={handleResizeStart}
+                            isDragging={draggedAppointment?.abID === appointment.abID}
+                            isResizing={resizeState?.appointment.abID === appointment.abID}
+                            isElapsed={isElapsed}
+                          />
+                        </Box>
+                      );
+                    }
+                    return null;
+                  })}
+                </Box>
+              );
+            })}
+          </Box>
         </Grid>
       </Grid>
     </Box>
