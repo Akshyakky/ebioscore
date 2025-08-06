@@ -1,6 +1,6 @@
 // src/pages/frontOffice/Appointment/components/SchedulerHeader.tsx
-import { Add as AddIcon, NavigateBefore, NavigateNext, Today, Warning as WarningIcon } from "@mui/icons-material";
-import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography } from "@mui/material";
+import { NavigateBefore, NavigateNext, Today, Warning as WarningIcon } from "@mui/icons-material";
+import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import React from "react";
 
 interface SchedulerHeaderProps {
@@ -227,32 +227,6 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
               ))}
             </Select>
           </FormControl>
-        </Grid>
-
-        {/* Book Appointment Button with Enhanced States */}
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Tooltip title={getBookingButtonTooltip()} arrow>
-            <span>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={onBookingClick}
-                fullWidth
-                size="small"
-                style={{ fontSize: "0.8rem" }}
-                disabled={!isBookingAllowed}
-                color={isBookingAllowed ? "primary" : "inherit"}
-                sx={{
-                  "&.Mui-disabled": {
-                    backgroundColor: "action.disabledBackground",
-                    color: "action.disabled",
-                  },
-                }}
-              >
-                Book Appointment
-              </Button>
-            </span>
-          </Tooltip>
         </Grid>
       </Grid>
     </Paper>
