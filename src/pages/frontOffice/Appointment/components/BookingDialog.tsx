@@ -60,8 +60,8 @@ const appointmentBookingSchema = z
     // Reason and duration
     arlID: z.number().optional().default(0),
     arlName: z.string().optional().default(""),
-    abDuration: z.number().min(15, "Duration must be at least 15 minutes").default(30),
-    abDurDesc: z.string().default("30 minutes"),
+    abDuration: z.number().min(15, "Duration must be at least 15 minutes").default(15),
+    abDurDesc: z.string().default("15 minutes"),
 
     // Date and time - with proper validation
     abDate: z.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
@@ -198,8 +198,8 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
       rlName: existingAppointment?.rlName || bookingForm.rlName || "",
       arlID: existingAppointment?.arlID || bookingForm.arlID || 0,
       arlName: existingAppointment?.arlName || bookingForm.arlName || "",
-      abDuration: existingAppointment?.abDuration || bookingForm.abDuration || 30,
-      abDurDesc: existingAppointment?.abDurDesc || bookingForm.abDurDesc || "30 minutes",
+      abDuration: existingAppointment?.abDuration || bookingForm.abDuration || 15,
+      abDurDesc: existingAppointment?.abDurDesc || bookingForm.abDurDesc || "15 minutes",
       abDate: existingAppointment?.abDate ? new Date(existingAppointment.abDate) : bookingForm.abDate ? new Date(bookingForm.abDate) : serverDate,
       abTime: existingAppointment?.abTime ? new Date(existingAppointment.abTime) : bookingForm.abTime ? new Date(bookingForm.abTime) : serverDate,
       abEndTime: existingAppointment?.abEndTime ? new Date(existingAppointment.abEndTime) : bookingForm.abEndTime ? new Date(bookingForm.abEndTime) : serverDate,
@@ -499,15 +499,37 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ open, onClose, onSubmit, 
     [resources, setValue]
   );
 
+  const getDurationDescription = (minutes: number): string => {
+    if (minutes === 0) return "";
+    if (minutes <= 15) return "15 minutes";
+    if (minutes <= 30) return "30 minutes";
+    if (minutes <= 45) return "45 minutes";
+    if (minutes <= 60) return "1 hour";
+    if (minutes <= 90) return "1.5 hours";
+    if (minutes <= 120) return "2 hours";
+    return `${minutes} minutes`;
+  };
+
   const handleReasonChange = useCallback(
     (value: any) => {
       const selectedReason = reasonList.find((reason) => Number(reason.value) === Number(value.value));
       if (selectedReason) {
+        // Set reason information
         setValue("arlID", Number(selectedReason.value), { shouldValidate: true, shouldDirty: true });
         setValue("arlName", selectedReason.label, { shouldValidate: true, shouldDirty: true });
+
+        // Auto-populate duration from the selected reason
+        const reasonData = selectedReason as any; // Cast to access additional properties
+        if (reasonData.arlDuration) {
+          setValue("abDuration", Number(reasonData.arlDuration), { shouldValidate: true, shouldDirty: true });
+
+          // Set duration description
+          const durationDesc = reasonData.arlDurDesc || getDurationDescription(Number(reasonData.arlDuration));
+          setValue("abDurDesc", durationDesc, { shouldValidate: true, shouldDirty: true });
+        }
       }
     },
-    [reasonList, setValue]
+    [reasonList, setValue, showAlert]
   );
 
   const handleDurationChange = useCallback(
