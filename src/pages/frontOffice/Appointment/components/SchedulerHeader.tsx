@@ -1,6 +1,6 @@
 // src/pages/frontOffice/Appointment/components/SchedulerHeader.tsx
-import { NavigateBefore, NavigateNext, Today, Warning as WarningIcon } from "@mui/icons-material";
-import { Autocomplete, Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { CalendarMonth, LocationOn, NavigateBefore, NavigateNext, Person, Warning as WarningIcon } from "@mui/icons-material";
+import { Autocomplete, Box, Button, Chip, FormControl, Grid, IconButton, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -27,8 +27,8 @@ interface SchedulerHeaderProps {
 }
 
 const bookingModeOptions = [
-  { value: "physician", label: "Physician" },
-  { value: "resource", label: "Resource" },
+  { value: "physician", label: "Physician", icon: <Person fontSize="small" /> },
+  { value: "resource", label: "Resource", icon: <LocationOn fontSize="small" /> },
 ];
 
 export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
@@ -54,18 +54,22 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
       case "month":
         return currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
       case "week":
-        return `Week of ${getWeekDates(currentDate)[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+        const weekStart = getWeekDates(currentDate)[0];
+        const weekEnd = getWeekDates(currentDate)[6];
+        return `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}`;
       default:
         return currentDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
     }
   };
 
-  // Get the current selection value based on booking mode
   const getCurrentSelectionValue = () => {
     return bookingMode === "physician" ? selectedProvider : selectedResource;
   };
 
-  // Handle selection change based on booking mode
   const handleSelectionChange = (value: string) => {
     if (bookingMode === "physician") {
       onProviderChange(value);
@@ -74,7 +78,6 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
     }
   };
 
-  // Get the appropriate options based on booking mode
   const getCurrentOptions = () => {
     const baseOptions = bookingMode === "physician" ? providers : resources;
     const allOption = {
@@ -85,49 +88,31 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
     return [allOption, ...baseOptions];
   };
 
-  // Get the appropriate label based on booking mode
   const getCurrentLabel = () => {
     return bookingMode === "physician" ? "Provider" : "Resource";
   };
 
-  // Check if current selection is required but missing
   const isSelectionRequired = () => {
     return (bookingMode === "physician" && !selectedProvider) || (bookingMode === "resource" && !selectedResource);
   };
 
-  // Get tooltip text for disabled booking button
-  const getBookingButtonTooltip = () => {
-    if (!isBookingAllowed) {
-      if (bookingMode === "physician" && !selectedProvider) {
-        return "Please select a provider before booking appointments";
-      }
-      if (bookingMode === "resource" && !selectedResource) {
-        return "Please select a resource before booking appointments";
-      }
-    }
-    return "Book new appointment";
-  };
-
-  // Handle date picker change
   const handleDatePickerChange = (newValue: Dayjs | null) => {
     if (newValue && newValue.isValid()) {
       onDateChange(newValue.toDate());
     }
   };
 
-  // Get the currently selected option object for Autocomplete
   const getSelectedOption = () => {
     const currentValue = getCurrentSelectionValue();
     const options = getCurrentOptions();
 
     if (!currentValue) {
-      return options[0]; // Return "All" option when nothing is selected
+      return options[0];
     }
 
     return options.find((option) => option.value.toString() === currentValue) || null;
   };
 
-  // Handle Autocomplete change
   const handleAutocompleteChange = (event: any, newValue: any) => {
     if (newValue) {
       handleSelectionChange(newValue.value === 0 ? "" : newValue.value.toString());
@@ -137,165 +122,267 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   };
 
   return (
-    <Paper variant="outlined" style={{ padding: 8, marginBottom: 8 }}>
-      <Grid container spacing={1} alignItems="center">
-        {/* Date Display and Navigation */}
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Typography variant="caption" color="text.secondary" display="block" marginBottom={0.5}>
-            {getDateDisplay()}
-          </Typography>
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                value={dayjs(currentDate)}
-                onChange={handleDatePickerChange}
-                format="DD/MM/YYYY"
-                slotProps={{
-                  textField: {
-                    size: "small",
-                    style: { minWidth: 120 },
-                    InputProps: {
-                      style: { fontSize: "0.8rem" },
-                    },
-                  },
-                }}
-              />
-            </LocalizationProvider>
-            <IconButton onClick={() => onNavigate("prev")} size="small">
-              <NavigateBefore />
-            </IconButton>
-            <IconButton onClick={() => onNavigate("next")} size="small">
-              <NavigateNext />
-            </IconButton>
-            <Button variant="outlined" startIcon={<Today />} onClick={() => onNavigate("today")} size="small" style={{ minWidth: "auto", fontSize: "0.7rem" }}>
-              Today
-            </Button>
+    <Paper
+      elevation={1}
+      sx={{
+        borderRadius: 1,
+        overflow: "hidden",
+        mb: 1,
+      }}
+    >
+      {/* Compact Header Bar */}
+      <Box
+        sx={{
+          background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+          color: "white",
+          px: 2,
+          py: 0.8,
+        }}
+      >
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack direction="row" spacing={2} alignItems="center">
+            <CalendarMonth fontSize="small" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: "0.95rem" }}>
+              Appointments
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9, fontSize: "0.8rem" }}>
+              {getDateDisplay()}
+            </Typography>
           </Stack>
-        </Grid>
 
-        {/* View Mode Tabs */}
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Tabs
-            value={viewMode}
-            onChange={(_, value) => onViewModeChange(value)}
-            variant="fullWidth"
-            style={{
-              minHeight: 36,
+          <Button
+            variant="contained"
+            onClick={onBookingClick}
+            disabled={!isBookingAllowed}
+            size="small"
+            sx={{
+              bgcolor: "rgba(255, 255, 255, 0.2)",
+              color: "white",
+              fontWeight: 600,
+              fontSize: "0.8rem",
+              px: 2,
+              py: 0.5,
+              minHeight: "auto",
+              textTransform: "none",
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.3)",
+              },
+              "&:disabled": {
+                bgcolor: "rgba(255, 255, 255, 0.1)",
+                color: "rgba(255, 255, 255, 0.5)",
+              },
             }}
           >
-            <Tab
-              value="day"
-              label="Day"
-              style={{
-                fontSize: "0.75rem",
-                minHeight: 36,
-                minWidth: "auto",
-                padding: "4px 8px",
-              }}
-            />
-            <Tab
-              value="week"
-              label="Week"
-              style={{
-                fontSize: "0.75rem",
-                minHeight: 36,
-                minWidth: "auto",
-                padding: "4px 8px",
-              }}
-            />
-            <Tab
-              value="month"
-              label="Month"
-              style={{
-                fontSize: "0.75rem",
-                minHeight: 36,
-                minWidth: "auto",
-                padding: "4px 8px",
-              }}
-            />
-          </Tabs>
-        </Grid>
+            + New
+          </Button>
+        </Stack>
+      </Box>
 
-        {/* Booking Mode Selection */}
-        <Grid size={{ xs: 6, md: 1.5 }}>
-          <FormControl size="small" fullWidth>
-            <InputLabel style={{ fontSize: "0.8rem" }}>Mode</InputLabel>
-            <Select value={bookingMode} onChange={(e) => onBookingModeChange(e.target.value)} label="Mode" style={{ fontSize: "0.8rem" }}>
-              {bookingModeOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Searchable Provider/Resource Selection */}
-        <Grid size={{ xs: 6, md: 3.5 }}>
-          <Autocomplete
-            size="small"
-            value={getSelectedOption()}
-            onChange={handleAutocompleteChange}
-            options={getCurrentOptions()}
-            getOptionLabel={(option) => option.label}
-            isOptionEqualToValue={(option, value) => option.value === value.value}
-            filterOptions={(options, { inputValue }) => {
-              const filtered = options.filter((option) => option.label.toLowerCase().includes(inputValue.toLowerCase()));
-              return filtered;
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label={
-                  <Stack direction="row" spacing={0.5} alignItems="center">
-                    {getCurrentLabel()}
-                    {isSelectionRequired() && <WarningIcon fontSize="small" />}
-                  </Stack>
-                }
-                error={isSelectionRequired()}
-                InputProps={{
-                  ...params.InputProps,
-                  style: { fontSize: "0.8rem" },
-                }}
-                InputLabelProps={{
-                  ...params.InputLabelProps,
-                  style: {
-                    fontSize: "0.8rem",
-                    color: isSelectionRequired() ? "#ed6c02" : undefined,
-                  },
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    "&.Mui-error": {
-                      "& fieldset": {
-                        borderColor: "warning.main",
+      {/* Compact Controls */}
+      <Box sx={{ px: 2, py: 1.2 }}>
+        <Grid container spacing={1.5} alignItems="center">
+          {/* Date Navigation */}
+          <Grid size={{ xs: 12, md: 3.5 }}>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  value={dayjs(currentDate)}
+                  onChange={handleDatePickerChange}
+                  format="DD/MM/YYYY"
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      sx: {
+                        minWidth: 110,
+                        "& .MuiInputBase-input": {
+                          fontSize: "0.8rem",
+                          py: 0.6,
+                        },
+                        "& .MuiOutlinedInput-root": {
+                          height: 32,
+                        },
                       },
                     },
+                  }}
+                />
+              </LocalizationProvider>
+              <IconButton
+                onClick={() => onNavigate("prev")}
+                size="small"
+                sx={{
+                  width: 32,
+                  height: 32,
+                  bgcolor: "rgba(103, 126, 234, 0.08)",
+                  "&:hover": { bgcolor: "rgba(103, 126, 234, 0.15)" },
+                }}
+              >
+                <NavigateBefore fontSize="small" />
+              </IconButton>
+              <IconButton
+                onClick={() => onNavigate("next")}
+                size="small"
+                sx={{
+                  width: 32,
+                  height: 32,
+                  bgcolor: "rgba(103, 126, 234, 0.08)",
+                  "&:hover": { bgcolor: "rgba(103, 126, 234, 0.15)" },
+                }}
+              >
+                <NavigateNext fontSize="small" />
+              </IconButton>
+              <Button
+                variant="outlined"
+                onClick={() => onNavigate("today")}
+                size="small"
+                sx={{
+                  minWidth: "auto",
+                  px: 1,
+                  py: 0.3,
+                  height: 32,
+                  fontSize: "0.75rem",
+                  textTransform: "none",
+                  borderColor: "rgba(103, 126, 234, 0.3)",
+                }}
+              >
+                Today
+              </Button>
+            </Stack>
+          </Grid>
+
+          {/* View Mode */}
+          <Grid size={{ xs: 12, md: 2.5 }}>
+            <Tabs
+              value={viewMode}
+              onChange={(_, value) => onViewModeChange(value)}
+              variant="fullWidth"
+              sx={{
+                minHeight: 32,
+                bgcolor: "rgba(103, 126, 234, 0.05)",
+                borderRadius: 0.8,
+                "& .MuiTab-root": {
+                  minHeight: 32,
+                  py: 0.3,
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  color: "text.secondary",
+                  "&.Mui-selected": {
+                    color: "white",
+                    bgcolor: "primary.main",
+                    borderRadius: 0.8,
+                  },
+                },
+                "& .MuiTabs-indicator": {
+                  display: "none",
+                },
+              }}
+            >
+              <Tab value="day" label="Day" />
+              <Tab value="week" label="Week" />
+              <Tab value="month" label="Month" />
+            </Tabs>
+          </Grid>
+
+          {/* Booking Mode */}
+          <Grid size={{ xs: 6, md: 2 }}>
+            <FormControl size="small" fullWidth>
+              <Select
+                value={bookingMode}
+                onChange={(e) => onBookingModeChange(e.target.value)}
+                displayEmpty
+                sx={{
+                  height: 32,
+                  fontSize: "0.8rem",
+                  "& .MuiSelect-select": {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    py: 0.5,
                   },
                 }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <li {...props} key={option.value}>
-                <Stack direction="row" spacing={1} alignItems="center" width="100%">
-                  <Typography variant="body2" style={{ fontSize: "0.8rem" }}>
-                    {option.label}
-                  </Typography>
-                  {option.type && option.type !== "all" && (
-                    <Typography variant="caption" color="text.secondary" style={{ fontSize: "0.7rem", marginLeft: "auto" }}>
-                      {option.type}
+              >
+                {bookingModeOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value} sx={{ fontSize: "0.8rem" }}>
+                    <Stack direction="row" spacing={0.8} alignItems="center">
+                      {option.icon}
+                      <Typography fontSize="0.8rem">{option.label}</Typography>
+                    </Stack>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Provider/Resource Selection */}
+          <Grid size={{ xs: 6, md: 4 }}>
+            <Autocomplete
+              size="small"
+              value={getSelectedOption()}
+              onChange={handleAutocompleteChange}
+              options={getCurrentOptions()}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) => option.value === value.value}
+              filterOptions={(options, { inputValue }) => {
+                return options.filter((option) => option.label.toLowerCase().includes(inputValue.toLowerCase()));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={`Select ${getCurrentLabel()}`}
+                  error={isSelectionRequired()}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      height: 32,
+                      fontSize: "0.8rem",
+                    },
+                    "& .MuiInputBase-input": {
+                      py: 0.5,
+                    },
+                  }}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: isSelectionRequired() ? (
+                      <WarningIcon
+                        fontSize="small"
+                        sx={{
+                          color: "warning.main",
+                          mr: 0.5,
+                          fontSize: "1rem",
+                        }}
+                      />
+                    ) : null,
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props} key={option.value} style={{ fontSize: "0.8rem" }}>
+                  <Stack direction="row" spacing={1} alignItems="center" width="100%">
+                    <Typography variant="body2" fontSize="0.8rem">
+                      {option.label}
                     </Typography>
-                  )}
-                </Stack>
-              </li>
-            )}
-            noOptionsText="No options found"
-            clearOnBlur
-            selectOnFocus
-            handleHomeEndKeys
-          />
+                    {option.type && option.type !== "all" && (
+                      <Chip
+                        label={option.type}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          marginLeft: "auto",
+                          fontSize: "0.65rem",
+                          height: 18,
+                        }}
+                      />
+                    )}
+                  </Stack>
+                </li>
+              )}
+              noOptionsText="No options found"
+              clearOnBlur
+              selectOnFocus
+              handleHomeEndKeys
+            />
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
     </Paper>
   );
 };
