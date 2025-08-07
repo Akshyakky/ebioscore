@@ -8,8 +8,26 @@ import { useAlert } from "@/providers/AlertProvider";
 import { laboratoryService } from "@/services/Laboratory/LaboratoryService";
 import { LCENT_ID } from "@/types/lCentConstants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save as SaveIcon } from "@mui/icons-material";
-import { Alert, Box, Card, CardContent, Chip, CircularProgress, Divider, Grid, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { ExpandMore, GroupWork, Save as SaveIcon } from "@mui/icons-material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Divider,
+  Grid,
+  Paper,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
@@ -39,54 +57,53 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-// Create dynamic schema based on component types
-const createComponentSchema = (components: ComponentResultDto[]) => {
-  const shape: Record<string, any> = {
-    technicianApproval: z.string(),
-    consultantApproval: z.string(),
-    technicianId: z.number().optional(),
-    technicianName: z.string().optional(),
-    consultantId: z.number().optional(),
-    consultantName: z.string().optional(),
-  };
+// Create dynamic schema based on component types and investigation approvals
+const createDynamicSchema = (investigations: LabResultItemDto[]) => {
+  const shape: Record<string, any> = {};
 
-  components.forEach((component) => {
-    const fieldName = `component_${component.componentId}`;
+  investigations.forEach((investigation) => {
+    // Add approval fields for each investigation
+    const invPrefix = `inv_${investigation.investigationId}`;
+    shape[`${invPrefix}_technicianId`] = z.number().optional();
+    shape[`${invPrefix}_technicianName`] = z.string().optional();
+    shape[`${invPrefix}_technicianApproval`] = z.enum(["Y", "N"]).default("N");
+    shape[`${invPrefix}_consultantId`] = z.number().optional();
+    shape[`${invPrefix}_consultantName`] = z.string().optional();
+    shape[`${invPrefix}_consultantApproval`] = z.enum(["Y", "N"]).default("N");
+    shape[`${invPrefix}_remarks`] = z.string().optional();
 
-    switch (component.resultTypeId) {
-      case LCENT_ID.SINGLELINE_NUMERIC_VALUES: // Single Line [Numbers only]
-      case LCENT_ID.REFERENCE_VALUES: // Reference Values [Numeric Only]
-        shape[fieldName] = z
-          .string()
-          .nonempty(`${component.componentName} is required`)
-          .refine((val) => !isNaN(Number(val)), {
-            message: "Please enter a valid number",
-          });
-        break;
-      case LCENT_ID.MULTIPLE_SELECTION: // Selection Type
-        shape[fieldName] = z.string().nonempty(`Please select a value for ${component.componentName}`);
-        break;
-      default:
-        shape[fieldName] = z.string().nonempty(`${component.componentName} is required`);
-        break;
-    }
+    // Add component fields
+    investigation.componentResults?.forEach((component) => {
+      const fieldName = `component_${component.componentId}`;
 
-    // Add fields for remarks and comments if needed
-    shape[`${fieldName}_remarks`] = z.string().optional();
-    shape[`${fieldName}_comments`] = z.string().optional();
+      switch (component.resultTypeId) {
+        case LCENT_ID.SINGLELINE_NUMERIC_VALUES:
+        case LCENT_ID.REFERENCE_VALUES:
+          shape[fieldName] = z
+            .string()
+            .nonempty(`${component.componentName} is required`)
+            .refine((val) => !isNaN(Number(val)), {
+              message: "Please enter a valid number",
+            });
+          break;
+        case LCENT_ID.MULTIPLE_SELECTION:
+          shape[fieldName] = z.string().nonempty(`Please select a value for ${component.componentName}`);
+          break;
+        default:
+          shape[fieldName] = z.string().nonempty(`${component.componentName} is required`);
+          break;
+      }
+
+      shape[`${fieldName}_remarks`] = z.string().optional();
+      shape[`${fieldName}_comments`] = z.string().optional();
+    });
   });
 
   return z.object(shape);
 };
 
 type LabReportFormData = {
-  technicianApproval: "Y" | "N";
-  consultantApproval: "Y" | "N";
-  technicianId?: number;
-  technicianName?: string;
-  consultantId?: number;
-  consultantName?: string;
-  [key: string]: any; // For dynamic component fields
+  [key: string]: any; // For dynamic fields
 };
 
 const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClose, labRegNo, serviceTypeId, patientName = "Unknown Patient", onSave }) => {
@@ -98,11 +115,12 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [componentSchema, setComponentSchema] = useState<z.ZodSchema<any> | null>(null);
+  const [expandedAccordion, setExpandedAccordion] = useState<string | false>("bulk-approval");
 
   const { contacts: labTechnicians } = useContactMastByCategory({ consValue: "PHY" });
   const { contacts: labConsultants } = useContactMastByCategory({ consValue: "PHY" });
 
-  // Initialize form with default values
+  // Initialize form
   const {
     control,
     handleSubmit,
@@ -111,23 +129,14 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     watch,
     formState: { errors, isValid },
   } = useForm<LabReportFormData>({
-    defaultValues: {
-      technicianApproval: "N",
-      consultantApproval: "N",
-      technicianId: undefined,
-      consultantId: undefined,
-      technicianName: "",
-      consultantName: "",
-    },
+    defaultValues: {},
     resolver: componentSchema ? zodResolver(componentSchema) : undefined,
     mode: "onChange",
   });
 
   // Watch all form values for validation
   const formValues = useWatch({ control });
-  useEffect(() => {
-    console.log("formValues", formValues);
-  }, [formValues]);
+
   // Fetch lab result data when dialog opens
   useEffect(() => {
     if (open && labRegNo && serviceTypeId) {
@@ -143,29 +152,25 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       if (response.success && response.data) {
         setLabData(response.data);
 
-        // Create schema based on components
-        const allComponents: ComponentResultDto[] = [];
-        response.data.results.forEach((investigation) => {
-          if (investigation.componentResults) {
-            allComponents.push(...investigation.componentResults);
-          }
-        });
-
-        const schema = createComponentSchema(allComponents);
+        // Create schema based on investigations and components
+        const schema = createDynamicSchema(response.data.results);
         setComponentSchema(schema);
 
         // Set form default values
-        const defaultValues: LabReportFormData = {
-          technicianApproval: response.data.isTechnicianApproved || "N",
-          consultantApproval: response.data.isLabConsultantApproved || "N",
-          technicianId: response.data.technicianId,
-          consultantId: response.data.labConsultantId,
-          technicianName: response.data.technicianName || "",
-          consultantName: response.data.labConsultantName || "",
-        };
+        const defaultValues: LabReportFormData = {};
 
-        // Initialize component values
+        // Initialize investigation-wise approval values
         response.data.results.forEach((investigation) => {
+          const invPrefix = `inv_${investigation.investigationId}`;
+          defaultValues[`${invPrefix}_technicianId`] = investigation.technicianId;
+          defaultValues[`${invPrefix}_technicianName`] = investigation.technicianName || "";
+          defaultValues[`${invPrefix}_technicianApproval`] = investigation.isTechnicianApproved || "N";
+          defaultValues[`${invPrefix}_consultantId`] = investigation.labConsultantId;
+          defaultValues[`${invPrefix}_consultantName`] = investigation.labConsultantName || "";
+          defaultValues[`${invPrefix}_consultantApproval`] = investigation.isLabConsultantApproved || "N";
+          defaultValues[`${invPrefix}_remarks`] = investigation.remarks || "";
+
+          // Initialize component values
           investigation.componentResults?.forEach((component) => {
             defaultValues[`component_${component.componentId}`] = component.patuentValue || "";
             if (component.comments) {
@@ -190,8 +195,62 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     setActiveTab(newValue);
   };
 
+  const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedAccordion(isExpanded ? panel : false);
+  };
+
+  const handleBulkApproval = (type: "technician" | "consultant") => {
+    if (!labData) return;
+
+    // Get the first selected value to apply to all
+    const firstInvestigation = labData.results[0];
+    if (!firstInvestigation) return;
+
+    const invPrefix = `inv_${firstInvestigation.investigationId}`;
+
+    if (type === "technician") {
+      const technicianId = watch(`${invPrefix}_technicianId`);
+      const technicianName = watch(`${invPrefix}_technicianName`);
+      const technicianApproval = watch(`${invPrefix}_technicianApproval`);
+
+      if (!technicianId) {
+        showAlert("Warning", "Please select a technician from the first investigation to apply to all", "warning");
+        return;
+      }
+
+      // Apply to all investigations
+      labData.results.forEach((investigation) => {
+        const prefix = `inv_${investigation.investigationId}`;
+        setValue(`${prefix}_technicianId`, technicianId);
+        setValue(`${prefix}_technicianName`, technicianName);
+        setValue(`${prefix}_technicianApproval`, technicianApproval || "N");
+      });
+
+      showAlert("Success", "Technician details applied to all investigations", "success");
+    } else {
+      const consultantId = watch(`${invPrefix}_consultantId`);
+      const consultantName = watch(`${invPrefix}_consultantName`);
+      const consultantApproval = watch(`${invPrefix}_consultantApproval`);
+
+      if (!consultantId) {
+        showAlert("Warning", "Please select a consultant from the first investigation to apply to all", "warning");
+        return;
+      }
+
+      // Apply to all investigations
+      labData.results.forEach((investigation) => {
+        const prefix = `inv_${investigation.investigationId}`;
+        setValue(`${prefix}_consultantId`, consultantId);
+        setValue(`${prefix}_consultantName`, consultantName);
+        setValue(`${prefix}_consultantApproval`, consultantApproval || "N");
+      });
+
+      showAlert("Success", "Consultant details applied to all investigations", "success");
+    }
+  };
+
   const getComponentStatus = (component: ComponentResultDto, value: string): "Normal" | "Abnormal" => {
-    if (component.resultTypeId === 6 && value && component.referenceRange) {
+    if (component.resultTypeId === LCENT_ID.REFERENCE_VALUES && value && component.referenceRange) {
       const numValue = Number(value);
       const { lowerValue = 0, upperValue = 0 } = component.referenceRange;
       if (numValue < lowerValue || numValue > upperValue) {
@@ -204,21 +263,22 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
   const getStatusChip = (component: ComponentResultDto) => {
     const value = watch(`component_${component.componentId}`);
     if (!value) return null;
-
+    if (component.resultTypeId !== LCENT_ID.REFERENCE_VALUES) {
+      return null;
+    }
     const status = getComponentStatus(component, value);
     return <Chip size="small" label={status} color={status === "Normal" ? "success" : "error"} />;
   };
 
   const renderComponentField = (component: ComponentResultDto) => {
     const fieldName = `component_${component.componentId}`;
-    const errorMessage = errors[fieldName]?.message;
 
     switch (component.resultTypeId) {
-      case LCENT_ID.SINGLELINE_ALPHANUMERIC_VALUES: // Single Line [Alpha Numeric]
+      case LCENT_ID.SINGLELINE_ALPHANUMERIC_VALUES:
         return <FormField name={fieldName} control={control} label={component.componentName} type="text" required size="small" fullWidth placeholder="Enter value" />;
 
-      case LCENT_ID.SINGLELINE_NUMERIC_VALUES: // Single Line [Numbers only]
-      case LCENT_ID.REFERENCE_VALUES: // Reference Values [Numeric Only]
+      case LCENT_ID.SINGLELINE_NUMERIC_VALUES:
+      case LCENT_ID.REFERENCE_VALUES:
         return (
           <Box>
             <FormField
@@ -233,7 +293,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
               adornment={component.unit}
               adornmentPosition="end"
             />
-            {component.resultTypeId === 6 && component.referenceRange && (
+            {component.resultTypeId === LCENT_ID.REFERENCE_VALUES && component.referenceRange && (
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                 Reference Range: {component.referenceRange.referenceRange} {component.unit}
               </Typography>
@@ -241,7 +301,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           </Box>
         );
 
-      case LCENT_ID.MULTILINE_VALUES: // Multi Line [Alpha Numeric]
+      case LCENT_ID.MULTILINE_VALUES:
         return (
           <FormField
             name={fieldName}
@@ -256,8 +316,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           />
         );
 
-      case LCENT_ID.MULTIPLE_SELECTION: // Selection Type [Alpha Numeric]
-        // In a real implementation, you would fetch these options from the backend
+      case LCENT_ID.MULTIPLE_SELECTION:
         const selectionOptions = [
           { value: "Positive", label: "Positive" },
           { value: "Negative", label: "Negative" },
@@ -266,7 +325,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
 
         return <FormField name={fieldName} control={control} label={component.componentName} type="select" required size="small" fullWidth options={selectionOptions} />;
 
-      case LCENT_ID.TEMPLATE_VALUES: // Template Values [Alpha Numeric]
+      case LCENT_ID.TEMPLATE_VALUES:
         return (
           <FormField
             name={fieldName}
@@ -289,31 +348,36 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
   const prepareDataForSave = (formData: LabReportFormData): LabEnterResultDto => {
     if (!labData) throw new Error("No lab data available");
 
-    const updatedResults = labData.results.map((investigation) => ({
-      ...investigation,
-      componentResults: investigation.componentResults?.map((component) => {
-        const value = formData[`component_${component.componentId}`] || "";
-        const status = getComponentStatus(component, value);
+    const updatedResults = labData.results.map((investigation) => {
+      const invPrefix = `inv_${investigation.investigationId}`;
 
-        return {
-          ...component,
-          patuentValue: value,
-          status: status,
-          resultStatus: status,
-          comments: formData[`component_${component.componentId}_comments`] || component.comments,
-        };
-      }),
-    }));
+      return {
+        ...investigation,
+        technicianId: formData[`${invPrefix}_technicianId`],
+        technicianName: formData[`${invPrefix}_technicianName`],
+        isTechnicianApproved: formData[`${invPrefix}_technicianApproval`],
+        labConsultantId: formData[`${invPrefix}_consultantId`],
+        labConsultantName: formData[`${invPrefix}_consultantName`],
+        isLabConsultantApproved: formData[`${invPrefix}_consultantApproval`],
+        remarks: formData[`${invPrefix}_remarks`],
+        componentResults: investigation.componentResults?.map((component) => {
+          const value = formData[`component_${component.componentId}`] || "";
+          const status = getComponentStatus(component, value);
+
+          return {
+            ...component,
+            patuentValue: value,
+            status: status,
+            resultStatus: status,
+            comments: formData[`component_${component.componentId}_comments`] || component.comments,
+          };
+        }),
+      };
+    });
 
     return {
       ...labData,
-      technicianId: formData.technicianId,
-      isTechnicianApproved: formData.technicianApproval,
-      labConsultantId: formData.consultantId,
-      isLabConsultantApproved: formData.consultantApproval,
-      technicianName: formData.technicianName,
-      labConsultantName: formData.consultantName,
-      results: updatedResults as unknown as LabResultItemDto[],
+      results: updatedResults as LabResultItemDto[],
     };
   };
 
@@ -415,59 +479,30 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
             </Grid>
           </Paper>
 
-          {/* Approval Section */}
-          <Card variant="outlined" sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="subtitle1" gutterBottom>
-                Approvals
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={2}>
-                    <FormField
-                      name="technicianId"
-                      control={control}
-                      label="Technician"
-                      type="select"
-                      size="small"
-                      fullWidth
-                      options={technicianOptions}
-                      placeholder="Select Technician"
-                      onChange={(value) => {
-                        const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
-                        if (selectedTechnician) {
-                          setValue("technicianName", selectedTechnician.label || "");
-                        }
-                      }}
-                    />
-                    <FormField name="technicianApproval" control={control} label="Technician Approved" type="switch" size="small" disabled={!watch("technicianId")} />
-                  </Stack>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Stack spacing={2}>
-                    <FormField
-                      name="consultantId"
-                      control={control}
-                      label="Lab Consultant"
-                      type="select"
-                      size="small"
-                      fullWidth
-                      options={consultantOptions}
-                      placeholder="Select Consultant"
-                      onChange={(value) => {
-                        const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value);
-                        if (selectedConsultant) {
-                          setValue("consultantName", selectedConsultant.label || "");
-                        }
-                      }}
-                    />
-                    <FormField name="consultantApproval" control={control} label="Consultant Approved" type="switch" size="small" disabled={!watch("consultantId")} />
-                  </Stack>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+          {/* Bulk Approval Section */}
+          {labData.results.length > 1 && (
+            <Accordion expanded={expandedAccordion === "bulk-approval"} onChange={handleAccordionChange("bulk-approval")} sx={{ mb: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMore />}>
+                <Typography variant="subtitle1" sx={{ display: "flex", alignItems: "center" }}>
+                  <GroupWork sx={{ mr: 1 }} />
+                  Bulk Approval Settings (Apply to All Investigations)
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Configure the approval settings for the first investigation, then use the buttons below to apply to all investigations.
+                </Alert>
+                <Stack direction="row" spacing={2}>
+                  <Button variant="contained" color="secondary" onClick={() => handleBulkApproval("technician")} size="small">
+                    Apply Technician to All
+                  </Button>
+                  <Button variant="contained" color="secondary" onClick={() => handleBulkApproval("consultant")} size="small">
+                    Apply Consultant to All
+                  </Button>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+          )}
 
           {/* Investigation Tabs */}
           <Paper sx={{ mb: 2 }}>
@@ -490,15 +525,96 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
             {labData.results.map((investigation, index) => (
               <TabPanel key={investigation.investigationId} value={activeTab} index={index}>
                 <Box sx={{ p: 2 }}>
-                  {/* Investigation Header */}
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6">{investigation.investigationName}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Code: {investigation.investigationCode}
-                    </Typography>
-                  </Box>
+                  {/* Investigation Header with Approval Section */}
+                  <Card variant="outlined" sx={{ mb: 3 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        {investigation.investigationName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Code: {investigation.investigationCode}
+                      </Typography>
 
-                  {/* Group components by subtitle */}
+                      <Divider sx={{ my: 2 }} />
+
+                      <Typography variant="subtitle1" gutterBottom>
+                        Investigation Approvals
+                      </Typography>
+
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Stack spacing={2}>
+                            <FormField
+                              name={`inv_${investigation.investigationId}_technicianId`}
+                              control={control}
+                              label="Technician"
+                              type="select"
+                              size="small"
+                              fullWidth
+                              options={technicianOptions}
+                              placeholder="Select Technician"
+                              onChange={(value) => {
+                                const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
+                                if (selectedTechnician) {
+                                  setValue(`inv_${investigation.investigationId}_technicianName`, selectedTechnician.label || "");
+                                }
+                              }}
+                            />
+                            <FormField
+                              name={`inv_${investigation.investigationId}_technicianApproval`}
+                              control={control}
+                              label="Technician Approved"
+                              type="switch"
+                              size="small"
+                              disabled={!watch(`inv_${investigation.investigationId}_technicianId`)}
+                            />
+                          </Stack>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Stack spacing={2}>
+                            <FormField
+                              name={`inv_${investigation.investigationId}_consultantId`}
+                              control={control}
+                              label="Lab Consultant"
+                              type="select"
+                              size="small"
+                              fullWidth
+                              options={consultantOptions}
+                              placeholder="Select Consultant"
+                              onChange={(value) => {
+                                const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
+                                if (selectedConsultant) {
+                                  setValue(`inv_${investigation.investigationId}_consultantName`, selectedConsultant.label || "");
+                                }
+                              }}
+                            />
+                            <FormField
+                              name={`inv_${investigation.investigationId}_consultantApproval`}
+                              control={control}
+                              label="Consultant Approved"
+                              type="switch"
+                              size="small"
+                              disabled={!watch(`inv_${investigation.investigationId}_consultantId`)}
+                            />
+                          </Stack>
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <FormField
+                            name={`inv_${investigation.investigationId}_remarks`}
+                            control={control}
+                            label="Remarks"
+                            type="textarea"
+                            size="small"
+                            fullWidth
+                            rows={2}
+                            placeholder="Enter any remarks for this investigation"
+                          />
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+
+                  {/* Component Results */}
                   {(() => {
                     const groupedComponents = (investigation.componentResults || []).reduce((acc, component) => {
                       const subtitle = component.subTitleName || "Other";
