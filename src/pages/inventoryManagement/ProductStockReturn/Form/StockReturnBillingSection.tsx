@@ -167,7 +167,6 @@ const StockReturnBillingSection: React.FC<BillingSectionProps> = ({ control }) =
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "grey.50",
           borderRadius: 1,
           mb: 2,
         }}
@@ -206,7 +205,7 @@ const StockReturnBillingSection: React.FC<BillingSectionProps> = ({ control }) =
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "grey.50",
+          // bgcolor: "grey.50",
           borderRadius: 1,
           mb: 2,
         }}
@@ -254,7 +253,7 @@ const StockReturnBillingSection: React.FC<BillingSectionProps> = ({ control }) =
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "success.50",
+          // bgcolor: "success.50",
           borderRadius: 1,
           mb: 2,
         }}

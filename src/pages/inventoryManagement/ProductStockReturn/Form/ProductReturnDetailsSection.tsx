@@ -607,7 +607,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
           border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
         }}
       >
-        <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04), borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}` }}>
+        <Box sx={{ p: 2, borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}` }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center" gap={1.5}>
               <Box
@@ -618,7 +618,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                   width: 32,
                   height: 32,
                   borderRadius: "8px",
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  // bgcolor: alpha(theme.palette.primary.main, 0.1),
                 }}
               >
                 <ReturnIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
@@ -831,7 +831,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                           key={row.id}
                           hover
                           selected={isSelected}
-                          sx={{ bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.08) : "inherit", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
+                          // sx={{ bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.08) : "inherit", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
                         >
                           <TableCell padding="checkbox">
                             <Checkbox checked={isSelected} onChange={() => handleSelectRow(row.id)} size="small" disabled={isViewMode} />
@@ -926,7 +926,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                   width: 64,
                   height: 64,
                   borderRadius: "50%",
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  // bgcolor: alpha(theme.palette.primary.main, 0.1),
                   mx: "auto",
                   mb: 2,
                 }}
@@ -951,7 +951,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
         </CardContent>
       </Card>
 
-      <Box sx={{ mt: 2, p: 2, bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
+      <Box sx={{ mt: 2, p: 2, borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
         <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
           Return Summary
         </Typography>
