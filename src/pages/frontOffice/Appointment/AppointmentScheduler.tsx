@@ -35,6 +35,10 @@ const AppointmentScheduler: React.FC = () => {
   const [selectedProvider, setSelectedProvider] = useState("");
   const [selectedResource, setSelectedResource] = useState("");
 
+  // Auto-scroll state management
+  const [shouldScrollToTime, setShouldScrollToTime] = useState(true);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
+
   // Enhanced state for elapsed slot confirmation workflow
   const [showElapsedConfirmation, setShowElapsedConfirmation] = useState(false);
   const [pendingElapsedSlot, setPendingElapsedSlot] = useState<{
@@ -136,19 +140,30 @@ const AppointmentScheduler: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Enhanced booking mode change handler to clear inactive selections
-  const handleBookingModeChange = useCallback((mode: string) => {
-    setBookingMode(mode);
-
-    // Clear the non-active selection when switching modes
-    if (mode === "physician") {
-      setSelectedResource("");
-    } else if (mode === "resource") {
-      setSelectedProvider("");
-    }
+  // Helper function to trigger auto-scroll
+  const triggerAutoScroll = useCallback(() => {
+    setScrollTrigger((prev) => prev + 1);
   }, []);
 
-  // Enhanced provider change handler
+  // Enhanced booking mode change handler to clear inactive selections and trigger scroll
+  const handleBookingModeChange = useCallback(
+    (mode: string) => {
+      setBookingMode(mode);
+
+      // Clear the non-active selection when switching modes
+      if (mode === "physician") {
+        setSelectedResource("");
+      } else if (mode === "resource") {
+        setSelectedProvider("");
+      }
+
+      // Trigger auto-scroll after mode change
+      triggerAutoScroll();
+    },
+    [triggerAutoScroll]
+  );
+
+  // Enhanced provider change handler with auto-scroll
   const handleProviderChange = useCallback(
     (provider: string) => {
       setSelectedProvider(provider);
@@ -156,11 +171,14 @@ const AppointmentScheduler: React.FC = () => {
       if (provider && selectedResource) {
         setSelectedResource("");
       }
+
+      // Trigger auto-scroll after provider change
+      triggerAutoScroll();
     },
-    [selectedResource]
+    [selectedResource, triggerAutoScroll]
   );
 
-  // Enhanced resource change handler
+  // Enhanced resource change handler with auto-scroll
   const handleResourceChange = useCallback(
     (resource: string) => {
       setSelectedResource(resource);
@@ -168,8 +186,11 @@ const AppointmentScheduler: React.FC = () => {
       if (resource && selectedProvider) {
         setSelectedProvider("");
       }
+
+      // Trigger auto-scroll after resource change
+      triggerAutoScroll();
     },
-    [selectedProvider]
+    [selectedProvider, triggerAutoScroll]
   );
 
   // Date navigation utility functions
@@ -276,39 +297,73 @@ const AppointmentScheduler: React.FC = () => {
     });
   }, [appointments, currentDate, viewMode, bookingMode, selectedProvider, selectedResource, getWeekDates]);
 
-  // Navigation handlers for date movement and view changes
-  const handleNavigateDate = (direction: "prev" | "next" | "today") => {
-    const newDate = new Date(currentDate);
+  // Enhanced navigation handlers with auto-scroll support
+  const handleNavigateDate = useCallback(
+    (direction: "prev" | "next" | "today") => {
+      const newDate = new Date(currentDate);
 
-    switch (direction) {
-      case "prev":
-        if (viewMode === "day") {
-          newDate.setDate(newDate.getDate() - 1);
-        } else if (viewMode === "week") {
-          newDate.setDate(newDate.getDate() - 7);
-        } else {
-          newDate.setMonth(newDate.getMonth() - 1);
-        }
-        break;
-      case "next":
-        if (viewMode === "day") {
-          newDate.setDate(newDate.getDate() + 1);
-        } else if (viewMode === "week") {
-          newDate.setDate(newDate.getDate() + 7);
-        } else {
-          newDate.setMonth(newDate.getMonth() + 1);
-        }
-        break;
-      case "today":
-        return setCurrentDate(new Date());
-    }
+      switch (direction) {
+        case "prev":
+          if (viewMode === "day") {
+            newDate.setDate(newDate.getDate() - 1);
+          } else if (viewMode === "week") {
+            newDate.setDate(newDate.getDate() - 7);
+          } else {
+            newDate.setMonth(newDate.getMonth() - 1);
+          }
+          break;
+        case "next":
+          if (viewMode === "day") {
+            newDate.setDate(newDate.getDate() + 1);
+          } else if (viewMode === "week") {
+            newDate.setDate(newDate.getDate() + 7);
+          } else {
+            newDate.setMonth(newDate.getMonth() + 1);
+          }
+          break;
+        case "today":
+          const today = new Date();
+          setCurrentDate(today);
+          // Enable auto-scroll to current time when "Today" is clicked
+          setShouldScrollToTime(true);
+          triggerAutoScroll();
+          return;
+      }
 
-    setCurrentDate(newDate);
-  };
+      setCurrentDate(newDate);
+      // Enable auto-scroll for date navigation
+      setShouldScrollToTime(true);
+      triggerAutoScroll();
+    },
+    [currentDate, viewMode, triggerAutoScroll]
+  );
+
+  // Enhanced date change handler with auto-scroll
+  const handleDateChange = useCallback(
+    (date: Date) => {
+      setCurrentDate(date);
+      setShouldScrollToTime(true);
+      triggerAutoScroll();
+    },
+    [triggerAutoScroll]
+  );
+
+  // Enhanced view mode change handler with auto-scroll
+  const handleViewModeChange = useCallback(
+    (mode: string) => {
+      setViewMode(mode);
+      // Trigger auto-scroll when switching views
+      if (mode === "day" || mode === "week") {
+        setShouldScrollToTime(true);
+        triggerAutoScroll();
+      }
+    },
+    [triggerAutoScroll]
+  );
 
   // Enhanced appointment booking workflow with comprehensive validation
   const handleSlotDoubleClick = async (date: Date, hour: number, minute: number) => {
-    // Validate booking requirements first
+    // Validation remains the same
     const validation = validateBookingRequirements();
     if (!validation.isValid) {
       showAlert("Selection Required", validation.message, "warning");
@@ -458,7 +513,7 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
-  // Enhanced view rendering with comprehensive data integration
+  // Enhanced view rendering with comprehensive data integration and auto-scroll support
   const renderCurrentView = () => {
     if (isLoading) {
       return (
@@ -480,6 +535,8 @@ const AppointmentScheduler: React.FC = () => {
       workHours,
       currentTime,
       onAppointmentClick: handleAppointmentClick,
+      shouldScrollToTime,
+      scrollTrigger,
     };
 
     switch (viewMode) {
@@ -547,8 +604,8 @@ const AppointmentScheduler: React.FC = () => {
           bookingMode={bookingMode}
           selectedProvider={selectedProvider}
           selectedResource={selectedResource}
-          onDateChange={setCurrentDate}
-          onViewModeChange={setViewMode}
+          onDateChange={handleDateChange}
+          onViewModeChange={handleViewModeChange}
           onNavigate={handleNavigateDate}
           onBookingModeChange={handleBookingModeChange}
           onProviderChange={handleProviderChange}
@@ -575,26 +632,8 @@ const AppointmentScheduler: React.FC = () => {
           <Box
             sx={{
               flex: 1,
-              overflow: "auto",
+              overflow: "hidden", // Changed from "auto" to "hidden" to let child components handle scrolling
               padding: 1,
-              "&::-webkit-scrollbar": {
-                width: "8px",
-                height: "8px",
-              },
-              "&::-webkit-scrollbar-track": {
-                backgroundColor: "#f1f1f1",
-                borderRadius: "4px",
-              },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "#c4c4c4",
-                borderRadius: "4px",
-                "&:hover": {
-                  backgroundColor: "#a8a8a8",
-                },
-              },
-              "&::-webkit-scrollbar-corner": {
-                backgroundColor: "#f1f1f1",
-              },
             }}
           >
             {renderCurrentView()}
