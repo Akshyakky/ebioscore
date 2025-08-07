@@ -261,7 +261,7 @@ const ProductStockReturnPage: React.FC = () => {
         cgst: detail.cgst || detail.CGST || (detail.tax || detail.Tax || 0) / 2,
         sgst: detail.sgst || detail.SGST || (detail.tax || detail.Tax || 0) / 2,
         rActiveYN: detail.rActiveYN || detail.RActiveYN || "Y",
-        grnCode: detail.grnCode || detail.GrnCode || "",
+        grnCode: detail.grn || detail.GrnCode || "",
         supplierName: detail.supplierName || detail.SupplierName || detail.supplrName || detail.SupplrName || "",
         invoiceNo: detail.invoiceNo || detail.InvoiceNo || "",
         recvdQty: detail.recvdQty || detail.RecvdQty || 0,
@@ -285,7 +285,6 @@ const ProductStockReturnPage: React.FC = () => {
     try {
       setIsLoading(true);
       clearError();
-
       const searchParams: ProductStockReturnSearchRequest = {
         pageIndex: 1,
         pageSize: 1000,
@@ -300,7 +299,6 @@ const ProductStockReturnPage: React.FC = () => {
         sortBy: sortBy,
         sortAscending: sortOrder,
       };
-
       let result;
       if (currentReturnType === ReturnType.Supplier) {
         result = await supplierReturnSearch(searchParams);
@@ -366,14 +364,11 @@ const ProductStockReturnPage: React.FC = () => {
     const pending = total - approved;
     const daysOldCheck = (date: Date): number => (date ? dayjs().diff(dayjs(date), "days") : 0);
     const overdue = returns.filter((stockReturn) => daysOldCheck(stockReturn.psrDate) > 7 && stockReturn.approvedYN !== "Y").length;
-
     const supplierReturns = returns.filter((r) => r.returnTypeCode === ReturnType.Supplier).length;
     const internalReturns = returns.filter((r) => r.returnTypeCode === ReturnType.Internal).length;
     const expiredReturns = returns.filter((r) => r.returnTypeCode === ReturnType.Expired).length;
     const damagedReturns = returns.filter((r) => r.returnTypeCode === ReturnType.Damaged).length;
-
     const totalValue = returns.reduce((sum, stockReturn) => sum + (stockReturn.stkrRetAmt || 0), 0);
-
     setStatistics({
       total,
       approved,
@@ -392,7 +387,6 @@ const ProductStockReturnPage: React.FC = () => {
       showAlert("Warning", "Please select a department first", "warning");
       return;
     }
-
     setSearchTerm("");
     setSelectedRows([]);
     await fetchReturnsForDepartment();
@@ -421,12 +415,10 @@ const ProductStockReturnPage: React.FC = () => {
         if (!returnToCopy.psrID) {
           throw new Error("Invalid return data received from server");
         }
-
         setSelectedReturn(returnToCopy);
         setIsCopyMode(true);
         setIsViewMode(false);
         setIsFormOpen(true);
-
         const detailsCount = returnToCopy.details?.length || 0;
         showAlert("Success", `Ready to copy Stock Return "${stockReturn.psrCode}" with ${detailsCount} products. Please review and save.`, "success");
       } catch (error) {
@@ -445,7 +437,6 @@ const ProductStockReturnPage: React.FC = () => {
         showAlert("Warning", "Approved Stock Returns cannot be edited.", "warning");
         return;
       }
-
       try {
         setIsLoadingDetails(true);
         if (!stockReturn.psrID || stockReturn.psrID <= 0) {
@@ -459,12 +450,10 @@ const ProductStockReturnPage: React.FC = () => {
         if (!returnToEdit.psrID) {
           throw new Error("Invalid return data received from server");
         }
-
         setSelectedReturn(returnToEdit);
         setIsCopyMode(false);
         setIsViewMode(false);
         setIsFormOpen(true);
-
         const detailsCount = returnToEdit.details?.length || 0;
         showAlert("Success", `Loading Stock Return "${stockReturn.psrCode}" with ${detailsCount} products for editing...`, "success");
       } catch (error) {
@@ -497,7 +486,6 @@ const ProductStockReturnPage: React.FC = () => {
         setIsCopyMode(false);
         setIsViewMode(true);
         setIsFormOpen(true);
-
         const detailsCount = returnToView.details?.length || 0;
         showAlert("Success", `Loading Stock Return "${stockReturn.psrCode}" with ${detailsCount} products for viewing...`, "success");
       } catch (error) {
@@ -603,10 +591,8 @@ const ProductStockReturnPage: React.FC = () => {
         Status: stockReturn.approvedYN === "Y" ? "Approved" : "Pending",
         "Approved By": stockReturn.approvedBy,
       }));
-
       if (format === "csv") {
         const csvContent = [Object.keys(exportData[0]).join(","), ...exportData.map((row) => Object.values(row).join(","))].join("\n");
-
         const blob = new Blob([csvContent], { type: "text/csv" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -615,7 +601,6 @@ const ProductStockReturnPage: React.FC = () => {
         a.click();
         window.URL.revokeObjectURL(url);
       }
-
       showAlert("Success", `${format.toUpperCase()} export initiated for ${filteredAndSearchedReturns.length} records from ${deptName}`, "success");
       setReportsMenuAnchor(null);
     },
@@ -642,7 +627,6 @@ const ProductStockReturnPage: React.FC = () => {
       default:
         newReturnType = undefined;
     }
-
     setCurrentReturnType(newReturnType);
   };
 
@@ -1202,7 +1186,7 @@ const ProductStockReturnPage: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: "rgba(0, 0, 0, 0.3)",
+            // bgcolor: "rgba(0, 0, 0, 0.3)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -1249,7 +1233,7 @@ const ProductStockReturnPage: React.FC = () => {
           </Paper>
 
           <Collapse in={showStatistics}>
-            <Paper elevation={1} sx={{ p: 3, mb: 3, bgcolor: "grey.50" }}>
+            <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
               <Grid container spacing={3} justifyContent="center">
                 {[
                   {
@@ -1298,7 +1282,7 @@ const ProductStockReturnPage: React.FC = () => {
                         textAlign: "center",
                         gap: 1.5,
                         p: 2,
-                        bgcolor: "background.paper",
+                        // bgcolor: "background.paper",
                         borderRadius: 2,
                         border: `3px solid ${stat.bgColor}`,
                         borderLeft: `6px solid ${stat.bgColor}`,

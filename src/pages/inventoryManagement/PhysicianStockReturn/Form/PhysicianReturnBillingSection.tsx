@@ -5,7 +5,6 @@ import { Control, useWatch } from "react-hook-form";
 import * as z from "zod";
 import { PhysicianReturnType } from "../hook/usePhysicianReturn";
 
-// Define the schema and type within this file to avoid import issues
 const returnDetailSchema = z.object({
   psrdID: z.number(),
   psrID: z.number(),
@@ -47,7 +46,6 @@ const schema = z.object({
 });
 
 type PhysicianReturnFormData = z.infer<typeof schema>;
-
 interface BillingSectionProps {
   control: Control<PhysicianReturnFormData>;
 }
@@ -78,13 +76,11 @@ const PhysicianReturnBillingSection: React.FC<BillingSectionProps> = ({ control 
       const itemTotal = (detail.unitPrice || 0) * detail.quantity;
       return sum + itemTotal;
     }, 0);
-
     const taxAmount = validDetails.reduce((sum, detail) => {
       const itemTotal = (detail.unitPrice || 0) * detail.quantity;
       const itemTax = (itemTotal * (detail.tax || 0)) / 100;
       return sum + itemTax;
     }, 0);
-
     const cgstAmount = taxAmount / 2;
     const sgstAmount = taxAmount / 2;
     const igstAmount = 0;
@@ -146,7 +142,6 @@ const PhysicianReturnBillingSection: React.FC<BillingSectionProps> = ({ control 
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "grey.50",
           borderRadius: 1,
           mb: 2,
         }}
@@ -185,7 +180,6 @@ const PhysicianReturnBillingSection: React.FC<BillingSectionProps> = ({ control 
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "grey.50",
           borderRadius: 1,
           mb: 2,
         }}
@@ -233,7 +227,6 @@ const PhysicianReturnBillingSection: React.FC<BillingSectionProps> = ({ control 
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          bgcolor: "success.50",
           borderRadius: 1,
           mb: 2,
         }}

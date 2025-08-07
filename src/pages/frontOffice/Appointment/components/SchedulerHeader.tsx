@@ -1,6 +1,10 @@
 // src/pages/frontOffice/Appointment/components/SchedulerHeader.tsx
 import { NavigateBefore, NavigateNext, Today, Warning as WarningIcon } from "@mui/icons-material";
-import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs, { Dayjs } from "dayjs";
 import React from "react";
 
 interface SchedulerHeaderProps {
@@ -103,6 +107,13 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
     return "Book new appointment";
   };
 
+  // Handle date picker change
+  const handleDatePickerChange = (newValue: Dayjs | null) => {
+    if (newValue && newValue.isValid()) {
+      onDateChange(newValue.toDate());
+    }
+  };
+
   return (
     <Paper variant="outlined" style={{ padding: 8, marginBottom: 8 }}>
       <Grid container spacing={1} alignItems="center">
@@ -112,16 +123,22 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
             {getDateDisplay()}
           </Typography>
           <Stack direction="row" spacing={0.5} alignItems="center">
-            <TextField
-              type="date"
-              size="small"
-              value={currentDate.toISOString().split("T")[0]}
-              onChange={(e) => onDateChange(new Date(e.target.value))}
-              style={{ minWidth: 120 }}
-              InputProps={{
-                style: { fontSize: "0.8rem" },
-              }}
-            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                value={dayjs(currentDate)}
+                onChange={handleDatePickerChange}
+                format="DD/MM/YYYY"
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    style: { minWidth: 120 },
+                    InputProps: {
+                      style: { fontSize: "0.8rem" },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
             <IconButton onClick={() => onNavigate("prev")} size="small">
               <NavigateBefore />
             </IconButton>
