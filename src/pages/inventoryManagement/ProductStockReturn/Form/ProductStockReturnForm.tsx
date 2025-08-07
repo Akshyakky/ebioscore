@@ -27,50 +27,35 @@ interface ProductStockReturnFormProps {
 }
 
 const returnDetailSchema = z.object({
-  // Core identification fields
   psrdID: z.number().default(0),
   psrID: z.number().default(0),
-
-  // Product information
   productID: z.number().min(1, "Product is required"),
   productCode: z.string().optional(),
   productName: z.string().min(1, "Product name is required"),
-
-  // Quantity and pricing
   quantity: z.number().min(1, "Quantity must be at least 1"),
   unitPrice: z.number().min(0, "Unit price must be non-negative"),
   totalAmount: z.number().min(0, "Total amount must be non-negative"),
   sellUnitPrice: z.number().optional(),
   mrp: z.number().optional(),
-
-  // Batch information
   batchID: z.number().optional(),
   batchNo: z.string().optional(),
   expiryDate: z.date().optional(),
   manufacturedDate: z.date().optional(),
   grnDate: z.date().default(() => new Date()),
-
-  // Status flags
   prescriptionYN: z.string().default("N"),
   expiryYN: z.string().default("N"),
   sellableYN: z.string().default("Y"),
   taxableYN: z.string().default("Y"),
   rActiveYN: z.string().default("Y"),
-
-  // Product group information
   psGrpID: z.number().optional(),
   psGrpName: z.string().optional(),
   pGrpID: z.number().optional(),
   pGrpName: z.string().optional(),
-
-  // Manufacturer information
   manufacturerID: z.number().optional(),
   manufacturerCode: z.string().optional(),
   manufacturerName: z.string().optional(),
   mfID: z.number().optional(),
   mfName: z.string().optional(),
-
-  // Tax information
   taxID: z.number().optional(),
   taxName: z.string().optional(),
   tax: z.number().optional(),
@@ -141,13 +126,15 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     generateDamagedReturnCode,
     saveReturnWithDetails,
   } = useProductStockReturn();
-  const [isSaving, setIsSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
-  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [state, setState] = useState({
+    isSaving: false,
+    formError: null as string | null,
+    isGeneratingCode: false,
+    showResetConfirmation: false,
+    showCancelConfirmation: false,
+    isDataLoaded: false,
+    isLoadingData: false,
+  });
   const { department } = useDropdownValues(["department"]);
   const { showAlert } = useAlert();
   const isAddMode = !initialData || copyMode;
@@ -209,13 +196,10 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   const activeStatusValue = useWatch({ control, name: "rActiveYN" });
   const approvalStatusValue = useWatch({ control, name: "approvedYN" });
   const returnTypeValue = useWatch({ control, name: "returnTypeCode" });
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "productStockReturnDetails",
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: "productStockReturnDetails" });
 
-  const createDetailMappingWithAllFields = useCallback((detail: any, isCopyMode: boolean) => {
-    return {
+  const createDetailMappingWithAllFields = useCallback(
+    (detail: any, isCopyMode: boolean) => ({
       psrdID: isCopyMode ? 0 : detail.psrdID || 0,
       psrID: isCopyMode ? 0 : detail.psrID || 0,
       productID: detail.productID || 0,
@@ -263,15 +247,16 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       psdID: detail.psdID || 1,
       psbid: detail.psbid || detail.grnDetID,
       returnReason: detail.returnReason || "",
-    };
-  }, []);
+    }),
+    []
+  );
 
   const generateReturnCodeAsync = async () => {
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
     const returnType = getValues("returnTypeCode");
     if (!isAddMode || !deptId || !returnType) return;
     try {
-      setIsGeneratingCode(true);
+      setState((prev) => ({ ...prev, isGeneratingCode: true }));
       let code: string | null = null;
       switch (returnType) {
         case ReturnType.Supplier:
@@ -297,16 +282,14 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     } catch (error) {
       showAlert("Error", "Error generating return code", "error");
     } finally {
-      setIsGeneratingCode(false);
+      setState((prev) => ({ ...prev, isGeneratingCode: false }));
     }
   };
 
   const loadReturnDetails = useCallback(async () => {
-    if (!initialData) {
-      return;
-    }
+    if (!initialData) return;
     try {
-      setIsLoadingData(true);
+      setState((prev) => ({ ...prev, isLoadingData: true }));
       setLoading(true);
       let returnData: ProductStockReturnDto;
       let detailsData: any[] = [];
@@ -351,7 +334,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         productStockReturnDetails: detailsData.map((detail) => createDetailMappingWithAllFields(detail, isCopyMode)),
       };
       reset(formData);
-      setIsDataLoaded(true);
+      setState((prev) => ({ ...prev, isDataLoaded: true }));
       if (isCopyMode && formData.fromDeptID) {
         setTimeout(() => generateReturnCodeAsync(), 500);
       }
@@ -361,77 +344,52 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       console.error("Error loading return details:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to load Stock Return details";
       showAlert("Error", errorMessage, "error");
-      setFormError(errorMessage);
+      setState((prev) => ({ ...prev, formError: errorMessage }));
     } finally {
-      setIsLoadingData(false);
+      setState((prev) => ({ ...prev, isLoadingData: false }));
       setLoading(false);
     }
   }, [initialData, isCopyMode, isViewMode, getReturnWithDetailsById, reset, setLoading, showAlert, createDetailMappingWithAllFields, selectedDepartmentId, selectedDepartmentName]);
 
   useEffect(() => {
-    console.log("Data loading useEffect triggered", {
-      open,
-      isDataLoaded,
-      initialData: !!initialData,
-      isAddMode,
-      isCopyMode,
-      isEditMode,
-      isViewMode,
-    });
-
-    if (!open) {
-      console.log("Dialog not open, skipping data load");
-      return;
-    }
-
-    if (isDataLoaded) {
-      console.log("Data already loaded, skipping");
-      return;
-    }
-
+    if (!open) return;
+    if (state.isDataLoaded) return;
     if (initialData && (isCopyMode || isEditMode || isViewMode)) {
-      console.log("Loading data for existing return");
       loadReturnDetails();
     } else if (isAddMode && !initialData) {
-      console.log("Setting up form for new return");
       reset(defaultValues);
-      setIsDataLoaded(true);
+      setState((prev) => ({ ...prev, isDataLoaded: true }));
     }
-  }, [open, initialData?.psrID, isAddMode, isCopyMode, isEditMode, isViewMode, isDataLoaded, loadReturnDetails, reset, defaultValues]);
+  }, [open, initialData?.psrID, isAddMode, isCopyMode, isEditMode, isViewMode, state.isDataLoaded, loadReturnDetails, reset, defaultValues]);
 
   useEffect(() => {
-    if (isAddMode && selectedDepartmentId && selectedDepartmentName && !initialData && isDataLoaded) {
-      console.log("Setting department data for add mode:", selectedDepartmentId, selectedDepartmentName);
+    if (isAddMode && selectedDepartmentId && selectedDepartmentName && !initialData && state.isDataLoaded) {
       setValue("fromDeptID", selectedDepartmentId, { shouldValidate: true, shouldDirty: false });
       setValue("fromDeptName", selectedDepartmentName, { shouldValidate: true, shouldDirty: false });
     }
-  }, [isAddMode, selectedDepartmentId, selectedDepartmentName, setValue, initialData, isDataLoaded]);
+  }, [isAddMode, selectedDepartmentId, selectedDepartmentName, setValue, initialData, state.isDataLoaded]);
 
   useEffect(() => {
     if (!open) {
-      console.log("Dialog closed, resetting data loaded flag");
-      setIsDataLoaded(false);
-      setFormError(null);
-      setIsLoadingData(false);
+      setState((prev) => ({ ...prev, isDataLoaded: false, formError: null, isLoadingData: false }));
     }
   }, [open]);
 
   useEffect(() => {
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
-    if (deptId && isAddMode && !isCopyMode && isDataLoaded) {
+    if (deptId && isAddMode && !isCopyMode && state.isDataLoaded) {
       generateReturnCodeAsync();
     }
-  }, [getValues("fromDeptID"), selectedDepartmentId, isAddMode, isCopyMode, isDataLoaded, getValues("returnTypeCode")]);
+  }, [getValues("fromDeptID"), selectedDepartmentId, isAddMode, isCopyMode, state.isDataLoaded, getValues("returnTypeCode")]);
 
   useEffect(() => {
-    if (isDataLoaded && (isAddMode || isCopyMode)) {
+    if (state.isDataLoaded && (isAddMode || isCopyMode)) {
       generateReturnCodeAsync();
       const currentReturnType = getValues("returnTypeCode");
       if (currentReturnType !== ReturnType.Internal) {
         setValue("toDeptID", undefined, { shouldValidate: true });
         setValue("toDeptName", "", { shouldValidate: true });
       }
-
       if (currentReturnType !== ReturnType.Supplier) {
         setValue("supplierID", undefined, { shouldValidate: true });
         setValue("supplierName", "", { shouldValidate: true });
@@ -445,11 +403,10 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   };
 
   const onSubmit = async (data: ProductStockReturnFormData) => {
-    debugger;
     if (isViewMode) return;
-    setFormError(null);
+    setState((prev) => ({ ...prev, formError: null }));
     try {
-      setIsSaving(true);
+      setState((prev) => ({ ...prev, isSaving: true }));
       setLoading(true);
       if (!data.fromDeptID || data.fromDeptID === 0) {
         if (selectedDepartmentId) {
@@ -576,10 +533,10 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to save Stock Return";
-      setFormError(errorMessage);
+      setState((prev) => ({ ...prev, formError: errorMessage }));
       showAlert("Error", errorMessage, "error");
     } finally {
-      setIsSaving(false);
+      setState((prev) => ({ ...prev, isSaving: false }));
       setLoading(false);
     }
   };
@@ -602,9 +559,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
   const performReset = () => {
     const resetData = initialData ? undefined : defaultValues;
     reset(resetData);
-    setFormError(null);
-    setIsDataLoaded(false);
-
+    setState((prev) => ({ ...prev, formError: null, isDataLoaded: false }));
     if (initialData) {
       setTimeout(() => loadReturnDetails(), 100);
     }
@@ -612,7 +567,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
 
   const handleReset = () => {
     if (isDirty) {
-      setShowResetConfirmation(true);
+      setState((prev) => ({ ...prev, showResetConfirmation: true }));
     } else {
       performReset();
     }
@@ -630,7 +585,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
   ) : (
     <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-      <SmartButton text="Clear" onClick={handleReset} variant="outlined" color="error" disabled={isSaving} />
+      <SmartButton text="Clear" onClick={handleReset} variant="outlined" color="error" disabled={state.isSaving} />
       <SmartButton
         text={isCopyMode ? "Copy & Save" : "Save"}
         onClick={handleSubmit(onSubmit)}
@@ -641,7 +596,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         showLoadingIndicator={true}
         loadingText="Saving..."
         successText="Saved!"
-        disabled={isSaving || !isValid || fields.length === 0}
+        disabled={state.isSaving || !isValid || fields.length === 0}
       />
     </Box>
   );
@@ -656,8 +611,8 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
         fullWidth
         fullScreen
         showCloseButton
-        disableBackdropClick={!isViewMode && (isDirty || isSaving)}
-        disableEscapeKeyDown={!isViewMode && (isDirty || isSaving)}
+        disableBackdropClick={!isViewMode && (isDirty || state.isSaving)}
+        disableEscapeKeyDown={!isViewMode && (isDirty || state.isSaving)}
         actions={dialogActions}
       >
         <Box component="form" noValidate sx={{ p: 1 }}>
@@ -673,7 +628,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
             </Alert>
           )}
 
-          {isLoadingData && (
+          {state.isLoadingData && (
             <Alert severity="info" sx={{ mb: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircularProgress size={20} />
@@ -682,9 +637,9 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
             </Alert>
           )}
 
-          {formError && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
-              {formError}
+          {state.formError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setState((prev) => ({ ...prev, formError: null }))}>
+              {state.formError}
             </Alert>
           )}
 
@@ -709,7 +664,7 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
                     endAdornment:
                       (isAddMode || isCopyMode) && !isViewMode && getValues("fromDeptID") ? (
                         <InputAdornment position="end">
-                          {isGeneratingCode ? (
+                          {state.isGeneratingCode ? (
                             <CircularProgress size={20} />
                           ) : (
                             <IconButton size="small" onClick={generateReturnCodeAsync} title="Generate new code">
@@ -847,11 +802,11 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       </GenericDialog>
 
       <ConfirmationDialog
-        open={showResetConfirmation}
-        onClose={() => setShowResetConfirmation(false)}
+        open={state.showResetConfirmation}
+        onClose={() => setState((prev) => ({ ...prev, showResetConfirmation: false }))}
         onConfirm={() => {
           performReset();
-          setShowResetConfirmation(false);
+          setState((prev) => ({ ...prev, showResetConfirmation: false }));
         }}
         title="Reset Form"
         message="Are you sure you want to reset the form? All unsaved changes will be lost."
@@ -862,10 +817,10 @@ const ProductStockReturnForm: React.FC<ProductStockReturnFormProps> = ({
       />
 
       <ConfirmationDialog
-        open={showCancelConfirmation}
-        onClose={() => setShowCancelConfirmation(false)}
+        open={state.showCancelConfirmation}
+        onClose={() => setState((prev) => ({ ...prev, showCancelConfirmation: false }))}
         onConfirm={() => {
-          setShowCancelConfirmation(false);
+          setState((prev) => ({ ...prev, showCancelConfirmation: false }));
           onClose();
         }}
         title="Unsaved Changes"
