@@ -10,7 +10,7 @@ export const SAMPLE_STATUS = {
 } as const;
 
 export const SAMPLE_STATUS_OPTIONS = [
-  { value: "all", label: "All Report Status" },
+  { value: "all", label: "All Reports" },
   { value: "pending", label: "Sample Pending" },
   { value: "collected", label: "Sample Collected" },
   { value: "rejected", label: "Sample Rejected" },

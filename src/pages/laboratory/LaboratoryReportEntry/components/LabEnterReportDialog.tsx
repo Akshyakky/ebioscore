@@ -8,7 +8,7 @@ import { useAlert } from "@/providers/AlertProvider";
 import { laboratoryService } from "@/services/Laboratory/LaboratoryService";
 import { LCENT_ID } from "@/types/lCentConstants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle, ExpandMore, GroupWork, PersonAdd, Save as SaveIcon, SupervisorAccount, Warning } from "@mui/icons-material";
+import { CheckCircle, ExpandMore, GroupWork, Save as SaveIcon, Warning } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
@@ -264,8 +264,9 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
 
       return (
         <Box>
-          <Stack direction="row" spacing={2} alignItems="flex-start">
-            <Box flex={1}>
+          <Grid container spacing={2} alignItems="flex-start">
+            <Grid size={{ xs: 3 }}></Grid>
+            <Grid size={{ xs: 6 }}>
               {component.resultTypeId === LCENT_ID.SINGLELINE_ALPHANUMERIC_VALUES && (
                 <FormField name={fieldName} control={control} label={component.componentName} type="text" required size="small" fullWidth placeholder="Enter value" />
               )}
@@ -320,19 +321,25 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                   placeholder="Enter or modify template text"
                 />
               )}
-            </Box>
-
-            {component.resultTypeId === LCENT_ID.REFERENCE_VALUES && component.referenceRange && (
-              <>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                  Reference Range: {component.referenceRange.referenceRange} {component.unit}
-                </Typography>
-                {value && (
-                  <Chip size="small" label={getComponentStatus(component, value)} color={getComponentStatus(component, value) === "Normal" ? "success" : "error"} sx={{ mt: 3 }} />
-                )}
-              </>
-            )}
-          </Stack>
+            </Grid>
+            <Grid size={{ xs: 3 }}>
+              {component.resultTypeId === LCENT_ID.REFERENCE_VALUES && component.referenceRange && (
+                <>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                    Reference Range: {component.referenceRange.referenceRange} {component.unit}
+                  </Typography>
+                  {value && (
+                    <Chip
+                      size="small"
+                      label={getComponentStatus(component, value)}
+                      color={getComponentStatus(component, value) === "Normal" ? "success" : "error"}
+                      sx={{ mt: 3 }}
+                    />
+                  )}
+                </>
+              )}
+            </Grid>
+          </Grid>
         </Box>
       );
     },
@@ -508,89 +515,68 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                 {/* Technician Section */}
                 <Grid size={6}>
                   <Paper variant="outlined" sx={{ p: 2, backgroundColor: "background.paper" }}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", fontWeight: "bold" }}>
-                      <PersonAdd sx={{ mr: 1, fontSize: 20 }} />
-                      Technician Details
-                    </Typography>
-                    <Stack spacing={2}>
-                      <FormField
-                        name="global_technicianId"
-                        control={control}
-                        label="Select Technician"
-                        type="select"
-                        size="small"
-                        fullWidth
-                        options={technicianOptions}
-                        placeholder="Choose Technician"
-                        onChange={(value) => {
-                          const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
-                          if (selectedTechnician) {
-                            setValue("global_technicianName", selectedTechnician.label || "");
-                          } else if (!value.value) {
-                            setValue("global_technicianId", 0);
-                            setValue("global_technicianName", "");
-                            setValue("global_technicianApproval", "N");
-                          }
-                        }}
-                      />
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <FormField name="global_technicianApproval" control={control} label="Approved" type="switch" size="small" disabled={!watch("global_technicianId")} />
-
-                        <SmartButton
-                          text="Apply to All"
-                          icon={CheckCircle}
-                          onClick={applyGlobalTechnician}
-                          variant="contained"
-                          color="success"
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ flex: 1 }} minWidth={300}>
+                        <FormField
+                          name="global_technicianId"
+                          control={control}
+                          label="Select Technician"
+                          type="select"
                           size="small"
-                          sx={{ minWidth: 120 }}
+                          fullWidth
+                          options={technicianOptions}
+                          placeholder="Choose Technician"
+                          onChange={(value) => {
+                            const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
+                            if (selectedTechnician) {
+                              setValue("global_technicianName", selectedTechnician.label || "");
+                            } else if (!value.value) {
+                              setValue("global_technicianId", 0);
+                              setValue("global_technicianName", "");
+                              setValue("global_technicianApproval", "N");
+                            }
+                          }}
                         />
                       </Box>
-                    </Stack>
+
+                      <FormField name="global_technicianApproval" control={control} label="Approved" type="switch" size="small" disabled={!watch("global_technicianId")} />
+
+                      <SmartButton text="Apply to All" icon={CheckCircle} onClick={applyGlobalTechnician} variant="contained" color="success" size="small" sx={{ minWidth: 120 }} />
+                    </Box>
                   </Paper>
                 </Grid>
 
                 {/* Consultant Section */}
                 <Grid size={6}>
                   <Paper variant="outlined" sx={{ p: 2, backgroundColor: "background.paper" }}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", fontWeight: "bold" }}>
-                      <SupervisorAccount sx={{ mr: 1, fontSize: 20 }} />
-                      Lab Consultant Details
-                    </Typography>
-                    <Stack spacing={2}>
-                      <FormField
-                        name="global_consultantId"
-                        control={control}
-                        label="Select Consultant"
-                        type="select"
-                        size="small"
-                        fullWidth
-                        options={consultantOptions}
-                        placeholder="Choose Consultant"
-                        onChange={(value) => {
-                          const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
-                          if (selectedConsultant) {
-                            setValue("global_consultantName", selectedConsultant.label || "");
-                          } else if (!value.value) {
-                            setValue("global_consultantId", 0);
-                            setValue("global_consultantName", "");
-                            setValue("global_consultantApproval", "N");
-                          }
-                        }}
-                      />
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <FormField name="global_consultantApproval" control={control} label="Approved" type="switch" size="small" disabled={!watch("global_consultantId")} />
-                        <SmartButton
-                          text="Apply to All"
-                          icon={CheckCircle}
-                          onClick={applyGlobalConsultant}
-                          variant="contained"
-                          color="success"
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ flex: 1 }} minWidth={300}>
+                        <FormField
+                          name="global_consultantId"
+                          control={control}
+                          label="Select Consultant"
+                          type="select"
                           size="small"
-                          sx={{ minWidth: 120 }}
+                          fullWidth
+                          options={consultantOptions}
+                          placeholder="Choose Consultant"
+                          onChange={(value) => {
+                            const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
+                            if (selectedConsultant) {
+                              setValue("global_consultantName", selectedConsultant.label || "");
+                            } else if (!value.value) {
+                              setValue("global_consultantId", 0);
+                              setValue("global_consultantName", "");
+                              setValue("global_consultantApproval", "N");
+                            }
+                          }}
                         />
                       </Box>
-                    </Stack>
+
+                      <FormField name="global_consultantApproval" control={control} label="Approved" type="switch" size="small" disabled={!watch("global_consultantId")} />
+
+                      <SmartButton text="Apply to All" icon={CheckCircle} onClick={applyGlobalConsultant} variant="contained" color="success" size="small" sx={{ minWidth: 120 }} />
+                    </Box>
                   </Paper>
                 </Grid>
               </Grid>
@@ -636,25 +622,27 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                       </Button>
 
                       <Collapse in={showApprovals}>
-                        <Paper variant="outlined" sx={{ p: 2, backgroundColor: "grey.50" }}>
+                        <Paper variant="outlined" sx={{ p: 2 }}>
                           <Grid container spacing={2}>
                             <Grid size={6}>
-                              <Stack spacing={1}>
-                                <FormField
-                                  name={`inv_${investigation.investigationId}_technicianId`}
-                                  control={control}
-                                  label="Technician"
-                                  type="select"
-                                  size="small"
-                                  fullWidth
-                                  options={technicianOptions}
-                                  onChange={(value) => {
-                                    const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
-                                    if (selectedTechnician) {
-                                      setValue(`inv_${investigation.investigationId}_technicianName`, selectedTechnician.label || "");
-                                    }
-                                  }}
-                                />
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                                <Box sx={{ flex: 1 }} minWidth={300}>
+                                  <FormField
+                                    name={`inv_${investigation.investigationId}_technicianId`}
+                                    control={control}
+                                    label="Technician"
+                                    type="select"
+                                    size="small"
+                                    fullWidth
+                                    options={technicianOptions}
+                                    onChange={(value) => {
+                                      const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
+                                      if (selectedTechnician) {
+                                        setValue(`inv_${investigation.investigationId}_technicianName`, selectedTechnician.label || "");
+                                      }
+                                    }}
+                                  />
+                                </Box>
                                 <FormField
                                   name={`inv_${investigation.investigationId}_technicianApproval`}
                                   control={control}
@@ -663,25 +651,27 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                                   size="small"
                                   disabled={!watch(`inv_${investigation.investigationId}_technicianId`)}
                                 />
-                              </Stack>
+                              </Box>
                             </Grid>
                             <Grid size={6}>
-                              <Stack spacing={1}>
-                                <FormField
-                                  name={`inv_${investigation.investigationId}_consultantId`}
-                                  control={control}
-                                  label="Consultant"
-                                  type="select"
-                                  size="small"
-                                  fullWidth
-                                  options={consultantOptions}
-                                  onChange={(value) => {
-                                    const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
-                                    if (selectedConsultant) {
-                                      setValue(`inv_${investigation.investigationId}_consultantName`, selectedConsultant.label || "");
-                                    }
-                                  }}
-                                />
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                                <Box sx={{ flex: 1 }} minWidth={300}>
+                                  <FormField
+                                    name={`inv_${investigation.investigationId}_consultantId`}
+                                    control={control}
+                                    label="Consultant"
+                                    type="select"
+                                    size="small"
+                                    fullWidth
+                                    options={consultantOptions}
+                                    onChange={(value) => {
+                                      const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
+                                      if (selectedConsultant) {
+                                        setValue(`inv_${investigation.investigationId}_consultantName`, selectedConsultant.label || "");
+                                      }
+                                    }}
+                                  />
+                                </Box>
                                 <FormField
                                   name={`inv_${investigation.investigationId}_consultantApproval`}
                                   control={control}
@@ -690,7 +680,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                                   size="small"
                                   disabled={!watch(`inv_${investigation.investigationId}_consultantId`)}
                                 />
-                              </Stack>
+                              </Box>
                             </Grid>
                           </Grid>
                         </Paper>

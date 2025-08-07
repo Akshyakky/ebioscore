@@ -77,13 +77,6 @@ export const LabRegistersGrid: React.FC<LabRegistersGridProps> = ({
       formatter: (_value: any, item: GetLabRegistersListDto) => item.labRegister.referralDoctor || "-",
     },
     {
-      key: "location",
-      header: "Location",
-      visible: true,
-      width: 180,
-      render: (item) => <LocationInfo register={item.labRegister} />,
-    },
-    {
       key: "sampleStatus",
       header: "Report Status",
       visible: true,
@@ -97,6 +90,13 @@ export const LabRegistersGrid: React.FC<LabRegistersGridProps> = ({
       visible: true,
       width: 300,
       render: (item) => <InvestigationCountChips register={item.labRegister} />,
+    },
+    {
+      key: "location",
+      header: "Location",
+      visible: true,
+      width: 180,
+      render: (item) => <LocationInfo register={item.labRegister} />,
     },
     {
       key: "billedBy",
