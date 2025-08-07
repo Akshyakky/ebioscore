@@ -599,7 +599,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
 
           {/* Investigations as Accordions */}
           <Stack spacing={2}>
-            {labData.results.map((investigation, index) => {
+            {labData.results.map((investigation, _index) => {
               const completionStatus = getInvestigationCompletionStatus(investigation);
               const isExpanded = expandedInvestigations[investigation.investigationId];
               const showApprovals = showIndividualApprovals[investigation.investigationId];
