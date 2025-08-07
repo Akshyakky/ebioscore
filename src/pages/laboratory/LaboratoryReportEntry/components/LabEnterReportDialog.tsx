@@ -8,27 +8,28 @@ import { useAlert } from "@/providers/AlertProvider";
 import { laboratoryService } from "@/services/Laboratory/LaboratoryService";
 import { LCENT_ID } from "@/types/lCentConstants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ExpandMore, GroupWork, Save as SaveIcon } from "@mui/icons-material";
+import { CheckCircle, ExpandMore, GroupWork, PersonAdd, Save as SaveIcon, SupervisorAccount, Warning } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Alert,
+  Badge,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
   CircularProgress,
+  Collapse,
   Divider,
   Grid,
+  LinearProgress,
   Paper,
   Stack,
-  Tab,
-  Tabs,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
@@ -41,28 +42,17 @@ interface LabEnterReportDialogProps {
   onSave?: () => void;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div role="tabpanel" hidden={value !== index} id={`investigation-tabpanel-${index}`} aria-labelledby={`investigation-tab-${index}`} {...other}>
-      {value === index && <Box sx={{ py: 2 }}>{children}</Box>}
-    </div>
-  );
-}
-
-// Create dynamic schema based on component types and investigation approvals
 const createDynamicSchema = (investigations: LabResultItemDto[]) => {
   const shape: Record<string, any> = {};
 
+  shape["global_technicianId"] = z.number().optional();
+  shape["global_technicianName"] = z.string().optional();
+  shape["global_technicianApproval"] = z.enum(["Y", "N"]).default("N");
+  shape["global_consultantId"] = z.number().optional();
+  shape["global_consultantName"] = z.string().optional();
+  shape["global_consultantApproval"] = z.enum(["Y", "N"]).default("N");
+
   investigations.forEach((investigation) => {
-    // Add approval fields for each investigation
     const invPrefix = `inv_${investigation.investigationId}`;
     shape[`${invPrefix}_technicianId`] = z.number().optional();
     shape[`${invPrefix}_technicianName`] = z.string().optional();
@@ -72,7 +62,6 @@ const createDynamicSchema = (investigations: LabResultItemDto[]) => {
     shape[`${invPrefix}_consultantApproval`] = z.enum(["Y", "N"]).default("N");
     shape[`${invPrefix}_remarks`] = z.string().optional();
 
-    // Add component fields
     investigation.componentResults?.forEach((component) => {
       const fieldName = `component_${component.componentId}`;
 
@@ -82,7 +71,7 @@ const createDynamicSchema = (investigations: LabResultItemDto[]) => {
           shape[fieldName] = z
             .string()
             .nonempty(`${component.componentName} is required`)
-            .refine((val) => !isNaN(Number(val)), {
+            .refine((val) => !isNaN(Number(val)) && val.trim() !== "", {
               message: "Please enter a valid number",
             });
           break;
@@ -103,7 +92,7 @@ const createDynamicSchema = (investigations: LabResultItemDto[]) => {
 };
 
 type LabReportFormData = {
-  [key: string]: any; // For dynamic fields
+  [key: string]: any;
 };
 
 const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClose, labRegNo, serviceTypeId, patientName = "Unknown Patient", onSave }) => {
@@ -113,14 +102,13 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
   const [dataLoading, setDataLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
   const [componentSchema, setComponentSchema] = useState<z.ZodSchema<any> | null>(null);
-  const [expandedAccordion, setExpandedAccordion] = useState<string | false>("bulk-approval");
+  const [expandedInvestigations, setExpandedInvestigations] = useState<Record<number, boolean>>({});
+  const [showIndividualApprovals, setShowIndividualApprovals] = useState<Record<number, boolean>>({});
 
   const { contacts: labTechnicians } = useContactMastByCategory({ consValue: "PHY" });
   const { contacts: labConsultants } = useContactMastByCategory({ consValue: "PHY" });
 
-  // Initialize form
   const {
     control,
     handleSubmit,
@@ -133,11 +121,14 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     resolver: componentSchema ? zodResolver(componentSchema) : undefined,
     mode: "onChange",
   });
+  useEffect(() => {
+    if (errors.root) {
+      console.error("errors.root", errors.root);
+    }
+  }, [errors.root]);
 
-  // Watch all form values for validation
   const formValues = useWatch({ control });
 
-  // Fetch lab result data when dialog opens
   useEffect(() => {
     if (open && labRegNo && serviceTypeId) {
       fetchLabResult();
@@ -151,15 +142,21 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       const response = await laboratoryService.getLabEnterResult(labRegNo, serviceTypeId);
       if (response.success && response.data) {
         setLabData(response.data);
-
-        // Create schema based on investigations and components
         const schema = createDynamicSchema(response.data.results);
         setComponentSchema(schema);
 
-        // Set form default values
         const defaultValues: LabReportFormData = {};
 
-        // Initialize investigation-wise approval values
+        if (response.data.results.length > 0) {
+          const firstInv = response.data.results[0];
+          defaultValues["global_technicianId"] = firstInv.technicianId;
+          defaultValues["global_technicianName"] = firstInv.technicianName || "";
+          defaultValues["global_technicianApproval"] = firstInv.isTechnicianApproved || "N";
+          defaultValues["global_consultantId"] = firstInv.labConsultantId;
+          defaultValues["global_consultantName"] = firstInv.labConsultantName || "";
+          defaultValues["global_consultantApproval"] = firstInv.isLabConsultantApproved || "N";
+        }
+
         response.data.results.forEach((investigation) => {
           const invPrefix = `inv_${investigation.investigationId}`;
           defaultValues[`${invPrefix}_technicianId`] = investigation.technicianId;
@@ -170,9 +167,8 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           defaultValues[`${invPrefix}_consultantApproval`] = investigation.isLabConsultantApproved || "N";
           defaultValues[`${invPrefix}_remarks`] = investigation.remarks || "";
 
-          // Initialize component values
           investigation.componentResults?.forEach((component) => {
-            defaultValues[`component_${component.componentId}`] = component.patuentValue || "";
+            defaultValues[`component_${component.componentId}`] = component.patuentValue ? String(component.patuentValue) : "";
             if (component.comments) {
               defaultValues[`component_${component.componentId}_comments`] = component.comments;
             }
@@ -180,6 +176,10 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
         });
 
         reset(defaultValues);
+
+        if (response.data.results.length > 0) {
+          setExpandedInvestigations({ [response.data.results[0].investigationId]: true });
+        }
       } else {
         setError(response.errorMessage || "Failed to fetch lab result data");
       }
@@ -191,65 +191,48 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     }
   };
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
+  const handleAccordionToggle = useCallback((investigationId: number) => {
+    setExpandedInvestigations((prev) => ({
+      ...prev,
+      [investigationId]: !prev[investigationId],
+    }));
+  }, []);
 
-  const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpandedAccordion(isExpanded ? panel : false);
-  };
-
-  const handleBulkApproval = (type: "technician" | "consultant") => {
+  const applyGlobalTechnician = useCallback(() => {
     if (!labData) return;
 
-    // Get the first selected value to apply to all
-    const firstInvestigation = labData.results[0];
-    if (!firstInvestigation) return;
+    const technicianId = watch("global_technicianId");
+    const technicianName = watch("global_technicianName");
+    const technicianApproval = watch("global_technicianApproval");
 
-    const invPrefix = `inv_${firstInvestigation.investigationId}`;
+    labData.results.forEach((investigation) => {
+      const prefix = `inv_${investigation.investigationId}`;
+      setValue(`${prefix}_technicianId`, technicianId);
+      setValue(`${prefix}_technicianName`, technicianName);
+      setValue(`${prefix}_technicianApproval`, technicianApproval || "N");
+    });
 
-    if (type === "technician") {
-      const technicianId = watch(`${invPrefix}_technicianId`);
-      const technicianName = watch(`${invPrefix}_technicianName`);
-      const technicianApproval = watch(`${invPrefix}_technicianApproval`);
+    showAlert("Success", "Technician details applied to all investigations", "success");
+  }, [labData, watch, setValue, showAlert]);
 
-      if (!technicianId) {
-        showAlert("Warning", "Please select a technician from the first investigation to apply to all", "warning");
-        return;
-      }
+  const applyGlobalConsultant = useCallback(() => {
+    if (!labData) return;
 
-      // Apply to all investigations
-      labData.results.forEach((investigation) => {
-        const prefix = `inv_${investigation.investigationId}`;
-        setValue(`${prefix}_technicianId`, technicianId);
-        setValue(`${prefix}_technicianName`, technicianName);
-        setValue(`${prefix}_technicianApproval`, technicianApproval || "N");
-      });
+    const consultantId = watch("global_consultantId");
+    const consultantName = watch("global_consultantName");
+    const consultantApproval = watch("global_consultantApproval");
 
-      showAlert("Success", "Technician details applied to all investigations", "success");
-    } else {
-      const consultantId = watch(`${invPrefix}_consultantId`);
-      const consultantName = watch(`${invPrefix}_consultantName`);
-      const consultantApproval = watch(`${invPrefix}_consultantApproval`);
+    labData.results.forEach((investigation) => {
+      const prefix = `inv_${investigation.investigationId}`;
+      setValue(`${prefix}_consultantId`, consultantId);
+      setValue(`${prefix}_consultantName`, consultantName);
+      setValue(`${prefix}_consultantApproval`, consultantApproval || "N");
+    });
 
-      if (!consultantId) {
-        showAlert("Warning", "Please select a consultant from the first investigation to apply to all", "warning");
-        return;
-      }
+    showAlert("Success", "Consultant details applied to all investigations", "success");
+  }, [labData, watch, setValue, showAlert]);
 
-      // Apply to all investigations
-      labData.results.forEach((investigation) => {
-        const prefix = `inv_${investigation.investigationId}`;
-        setValue(`${prefix}_consultantId`, consultantId);
-        setValue(`${prefix}_consultantName`, consultantName);
-        setValue(`${prefix}_consultantApproval`, consultantApproval || "N");
-      });
-
-      showAlert("Success", "Consultant details applied to all investigations", "success");
-    }
-  };
-
-  const getComponentStatus = (component: ComponentResultDto, value: string): "Normal" | "Abnormal" => {
+  const getComponentStatus = useCallback((component: ComponentResultDto, value: string): "Normal" | "Abnormal" => {
     if (component.resultTypeId === LCENT_ID.REFERENCE_VALUES && value && component.referenceRange) {
       const numValue = Number(value);
       const { lowerValue = 0, upperValue = 0 } = component.referenceRange;
@@ -258,92 +241,103 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
       }
     }
     return "Normal";
-  };
+  }, []);
 
-  const getStatusChip = (component: ComponentResultDto) => {
-    const value = watch(`component_${component.componentId}`);
-    if (!value) return null;
-    if (component.resultTypeId !== LCENT_ID.REFERENCE_VALUES) {
-      return null;
-    }
-    const status = getComponentStatus(component, value);
-    return <Chip size="small" label={status} color={status === "Normal" ? "success" : "error"} />;
-  };
+  const getInvestigationCompletionStatus = useCallback(
+    (investigation: LabResultItemDto) => {
+      const filledComponents = investigation.componentResults?.filter((comp) => watch(`component_${comp.componentId}`)).length || 0;
+      const totalComponents = investigation.componentResults?.length || 0;
 
-  const renderComponentField = (component: ComponentResultDto) => {
-    const fieldName = `component_${component.componentId}`;
+      return {
+        filled: filledComponents,
+        total: totalComponents,
+        percentage: totalComponents > 0 ? (filledComponents / totalComponents) * 100 : 0,
+      };
+    },
+    [watch]
+  );
 
-    switch (component.resultTypeId) {
-      case LCENT_ID.SINGLELINE_ALPHANUMERIC_VALUES:
-        return <FormField name={fieldName} control={control} label={component.componentName} type="text" required size="small" fullWidth placeholder="Enter value" />;
+  const renderComponentField = useCallback(
+    (component: ComponentResultDto) => {
+      const fieldName = `component_${component.componentId}`;
+      const value = watch(fieldName);
 
-      case LCENT_ID.SINGLELINE_NUMERIC_VALUES:
-      case LCENT_ID.REFERENCE_VALUES:
-        return (
-          <Box>
-            <FormField
-              name={fieldName}
-              control={control}
-              label={component.componentName}
-              type="number"
-              required
-              size="small"
-              fullWidth
-              placeholder="Enter numeric value"
-              adornment={component.unit}
-              adornmentPosition="end"
-            />
+      return (
+        <Box>
+          <Stack direction="row" spacing={2} alignItems="flex-start">
+            <Box flex={1}>
+              {component.resultTypeId === LCENT_ID.SINGLELINE_ALPHANUMERIC_VALUES && (
+                <FormField name={fieldName} control={control} label={component.componentName} type="text" required size="small" fullWidth placeholder="Enter value" />
+              )}
+
+              {(component.resultTypeId === LCENT_ID.SINGLELINE_NUMERIC_VALUES || component.resultTypeId === LCENT_ID.REFERENCE_VALUES) && (
+                <Box>
+                  <FormField
+                    name={fieldName}
+                    control={control}
+                    label={component.componentName}
+                    type="text"
+                    required
+                    size="small"
+                    placeholder="Enter numeric value"
+                    adornment={component.unit}
+                    adornmentPosition="end"
+                  />
+                </Box>
+              )}
+
+              {component.resultTypeId === LCENT_ID.MULTILINE_VALUES && (
+                <FormField name={fieldName} control={control} label={component.componentName} type="textarea" required size="small" rows={3} placeholder="Enter detailed text" />
+              )}
+
+              {component.resultTypeId === LCENT_ID.MULTIPLE_SELECTION && (
+                <FormField
+                  name={fieldName}
+                  control={control}
+                  label={component.componentName}
+                  type="select"
+                  required
+                  size="small"
+                  fullWidth
+                  options={[
+                    { value: "Positive", label: "Positive" },
+                    { value: "Negative", label: "Negative" },
+                    { value: "Not Detected", label: "Not Detected" },
+                  ]}
+                />
+              )}
+
+              {component.resultTypeId === LCENT_ID.TEMPLATE_VALUES && (
+                <FormField
+                  name={fieldName}
+                  control={control}
+                  label={component.componentName}
+                  type="textarea"
+                  required
+                  size="small"
+                  fullWidth
+                  rows={5}
+                  placeholder="Enter or modify template text"
+                />
+              )}
+            </Box>
+
             {component.resultTypeId === LCENT_ID.REFERENCE_VALUES && component.referenceRange && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                Reference Range: {component.referenceRange.referenceRange} {component.unit}
-              </Typography>
+              <>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  Reference Range: {component.referenceRange.referenceRange} {component.unit}
+                </Typography>
+                {value && (
+                  <Chip size="small" label={getComponentStatus(component, value)} color={getComponentStatus(component, value) === "Normal" ? "success" : "error"} sx={{ mt: 3 }} />
+                )}
+              </>
             )}
-          </Box>
-        );
-
-      case LCENT_ID.MULTILINE_VALUES:
-        return (
-          <FormField
-            name={fieldName}
-            control={control}
-            label={component.componentName}
-            type="textarea"
-            required
-            size="small"
-            fullWidth
-            rows={3}
-            placeholder="Enter detailed text"
-          />
-        );
-
-      case LCENT_ID.MULTIPLE_SELECTION:
-        const selectionOptions = [
-          { value: "Positive", label: "Positive" },
-          { value: "Negative", label: "Negative" },
-          { value: "Not Detected", label: "Not Detected" },
-        ];
-
-        return <FormField name={fieldName} control={control} label={component.componentName} type="select" required size="small" fullWidth options={selectionOptions} />;
-
-      case LCENT_ID.TEMPLATE_VALUES:
-        return (
-          <FormField
-            name={fieldName}
-            control={control}
-            label={component.componentName}
-            type="textarea"
-            required
-            size="small"
-            fullWidth
-            rows={5}
-            placeholder="Enter or modify template text"
-          />
-        );
-
-      default:
-        return <FormField name={fieldName} control={control} label={component.componentName} type="text" required size="small" fullWidth placeholder="Enter value" />;
-    }
-  };
+          </Stack>
+        </Box>
+      );
+    },
+    [control, watch, getComponentStatus]
+  );
 
   const prepareDataForSave = (formData: LabReportFormData): LabEnterResultDto => {
     if (!labData) throw new Error("No lab data available");
@@ -405,7 +399,6 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     }
   };
 
-  // Prepare options for technicians and consultants dropdowns
   const technicianOptions = labTechnicians.map((tech) => ({
     value: Number(tech.value) || 0,
     label: tech.label || "",
@@ -415,6 +408,21 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
     value: Number(cons.value) || 0,
     label: cons.label || "",
   }));
+
+  const overallProgress = useMemo(() => {
+    if (!labData) return 0;
+    let totalComponents = 0;
+    let filledComponents = 0;
+
+    labData.results.forEach((investigation) => {
+      const total = investigation.componentResults?.length || 0;
+      const filled = investigation.componentResults?.filter((comp) => watch(`component_${comp.componentId}`)).length || 0;
+      totalComponents += total;
+      filledComponents += filled;
+    });
+
+    return totalComponents > 0 ? (filledComponents / totalComponents) * 100 : 0;
+  }, [labData, formValues]);
 
   if (!open) return null;
 
@@ -458,220 +466,270 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           {/* Header Information */}
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 3 }}>
+              <Grid size={3}>
                 <Typography variant="body2" color="text.secondary">
                   Lab Reg No
                 </Typography>
                 <Typography variant="h6">{labData.labRegNo}</Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 5 }}>
+              <Grid size={5}>
                 <Typography variant="body2" color="text.secondary">
                   Patient Name
                 </Typography>
                 <Typography variant="h6">{patientName}</Typography>
               </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={4}>
                 <Typography variant="body2" color="text.secondary">
                   Department
                 </Typography>
                 <Typography variant="h6">{labData.departmentName}</Typography>
               </Grid>
             </Grid>
+
+            {/* Overall Progress */}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Overall Progress: {Math.round(overallProgress)}%
+              </Typography>
+              <LinearProgress variant="determinate" value={overallProgress} color={overallProgress === 100 ? "success" : "primary"} sx={{ height: 8, borderRadius: 4 }} />
+            </Box>
           </Paper>
 
-          {/* Bulk Approval Section */}
-          {labData.results.length > 1 && (
-            <Accordion expanded={expandedAccordion === "bulk-approval"} onChange={handleAccordionChange("bulk-approval")} sx={{ mb: 2 }}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="subtitle1" sx={{ display: "flex", alignItems: "center" }}>
-                  <GroupWork sx={{ mr: 1 }} />
-                  Bulk Approval Settings (Apply to All Investigations)
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Configure the approval settings for the first investigation, then use the buttons below to apply to all investigations.
-                </Alert>
-                <Stack direction="row" spacing={2}>
-                  <Button variant="contained" color="secondary" onClick={() => handleBulkApproval("technician")} size="small">
-                    Apply Technician to All
-                  </Button>
-                  <Button variant="contained" color="secondary" onClick={() => handleBulkApproval("consultant")} size="small">
-                    Apply Consultant to All
-                  </Button>
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-          )}
+          {/* Global Approval Section */}
+          <Card elevation={2} sx={{ mb: 3, backgroundColor: "primary.50" }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", color: "primary.main" }}>
+                <GroupWork sx={{ mr: 1 }} />
+                Investigation Approvals
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
 
-          {/* Investigation Tabs */}
-          <Paper sx={{ mb: 2 }}>
-            <Tabs value={activeTab} onChange={handleTabChange} aria-label="investigation tabs" variant="scrollable" scrollButtons="auto">
-              {labData.results.map((investigation) => (
-                <Tab
-                  key={investigation.investigationId}
-                  label={
-                    <Box>
-                      <Typography variant="body2">{investigation.investigationName}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {investigation.investigationCode}
-                      </Typography>
-                    </Box>
-                  }
-                />
-              ))}
-            </Tabs>
+              <Grid container spacing={3}>
+                {/* Technician Section */}
+                <Grid size={6}>
+                  <Paper variant="outlined" sx={{ p: 2, backgroundColor: "background.paper" }}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", fontWeight: "bold" }}>
+                      <PersonAdd sx={{ mr: 1, fontSize: 20 }} />
+                      Technician Details
+                    </Typography>
+                    <Stack spacing={2}>
+                      <FormField
+                        name="global_technicianId"
+                        control={control}
+                        label="Select Technician"
+                        type="select"
+                        size="small"
+                        fullWidth
+                        options={technicianOptions}
+                        placeholder="Choose Technician"
+                        onChange={(value) => {
+                          const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
+                          if (selectedTechnician) {
+                            setValue("global_technicianName", selectedTechnician.label || "");
+                          } else if (!value.value) {
+                            setValue("global_technicianId", 0);
+                            setValue("global_technicianName", "");
+                            setValue("global_technicianApproval", "N");
+                          }
+                        }}
+                      />
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <FormField name="global_technicianApproval" control={control} label="Approved" type="switch" size="small" disabled={!watch("global_technicianId")} />
 
-            {labData.results.map((investigation, index) => (
-              <TabPanel key={investigation.investigationId} value={activeTab} index={index}>
-                <Box sx={{ p: 2 }}>
-                  {/* Investigation Header with Approval Section */}
-                  <Card variant="outlined" sx={{ mb: 3 }}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        {investigation.investigationName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Code: {investigation.investigationCode}
-                      </Typography>
-
-                      <Divider sx={{ my: 2 }} />
-
-                      <Typography variant="subtitle1" gutterBottom>
-                        Investigation Approvals
-                      </Typography>
-
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Stack spacing={2}>
-                            <FormField
-                              name={`inv_${investigation.investigationId}_technicianId`}
-                              control={control}
-                              label="Technician"
-                              type="select"
-                              size="small"
-                              fullWidth
-                              options={technicianOptions}
-                              placeholder="Select Technician"
-                              onChange={(value) => {
-                                const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
-                                if (selectedTechnician) {
-                                  setValue(`inv_${investigation.investigationId}_technicianName`, selectedTechnician.label || "");
-                                }
-                              }}
-                            />
-                            <FormField
-                              name={`inv_${investigation.investigationId}_technicianApproval`}
-                              control={control}
-                              label="Technician Approved"
-                              type="switch"
-                              size="small"
-                              disabled={!watch(`inv_${investigation.investigationId}_technicianId`)}
-                            />
-                          </Stack>
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Stack spacing={2}>
-                            <FormField
-                              name={`inv_${investigation.investigationId}_consultantId`}
-                              control={control}
-                              label="Lab Consultant"
-                              type="select"
-                              size="small"
-                              fullWidth
-                              options={consultantOptions}
-                              placeholder="Select Consultant"
-                              onChange={(value) => {
-                                const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
-                                if (selectedConsultant) {
-                                  setValue(`inv_${investigation.investigationId}_consultantName`, selectedConsultant.label || "");
-                                }
-                              }}
-                            />
-                            <FormField
-                              name={`inv_${investigation.investigationId}_consultantApproval`}
-                              control={control}
-                              label="Consultant Approved"
-                              type="switch"
-                              size="small"
-                              disabled={!watch(`inv_${investigation.investigationId}_consultantId`)}
-                            />
-                          </Stack>
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <FormField
-                            name={`inv_${investigation.investigationId}_remarks`}
-                            control={control}
-                            label="Remarks"
-                            type="textarea"
-                            size="small"
-                            fullWidth
-                            rows={2}
-                            placeholder="Enter any remarks for this investigation"
-                          />
-                        </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-
-                  {/* Component Results */}
-                  {(() => {
-                    const groupedComponents = (investigation.componentResults || []).reduce((acc, component) => {
-                      const subtitle = component.subTitleName || "Other";
-                      if (!acc[subtitle]) acc[subtitle] = [];
-                      acc[subtitle].push(component);
-                      return acc;
-                    }, {} as Record<string, ComponentResultDto[]>);
-
-                    return Object.entries(groupedComponents).map(([subtitle, components]) => (
-                      <Box key={subtitle} sx={{ mb: 3 }}>
-                        <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
-                          {subtitle}
-                        </Typography>
-                        <Grid container spacing={2}>
-                          {components
-                            .sort((a, b) => (a.order || 0) - (b.order || 0))
-                            .map((component) => (
-                              <Grid key={component.componentId} size={{ xs: 12, md: 6 }}>
-                                <Card variant="outlined">
-                                  <CardContent>
-                                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
-                                      <Box flex={1}>{renderComponentField(component)}</Box>
-                                      <Box ml={1}>{getStatusChip(component)}</Box>
-                                    </Stack>
-
-                                    {component.interpretation && (
-                                      <Box sx={{ mt: 2 }}>
-                                        <Typography variant="caption" color="text.secondary">
-                                          Interpretation:
-                                        </Typography>
-                                        <Typography variant="body2">{component.interpretation}</Typography>
-                                      </Box>
-                                    )}
-
-                                    <Box sx={{ mt: 2 }}>
-                                      <FormField
-                                        name={`component_${component.componentId}_comments`}
-                                        control={control}
-                                        label="Comments"
-                                        type="textarea"
-                                        size="small"
-                                        fullWidth
-                                        rows={2}
-                                      />
-                                    </Box>
-                                  </CardContent>
-                                </Card>
-                              </Grid>
-                            ))}
-                        </Grid>
+                        <SmartButton
+                          text="Apply to All"
+                          icon={CheckCircle}
+                          onClick={applyGlobalTechnician}
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          sx={{ minWidth: 150 }}
+                        />
                       </Box>
-                    ));
-                  })()}
-                </Box>
-              </TabPanel>
-            ))}
-          </Paper>
+                    </Stack>
+                  </Paper>
+                </Grid>
+
+                {/* Consultant Section */}
+                <Grid size={6}>
+                  <Paper variant="outlined" sx={{ p: 2, backgroundColor: "background.paper" }}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", fontWeight: "bold" }}>
+                      <SupervisorAccount sx={{ mr: 1, fontSize: 20 }} />
+                      Lab Consultant Details
+                    </Typography>
+                    <Stack spacing={2}>
+                      <FormField
+                        name="global_consultantId"
+                        control={control}
+                        label="Select Consultant"
+                        type="select"
+                        size="small"
+                        fullWidth
+                        options={consultantOptions}
+                        placeholder="Choose Consultant"
+                        onChange={(value) => {
+                          const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
+                          if (selectedConsultant) {
+                            setValue("global_consultantName", selectedConsultant.label || "");
+                          } else if (!value.value) {
+                            setValue("global_consultantId", 0);
+                            setValue("global_consultantName", "");
+                            setValue("global_consultantApproval", "N");
+                          }
+                        }}
+                      />
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <FormField name="global_consultantApproval" control={control} label="Approved" type="switch" size="small" disabled={!watch("global_consultantId")} />
+                        <SmartButton
+                          text="Apply to All"
+                          icon={CheckCircle}
+                          onClick={applyGlobalConsultant}
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          sx={{ minWidth: 150 }}
+                        />
+                      </Box>
+                    </Stack>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Investigations as Accordions */}
+          <Stack spacing={2}>
+            {labData.results.map((investigation, index) => {
+              const completionStatus = getInvestigationCompletionStatus(investigation);
+              const isExpanded = expandedInvestigations[investigation.investigationId];
+              const showApprovals = showIndividualApprovals[investigation.investigationId];
+
+              return (
+                <Accordion key={investigation.investigationId} expanded={isExpanded} onChange={() => handleAccordionToggle(investigation.investigationId)}>
+                  <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Box sx={{ display: "flex", alignItems: "center", width: "100%", pr: 2 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {investigation.investigationCode} : {investigation.investigationName}
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Badge badgeContent={`${completionStatus.filled}/${completionStatus.total}`} color={completionStatus.percentage === 100 ? "success" : "warning"}>
+                          {completionStatus.percentage === 100 ? <CheckCircle color="success" /> : <Warning color="warning" />}
+                        </Badge>
+                        <Typography variant="caption" color="text.secondary">
+                          {Math.round(completionStatus.percentage)}% Complete
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {/* Compact Approval Section */}
+                    <Box sx={{ mb: 2 }}>
+                      <Button
+                        size="small"
+                        variant="text"
+                        onClick={() => setShowIndividualApprovals((prev) => ({ ...prev, [investigation.investigationId]: !prev[investigation.investigationId] }))}
+                        sx={{ mb: 1 }}
+                      >
+                        {showApprovals ? "Hide" : "Show"} Individual Approvals
+                      </Button>
+
+                      <Collapse in={showApprovals}>
+                        <Paper variant="outlined" sx={{ p: 2, backgroundColor: "grey.50" }}>
+                          <Grid container spacing={2}>
+                            <Grid size={6}>
+                              <Stack spacing={1}>
+                                <FormField
+                                  name={`inv_${investigation.investigationId}_technicianId`}
+                                  control={control}
+                                  label="Technician"
+                                  type="select"
+                                  size="small"
+                                  fullWidth
+                                  options={technicianOptions}
+                                  onChange={(value) => {
+                                    const selectedTechnician = labTechnicians.find((tech) => Number(tech.value) === value.value);
+                                    if (selectedTechnician) {
+                                      setValue(`inv_${investigation.investigationId}_technicianName`, selectedTechnician.label || "");
+                                    }
+                                  }}
+                                />
+                                <FormField
+                                  name={`inv_${investigation.investigationId}_technicianApproval`}
+                                  control={control}
+                                  label="Approved"
+                                  type="switch"
+                                  size="small"
+                                  disabled={!watch(`inv_${investigation.investigationId}_technicianId`)}
+                                />
+                              </Stack>
+                            </Grid>
+                            <Grid size={6}>
+                              <Stack spacing={1}>
+                                <FormField
+                                  name={`inv_${investigation.investigationId}_consultantId`}
+                                  control={control}
+                                  label="Consultant"
+                                  type="select"
+                                  size="small"
+                                  fullWidth
+                                  options={consultantOptions}
+                                  onChange={(value) => {
+                                    const selectedConsultant = labConsultants.find((cons) => Number(cons.value) === value.value);
+                                    if (selectedConsultant) {
+                                      setValue(`inv_${investigation.investigationId}_consultantName`, selectedConsultant.label || "");
+                                    }
+                                  }}
+                                />
+                                <FormField
+                                  name={`inv_${investigation.investigationId}_consultantApproval`}
+                                  control={control}
+                                  label="Approved"
+                                  type="switch"
+                                  size="small"
+                                  disabled={!watch(`inv_${investigation.investigationId}_consultantId`)}
+                                />
+                              </Stack>
+                            </Grid>
+                          </Grid>
+                        </Paper>
+                      </Collapse>
+                    </Box>
+
+                    {/* Component Results - One per row */}
+                    <Box>
+                      {(() => {
+                        const groupedComponents = (investigation.componentResults || []).reduce((acc, component) => {
+                          const subtitle = component.subTitleName || "General";
+                          if (!acc[subtitle]) acc[subtitle] = [];
+                          acc[subtitle].push(component);
+                          return acc;
+                        }, {} as Record<string, ComponentResultDto[]>);
+
+                        return Object.entries(groupedComponents).map(([subtitle, components]) => (
+                          <Box key={subtitle} sx={{ mb: 3 }}>
+                            <Typography variant="subtitle2" color="primary" sx={{ mb: 2, fontWeight: "bold" }}>
+                              {subtitle}
+                            </Typography>
+                            <Stack spacing={2}>
+                              {components
+                                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                                .map((component) => (
+                                  <Card key={component.componentId} variant="outlined">
+                                    <CardContent>{renderComponentField(component)}</CardContent>
+                                  </Card>
+                                ))}
+                            </Stack>
+                          </Box>
+                        ));
+                      })()}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })}
+          </Stack>
         </Box>
       ) : (
         <Alert severity="info">No data available</Alert>
