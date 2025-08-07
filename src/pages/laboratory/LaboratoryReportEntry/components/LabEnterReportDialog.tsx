@@ -462,7 +462,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
           {error}
         </Alert>
       ) : labData ? (
-        <Box component="form" noValidate>
+        <Box component="form" noValidate sx={{ minHeight: "100vh" }}>
           {/* Header Information */}
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2}>
@@ -541,9 +541,9 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                           icon={CheckCircle}
                           onClick={applyGlobalTechnician}
                           variant="contained"
-                          color="primary"
+                          color="success"
                           size="small"
-                          sx={{ minWidth: 150 }}
+                          sx={{ minWidth: 120 }}
                         />
                       </Box>
                     </Stack>
@@ -585,9 +585,9 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                           icon={CheckCircle}
                           onClick={applyGlobalConsultant}
                           variant="contained"
-                          color="primary"
+                          color="success"
                           size="small"
-                          sx={{ minWidth: 150 }}
+                          sx={{ minWidth: 120 }}
                         />
                       </Box>
                     </Stack>
@@ -613,7 +613,7 @@ const LabEnterReportDialog: React.FC<LabEnterReportDialogProps> = ({ open, onClo
                           {investigation.investigationCode} : {investigation.investigationName}
                         </Typography>
                       </Box>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" spacing={6} alignItems="center">
                         <Badge badgeContent={`${completionStatus.filled}/${completionStatus.total}`} color={completionStatus.percentage === 100 ? "success" : "warning"}>
                           {completionStatus.percentage === 100 ? <CheckCircle color="success" /> : <Warning color="warning" />}
                         </Badge>
