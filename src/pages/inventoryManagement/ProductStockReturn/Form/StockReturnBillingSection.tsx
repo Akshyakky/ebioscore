@@ -5,7 +5,6 @@ import React, { useMemo } from "react";
 import { Control, useWatch } from "react-hook-form";
 import * as z from "zod";
 
-// Define the schema and type within this file to avoid import issues
 const returnDetailSchema = z.object({
   psrdID: z.number(),
   psrID: z.number(),
@@ -205,7 +204,6 @@ const StockReturnBillingSection: React.FC<BillingSectionProps> = ({ control }) =
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          // bgcolor: "grey.50",
           borderRadius: 1,
           mb: 2,
         }}
@@ -253,7 +251,6 @@ const StockReturnBillingSection: React.FC<BillingSectionProps> = ({ control }) =
           justifyContent: "space-between",
           alignItems: "center",
           p: 2,
-          // bgcolor: "success.50",
           borderRadius: 1,
           mb: 2,
         }}

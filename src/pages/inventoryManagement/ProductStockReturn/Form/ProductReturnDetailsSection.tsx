@@ -141,14 +141,11 @@ interface TablePaginationActionsProps {
 const TablePaginationActions: React.FC<TablePaginationActionsProps> = ({ count, page, rowsPerPage, onPageChange }) => {
   const theme = useTheme();
   const maxPage = Math.max(0, Math.ceil(count / rowsPerPage) - 1);
-
   const handleClick = (newPage: number) => (event: React.MouseEvent<HTMLButtonElement>) => onPageChange(event, newPage);
-
   const iconButtonStyle = {
     border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
     "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.04) },
   };
-
   const buttons = [
     { onClick: handleClick(0), disabled: page === 0, icon: theme.direction === "rtl" ? <LastPage /> : <FirstPage />, title: "First page" },
     { onClick: handleClick(page - 1), disabled: page === 0, icon: theme.direction === "rtl" ? <KeyboardArrowRight /> : <KeyboardArrowLeft />, title: "Previous page" },
@@ -188,7 +185,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
   const theme = useTheme();
   const grnProductSearchRef = useRef<GrnProductSearchRef>(null);
 
-  // Consolidated state
   const [state, setState] = useState({
     selectedGrnProduct: null as GrnProductSearchResult | null,
     selectedQuantity: undefined as number | undefined,
@@ -214,13 +210,11 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
   });
 
   const updateState = (updates: Partial<typeof state>) => setState((prev) => ({ ...prev, ...updates }));
-
   const watchedDetails = useWatch({ control, name: "productStockReturnDetails" });
   const fromDeptID = useWatch({ control, name: "fromDeptID" });
   const returnTypeCode = useWatch({ control, name: "returnTypeCode" });
   const { isDialogOpen: isBatchSelectionDialogOpen, availableBatches, closeDialog: closeBatchDialog } = useBatchSelection();
 
-  // Effects
   useEffect(() => {
     const newQuantities = Object.fromEntries(fields.map((field) => [field.id, field.quantity || 0]));
     updateState({ quantities: newQuantities });
@@ -232,7 +226,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
     if (hasChanges) updateState({ quantities: currentQuantities });
   }, [watchedDetails, fields, state.quantities]);
 
-  // Utility functions
   const clearTemporaryFields = useCallback(() => {
     updateState({
       selectedGrnProduct: null,
@@ -326,7 +319,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
     return diffDays <= 0 ? "expired" : diffDays <= 30 ? "warning" : null;
   };
 
-  // Event handlers
   const handleQuantityChange = useCallback(
     (rowId: string | number, value: number) => {
       updateState({ quantities: { ...state.quantities, [rowId]: value } });
@@ -383,7 +375,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
     ]
   );
 
-  // Statistics and filtering
   const statistics = useMemo(() => {
     const totalProducts = watchedDetails?.length || 0;
     const totalReturnQuantity = watchedDetails?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
@@ -394,19 +385,16 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
 
   const filteredRows = useMemo(() => {
     let filtered = [...fields];
-
     if (state.viewType === "expired") {
       filtered = filtered.filter((row) => row.expiryDate && new Date(row.expiryDate) < new Date());
     } else if (state.viewType === "nonExpired") {
       filtered = filtered.filter((row) => !row.expiryDate || new Date(row.expiryDate) >= new Date());
     }
-
     if (state.globalFilter) {
       filtered = filtered.filter((row) =>
         Object.values(row).some((value) => (typeof value === "string" || typeof value === "number") && String(value).toLowerCase().includes(state.globalFilter.toLowerCase()))
       );
     }
-
     Object.entries(state.columnFilters).forEach(([key, value]) => {
       if (value) {
         filtered = filtered.filter((row) => {
@@ -415,7 +403,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
         });
       }
     });
-
     if (state.sortField) {
       filtered.sort((a, b) => {
         const aValue = a[state.sortField as keyof typeof a];
@@ -423,7 +410,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
         if (!aValue && !bValue) return 0;
         if (!aValue) return state.sortDirection === "asc" ? -1 : 1;
         if (!bValue) return state.sortDirection === "asc" ? 1 : -1;
-
         if (typeof aValue === "string" && typeof bValue === "string") {
           return state.sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }
@@ -433,7 +419,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
         return state.sortDirection === "asc" ? (aValue < bValue ? -1 : 1) : bValue < aValue ? -1 : 1;
       });
     }
-
     return filtered;
   }, [fields, state.viewType, state.globalFilter, state.columnFilters, state.sortField, state.sortDirection]);
 
@@ -442,7 +427,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
     return filteredRows.slice(startIndex, startIndex + state.rowsPerPage);
   }, [filteredRows, state.page, state.rowsPerPage]);
 
-  // Pagination and table handlers
   const handleChangePage = useCallback((event: unknown, newPage: number) => updateState({ page: newPage }), []);
   const handleChangeRowsPerPage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     updateState({ rowsPerPage: parseInt(event.target.value, 10), page: 0 });
@@ -493,15 +477,12 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
     if (state.selectedRows.size === 0) return;
     const rowsToKeep = fields.filter((field) => !state.selectedRows.has(field.id));
     const deletedCount = state.selectedRows.size;
-
     rowsToKeep.forEach((row, i) => setValue(`productStockReturnDetails.${i}`, row));
     for (let i = fields.length - 1; i >= rowsToKeep.length; i--) remove(i);
-
     updateState({ selectedRows: new Set() });
     showAlert("Success", `${deletedCount} items removed from return list`, "success");
   }, [fields, remove, state.selectedRows, setValue, showAlert]);
 
-  // Component helpers
   const ColumnFilter: React.FC<{ columnId: string; label: string }> = ({ columnId, label }) => (
     <TextField
       size="small"
@@ -564,7 +545,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                 </Box>
               )}
             </Grid>
-
             <Grid size={{ sm: 6, md: 2 }}>
               <TextField
                 label="Return Quantity"
@@ -579,7 +559,6 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                 helperText={state.selectedGrnProduct ? `Avail: ${state.selectedGrnProduct.availableQty}` : ""}
               />
             </Grid>
-
             <Grid size={{ sm: 6, md: 4 }}>
               <TextField
                 label="Return Reason"
@@ -610,17 +589,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
         <Box sx={{ p: 2, borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.12)}` }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center" gap={1.5}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 32,
-                  height: 32,
-                  borderRadius: "8px",
-                  // bgcolor: alpha(theme.palette.primary.main, 0.1),
-                }}
-              >
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "8px" }}>
                 <ReturnIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
               </Box>
               <Typography variant="h6" fontWeight="600" color="primary.main">
@@ -669,12 +638,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
               />
             </FormControl>
 
-            <Tabs
-              value={state.viewType}
-              onChange={(_, newValue) => {
-                updateState({ viewType: newValue, page: 0 });
-              }}
-            >
+            <Tabs value={state.viewType} onChange={(_, newValue) => updateState({ viewType: newValue, page: 0 })}>
               {[
                 { value: "all", label: "All Products", count: fields.length },
                 { value: "expired", label: "Expired", count: fields.filter((row) => row.expiryDate && new Date(row.expiryDate) < new Date()).length, color: "error" },
@@ -686,7 +650,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                   label={
                     <Box display="flex" alignItems="center" gap={1}>
                       <span>{tab.label}</span>
-                      <Chip label={tab.count} size="small" color={"primary"} sx={{ height: 18, minWidth: 24 }} />
+                      <Chip label={tab.count} size="small" color="primary" sx={{ height: 18, minWidth: 24 }} />
                     </Box>
                   }
                 />
@@ -780,7 +744,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                       </TableCell>
                       <TableCell align="center">Sl. No</TableCell>
                       {tableColumns.map((col) => (
-                        <TableCell key={col.id} align={"left"} sx={{ minWidth: col.minWidth }}>
+                        <TableCell key={col.id} align="left" sx={{ minWidth: col.minWidth }}>
                           {col.sortable ? (
                             <TableSortLabel
                               active={state.sortField === col.id}
@@ -827,12 +791,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
                       const currentQuantity = state.quantities[row.id] || row.quantity || 0;
 
                       return (
-                        <TableRow
-                          key={row.id}
-                          hover
-                          selected={isSelected}
-                          // sx={{ bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.08) : "inherit", "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
-                        >
+                        <TableRow key={row.id} hover selected={isSelected}>
                           <TableCell padding="checkbox">
                             <Checkbox checked={isSelected} onChange={() => handleSelectRow(row.id)} size="small" disabled={isViewMode} />
                           </TableCell>
@@ -918,19 +877,7 @@ const StockReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ contr
             </>
           ) : (
             <Paper sx={{ p: 4, textAlign: "center", borderRadius: 2, border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`, m: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 64,
-                  height: 64,
-                  borderRadius: "50%",
-                  // bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  mx: "auto",
-                  mb: 2,
-                }}
-              >
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, borderRadius: "50%", mx: "auto", mb: 2 }}>
                 <ReturnIcon sx={{ fontSize: 32, color: alpha(theme.palette.primary.main, 0.7) }} />
               </Box>
               <Typography variant="h6" fontWeight="600" color="text.primary" gutterBottom>
