@@ -1,6 +1,6 @@
 // src/pages/frontOffice/Appointment/components/SchedulerHeader.tsx
 import { NavigateBefore, NavigateNext, Today, Warning as WarningIcon } from "@mui/icons-material";
-import { Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Autocomplete, Button, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -76,17 +76,18 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
 
   // Get the appropriate options based on booking mode
   const getCurrentOptions = () => {
-    return bookingMode === "physician" ? providers : resources;
+    const baseOptions = bookingMode === "physician" ? providers : resources;
+    const allOption = {
+      value: 0,
+      label: bookingMode === "physician" ? "All Providers" : "All Resources",
+      type: "all",
+    };
+    return [allOption, ...baseOptions];
   };
 
   // Get the appropriate label based on booking mode
   const getCurrentLabel = () => {
     return bookingMode === "physician" ? "Provider" : "Resource";
-  };
-
-  // Get the appropriate "All" option text
-  const getAllOptionText = () => {
-    return bookingMode === "physician" ? "All Providers" : "All Resources";
   };
 
   // Check if current selection is required but missing
@@ -111,6 +112,27 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   const handleDatePickerChange = (newValue: Dayjs | null) => {
     if (newValue && newValue.isValid()) {
       onDateChange(newValue.toDate());
+    }
+  };
+
+  // Get the currently selected option object for Autocomplete
+  const getSelectedOption = () => {
+    const currentValue = getCurrentSelectionValue();
+    const options = getCurrentOptions();
+
+    if (!currentValue) {
+      return options[0]; // Return "All" option when nothing is selected
+    }
+
+    return options.find((option) => option.value.toString() === currentValue) || null;
+  };
+
+  // Handle Autocomplete change
+  const handleAutocompleteChange = (event: any, newValue: any) => {
+    if (newValue) {
+      handleSelectionChange(newValue.value === 0 ? "" : newValue.value.toString());
+    } else {
+      handleSelectionChange("");
     }
   };
 
@@ -208,42 +230,70 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
           </FormControl>
         </Grid>
 
-        {/* Unified Provider/Resource Selection with Visual Indicators */}
+        {/* Searchable Provider/Resource Selection */}
         <Grid size={{ xs: 6, md: 3.5 }}>
-          <FormControl
+          <Autocomplete
             size="small"
-            fullWidth
-            error={isSelectionRequired()}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                "&.Mui-error": {
-                  "& fieldset": {
-                    borderColor: "warning.main",
-                  },
-                },
-              },
+            value={getSelectedOption()}
+            onChange={handleAutocompleteChange}
+            options={getCurrentOptions()}
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, value) => option.value === value.value}
+            filterOptions={(options, { inputValue }) => {
+              const filtered = options.filter((option) => option.label.toLowerCase().includes(inputValue.toLowerCase()));
+              return filtered;
             }}
-          >
-            <InputLabel
-              style={{
-                fontSize: "0.8rem",
-                color: isSelectionRequired() ? "#ed6c02" : undefined,
-              }}
-            >
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                {getCurrentLabel()}
-                {isSelectionRequired() && <WarningIcon fontSize="small" />}
-              </Stack>
-            </InputLabel>
-            <Select value={getCurrentSelectionValue()} onChange={(e) => handleSelectionChange(e.target.value)} label={getCurrentLabel()} style={{ fontSize: "0.8rem" }}>
-              <MenuItem value="">{getAllOptionText()}</MenuItem>
-              {getCurrentOptions().map((option) => (
-                <MenuItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    {getCurrentLabel()}
+                    {isSelectionRequired() && <WarningIcon fontSize="small" />}
+                  </Stack>
+                }
+                error={isSelectionRequired()}
+                InputProps={{
+                  ...params.InputProps,
+                  style: { fontSize: "0.8rem" },
+                }}
+                InputLabelProps={{
+                  ...params.InputLabelProps,
+                  style: {
+                    fontSize: "0.8rem",
+                    color: isSelectionRequired() ? "#ed6c02" : undefined,
+                  },
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    "&.Mui-error": {
+                      "& fieldset": {
+                        borderColor: "warning.main",
+                      },
+                    },
+                  },
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <li {...props} key={option.value}>
+                <Stack direction="row" spacing={1} alignItems="center" width="100%">
+                  <Typography variant="body2" style={{ fontSize: "0.8rem" }}>
+                    {option.label}
+                  </Typography>
+                  {option.type && option.type !== "all" && (
+                    <Typography variant="caption" color="text.secondary" style={{ fontSize: "0.7rem", marginLeft: "auto" }}>
+                      {option.type}
+                    </Typography>
+                  )}
+                </Stack>
+              </li>
+            )}
+            noOptionsText="No options found"
+            clearOnBlur
+            selectOnFocus
+            handleHomeEndKeys
+          />
         </Grid>
       </Grid>
     </Paper>
