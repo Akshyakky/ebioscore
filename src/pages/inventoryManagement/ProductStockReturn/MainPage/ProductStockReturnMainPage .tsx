@@ -43,6 +43,7 @@ import {
 } from "@mui/icons-material";
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   Card,
@@ -1176,6 +1177,195 @@ const ProductStockReturnPage: React.FC = () => {
     );
   }
 
+  const renderStatsDashboard = () => (
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <DashboardIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {statistics.total}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Returns
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <TaskAltIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {statistics.approved}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Approved
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <PendingIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {statistics.pending}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Pending
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <WarningIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {statistics.overdue}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Overdue
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <SupplierIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {statistics.supplierReturns}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Supplier Returns
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+
+  // Additional stats row for more detailed metrics
+  const renderAdditionalStats = () => (
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <TransferIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {statistics.internalReturns}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Internal Transfers
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #ff5722" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff5722", width: 40, height: 40 }}>
+                <ExpiredIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff5722" fontWeight="bold">
+                  {statistics.expiredReturns}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Expired Items
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #795548" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#795548", width: 40, height: 40 }}>
+                <DamagedIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#795548" fontWeight="bold">
+                  {statistics.damagedReturns}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Damaged Items
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #607d8b" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#607d8b", width: 40, height: 40 }}>
+                <InventoryIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#607d8b" fontWeight="bold">
+                  ₹{Math.round(statistics.totalValue / 1000)}K
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Value
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       {isLoadingDetails && (
@@ -1234,104 +1424,8 @@ const ProductStockReturnPage: React.FC = () => {
 
           <Collapse in={showStatistics}>
             <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-              <Grid container spacing={3} justifyContent="center">
-                {[
-                  {
-                    title: "Total Returns",
-                    value: statistics.total,
-                    icon: <DashboardIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#1976d2",
-                  },
-                  {
-                    title: "Pending",
-                    value: statistics.pending,
-                    icon: <PendingIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#ff9800",
-                  },
-                  {
-                    title: "Approved",
-                    value: statistics.approved,
-                    icon: <TaskAltIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#4caf50",
-                  },
-                  {
-                    title: "Overdue",
-                    value: statistics.overdue,
-                    icon: <WarningIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#f44336",
-                  },
-                  {
-                    title: "Total Value (K)",
-                    value: Math.round(statistics.totalValue / 1000),
-                    icon: <InventoryIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#2196f3",
-                  },
-                  {
-                    title: "Supplier Returns",
-                    value: statistics.supplierReturns,
-                    icon: <SupplierIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#9c27b0",
-                  },
-                ].map((stat, index) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }} key={stat.title}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        textAlign: "center",
-                        gap: 1.5,
-                        p: 2,
-                        // bgcolor: "background.paper",
-                        borderRadius: 2,
-                        border: `3px solid ${stat.bgColor}`,
-                        borderLeft: `6px solid ${stat.bgColor}`,
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          transform: "translateY(-2px)",
-                          boxShadow: 2,
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: "50%",
-                          bgcolor: stat.bgColor,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          mb: 1,
-                        }}
-                      >
-                        {stat.icon}
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          fontWeight: 700,
-                          color: stat.bgColor,
-                          lineHeight: 1,
-                        }}
-                      >
-                        {stat.value}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          fontSize: "0.875rem",
-                          fontWeight: 500,
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {stat.title}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
+              {renderStatsDashboard()}
+              {renderAdditionalStats()}
             </Paper>
           </Collapse>
 

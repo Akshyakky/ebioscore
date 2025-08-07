@@ -19,44 +19,44 @@ const lightTheme = createTheme({
   },
   typography: {
     fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: 14,
+    fontSize: 13, // Reduced from 14
     h1: {
       fontSize: TYPOGRAPHY.fontSizes["4xl"],
       fontWeight: TYPOGRAPHY.fontWeights.bold,
-      lineHeight: TYPOGRAPHY.lineHeights.sm,
+      lineHeight: TYPOGRAPHY.lineHeights.xs, // Tighter
     },
     h2: {
       fontSize: TYPOGRAPHY.fontSizes["3xl"],
       fontWeight: TYPOGRAPHY.fontWeights.semibold,
-      lineHeight: TYPOGRAPHY.lineHeights.sm,
+      lineHeight: TYPOGRAPHY.lineHeights.xs, // Tighter
     },
     h3: {
       fontSize: TYPOGRAPHY.fontSizes["2xl"],
       fontWeight: TYPOGRAPHY.fontWeights.semibold,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
     },
     h4: {
       fontSize: TYPOGRAPHY.fontSizes.xl,
       fontWeight: TYPOGRAPHY.fontWeights.semibold,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
     },
     h5: {
       fontSize: TYPOGRAPHY.fontSizes.lg,
       fontWeight: TYPOGRAPHY.fontWeights.medium,
-      lineHeight: TYPOGRAPHY.lineHeights.lg,
+      lineHeight: TYPOGRAPHY.lineHeights.md, // Tighter
     },
     h6: {
       fontSize: TYPOGRAPHY.fontSizes.md,
       fontWeight: TYPOGRAPHY.fontWeights.medium,
-      lineHeight: TYPOGRAPHY.lineHeights.lg,
+      lineHeight: TYPOGRAPHY.lineHeights.md, // Tighter
     },
     body1: {
       fontSize: TYPOGRAPHY.fontSizes.md,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
     },
     body2: {
       fontSize: TYPOGRAPHY.fontSizes.sm,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
     },
     button: {
       textTransform: "none",
@@ -87,20 +87,20 @@ const lightTheme = createTheme({
           height: "100%",
           backgroundColor: LIGHT_COLORS.background.default,
         },
-        // Global scrollbar styles for light theme
+        // Global scrollbar styles for light theme - Compact
         "*::-webkit-scrollbar": {
-          width: "8px",
-          height: "8px",
+          width: "6px", // Reduced from 8px
+          height: "6px", // Reduced from 8px
         },
         "*::-webkit-scrollbar-track": {
           background: LIGHT_COLORS.grey[100],
-          borderRadius: "4px",
+          borderRadius: "2px", // Reduced from 4px
         },
         "*::-webkit-scrollbar-thumb": {
           background: LIGHT_COLORS.grey[400],
-          borderRadius: "4px",
-          border: `2px solid ${LIGHT_COLORS.grey[100]}`,
-          transition: "background-color 0.2s ease",
+          borderRadius: "2px", // Reduced from 4px
+          border: `1px solid ${LIGHT_COLORS.grey[100]}`, // Reduced border
+          transition: "background-color 0.15s ease", // Faster
         },
         "*::-webkit-scrollbar-thumb:hover": {
           background: LIGHT_COLORS.primary.main,
@@ -108,22 +108,22 @@ const lightTheme = createTheme({
         "*::-webkit-scrollbar-corner": {
           background: LIGHT_COLORS.grey[100],
         },
-        // Sidebar specific scrollbar (thinner)
+        // Sidebar specific scrollbar (thinner) - Compact
         ".sidebar-scroll::-webkit-scrollbar": {
-          width: "6px",
+          width: "4px", // Reduced from 6px
         },
         ".sidebar-scroll::-webkit-scrollbar-track": {
           background: "transparent",
         },
         ".sidebar-scroll::-webkit-scrollbar-thumb": {
           background: LIGHT_COLORS.grey[300],
-          borderRadius: "3px",
+          borderRadius: "2px", // Reduced from 3px
           border: "none",
         },
         ".sidebar-scroll::-webkit-scrollbar-thumb:hover": {
           background: LIGHT_COLORS.primary.main,
         },
-        // DataGrid specific styles
+        // DataGrid specific styles - Compact
         ".row-valid": {
           backgroundColor: `${DATAGRID_CONSTANTS.colors.light.rowValid} !important`,
           "&:hover": {
@@ -142,11 +142,11 @@ const lightTheme = createTheme({
             backgroundColor: `${alpha(LIGHT_COLORS.error.main, 0.08)} !important`,
           },
         },
-        // Grid edit cell styles
+        // Grid edit cell styles - Compact
         ".grid-product-search": {
           width: "100%",
           "& .MuiOutlinedInput-root": {
-            height: "32px",
+            height: "26px", // Reduced from 32px
             fontSize: COMPONENT_CONSTANTS.dataGrid.fontSize,
             "& fieldset": {
               borderColor: LIGHT_COLORS.divider,
@@ -167,7 +167,7 @@ const lightTheme = createTheme({
           width: DRAWER_WIDTH,
           boxSizing: "border-box",
           overflowX: "hidden",
-          padding: "10px 0",
+          padding: "6px 0", // Reduced from "10px 0"
           background: LIGHT_COLORS.background.dark,
           color: LIGHT_COLORS.text.primary,
           borderRight: `1px solid ${LIGHT_COLORS.divider}`,
@@ -175,13 +175,14 @@ const lightTheme = createTheme({
           ".active-submenu-item": {
             backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.08),
             color: LIGHT_COLORS.primary.main,
-            borderLeft: `4px solid ${LIGHT_COLORS.primary.main}`,
+            borderLeft: `3px solid ${LIGHT_COLORS.primary.main}`, // Reduced from 4px
             "& .MuiListItemIcon-root": {
               color: LIGHT_COLORS.primary.main,
             },
           },
           ".MuiListItem-root": {
             transition: `all ${TRANSITIONS.duration.shorter}ms ${TRANSITIONS.easing.easeInOut}`,
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact padding
             "&:hover": {
               backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.04),
               color: LIGHT_COLORS.primary.main,
@@ -209,7 +210,7 @@ const lightTheme = createTheme({
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
           padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`,
           minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
-          fontSize: TYPOGRAPHY.fontSizes.lg,
+          fontSize: TYPOGRAPHY.fontSizes.md, // Reduced from lg
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
           display: "flex",
           alignItems: "center",
@@ -274,9 +275,11 @@ const lightTheme = createTheme({
           },
           "& .MuiInputBase-input": {
             color: LIGHT_COLORS.text.primary,
+            padding: `${SPACING_UNIT * 2}px ${SPACING_UNIT * 2.5}px`, // Reduced padding
           },
           "& .MuiFormLabel-root": {
             color: LIGHT_COLORS.text.secondary,
+            fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller label
             "&.Mui-focused": {
               color: LIGHT_COLORS.primary.main,
             },
@@ -291,22 +294,26 @@ const lightTheme = createTheme({
           borderRadius: SHAPE.borderRadius,
           fontWeight: TYPOGRAPHY.fontWeights.medium,
           height: COMPONENT_CONSTANTS.button.mediumHeight,
+          fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller font
+          padding: `${SPACING_UNIT}px ${SPACING_UNIT * 3}px`, // More compact padding
           "& .MuiSvgIcon-root": {
-            fontSize: 20,
+            fontSize: 18, // Reduced from 20
           },
         },
         sizeSmall: {
           height: COMPONENT_CONSTANTS.button.smallHeight,
           fontSize: TYPOGRAPHY.fontSizes.xs,
+          padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact
           "& .MuiSvgIcon-root": {
-            fontSize: 16,
+            fontSize: 14, // Reduced from 16
           },
         },
         sizeLarge: {
           height: COMPONENT_CONSTANTS.button.largeHeight,
           fontSize: TYPOGRAPHY.fontSizes.md,
+          padding: `${SPACING_UNIT * 1.5}px ${SPACING_UNIT * 4}px`, // More compact
           "& .MuiSvgIcon-root": {
-            fontSize: 24,
+            fontSize: 20, // Reduced from 24
           },
         },
         contained: {
@@ -352,7 +359,8 @@ const lightTheme = createTheme({
             fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
             height: COMPONENT_CONSTANTS.table.headerHeight,
             borderBottom: "none !important",
-            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            fontSize: `${TYPOGRAPHY.fontSizes.xs} !important`, // Smaller
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px !important`, // More compact
             "&:not(:last-child)": {
               borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)} !important`,
             },
@@ -363,7 +371,8 @@ const lightTheme = createTheme({
             fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
             height: COMPONENT_CONSTANTS.table.headerHeight,
             borderBottom: "none !important",
-            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            fontSize: `${TYPOGRAPHY.fontSizes.xs} !important`, // Smaller
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px !important`, // More compact
             "&:not(:last-child)": {
               borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)} !important`,
             },
@@ -391,6 +400,8 @@ const lightTheme = createTheme({
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
           color: LIGHT_COLORS.text.primary,
           height: COMPONENT_CONSTANTS.table.rowHeight,
+          fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller
+          padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact
         },
       },
     },
@@ -405,7 +416,7 @@ const lightTheme = createTheme({
     MuiAccordion: {
       styleOverrides: {
         root: {
-          boxShadow: `0 2px 8px ${alpha(LIGHT_COLORS.primary.main, 0.08)}`,
+          boxShadow: `0 1px 4px ${alpha(LIGHT_COLORS.primary.main, 0.08)}`, // Reduced shadow
           borderRadius: SHAPE.borderRadius,
           "&:before": {
             display: "none",
@@ -415,7 +426,7 @@ const lightTheme = createTheme({
           },
           transition: `box-shadow ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}, margin ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}`,
           "&:hover": {
-            boxShadow: `0 4px 12px ${alpha(LIGHT_COLORS.primary.main, 0.12)}`,
+            boxShadow: `0 2px 6px ${alpha(LIGHT_COLORS.primary.main, 0.12)}`, // Reduced shadow
           },
         },
       },
@@ -425,11 +436,11 @@ const lightTheme = createTheme({
         root: {
           background: `linear-gradient(135deg, ${alpha(LIGHT_COLORS.primary.main, 0.05)}, ${alpha(LIGHT_COLORS.primary.main, 0.1)})`,
           color: LIGHT_COLORS.primary.main,
-          minHeight: "42px !important",
-          height: "42px",
+          minHeight: "32px !important", // Reduced from 42px
+          height: "32px", // Reduced from 42px
           borderRadius: `${SHAPE.borderRadius}px ${SHAPE.borderRadius}px 0 0`,
           "&.Mui-expanded": {
-            minHeight: "48px",
+            minHeight: "36px", // Reduced from 48px
           },
           "&:hover": {
             background: `linear-gradient(135deg, ${alpha(LIGHT_COLORS.primary.main, 0.1)}, ${alpha(LIGHT_COLORS.primary.main, 0.15)})`,
@@ -444,11 +455,11 @@ const lightTheme = createTheme({
           },
         },
         content: {
-          margin: "12px 0",
+          margin: "8px 0", // Reduced from "12px 0"
           "& .MuiTypography-root": {
-            fontSize: "1rem",
+            fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller
             fontWeight: TYPOGRAPHY.fontWeights.semibold,
-            letterSpacing: "0.5px",
+            letterSpacing: "0.3px", // Reduced
             textTransform: "uppercase",
             color: LIGHT_COLORS.primary.main,
           },
@@ -458,7 +469,7 @@ const lightTheme = createTheme({
     MuiAccordionDetails: {
       styleOverrides: {
         root: {
-          padding: SPACING_UNIT * 2,
+          padding: SPACING_UNIT * 3, // Reduced from SPACING_UNIT * 2
           borderTop: `1px solid ${alpha(LIGHT_COLORS.divider, 0.5)}`,
           backgroundColor: alpha(LIGHT_COLORS.background.paper, 0.8),
           borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
@@ -470,11 +481,13 @@ const lightTheme = createTheme({
         root: {
           backgroundColor: LIGHT_COLORS.primary.main,
           color: LIGHT_COLORS.primary.contrastText,
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.06)", // Reduced shadow
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
           "& .MuiToolbar-root": {
             backgroundColor: "inherit",
             color: "inherit",
+            minHeight: `${52}px !important`, // More compact
+            padding: `0 ${SPACING_UNIT * 3}px !important`, // More compact
           },
           "& .MuiIconButton-root": {
             color: LIGHT_COLORS.primary.contrastText,
@@ -498,10 +511,11 @@ const lightTheme = createTheme({
           "& .MuiButton-root": {
             textTransform: "none",
             gap: SPACING_UNIT,
-            fontSize: TYPOGRAPHY.fontSizes.sm,
+            fontSize: TYPOGRAPHY.fontSizes.xs, // Smaller
             fontWeight: TYPOGRAPHY.fontWeights.medium,
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact
             "& .MuiSvgIcon-root": {
-              fontSize: 20,
+              fontSize: 16, // Reduced from 20
             },
           },
         },
@@ -524,7 +538,7 @@ const lightTheme = createTheme({
           "& .MuiDataGrid-withBorderColor": {
             borderColor: `${LIGHT_COLORS.divider} !important`,
           },
-          // Enhanced Header styling with higher specificity
+          // Enhanced Header styling with higher specificity - Compact
           "& .MuiDataGrid-columnHeaders": {
             backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
             color: `${LIGHT_COLORS.primary.contrastText} !important`,
@@ -565,7 +579,7 @@ const lightTheme = createTheme({
               color: `${LIGHT_COLORS.primary.contrastText} !important`,
               fontSize: "inherit",
               textTransform: "uppercase",
-              letterSpacing: "0.5px",
+              letterSpacing: "0.3px", // Reduced
             },
             "& .MuiDataGrid-iconSeparator": {
               display: "none",
@@ -595,7 +609,7 @@ const lightTheme = createTheme({
             backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
             color: `${LIGHT_COLORS.primary.contrastText} !important`,
           },
-          // Cell styling
+          // Cell styling - Compact
           "& .MuiDataGrid-cell": {
             borderRight: `${COMPONENT_CONSTANTS.dataGrid.borderWidth} solid ${DATAGRID_CONSTANTS.colors.light.cellBorder}`,
             borderBottom: `${COMPONENT_CONSTANTS.dataGrid.borderWidth} solid ${DATAGRID_CONSTANTS.colors.light.cellBorder}`,
@@ -623,7 +637,7 @@ const lightTheme = createTheme({
             userSelect: "text",
             WebkitUserSelect: "text",
           },
-          // Row styling
+          // Row styling - Compact
           "& .MuiDataGrid-row": {
             minHeight: `${COMPONENT_CONSTANTS.dataGrid.rowHeight}px !important`,
             maxHeight: `${COMPONENT_CONSTANTS.dataGrid.rowHeight}px !important`,
@@ -646,27 +660,27 @@ const lightTheme = createTheme({
             // Custom row states
             "&.row-valid": {
               backgroundColor: `${DATAGRID_CONSTANTS.colors.light.rowValid} !important`,
-              borderLeft: `3px solid ${LIGHT_COLORS.success.main}`,
+              borderLeft: `2px solid ${LIGHT_COLORS.success.main}`, // Reduced from 3px
               "&:hover": {
                 backgroundColor: `${alpha(LIGHT_COLORS.success.main, 0.08)} !important`,
               },
             },
             "&.row-invalid": {
               backgroundColor: `${DATAGRID_CONSTANTS.colors.light.rowInvalid} !important`,
-              borderLeft: `3px solid ${LIGHT_COLORS.warning.main}`,
+              borderLeft: `2px solid ${LIGHT_COLORS.warning.main}`, // Reduced from 3px
               "&:hover": {
                 backgroundColor: `${alpha(LIGHT_COLORS.warning.main, 0.08)} !important`,
               },
             },
             "&.row-error": {
               backgroundColor: `${DATAGRID_CONSTANTS.colors.light.rowError} !important`,
-              borderLeft: `3px solid ${LIGHT_COLORS.error.main}`,
+              borderLeft: `2px solid ${LIGHT_COLORS.error.main}`, // Reduced from 3px
               "&:hover": {
                 backgroundColor: `${alpha(LIGHT_COLORS.error.main, 0.08)} !important`,
               },
             },
           },
-          // Footer styling
+          // Footer styling - Compact
           "& .MuiDataGrid-footerContainer": {
             borderTop: `${COMPONENT_CONSTANTS.dataGrid.borderWidth} solid ${LIGHT_COLORS.divider}`,
             backgroundColor: LIGHT_COLORS.background.dark,
@@ -682,7 +696,7 @@ const lightTheme = createTheme({
           "& .MuiDataGrid-selectedRowCount": {
             color: LIGHT_COLORS.text.secondary,
           },
-          // Empty state and overlay styling
+          // Empty state and overlay styling - Compact
           "& .MuiDataGrid-overlay": {
             backgroundColor: DATAGRID_CONSTANTS.colors.light.emptyStateBg,
             color: LIGHT_COLORS.text.primary,
@@ -691,7 +705,7 @@ const lightTheme = createTheme({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: SPACING_UNIT * 2,
+            gap: SPACING_UNIT * 3, // More compact
             "& .MuiTypography-root": {
               color: LIGHT_COLORS.text.secondary,
             },
@@ -703,21 +717,21 @@ const lightTheme = createTheme({
             backgroundColor: DATAGRID_CONSTANTS.colors.light.loadingOverlay,
             backdropFilter: "blur(2px)",
           },
-          // Scrollbar styling
+          // Scrollbar styling - Compact
           "& .MuiDataGrid-virtualScroller": {
             "&::-webkit-scrollbar": {
-              width: "8px",
-              height: "8px",
+              width: "6px", // Reduced from 8px
+              height: "6px", // Reduced from 8px
             },
             "&::-webkit-scrollbar-track": {
               background: LIGHT_COLORS.grey[100],
-              borderRadius: "4px",
+              borderRadius: "2px", // Reduced from 4px
             },
             "&::-webkit-scrollbar-thumb": {
               background: LIGHT_COLORS.grey[400],
-              borderRadius: "4px",
-              border: `2px solid ${LIGHT_COLORS.grey[100]}`,
-              transition: "background-color 0.2s ease",
+              borderRadius: "2px", // Reduced from 4px
+              border: `1px solid ${LIGHT_COLORS.grey[100]}`, // Reduced border
+              transition: "background-color 0.15s ease", // Faster
             },
             "&::-webkit-scrollbar-thumb:hover": {
               background: LIGHT_COLORS.primary.main,
@@ -726,13 +740,13 @@ const lightTheme = createTheme({
               background: LIGHT_COLORS.grey[100],
             },
           },
-          // Edit cell styling
+          // Edit cell styling - Compact
           "& .MuiDataGrid-cell--editing": {
             backgroundColor: `${alpha(LIGHT_COLORS.primary.main, 0.04)} !important`,
             padding: COMPONENT_CONSTANTS.dataGrid.editCellPadding,
             "& .MuiInputBase-root": {
               fontSize: COMPONENT_CONSTANTS.dataGrid.fontSize,
-              height: "32px",
+              height: "26px", // Reduced from 32px
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: LIGHT_COLORS.primary.main,
                 borderWidth: "2px",
@@ -747,12 +761,12 @@ const lightTheme = createTheme({
             },
             "& .MuiTextField-root": {
               "& .MuiOutlinedInput-root": {
-                height: "32px",
+                height: "26px", // Reduced from 32px
                 fontSize: COMPONENT_CONSTANTS.dataGrid.fontSize,
               },
             },
           },
-          // Actions cell styling
+          // Actions cell styling - Compact
           "& .MuiDataGrid-actionsCell": {
             "& .MuiButton-root": {
               minWidth: "auto",
@@ -780,7 +794,7 @@ const lightTheme = createTheme({
             visibility: "visible",
             opacity: 1,
           },
-          // Density modifications
+          // Density modifications - More compact
           "&.MuiDataGrid-root--densityCompact": {
             "& .MuiDataGrid-cell": {
               padding: COMPONENT_CONSTANTS.dataGrid.compactCellPadding,
@@ -793,8 +807,8 @@ const lightTheme = createTheme({
             },
             "& .MuiDataGrid-columnHeaders": {
               backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
-              minHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 8}px !important`,
-              maxHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 8}px !important`,
+              minHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 10}px !important`, // More compact
+              maxHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 10}px !important`, // More compact
               "& .MuiDataGrid-columnHeader": {
                 backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
                 color: `${LIGHT_COLORS.primary.contrastText} !important`,
