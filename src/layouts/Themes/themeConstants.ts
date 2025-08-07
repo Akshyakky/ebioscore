@@ -1,9 +1,10 @@
 // src/layouts/Themes/themeConstants.ts
 import { alpha } from "@mui/material";
-// Layout Constants
-export const DRAWER_WIDTH = 340;
-export const APPBAR_HEIGHT = 64;
-export const BOTTOM_NAV_HEIGHT = 56;
+
+// Layout Constants - Compact Design
+export const DRAWER_WIDTH = 280; // Reduced from 340
+export const APPBAR_HEIGHT = 52; // Reduced from 64
+export const BOTTOM_NAV_HEIGHT = 48; // Reduced from 56
 
 // Breakpoints (in pixels)
 export const BREAKPOINTS = {
@@ -14,16 +15,16 @@ export const BREAKPOINTS = {
   xl: 1920,
 };
 
-// Spacing
-export const SPACING_UNIT = 6;
+// Spacing - Compact Design
+export const SPACING_UNIT = 4; // Reduced from 6
 
-// Border Radius
+// Border Radius - Compact Design
 export const BORDER_RADIUS = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  xs: 2, // Reduced from 4
+  sm: 4, // Reduced from 8
+  md: 6, // Reduced from 12
+  lg: 8, // Reduced from 16
+  xl: 12, // Reduced from 24
   round: "50%",
 };
 
@@ -190,28 +191,28 @@ export const DARK_COLORS = {
   border: "#2d2d2d",
 };
 
-// Shadow Constants
+// Shadow Constants - Compact Design
 export const SHADOWS = {
-  xs: "0 2px 4px rgba(0,0,0,0.05)",
-  sm: "0 4px 8px rgba(0,0,0,0.1)",
-  md: "0 8px 16px rgba(0,0,0,0.1)",
-  lg: "0 16px 24px rgba(0,0,0,0.1)",
-  xl: "0 24px 32px rgba(0,0,0,0.1)",
+  xs: "0 1px 2px rgba(0,0,0,0.04)", // Reduced
+  sm: "0 2px 4px rgba(0,0,0,0.08)", // Reduced
+  md: "0 4px 8px rgba(0,0,0,0.08)", // Reduced
+  lg: "0 8px 16px rgba(0,0,0,0.08)", // Reduced
+  xl: "0 12px 20px rgba(0,0,0,0.08)", // Reduced
 };
 
-// Typography Constants
+// Typography Constants - Compact Design
 export const TYPOGRAPHY = {
   fontFamily: ["Inter", "Segoe UI", "Roboto", "Arial", "sans-serif"].join(","),
   fontSizes: {
-    xs: "0.75rem", // 12px
-    sm: "0.875rem", // 14px
-    md: "1rem", // 16px
-    lg: "1.125rem", // 18px
-    xl: "1.25rem", // 20px
-    "2xl": "1.5rem", // 24px
-    "3xl": "1.875rem", // 30px
-    "4xl": "2.25rem", // 36px
-    "5xl": "3rem", // 48px
+    xs: "0.6875rem", // 11px - Reduced from 12px
+    sm: "0.8125rem", // 13px - Reduced from 14px
+    md: "0.875rem", // 14px - Reduced from 16px
+    lg: "1rem", // 16px - Reduced from 18px
+    xl: "1.125rem", // 18px - Reduced from 20px
+    "2xl": "1.25rem", // 20px - Reduced from 24px
+    "3xl": "1.5rem", // 24px - Reduced from 30px
+    "4xl": "1.875rem", // 30px - Reduced from 36px
+    "5xl": "2.25rem", // 36px - Reduced from 48px
   },
   fontWeights: {
     light: 300,
@@ -221,24 +222,24 @@ export const TYPOGRAPHY = {
     bold: 700,
   },
   lineHeights: {
-    xs: 1.25,
-    sm: 1.375,
-    md: 1.5,
-    lg: 1.625,
-    xl: 2,
+    xs: 1.2, // Reduced from 1.25
+    sm: 1.3, // Reduced from 1.375
+    md: 1.4, // Reduced from 1.5
+    lg: 1.5, // Reduced from 1.625
+    xl: 1.8, // Reduced from 2
   },
 };
 
-// Animation Constants
+// Animation Constants - Faster for Compact Design
 export const TRANSITIONS = {
   duration: {
-    shortest: 150,
-    shorter: 200,
-    short: 250,
-    standard: 300,
-    complex: 375,
-    enteringScreen: 225,
-    leavingScreen: 195,
+    shortest: 120, // Reduced from 150
+    shorter: 160, // Reduced from 200
+    short: 200, // Reduced from 250
+    standard: 240, // Reduced from 300
+    complex: 300, // Reduced from 375
+    enteringScreen: 180, // Reduced from 225
+    leavingScreen: 150, // Reduced from 195
   },
   easing: {
     easeInOut: "cubic-bezier(0.4, 0, 0.2, 1)",
@@ -248,62 +249,62 @@ export const TRANSITIONS = {
   },
 };
 
-// Component-specific constants
+// Component-specific constants - Compact Design
 export const COMPONENT_CONSTANTS = {
   table: {
-    headerHeight: 44,
-    rowHeight: 40,
-    paginationHeight: 52,
-    denseHeaderHeight: 36,
-    denseRowHeight: 32,
-    densePaginationHeight: 40,
+    headerHeight: 36, // Reduced from 44
+    rowHeight: 32, // Reduced from 40
+    paginationHeight: 44, // Reduced from 52
+    denseHeaderHeight: 30, // Reduced from 36
+    denseRowHeight: 26, // Reduced from 32
+    densePaginationHeight: 36, // Reduced from 40
   },
   dataGrid: {
-    headerHeight: 48,
-    rowHeight: 44,
-    compactRowHeight: 36,
-    denseRowHeight: 32,
-    paginationHeight: 52,
-    cellPadding: "8px 12px",
-    compactCellPadding: "6px 10px",
-    denseCellPadding: "4px 8px",
-    editCellPadding: "4px 8px",
+    headerHeight: 40, // Reduced from 48
+    rowHeight: 36, // Reduced from 44
+    compactRowHeight: 30, // Reduced from 36
+    denseRowHeight: 26, // Reduced from 32
+    paginationHeight: 44, // Reduced from 52
+    cellPadding: "4px 8px", // Reduced from "8px 12px"
+    compactCellPadding: "3px 6px", // Reduced from "6px 10px"
+    denseCellPadding: "2px 4px", // Reduced from "4px 8px"
+    editCellPadding: "2px 4px", // Reduced from "4px 8px"
     borderWidth: "1px",
-    fontSize: "0.875rem",
-    headerFontSize: "0.875rem",
+    fontSize: "0.8125rem", // Reduced from "0.875rem"
+    headerFontSize: "0.8125rem", // Reduced from "0.875rem"
     headerFontWeight: 600,
-    emptyStateMinHeight: 300,
-    loadingOverlayMinHeight: 200,
+    emptyStateMinHeight: 240, // Reduced from 300
+    loadingOverlayMinHeight: 160, // Reduced from 200
   },
   dialog: {
-    spacing: 16,
-    titleHeight: 40,
-    footerHeight: 48,
+    spacing: 12, // Reduced from 16
+    titleHeight: 36, // Reduced from 40
+    footerHeight: 40, // Reduced from 48
   },
   drawer: {
-    miniWidth: 56,
+    miniWidth: 48, // Reduced from 56
     standardWidth: DRAWER_WIDTH,
   },
   tooltip: {
-    fontSize: "0.75rem",
-    padding: "4px 8px",
-    arrowSize: 6,
+    fontSize: "0.6875rem", // Reduced from "0.75rem"
+    padding: "2px 6px", // Reduced from "4px 8px"
+    arrowSize: 4, // Reduced from 6
   },
   button: {
-    smallHeight: 28,
-    mediumHeight: 32,
-    largeHeight: 40,
+    smallHeight: 24, // Reduced from 28
+    mediumHeight: 28, // Reduced from 32
+    largeHeight: 34, // Reduced from 40
   },
 };
 
-// Shape Constants
+// Shape Constants - Compact Design
 export const SHAPE = {
-  borderRadius: 4,
+  borderRadius: 2, // Reduced from 4
   borderWidth: 1,
   borderStyle: "solid",
 };
 
-// DataGrid Specific Constants
+// DataGrid Specific Constants - Compact Design
 export const DATAGRID_CONSTANTS = {
   colors: {
     light: {
@@ -340,9 +341,9 @@ export const DATAGRID_CONSTANTS = {
     },
   },
   transitions: {
-    rowHover: "background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)",
-    cellFocus: "outline 200ms cubic-bezier(0.4, 0, 0.2, 1)",
-    cellEdit: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+    rowHover: "background-color 120ms cubic-bezier(0.4, 0, 0.2, 1)", // Faster
+    cellFocus: "outline 160ms cubic-bezier(0.4, 0, 0.2, 1)", // Faster
+    cellEdit: "all 160ms cubic-bezier(0.4, 0, 0.2, 1)", // Faster
   },
   zIndex: {
     overlay: 1000,
