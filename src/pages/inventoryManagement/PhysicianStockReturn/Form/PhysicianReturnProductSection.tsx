@@ -764,7 +764,7 @@ const PhysicianReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ c
                   handleEditExistingProduct(index);
                 }}
                 sx={{
-                  bgcolor: "rgba(25, 118, 210, 0.08)",
+                  bgcolor: "rgba(0, 1, 2, 0.08)",
                   "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
                 }}
               >
@@ -925,7 +925,7 @@ const PhysicianReturnProductSection: React.FC<ProductDetailsSectionProps> = ({ c
             </Alert>
           )}
 
-          <Box sx={{ mt: 2, p: 2, bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
+          <Box sx={{ mt: 2, p: 2, borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
             <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
               {getReturnTypeLabel()} Summary
             </Typography>

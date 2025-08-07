@@ -1009,14 +1009,13 @@ const PhysicianStockReturnPage: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: "rgba(0, 0, 0, 0.3)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 9999,
           }}
         >
-          <Box sx={{ bgcolor: "background.paper", p: 3, borderRadius: 2, display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ p: 3, borderRadius: 2, display: "flex", alignItems: "center", gap: 2 }}>
             <CircularProgress />
             <Typography>Loading Physician Return details...</Typography>
           </Box>
@@ -1056,7 +1055,7 @@ const PhysicianStockReturnPage: React.FC = () => {
           </Paper>
 
           <Collapse in={showStatistics}>
-            <Paper elevation={1} sx={{ p: 3, mb: 3, bgcolor: "grey.50" }}>
+            <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
               <Grid container spacing={3} justifyContent="center">
                 {[
                   {
@@ -1105,7 +1104,6 @@ const PhysicianStockReturnPage: React.FC = () => {
                         textAlign: "center",
                         gap: 1.5,
                         p: 2,
-                        bgcolor: "background.paper",
                         borderRadius: 2,
                         border: `3px solid ${stat.bgColor}`,
                         borderLeft: `6px solid ${stat.bgColor}`,
@@ -1121,7 +1119,6 @@ const PhysicianStockReturnPage: React.FC = () => {
                           width: 50,
                           height: 50,
                           borderRadius: "50%",
-                          bgcolor: stat.bgColor,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
