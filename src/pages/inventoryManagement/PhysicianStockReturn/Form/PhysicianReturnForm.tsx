@@ -45,6 +45,36 @@ const returnDetailSchema = z.object({
   tax: z.number().optional(),
   returnReason: z.string().optional(),
   rActiveYN: z.string().default("Y"),
+  // Additional fields from ProductStockReturnDetailDto
+  batchID: z.number().optional(),
+  manufacturedDate: z.date().optional(),
+  grnDate: z.date().optional(),
+  psGrpID: z.number().optional(),
+  psGrpName: z.string().optional(),
+  manufacturerID: z.number().optional(),
+  manufacturerCode: z.string().optional(),
+  manufacturerName: z.string().optional(),
+  taxID: z.number().optional(),
+  taxCode: z.string().optional(),
+  taxName: z.string().optional(),
+  mrp: z.number().optional(),
+  freeRetQty: z.number().optional(),
+  freeRetUnitQty: z.number().optional(),
+  psdID: z.number().optional(),
+  hsnCode: z.string().optional(),
+  pUnitID: z.number().optional(),
+  pUnitName: z.string().optional(),
+  pUnitsPerPack: z.number().optional(),
+  pkgID: z.number().optional(),
+  pkgName: z.string().optional(),
+  psbid: z.number().optional(),
+  sellUnitPrice: z.number().optional(),
+  mfID: z.number().optional(),
+  mfName: z.string().optional(),
+  pGrpID: z.number().optional(),
+  pGrpName: z.string().optional(),
+  cgst: z.number().optional(),
+  sgst: z.number().optional(),
 });
 
 const schema = z.object({
@@ -53,7 +83,7 @@ const schema = z.object({
   returnTypeCode: z.string().min(1, "Return type is required"),
   fromDeptID: z.number().min(1, "From department is required"),
   fromDeptName: z.string(),
-  physicianID: z.number().optional(),
+  physicianID: z.coerce.number().min(1, "Attending physician is required"),
   physicianName: z.string().optional(),
   auGrpID: z.number().optional(),
   catDesc: z.string().optional(),
@@ -64,6 +94,19 @@ const schema = z.object({
   approvedBy: z.string().optional(),
   rActiveYN: z.string().default("Y"),
   productStockReturnDetails: z.array(returnDetailSchema).min(1, "At least one product detail is required"),
+  // Additional fields from ProductStockReturnDto
+  dtID: z.number().optional(),
+  dtCode: z.string().optional(),
+  dtName: z.string().optional(),
+  toDeptID: z.number().optional(),
+  toDeptName: z.string().optional(),
+  returnType: z.string().optional(),
+  stkrCoinAdjAmt: z.number().optional(),
+  stkrGrossAmt: z.number().optional(),
+  stkrRetAmt: z.number().optional(),
+  stkrTaxAmt: z.number().optional(),
+  supplierID: z.number().optional(),
+  supplierName: z.string().optional(),
 });
 
 type PhysicianReturnFormData = z.infer<typeof schema>;
@@ -130,11 +173,21 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
   const activeStatusValue = useWatch({ control, name: "rActiveYN" });
   const approvalStatusValue = useWatch({ control, name: "approvedYN" });
   const returnTypeValue = useWatch({ control, name: "returnTypeCode" });
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: "productStockReturnDetails",
   });
+
+  const handleAttendingPhysicianChange = useCallback(
+    (value: any) => {
+      const selectedOption = attendingPhy.find((option) => option.value === value.value);
+      if (selectedOption) {
+        setValue("physicianID", Number(value.value.split("-")[0]), { shouldValidate: true });
+        setValue("physicianName", selectedOption.label, { shouldValidate: true });
+      }
+    },
+    [attendingPhy, setValue]
+  );
 
   const createDetailMappingWithAllFields = useCallback((detail: any, isCopyMode: boolean) => {
     const mappedDetail = { ...detail };
@@ -142,7 +195,6 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
       mappedDetail.psrdID = 0;
       mappedDetail.psrID = 0;
     }
-
     if (detail.expiryDate) {
       try {
         if (detail.expiryDate instanceof Date) {
@@ -243,20 +295,16 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
         mappedDetail[key] = stringDefaults[key];
       }
     });
-
     return mappedDetail;
   }, []);
 
   const generateReturnCodeAsync = async () => {
     const deptId = getValues("fromDeptID") || selectedDepartmentId;
     const returnType = getValues("returnTypeCode");
-
     if (!isAddMode || !deptId || !returnType) return;
-
     try {
       setIsGeneratingCode(true);
       let code: string | null = null;
-
       switch (returnType) {
         case PhysicianReturnType.Physician:
           code = await generatePhysicianReturnCode(deptId);
@@ -267,7 +315,6 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
         default:
           code = await generatePhysicianReturnCode(deptId);
       }
-
       if (code) {
         setValue("psrCode", code, { shouldValidate: true, shouldDirty: true });
       } else {
@@ -297,15 +344,14 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
         }
         compositeDto = fetchedComposite;
       }
-
       const formData: PhysicianReturnFormData = {
         psrID: isCopyMode ? 0 : compositeDto.productStockReturn.psrID,
         psrDate: isCopyMode ? new Date() : new Date(compositeDto.productStockReturn.psrDate),
         returnTypeCode: compositeDto.productStockReturn.returnTypeCode || PhysicianReturnType.Physician,
         fromDeptID: compositeDto.productStockReturn.fromDeptID || 0,
         fromDeptName: compositeDto.productStockReturn.fromDeptName || "",
-        physicianID: compositeDto.productStockReturn.toDeptID || 0, // Using toDeptID field for physicianID
-        physicianName: compositeDto.productStockReturn.toDeptName || "", // Using toDeptName field for physicianName
+        physicianID: compositeDto.productStockReturn.toDeptID || 0,
+        physicianName: compositeDto.productStockReturn.toDeptName || "",
         auGrpID: compositeDto.productStockReturn.auGrpID || 18,
         catDesc: compositeDto.productStockReturn.catDesc || "REVENUE",
         catValue: compositeDto.productStockReturn.catValue || "MEDI",
@@ -364,10 +410,8 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
     }
   }, [getValues("fromDeptID"), selectedDepartmentId, isAddMode, isCopyMode, isDataLoaded, getValues("returnTypeCode")]);
 
-  // Handle return type change
   useEffect(() => {
     if (isDataLoaded && (isAddMode || isCopyMode)) {
-      // Regenerate return code when return type changes
       generateReturnCodeAsync();
     }
   }, [returnTypeValue]);
@@ -395,7 +439,6 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
         }
       }
 
-      // Validate based on return type
       if (data.returnTypeCode === PhysicianReturnType.Physician && (!data.physicianID || data.physicianID === 0)) {
         showAlert("Warning", "Physician is required for Physician Returns. Please select a physician.", "warning");
         return;
@@ -408,20 +451,19 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
 
       const fromDept = department?.find((d) => Number(d.value) === data.fromDeptID);
       const selectedPhysician = attendingPhy?.find((p) => Number(p.value) === data.physicianID);
-
       const stockReturnCompositeDto: ProductStockReturnCompositeDto = {
         productStockReturn: {
           psrID: data.psrID,
           psrDate: data.psrDate,
-          dtID: 0, // Will be set by backend based on return type
+          dtID: 0,
           dtCode: "",
           dtName: "",
           returnTypeCode: data.returnTypeCode,
           returnType: data.returnTypeCode === PhysicianReturnType.Physician ? "Physician Return" : "Inventory Adjustment",
           fromDeptID: data.fromDeptID,
           fromDeptName: fromDept?.label || data.fromDeptName,
-          toDeptID: data.physicianID || undefined, // Using toDeptID field for physicianID
-          toDeptName: selectedPhysician?.label || data.physicianName, // Using toDeptName field for physicianName
+          toDeptID: data.physicianID || undefined,
+          toDeptName: selectedPhysician?.label || data.physicianName,
           auGrpID: data.auGrpID || 18,
           catDesc: data.catDesc || "REVENUE",
           catValue: data.catValue || "MEDI",
@@ -435,7 +477,6 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
           returnTypeName: data.returnTypeCode === PhysicianReturnType.Physician ? "Physician Return" : "Inventory Adjustment",
         } as ProductStockReturnDto,
         productStockReturnDetails: data.productStockReturnDetails.map((detail) => ({
-          // Ensure all required properties are present
           psrdID: detail.psrdID || 0,
           psrID: detail.psrID || 0,
           productID: detail.productID || 0,
@@ -467,7 +508,6 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
         })),
       };
       let response;
-
       if (data.returnTypeCode === PhysicianReturnType.Physician) {
         response = await savePhysicianReturn(stockReturnCompositeDto);
       } else {
@@ -503,7 +543,6 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
     setIsDataLoaded(false);
 
     if (initialData) {
-      setTimeout(() => loadReturnDetails(), 100);
     }
   };
 
@@ -682,19 +721,14 @@ const PhysicianReturnForm: React.FC<PhysicianReturnFormProps> = ({
               {returnTypeValue === PhysicianReturnType.Physician && (
                 <Grid size={{ sm: 12, md: 2 }}>
                   <FormField
-                    name="physicianID"
+                    name="physicianName"
                     control={control}
-                    label="Physician"
                     type="select"
+                    label="Attending Physician"
                     required
-                    disabled={isViewMode}
                     size="small"
-                    options={attendingPhy || []}
-                    fullWidth
-                    onChange={(value) => {
-                      const selectedPhysician = attendingPhy?.find((p) => Number(p.value) === Number(value.value));
-                      setValue("physicianName", selectedPhysician?.label || "");
-                    }}
+                    options={attendingPhy}
+                    onChange={handleAttendingPhysicianChange}
                   />
                 </Grid>
               )}
