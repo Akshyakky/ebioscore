@@ -14,7 +14,6 @@ import {
   ViewModule as CardIcon,
   Clear as ClearIcon,
   ContentCopy as CopyIcon,
-  Dashboard as DashboardIcon,
   Delete as DeleteIcon,
   Group as DeptIcon,
   Edit as EditIcon,
@@ -37,6 +36,7 @@ import {
   Warning as WarningIcon,
 } from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Button,
   Card,
@@ -1149,6 +1149,109 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
     },
   ];
 
+  const renderStatsDashboard = () => (
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <GrnIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {statistics.total}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total GRNs
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ApproveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {statistics.approved}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Approved
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <ScheduleIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {statistics.pending}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Pending
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <WarningIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {statistics.overdue}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Overdue
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <TrendingIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {formatCurrency(statistics.totalValue, "INR", "en-IN")}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Value
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
   return (
     <Box sx={{ p: 3 }}>
       {isDepartmentSelected && (
@@ -1171,38 +1274,8 @@ const ComprehensiveGRNManagementPage: React.FC = () => {
             </Box>
           </Paper>
 
-          <Grid container spacing={3} mb={3}>
-            {[
-              { title: "Total GRNs", value: statistics.total, icon: <DashboardIcon />, color: "#1976d2" },
-              { title: "Approved", value: statistics.approved, icon: <ApproveIcon />, color: "#4caf50" },
-              { title: "Pending", value: statistics.pending, icon: <ScheduleIcon />, color: "#ff9800" },
-              { title: "Overdue", value: statistics.overdue, icon: <WarningIcon />, color: "#f44336" },
-              { title: "Hidden", value: statistics.hidden, icon: <BlockIcon />, color: "#757575" },
-              { title: "Total Value", value: formatCurrency(statistics.totalValue, "INR", "en-IN"), icon: <TrendingIcon />, color: "#9c27b0" },
-            ].map((stat) => (
-              <Grid size={{ xs: 12, sm: 6, md: 2 }} key={stat.title}>
-                <Card
-                  elevation={2}
-                  sx={{
-                    height: "100%",
-                    borderLeft: `4px solid ${stat.color}`,
-                    transition: "box-shadow 0.2s",
-                    "&:hover": { elevation: 4 },
-                  }}
-                >
-                  <CardContent sx={{ textAlign: "center", p: 2.5 }}>
-                    <Box sx={{ color: stat.color, mb: 1 }}>{React.cloneElement(stat.icon, { sx: { fontSize: 32 } })}</Box>
-                    <Typography variant="h5" fontWeight="700" sx={{ color: stat.color, mb: 0.5 }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" fontWeight="500">
-                      {stat.title}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+          {/* Updated Statistics Dashboard */}
+          {renderStatsDashboard()}
 
           <Paper elevation={2} sx={{ p: 2.5, mb: 3 }}>
             <Grid container spacing={3} alignItems="center">

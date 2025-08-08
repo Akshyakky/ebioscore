@@ -37,6 +37,7 @@ import {
 } from "@mui/icons-material";
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   Card,
@@ -967,6 +968,173 @@ const DepartmentConsumptionPage: React.FC = () => {
     );
   }
 
+  const renderStatsDashboard = () => (
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <DashboardIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {statistics.total}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Records
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <InventoryIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {statistics.totalProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Products
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ConsumptionIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {Math.round(statistics.totalConsumedQty)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Consumed Qty
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <InventoryIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  ₹{Math.round(statistics.totalValue / 1000)}K
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Value
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <WarningIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {statistics.zeroStockItems}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Zero Stock Items
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+  const renderAdditionalStats = () => (
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 4 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <WarningIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {statistics.expiringItems}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Expiring Items
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 4 }}>
+        <Card sx={{ borderLeft: "3px solid #607d8b" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#607d8b", width: 40, height: 40 }}>
+                <ConsumptionIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#607d8b" fontWeight="bold">
+                  {Math.round(statistics.totalConsumedQty / statistics.total || 0)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Avg Consumption
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 4 }}>
+        <Card sx={{ borderLeft: "3px solid #795548" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#795548", width: 40, height: 40 }}>
+                <InventoryIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#795548" fontWeight="bold">
+                  ₹{Math.round(statistics.totalValue / statistics.totalProducts || 0)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Avg Value/Product
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       {isLoadingDetails && (
@@ -1024,105 +1192,9 @@ const DepartmentConsumptionPage: React.FC = () => {
           </Paper>
 
           <Collapse in={showStatistics}>
-            <Paper elevation={1} sx={{ p: 3, mb: 3, bgcolor: "grey.50" }}>
-              <Grid container spacing={3} justifyContent="center">
-                {[
-                  {
-                    title: "Total Records",
-                    value: statistics.total,
-                    icon: <DashboardIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#1976d2",
-                  },
-                  {
-                    title: "Total Products",
-                    value: statistics.totalProducts,
-                    icon: <InventoryIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#2196f3",
-                  },
-                  {
-                    title: "Consumed Qty",
-                    value: Math.round(statistics.totalConsumedQty),
-                    icon: <ConsumptionIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#4caf50",
-                  },
-                  {
-                    title: "Total Value (K)",
-                    value: Math.round(statistics.totalValue / 1000),
-                    icon: <InventoryIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#ff9800",
-                  },
-                  {
-                    title: "Zero Stock",
-                    value: statistics.zeroStockItems,
-                    icon: <WarningIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#f44336",
-                  },
-                  {
-                    title: "Expiring Items",
-                    value: statistics.expiringItems,
-                    icon: <WarningIcon sx={{ fontSize: 24, color: "white" }} />,
-                    bgColor: "#9c27b0",
-                  },
-                ].map((stat, index) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }} key={stat.title}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        textAlign: "center",
-                        gap: 1.5,
-                        p: 2,
-                        bgcolor: "background.paper",
-                        borderRadius: 2,
-                        border: `3px solid ${stat.bgColor}`,
-                        borderLeft: `6px solid ${stat.bgColor}`,
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          transform: "translateY(-2px)",
-                          boxShadow: 2,
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: "50%",
-                          bgcolor: stat.bgColor,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          mb: 1,
-                        }}
-                      >
-                        {stat.icon}
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          fontWeight: 700,
-                          color: stat.bgColor,
-                          lineHeight: 1,
-                        }}
-                      >
-                        {stat.value}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          fontSize: "0.875rem",
-                          fontWeight: 500,
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {stat.title}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
+            <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+              {renderStatsDashboard()}
+              {statistics.total > 0 && renderAdditionalStats()}
             </Paper>
           </Collapse>
 

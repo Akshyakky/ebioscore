@@ -18,51 +18,51 @@ const darkTheme = createTheme({
   },
   typography: {
     fontFamily: TYPOGRAPHY.fontFamily,
-    fontSize: 14,
+    fontSize: 13, // Reduced from 14
     h1: {
       fontSize: TYPOGRAPHY.fontSizes["4xl"],
       fontWeight: TYPOGRAPHY.fontWeights.bold,
-      lineHeight: TYPOGRAPHY.lineHeights.sm,
+      lineHeight: TYPOGRAPHY.lineHeights.xs, // Tighter
       color: DARK_COLORS.text.primary,
     },
     h2: {
       fontSize: TYPOGRAPHY.fontSizes["3xl"],
       fontWeight: TYPOGRAPHY.fontWeights.semibold,
-      lineHeight: TYPOGRAPHY.lineHeights.sm,
+      lineHeight: TYPOGRAPHY.lineHeights.xs, // Tighter
       color: DARK_COLORS.text.primary,
     },
     h3: {
       fontSize: TYPOGRAPHY.fontSizes["2xl"],
       fontWeight: TYPOGRAPHY.fontWeights.semibold,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
       color: DARK_COLORS.text.primary,
     },
     h4: {
       fontSize: TYPOGRAPHY.fontSizes.xl,
       fontWeight: TYPOGRAPHY.fontWeights.semibold,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
       color: DARK_COLORS.text.primary,
     },
     h5: {
       fontSize: TYPOGRAPHY.fontSizes.lg,
       fontWeight: TYPOGRAPHY.fontWeights.medium,
-      lineHeight: TYPOGRAPHY.lineHeights.lg,
+      lineHeight: TYPOGRAPHY.lineHeights.md, // Tighter
       color: DARK_COLORS.text.primary,
     },
     h6: {
       fontSize: TYPOGRAPHY.fontSizes.md,
       fontWeight: TYPOGRAPHY.fontWeights.medium,
-      lineHeight: TYPOGRAPHY.lineHeights.lg,
+      lineHeight: TYPOGRAPHY.lineHeights.md, // Tighter
       color: DARK_COLORS.text.primary,
     },
     body1: {
       fontSize: TYPOGRAPHY.fontSizes.md,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
       color: DARK_COLORS.text.primary,
     },
     body2: {
       fontSize: TYPOGRAPHY.fontSizes.sm,
-      lineHeight: TYPOGRAPHY.lineHeights.md,
+      lineHeight: TYPOGRAPHY.lineHeights.sm, // Tighter
       color: DARK_COLORS.text.secondary,
     },
     button: {
@@ -94,20 +94,20 @@ const darkTheme = createTheme({
           height: "100%",
           backgroundColor: DARK_COLORS.background.default,
         },
-        // Global scrollbar styles for dark theme
+        // Global scrollbar styles for dark theme - Compact
         "*::-webkit-scrollbar": {
-          width: "8px",
-          height: "8px",
+          width: "6px", // Reduced from 8px
+          height: "6px", // Reduced from 8px
         },
         "*::-webkit-scrollbar-track": {
           background: DARK_COLORS.background.default,
-          borderRadius: "4px",
+          borderRadius: "2px", // Reduced from 4px
         },
         "*::-webkit-scrollbar-thumb": {
           background: DARK_COLORS.grey[600],
-          borderRadius: "4px",
-          border: `2px solid ${DARK_COLORS.background.default}`,
-          transition: "background-color 0.2s ease",
+          borderRadius: "2px", // Reduced from 4px
+          border: `1px solid ${DARK_COLORS.background.default}`, // Reduced border
+          transition: "background-color 0.15s ease", // Faster
         },
         "*::-webkit-scrollbar-thumb:hover": {
           background: DARK_COLORS.primary.main,
@@ -115,22 +115,22 @@ const darkTheme = createTheme({
         "*::-webkit-scrollbar-corner": {
           background: DARK_COLORS.background.default,
         },
-        // Sidebar specific scrollbar (thinner)
+        // Sidebar specific scrollbar (thinner) - Compact
         ".sidebar-scroll::-webkit-scrollbar": {
-          width: "6px",
+          width: "4px", // Reduced from 6px
         },
         ".sidebar-scroll::-webkit-scrollbar-track": {
           background: "transparent",
         },
         ".sidebar-scroll::-webkit-scrollbar-thumb": {
           background: DARK_COLORS.grey[600],
-          borderRadius: "3px",
+          borderRadius: "2px", // Reduced from 3px
           border: "none",
         },
         ".sidebar-scroll::-webkit-scrollbar-thumb:hover": {
           background: DARK_COLORS.primary.main,
         },
-        // DataGrid specific styles for dark theme
+        // DataGrid specific styles for dark theme - Compact
         ".row-valid": {
           backgroundColor: `${DATAGRID_CONSTANTS.colors.dark.rowValid} !important`,
           "&:hover": {
@@ -149,11 +149,11 @@ const darkTheme = createTheme({
             backgroundColor: `${alpha(DARK_COLORS.error.main, 0.12)} !important`,
           },
         },
-        // Grid edit cell styles for dark theme
+        // Grid edit cell styles for dark theme - Compact
         ".grid-product-search": {
           width: "100%",
           "& .MuiOutlinedInput-root": {
-            height: "32px",
+            height: "26px", // Reduced from 32px
             fontSize: COMPONENT_CONSTANTS.dataGrid.fontSize,
             backgroundColor: DARK_COLORS.background.dark,
             "& fieldset": {
@@ -178,7 +178,7 @@ const darkTheme = createTheme({
           width: DRAWER_WIDTH,
           boxSizing: "border-box",
           overflowX: "hidden",
-          padding: "10px 0",
+          padding: "6px 0", // Reduced from "10px 0"
           background: DARK_COLORS.background.dark,
           color: DARK_COLORS.text.primary,
           borderRight: `1px solid ${DARK_COLORS.divider}`,
@@ -186,13 +186,14 @@ const darkTheme = createTheme({
           ".active-submenu-item": {
             backgroundColor: DARK_COLORS.primary.main,
             color: DARK_COLORS.primary.contrastText,
-            borderLeft: `4px solid ${DARK_COLORS.primary.light}`,
+            borderLeft: `3px solid ${DARK_COLORS.primary.light}`, // Reduced from 4px
             "& .MuiListItemIcon-root": {
               color: DARK_COLORS.primary.contrastText,
             },
           },
           ".MuiListItem-root": {
             transition: `all ${TRANSITIONS.duration.shorter}ms ${TRANSITIONS.easing.easeInOut}`,
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact padding
             "&:hover": {
               backgroundColor: DARK_COLORS.action.hover,
               color: DARK_COLORS.primary.light,
@@ -221,7 +222,7 @@ const darkTheme = createTheme({
           borderBottom: `1px solid ${DARK_COLORS.divider}`,
           padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`,
           minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
-          fontSize: TYPOGRAPHY.fontSizes.lg,
+          fontSize: TYPOGRAPHY.fontSizes.md, // Reduced from lg
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
           display: "flex",
           alignItems: "center",
@@ -287,9 +288,11 @@ const darkTheme = createTheme({
           },
           "& .MuiInputBase-input": {
             color: DARK_COLORS.text.primary,
+            padding: `${SPACING_UNIT * 2}px ${SPACING_UNIT * 2.5}px`, // Reduced padding
           },
           "& .MuiFormLabel-root": {
             color: DARK_COLORS.text.secondary,
+            fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller label
             "&.Mui-focused": {
               color: DARK_COLORS.primary.main,
             },
@@ -304,22 +307,26 @@ const darkTheme = createTheme({
           borderRadius: SHAPE.borderRadius,
           fontWeight: TYPOGRAPHY.fontWeights.medium,
           height: COMPONENT_CONSTANTS.button.mediumHeight,
+          fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller font
+          padding: `${SPACING_UNIT}px ${SPACING_UNIT * 3}px`, // More compact padding
           "& .MuiSvgIcon-root": {
-            fontSize: 20,
+            fontSize: 18, // Reduced from 20
           },
         },
         sizeSmall: {
           height: COMPONENT_CONSTANTS.button.smallHeight,
           fontSize: TYPOGRAPHY.fontSizes.xs,
+          padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact
           "& .MuiSvgIcon-root": {
-            fontSize: 16,
+            fontSize: 14, // Reduced from 16
           },
         },
         sizeLarge: {
           height: COMPONENT_CONSTANTS.button.largeHeight,
           fontSize: TYPOGRAPHY.fontSizes.md,
+          padding: `${SPACING_UNIT * 1.5}px ${SPACING_UNIT * 4}px`, // More compact
           "& .MuiSvgIcon-root": {
-            fontSize: 24,
+            fontSize: 20, // Reduced from 24
           },
         },
         contained: {
@@ -365,7 +372,8 @@ const darkTheme = createTheme({
             fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
             height: COMPONENT_CONSTANTS.table.headerHeight,
             borderBottom: "none !important",
-            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            fontSize: `${TYPOGRAPHY.fontSizes.xs} !important`, // Smaller
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px !important`, // More compact
             "&:not(:last-child)": {
               borderRight: `1px solid ${alpha(DARK_COLORS.primary.contrastText, 0.2)} !important`,
             },
@@ -376,7 +384,8 @@ const darkTheme = createTheme({
             fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
             height: COMPONENT_CONSTANTS.table.headerHeight,
             borderBottom: "none !important",
-            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            fontSize: `${TYPOGRAPHY.fontSizes.xs} !important`, // Smaller
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px !important`, // More compact
             "&:not(:last-child)": {
               borderRight: `1px solid ${alpha(DARK_COLORS.primary.contrastText, 0.2)} !important`,
             },
@@ -404,6 +413,8 @@ const darkTheme = createTheme({
           borderBottom: `1px solid ${DARK_COLORS.divider}`,
           color: DARK_COLORS.text.primary,
           height: COMPONENT_CONSTANTS.table.rowHeight,
+          fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller
+          padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact
         },
       },
     },
@@ -448,7 +459,7 @@ const darkTheme = createTheme({
     MuiAccordion: {
       styleOverrides: {
         root: {
-          boxShadow: `0 2px 8px ${alpha(DARK_COLORS.background.default, 0.3)}`,
+          boxShadow: `0 1px 4px ${alpha(DARK_COLORS.background.default, 0.3)}`, // Reduced shadow
           borderRadius: SHAPE.borderRadius,
           backgroundColor: DARK_COLORS.background.paper,
           "&:before": {
@@ -459,7 +470,7 @@ const darkTheme = createTheme({
           },
           transition: `box-shadow ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}, margin ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}`,
           "&:hover": {
-            boxShadow: `0 4px 12px ${alpha(DARK_COLORS.background.default, 0.5)}`,
+            boxShadow: `0 2px 6px ${alpha(DARK_COLORS.background.default, 0.5)}`, // Reduced shadow
           },
         },
       },
@@ -469,11 +480,11 @@ const darkTheme = createTheme({
         root: {
           background: `linear-gradient(135deg, ${alpha(DARK_COLORS.primary.main, 0.1)}, ${alpha(DARK_COLORS.primary.main, 0.15)})`,
           color: DARK_COLORS.primary.light,
-          minHeight: "42px !important",
-          height: "42px",
+          minHeight: "32px !important", // Reduced from 42px
+          height: "32px", // Reduced from 42px
           borderRadius: `${SHAPE.borderRadius}px ${SHAPE.borderRadius}px 0 0`,
           "&.Mui-expanded": {
-            minHeight: "48px",
+            minHeight: "36px", // Reduced from 48px
           },
           "&:hover": {
             background: `linear-gradient(135deg, ${alpha(DARK_COLORS.primary.main, 0.15)}, ${alpha(DARK_COLORS.primary.main, 0.2)})`,
@@ -492,11 +503,11 @@ const darkTheme = createTheme({
           },
         },
         content: {
-          margin: "12px 0",
+          margin: "8px 0", // Reduced from "12px 0"
           "& .MuiTypography-root": {
-            fontSize: "1rem",
+            fontSize: TYPOGRAPHY.fontSizes.sm, // Smaller
             fontWeight: TYPOGRAPHY.fontWeights.semibold,
-            letterSpacing: "0.5px",
+            letterSpacing: "0.3px", // Reduced
             textTransform: "uppercase",
             color: "inherit",
           },
@@ -506,7 +517,7 @@ const darkTheme = createTheme({
     MuiAccordionDetails: {
       styleOverrides: {
         root: {
-          padding: SPACING_UNIT * 2,
+          padding: SPACING_UNIT * 3, // Reduced from SPACING_UNIT * 2
           borderTop: `1px solid ${alpha(DARK_COLORS.divider, 0.5)}`,
           backgroundColor: alpha(DARK_COLORS.background.dark, 0.6),
           borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
@@ -519,11 +530,13 @@ const darkTheme = createTheme({
         root: {
           backgroundColor: DARK_COLORS.primary.main,
           color: DARK_COLORS.primary.contrastText,
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.15)", // Reduced shadow
           borderBottom: `1px solid ${DARK_COLORS.divider}`,
           "& .MuiToolbar-root": {
             backgroundColor: "inherit",
             color: "inherit",
+            minHeight: `${52}px !important`, // More compact
+            padding: `0 ${SPACING_UNIT * 3}px !important`, // More compact
           },
           "& .MuiIconButton-root": {
             color: DARK_COLORS.primary.contrastText,
@@ -547,10 +560,11 @@ const darkTheme = createTheme({
           "& .MuiButton-root": {
             textTransform: "none",
             gap: SPACING_UNIT,
-            fontSize: TYPOGRAPHY.fontSizes.sm,
+            fontSize: TYPOGRAPHY.fontSizes.xs, // Smaller
             fontWeight: TYPOGRAPHY.fontWeights.medium,
+            padding: `${SPACING_UNIT}px ${SPACING_UNIT * 2}px`, // More compact
             "& .MuiSvgIcon-root": {
-              fontSize: 20,
+              fontSize: 16, // Reduced from 20
             },
           },
         },
@@ -573,7 +587,7 @@ const darkTheme = createTheme({
           "& .MuiDataGrid-withBorderColor": {
             borderColor: `${DARK_COLORS.divider} !important`,
           },
-          // Header styling for dark theme
+          // Header styling for dark theme - Compact
           "& .MuiDataGrid-columnHeaders": {
             backgroundColor: `${DATAGRID_CONSTANTS.colors.dark.headerBackground} !important`,
             color: `${DATAGRID_CONSTANTS.colors.dark.headerText} !important`,
@@ -600,7 +614,7 @@ const darkTheme = createTheme({
               color: "inherit",
               fontSize: "inherit",
               textTransform: "uppercase",
-              letterSpacing: "0.5px",
+              letterSpacing: "0.3px", // Reduced
             },
             "& .MuiDataGrid-iconSeparator": {
               display: "none",
@@ -613,7 +627,7 @@ const darkTheme = createTheme({
               },
             },
           },
-          // Cell styling for dark theme
+          // Cell styling for dark theme - Compact
           "& .MuiDataGrid-cell": {
             borderRight: `${COMPONENT_CONSTANTS.dataGrid.borderWidth} solid ${DATAGRID_CONSTANTS.colors.dark.cellBorder}`,
             borderBottom: `${COMPONENT_CONSTANTS.dataGrid.borderWidth} solid ${DATAGRID_CONSTANTS.colors.dark.cellBorder}`,
@@ -641,7 +655,7 @@ const darkTheme = createTheme({
             userSelect: "text",
             WebkitUserSelect: "text",
           },
-          // Row styling for dark theme
+          // Row styling for dark theme - Compact
           "& .MuiDataGrid-row": {
             minHeight: `${COMPONENT_CONSTANTS.dataGrid.rowHeight}px !important`,
             maxHeight: `${COMPONENT_CONSTANTS.dataGrid.rowHeight}px !important`,
@@ -661,30 +675,30 @@ const darkTheme = createTheme({
                 backgroundColor: `${alpha(DARK_COLORS.primary.main, 0.24)} !important`,
               },
             },
-            // Custom row states for dark theme
+            // Custom row states for dark theme - Compact
             "&.row-valid": {
               backgroundColor: `${DATAGRID_CONSTANTS.colors.dark.rowValid} !important`,
-              borderLeft: `3px solid ${DARK_COLORS.success.main}`,
+              borderLeft: `2px solid ${DARK_COLORS.success.main}`, // Reduced from 3px
               "&:hover": {
                 backgroundColor: `${alpha(DARK_COLORS.success.main, 0.12)} !important`,
               },
             },
             "&.row-invalid": {
               backgroundColor: `${DATAGRID_CONSTANTS.colors.dark.rowInvalid} !important`,
-              borderLeft: `3px solid ${DARK_COLORS.warning.main}`,
+              borderLeft: `2px solid ${DARK_COLORS.warning.main}`, // Reduced from 3px
               "&:hover": {
                 backgroundColor: `${alpha(DARK_COLORS.warning.main, 0.12)} !important`,
               },
             },
             "&.row-error": {
               backgroundColor: `${DATAGRID_CONSTANTS.colors.dark.rowError} !important`,
-              borderLeft: `3px solid ${DARK_COLORS.error.main}`,
+              borderLeft: `2px solid ${DARK_COLORS.error.main}`, // Reduced from 3px
               "&:hover": {
                 backgroundColor: `${alpha(DARK_COLORS.error.main, 0.12)} !important`,
               },
             },
           },
-          // Footer styling for dark theme
+          // Footer styling for dark theme - Compact
           "& .MuiDataGrid-footerContainer": {
             borderTop: `${COMPONENT_CONSTANTS.dataGrid.borderWidth} solid ${DARK_COLORS.divider}`,
             backgroundColor: DARK_COLORS.background.dark,
@@ -700,7 +714,7 @@ const darkTheme = createTheme({
           "& .MuiDataGrid-selectedRowCount": {
             color: DARK_COLORS.text.secondary,
           },
-          // Empty state and overlay styling for dark theme
+          // Empty state and overlay styling for dark theme - Compact
           "& .MuiDataGrid-overlay": {
             backgroundColor: DATAGRID_CONSTANTS.colors.dark.emptyStateBg,
             color: DARK_COLORS.text.primary,
@@ -709,7 +723,7 @@ const darkTheme = createTheme({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: SPACING_UNIT * 2,
+            gap: SPACING_UNIT * 3, // More compact
             "& .MuiTypography-root": {
               color: DARK_COLORS.text.secondary,
             },
@@ -721,21 +735,21 @@ const darkTheme = createTheme({
             backgroundColor: DATAGRID_CONSTANTS.colors.dark.loadingOverlay,
             backdropFilter: "blur(2px)",
           },
-          // Scrollbar styling for dark theme
+          // Scrollbar styling for dark theme - Compact
           "& .MuiDataGrid-virtualScroller": {
             "&::-webkit-scrollbar": {
-              width: "8px",
-              height: "8px",
+              width: "6px", // Reduced from 8px
+              height: "6px", // Reduced from 8px
             },
             "&::-webkit-scrollbar-track": {
               background: DARK_COLORS.background.default,
-              borderRadius: "4px",
+              borderRadius: "2px", // Reduced from 4px
             },
             "&::-webkit-scrollbar-thumb": {
               background: DARK_COLORS.grey[600],
-              borderRadius: "4px",
-              border: `2px solid ${DARK_COLORS.background.default}`,
-              transition: "background-color 0.2s ease",
+              borderRadius: "2px", // Reduced from 4px
+              border: `1px solid ${DARK_COLORS.background.default}`, // Reduced border
+              transition: "background-color 0.15s ease", // Faster
             },
             "&::-webkit-scrollbar-thumb:hover": {
               background: DARK_COLORS.primary.main,
@@ -744,14 +758,14 @@ const darkTheme = createTheme({
               background: DARK_COLORS.background.default,
             },
           },
-          // Edit cell styling for dark theme
+          // Edit cell styling for dark theme - Compact
           "& .MuiDataGrid-cell--editing": {
             backgroundColor: `${DARK_COLORS.action.hover} !important`,
             padding: COMPONENT_CONSTANTS.dataGrid.editCellPadding,
             "& .MuiInputBase-root": {
               fontSize: COMPONENT_CONSTANTS.dataGrid.fontSize,
               backgroundColor: DARK_COLORS.background.dark,
-              height: "32px",
+              height: "26px", // Reduced from 32px
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: DARK_COLORS.primary.main,
                 borderWidth: "2px",
@@ -769,13 +783,13 @@ const darkTheme = createTheme({
             },
             "& .MuiTextField-root": {
               "& .MuiOutlinedInput-root": {
-                height: "32px",
+                height: "26px", // Reduced from 32px
                 fontSize: COMPONENT_CONSTANTS.dataGrid.fontSize,
                 backgroundColor: DARK_COLORS.background.dark,
               },
             },
           },
-          // Actions cell styling for dark theme
+          // Actions cell styling for dark theme - Compact
           "& .MuiDataGrid-actionsCell": {
             "& .MuiButton-root": {
               minWidth: "auto",
@@ -802,7 +816,7 @@ const darkTheme = createTheme({
             visibility: "visible",
             opacity: 1,
           },
-          // Density modifications for dark theme
+          // Density modifications for dark theme - More compact
           "&.MuiDataGrid-root--densityCompact": {
             "& .MuiDataGrid-cell": {
               padding: COMPONENT_CONSTANTS.dataGrid.compactCellPadding,
@@ -814,8 +828,8 @@ const darkTheme = createTheme({
               maxHeight: `${COMPONENT_CONSTANTS.dataGrid.compactRowHeight}px !important`,
             },
             "& .MuiDataGrid-columnHeaders": {
-              minHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 8}px !important`,
-              maxHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 8}px !important`,
+              minHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 10}px !important`, // More compact
+              maxHeight: `${COMPONENT_CONSTANTS.dataGrid.headerHeight - 10}px !important`, // More compact
             },
           },
         },

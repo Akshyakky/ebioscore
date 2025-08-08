@@ -26,26 +26,6 @@ const sampleStatusUpdateOptions = [
   { value: "R", label: "Rejected" },
 ];
 
-// Create schema for bulk update
-const bulkUpdateSchema = z
-  .object({
-    bulkStatus: z.string().optional(),
-    bulkReason: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.bulkStatus === "R" && !data.bulkReason?.trim()) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Rejection reason is required when status is Rejected",
-      path: ["bulkReason"],
-    }
-  );
-
-// Create schema for individual investigations
 const investigationUpdateSchema = z
   .object({
     investigationId: z.number(),
@@ -104,7 +84,6 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
   const bulkStatus = watch("bulkStatus");
   const bulkReason = watch("bulkReason");
 
-  // Initialize form when dialog opens
   useEffect(() => {
     if (open && investigations.length > 0) {
       const investigationData = investigations.map((inv) => ({
@@ -235,10 +214,7 @@ const SampleStatusUpdateDialog: React.FC<SampleStatusUpdateDialogProps> = ({ ope
         {/* Bulk Update Section */}
         {investigations.length > 1 && (
           <>
-            <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Bulk Update
-              </Typography>
+            <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
               <Grid container spacing={2} alignItems="flex-end">
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <FormField
